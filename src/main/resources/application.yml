@@ -133,6 +133,8 @@ logging.level:
   com.alphasights: INFO
   org.apache.tomcat: WARN
   org.apache.catalina: WARN
+  ju.ma: DEBUG
+  org.springframework.security: WARN
 
 auth:
   admin-secret: ${AUTH_ADMIN_SECRET:password}
