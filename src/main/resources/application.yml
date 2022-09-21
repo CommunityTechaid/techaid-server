@@ -72,7 +72,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${JWT_ISSUER:https://lambeth-techaid.eu.auth0.com/}
+          issuer-uri: ${JWT_ISSUER:}
   servlet:
     multipart:
       max-file-size: 10MB
@@ -133,6 +133,8 @@ logging.level:
   com.alphasights: INFO
   org.apache.tomcat: WARN
   org.apache.catalina: WARN
+  ju.ma: DEBUG
+  org.springframework.security: WARN
 
 auth:
   admin-secret: ${AUTH_ADMIN_SECRET:password}
