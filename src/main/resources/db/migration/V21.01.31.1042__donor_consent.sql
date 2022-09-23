@@ -1,2 +1,1 @@
-alter table donors
-  add column consent boolean default false;
+alter table donors add column if not exists consent boolean default false;
