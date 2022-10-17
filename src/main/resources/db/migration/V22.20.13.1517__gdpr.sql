@@ -64,9 +64,6 @@ create table if not exists gdpr.donors_archive (
   referral text);
 
 
--- TODO: this trigger will fire for donors not in the donors_to_delete view, but
--- then they'll have NULL for updated_at. Not a huge issue, but it would be good
--- to sort it out sometime.
 create or replace function gdpr.archive_donor_info ()
   returns trigger
 as
