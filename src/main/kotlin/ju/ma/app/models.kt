@@ -440,7 +440,7 @@ class Organisation(
     )
     var id: Long = 0,
     var name: String,
-    var website: String,
+    // var website: String,
     var contact: String,
     var phoneNumber: String,
     var email: String,
@@ -494,5 +494,10 @@ class OrganisationAttributes(
     var accepts: List<String> = listOf(),
     var alternateAccepts: List<String> = listOf(),
     var notes: String = "",
-    var details: String = ""
+    var details: String = "",
+    var hasInternetHome: Boolean = false,
+    var hasInternetLocal: Boolean = false,
+    var hasTrainingNeeds: Boolean = false,
+    var hasTrainingTravelNeeds: Boolean = false,
+    var clientRef: String = ""
 )

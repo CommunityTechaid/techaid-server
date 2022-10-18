@@ -1,7 +1,7 @@
 type Organisation {
     id: ID
     name: String
-    website: String
+    # website: String
     contact: String
     phoneNumber: String
     email: String
@@ -28,7 +28,7 @@ type RequestCount {
 
 input CreateOrganisationInput {
     name: String
-    website: String
+    # website: String
     phoneNumber: String
     email: String
     address: String
@@ -39,7 +39,7 @@ input CreateOrganisationInput {
 input UpdateOrganisationInput {
     id: ID!
     name: String
-    website: String
+    # website: String
     phoneNumber: String
     email: String
     address: String
@@ -76,26 +76,36 @@ type OrganisationPage {
 }
 
 type OrganisationAttributes {
-    request: Capacity
-    alternateRequest: Capacity
-    accepts: [String!]
-    alternateAccepts: [String!]
-    notes: String
-    details: String
+  request: Capacity
+  alternateRequest: Capacity
+  accepts: [String!]
+  alternateAccepts: [String!]
+  notes: String
+  details: String
+  hasInternetHome: Boolean
+  hasInternetLocal: Boolean
+  hasTrainingNeeds: Boolean
+  hasTrainingTravelNeeds: Boolean
+  clientRef: String
 }
 
 input OrganisationAttributesInput {
-    request: CapacityInput
-    alternateRequest: CapacityInput
-    accepts: [String!]
-    alternateAccepts: [String!]
-    notes: String
-    details: String
+  request: CapacityInput
+  alternateRequest: CapacityInput
+  accepts: [String!]
+  alternateAccepts: [String!]
+  notes: String
+  details: String
+  hasInternetHome: Boolean,
+  hasInternetLocal: Boolean,
+  hasTrainingNeeds: Boolean,
+  hasTrainingTravelNeeds: Boolean,
+  clientRef: String
 }
 
 input OrganisationWhereInput {
     id: LongComparison
-    website: TextComparison
+    # website: TextComparison
     phoneNumber: TextComparison
     name: TextComparison
     email: TextComparison
