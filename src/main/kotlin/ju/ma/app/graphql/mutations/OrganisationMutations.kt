@@ -132,6 +132,8 @@ data class OrganisationAttributesInput(
     var alternateAccepts: List<String>? = null,
     var notes: String? = null,
     var details: String? = null,
+    var isIndividual: Boolean? = false,
+    var isResident: Boolean? = false,
     var hasInternetHome: Boolean? = false,
     var hasInternetLocal: Boolean? = false,
     var hasTrainingNeeds: Boolean? = false,
@@ -148,7 +150,8 @@ data class OrganisationAttributesInput(
             notes = self.notes ?: notes
             details = self.details ?: details
             alternateAccepts = self.alternateAccepts ?: alternateAccepts
-
+            isIndividual = self.isIndividual ?: isIndividual
+            isResident = self.isResident ?: isResident
             hasInternetHome = self.hasInternetHome ?: hasInternetHome
             hasInternetLocal = self.hasInternetLocal ?: hasInternetLocal
             hasTrainingNeeds = self.hasTrainingNeeds ?: hasTrainingNeeds

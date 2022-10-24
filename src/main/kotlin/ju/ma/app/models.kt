@@ -495,6 +495,8 @@ class OrganisationAttributes(
     var alternateAccepts: List<String> = listOf(),
     var notes: String = "",
     var details: String = "",
+    var isIndividual: Boolean = false,
+    var isResident: Boolean = false,
     var hasInternetHome: Boolean = false,
     var hasInternetLocal: Boolean = false,
     var hasTrainingNeeds: Boolean = false,

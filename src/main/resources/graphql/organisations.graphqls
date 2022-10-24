@@ -82,6 +82,8 @@ type OrganisationAttributes {
   alternateAccepts: [String!]
   notes: String
   details: String
+  isIndividual: Boolean
+  isResident: Boolean
   hasInternetHome: Boolean
   hasInternetLocal: Boolean
   hasTrainingNeeds: Boolean
@@ -96,10 +98,12 @@ input OrganisationAttributesInput {
   alternateAccepts: [String!]
   notes: String
   details: String
-  hasInternetHome: Boolean,
-  hasInternetLocal: Boolean,
-  hasTrainingNeeds: Boolean,
-  hasTrainingTravelNeeds: Boolean,
+  isIndividual: Boolean
+  isResident: Boolean
+  hasInternetHome: Boolean
+  hasInternetLocal: Boolean
+  hasTrainingNeeds: Boolean
+  hasTrainingTravelNeeds: Boolean
   clientRef: String
 }
 
