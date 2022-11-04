@@ -84,10 +84,10 @@ type OrganisationAttributes {
   details: String
   isIndividual: Boolean
   isResident: Boolean
-  hasInternetHome: Boolean
-  hasInternetLocal: Boolean
-  hasTrainingNeeds: Boolean
-  hasTrainingTravelNeeds: Boolean
+  hasInternetHome: String
+  hasInternetLocal: String
+  hasTrainingNeeds: String
+  hasTrainingTravelNeeds: String
   clientRef: String
 }
 
@@ -100,10 +100,10 @@ input OrganisationAttributesInput {
   details: String
   isIndividual: Boolean
   isResident: Boolean
-  hasInternetHome: Boolean
-  hasInternetLocal: Boolean
-  hasTrainingNeeds: Boolean
-  hasTrainingTravelNeeds: Boolean
+  hasInternetHome: String
+  hasInternetLocal: String
+  hasTrainingNeeds: String
+  hasTrainingTravelNeeds: String
   clientRef: String
 }
 

@@ -134,10 +134,10 @@ data class OrganisationAttributesInput(
     var details: String? = null,
     var isIndividual: Boolean? = false,
     var isResident: Boolean? = false,
-    var hasInternetHome: Boolean? = false,
-    var hasInternetLocal: Boolean? = false,
-    var hasTrainingNeeds: Boolean? = false,
-    var hasTrainingTravelNeeds: Boolean? = false,
+    var hasInternetHome: String? = "",
+    var hasInternetLocal: String? = "",
+    var hasTrainingNeeds: String? = "",
+    var hasTrainingTravelNeeds: String? = "",
     var clientRef: String? = null
 
 ) {
