@@ -502,8 +502,8 @@ class OrganisationAttributes(
     // to these, so they have to be strings rather than booleans.
 
     // TODO: Is there a better way of handling this?
-    var hasInternetHome: String = "",
-    var hasMobilityNeeds: String = "",
-    var hasTrainingNeeds: String = "",
+    var hasInternetHome: String = "dk",
+    var hasMobilityNeeds: String = "dk",
+    var hasTrainingNeeds: String = "dk",
     var clientRef: String = ""
 )

@@ -134,9 +134,9 @@ data class OrganisationAttributesInput(
     var details: String? = null,
     var isIndividual: Boolean? = false,
     var isResident: Boolean? = false,
-    var hasInternetHome: String? = "",
-    var hasTrainingNeeds: String? = "",
-    var hasMobilityNeeds: String? = "",
+    var hasInternetHome: String? = "dk",
+    var hasTrainingNeeds: String? = "dk",
+    var hasMobilityNeeds: String? = "dk",
     var clientRef: String? = null
 
 ) {
