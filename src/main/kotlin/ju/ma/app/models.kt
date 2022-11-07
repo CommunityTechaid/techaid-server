@@ -497,14 +497,13 @@ class OrganisationAttributes(
     var details: String = "",
     var isIndividual: Boolean = false,
     var isResident: Boolean = false,
-    // Client needs variables, hasInternetHome, hasInternetLocal, hasTrainingNeeds
-    // and hasTrainingTravelNeeds have to have "don't know" category for responses
+    // Client needs variables, hasInternetHome, hasMobilityNeeds, hasTrainingNeeds
+    // have to have "don't know" category for responses
     // to these, so they have to be strings rather than booleans.
 
     // TODO: Is there a better way of handling this?
     var hasInternetHome: String = "",
-    var hasInternetLocal: String = "",
+    var hasMobilityNeeds: String = "",
     var hasTrainingNeeds: String = "",
-    var hasTrainingTravelNeeds: String = "",
     var clientRef: String = ""
 )

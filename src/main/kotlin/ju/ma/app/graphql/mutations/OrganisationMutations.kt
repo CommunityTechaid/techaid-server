@@ -135,9 +135,8 @@ data class OrganisationAttributesInput(
     var isIndividual: Boolean? = false,
     var isResident: Boolean? = false,
     var hasInternetHome: String? = "",
-    var hasInternetLocal: String? = "",
     var hasTrainingNeeds: String? = "",
-    var hasTrainingTravelNeeds: String? = "",
+    var hasMobilityNeeds: String? = "",
     var clientRef: String? = null
 
 ) {
@@ -153,9 +152,8 @@ data class OrganisationAttributesInput(
             isIndividual = self.isIndividual ?: isIndividual
             isResident = self.isResident ?: isResident
             hasInternetHome = self.hasInternetHome ?: hasInternetHome
-            hasInternetLocal = self.hasInternetLocal ?: hasInternetLocal
             hasTrainingNeeds = self.hasTrainingNeeds ?: hasTrainingNeeds
-            hasTrainingTravelNeeds = self.hasTrainingTravelNeeds ?: hasTrainingTravelNeeds
+            hasMobilityNeeds = self.hasMobilityNeeds ?: hasMobilityNeeds
             clientRef = self.clientRef ?: clientRef
         }
     }
