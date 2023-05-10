@@ -100,7 +100,7 @@ class OrganisationMutations(
 data class CreateOrganisationInput(
     @get:NotBlank
     val name: String,
-    val website: String,
+    // val website: String,
     val phoneNumber: String,
     val email: String,
     @get:NotBlank
@@ -112,7 +112,7 @@ data class CreateOrganisationInput(
     val entity by lazy {
         val org = Organisation(
             name = name,
-            website = website,
+            // website = website,
             phoneNumber = phoneNumber,
             email = email,
             address = address,
@@ -131,7 +131,12 @@ data class OrganisationAttributesInput(
     var accepts: List<String>? = null,
     var alternateAccepts: List<String>? = null,
     var notes: String? = null,
-    var details: String? = null
+    var details: String? = null,
+    var isIndividual: Boolean? = false,
+    var isResident: Boolean? = false,
+    var needs: List<String>? = null,
+    var clientRef: String? = null
+
 ) {
     fun apply(entity: Organisation): OrganisationAttributes {
         val self = this
@@ -142,6 +147,10 @@ data class OrganisationAttributesInput(
             notes = self.notes ?: notes
             details = self.details ?: details
             alternateAccepts = self.alternateAccepts ?: alternateAccepts
+            isIndividual = self.isIndividual ?: isIndividual
+            isResident = self.isResident ?: isResident
+            needs = self.needs ?: needs
+            clientRef = self.clientRef ?: clientRef
         }
     }
 }
@@ -151,7 +160,7 @@ data class UpdateOrganisationInput(
     val id: Long,
     @get:NotBlank
     val name: String,
-    val website: String,
+    // val website: String,
     val phoneNumber: String,
     @get:NotBlank
     val email: String,
@@ -166,7 +175,7 @@ data class UpdateOrganisationInput(
         val self = this
         return entity.apply {
             name = self.name
-            website = self.website
+            // website = self.website
             phoneNumber = self.phoneNumber
             email = self.email
             address = self.address

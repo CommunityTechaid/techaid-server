@@ -12,7 +12,7 @@ import ju.ma.graphql.TimeComparison
 
 class OrganisationWhereInput(
     var id: LongComparision? = null,
-    var website: TextComparison? = null,
+    // var website: TextComparison? = null,
     var phoneNumber: TextComparison? = null,
     var contact: TextComparison? = null,
     var name: TextComparison? = null,
@@ -37,7 +37,7 @@ class OrganisationWhereInput(
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         phoneNumber?.let { builder.and(it.build(entity.phoneNumber)) }
-        website?.let { builder.and(it.build(entity.website)) }
+        // website?.let { builder.and(it.build(entity.website)) }
         attributes?.let { builder.and(it.build(entity)) }
         archived?.let { builder.and(it.build(entity.archived)) }
         volunteer?.let { builder.and(it.build(entity.volunteer)) }
