@@ -33,7 +33,7 @@ manifests/secret.yaml
 
 ### VS Code ###
 .vscode/
-
+/bin/
 
 # Temporary files
 /logs/
