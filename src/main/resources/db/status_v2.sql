@@ -1,0 +1,37 @@
+select status as oldstatus,
+	case status
+		when 'NEW' then 'DONATION_NEW'
+		when 'DECLINED' then 'DONATION_DECLINED'
+		when 'ACCEPTED' then 'DONATION_ACCEPTED'
+		when 'DROPOFF_AGGREED' then 'DONATION_ARRANGED'
+		when 'WITH_TECHIE' then 'PROCESSING_WITH_TECHIE'
+		when 'INCOMPLETE' then 'PROCESSING_MISSING_PART'
+		when 'STORED' then 'PROCESSING_STORED'
+		when 'READY' then 'ALLOCATION_READY'
+		when 'COMPLETED' then 'ALLOCATION_QC_COMPLETED'
+		when 'DELIVERY_ARRANGED' then 'ALLOCATION_DELIVERY_ARRANGED'
+		when 'DELIVERED' then 'DISTRIBUTION_DELIVERED'
+		when 'RECYCLED' then 'DISTRIBUTION_RECYCLED'
+		else NULL
+	end as newstatus,
+	count(*)
+from public.kits
+group by newstatus
+
+select status, *
+from public.kits
+where case status
+		when 'NEW' then 'DONATION_NEW'
+		when 'DECLINED' then 'DONATION_DECLINED'
+		when 'ACCEPTED' then 'DONATION_ACCEPTED'
+		when 'DROPOFF_AGGREED' then 'DONATION_ARRANGED'
+		when 'WITH_TECHIE' then 'PROCESSING_WITH_TECHIE'
+		when 'INCOMPLETE' then 'PROCESSING_MISSING_PART'
+		when 'STORED' then 'PROCESSING_STORED'
+		when 'READY' then 'ALLOCATION_READY'
+		when 'COMPLETED' then 'ALLOCATION_QC_COMPLETED'
+		when 'DELIVERY_ARRANGED' then 'ALLOCATION_DELIVERY_ARRANGED'
+		when 'DELIVERED' then 'DISTRIBUTION_DELIVERED'
+		when 'RECYCLED' then 'DISTRIBUTION_RECYCLED'
+		else NULL
+	end is NULL

@@ -229,7 +229,7 @@ data class CreateKitInput(
     val entity by lazy {
         val kit = Kit(
             type = type,
-            status = status ?: KitStatus.NEW,
+            status = status ?: KitStatus.DONATION_NEW,
             model = model,
             location = location,
             age = age
