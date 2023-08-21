@@ -119,7 +119,6 @@ class CorsFilter : OncePerRequestFilter() {
         headerTypes["Access-Control-Max-Age"] = "pre"
         headerTypes["Access-Control-Allow-Origin"] = "ignore"
 
-        //May want to enable more verbose logging on this
         log.debug("Origin: {}", origin)
 
         for (route in routes) {
