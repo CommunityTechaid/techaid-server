@@ -6,15 +6,16 @@ services:
       dockerfile: Dockerfile
     image: stretech:1.0.0
     environment:
-      SPRING_PROFILES_ACTIVE: ${ACTIVE_PROFILE:-local}
-      DATASOURCE_PASSWORD: ${DB_PASS:-password}
-      DATASOURCE_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/stretech}
-      DATASOURCE_USERNAME: ${DB_USER:-postgres}
-      AUTH0_AUDIENCE:
-      AUTH0_DOMAIN:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+      DATASOURCE_PASSWORD: ${DB_PASS}
+      DATASOURCE_URL: ${DB_URL}
+      DATASOURCE_USERNAME: ${DB_USER}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_CLIENT_ID:
       AUTH0_CLIENT_SECRET:
-      JWT_ISSUER:
+      JWT_ISSUER: ${JWT_ISSUER}
       GOOGLE_PLACES_KEY:
       GMAIL_CLIENT_ID:
       GMAIL_CLIENT_SECRET:
@@ -35,7 +36,6 @@ services:
       - ./src/main/resources/application-local.yml:/app/config/application-local.yml:ro
       - ./src/main/resources/application.yml:/app/config/application.yml:ro
       - ./src/main/resources/db:/db
-      - ./build/libs/stretech-0.0.2-SNAPSHOT.jar:/app/app.jar
     depends_on:
       - postgres
     ports:
