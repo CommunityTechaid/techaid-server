@@ -36,6 +36,7 @@ services:
       - ./src/main/resources/application-local.yml:/app/config/application-local.yml:ro
       - ./src/main/resources/application.yml:/app/config/application.yml:ro
       - ./src/main/resources/db:/db
+      - ./src:/app/src
     depends_on:
       - postgres
     ports:
