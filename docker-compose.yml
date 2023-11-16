@@ -57,5 +57,13 @@ services:
       POSTGRES_USER: postgres
     volumes:
       - pgdata:/var/lib/postgresql/data
+  adminer:
+    image: adminer
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - 8900:8080
+
 volumes:
   pgdata: {}
