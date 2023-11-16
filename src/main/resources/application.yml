@@ -1,9 +1,9 @@
 spring.application:
   name: stretech
   environment: unknown
-  devtools:
-      livereload:
-        enabled: true
+spring.devtools:
+  livereload:
+    enabled: true
 management:
   context-path: /actuator
   endpoints:
