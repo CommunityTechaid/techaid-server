@@ -27,7 +27,7 @@ services:
       COMMENTO_AUTH_AUDIENCE:
       COMMENTO_AUTH_SCOPES:
       COMMENTO_AUTH_REDIRECT:
-      DDL_AUTO:
+      DDL_AUTO: update
       SHOW_SQL: "${SHOW_SQL:-true}"
       METABASE_SECRET_KEY:
       METABASE_SITE_URL:
@@ -50,11 +50,13 @@ services:
 #    volumes:
 #      - ./docker/proxy.conf:/etc/nginx/nginx.conf
   postgres:
-    image: postgres:11.5
+    image: postgres:16
     environment:
       POSTGRES_DB: stretech
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
+    ports:
+      - 5423:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
   adminer:
