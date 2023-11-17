@@ -121,6 +121,7 @@ bootRun {
 }
 
 dependencies {
+    def hibernate_version = dependencyManagement.importedProperties['hibernate.version']
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
@@ -186,7 +187,10 @@ dependencies {
     testImplementation 'io.zonky.test:embedded-database-spring-test:1.5.3'
     /* Providing In-Memory H2 database as the default spring data-source */
     testImplementation 'com.h2database:h2:1.4.200'
+    implementation "org.hibernate:hibernate-envers:${hibernate_version}"
 }
+
+
 
 idea {
     module {

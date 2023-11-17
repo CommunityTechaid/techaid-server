@@ -111,6 +111,13 @@ spring:
         # wasn't fetched in the initial query. This will work, but it's far better to use a DTO projection or
         # a JOIN FETCH query to retrieve the data
         enable_lazy_load_no_trans: true
+        envers:
+          audit_table_suffix: _AUD
+          revision_field_name: revision_id
+          revision_type_field_name: revision_type
+          audit_strategy: org.hibernate.envers.strategy.ValidityAuditStrategy
+
+
     # Hibernate ddl auto (create, create-drop, validate, update, none)
     #   validate: validate the schema, makes no changes to the database, will throw exception if table not found
     #   update: update the schema, creates the schema if none exists
