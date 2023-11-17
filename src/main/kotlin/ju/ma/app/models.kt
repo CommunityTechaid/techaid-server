@@ -34,6 +34,11 @@ import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
 import org.hibernate.annotations.TypeDefs
 import org.hibernate.annotations.UpdateTimestamp
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.AuditTable;
+import org.hibernate.envers.NotAudited
+import org.hibernate.envers.RelationTargetAuditMode
+
 
 @TypeDefs(
     TypeDef(name = "json", typeClass = JsonStringType::class),
@@ -174,6 +179,8 @@ class Donor(
 
 @Entity
 @Table(name = "kits")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "kit_audit_trail")
 class Kit(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kit-seq-generator")
@@ -203,6 +210,7 @@ class Kit(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_id")
     var organisation: Organisation? = null,
+    @NotAudited
     @JsonIgnore
     @OneToMany(mappedBy = "kit", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
     var volunteers: MutableSet<KitVolunteer> = mutableSetOf()
