@@ -188,6 +188,9 @@ dependencies {
     /* Providing In-Memory H2 database as the default spring data-source */
     testImplementation 'com.h2database:h2:1.4.200'
     implementation "org.hibernate:hibernate-envers:${hibernate_version}"
+
+    /* Devtools for hot reload */
+    compileOnly("org.springframework.boot:spring-boot-devtools")
 }
 
 

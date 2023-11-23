@@ -144,6 +144,7 @@ logging.level:
   org.apache.catalina: WARN
   ju.ma: DEBUG
   org.springframework.security: WARN
+  org.hibernate.type: TRACE
 
 auth:
   admin-secret: ${AUTH_ADMIN_SECRET:password}

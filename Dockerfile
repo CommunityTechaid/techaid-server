@@ -51,4 +51,4 @@ WORKDIR /app
 RUN chmod +x start.sh && ./gradlew getDeps
 
 # script which watches source file changes in background and executes bootRun
-CMD ["sh", "start.sh"]
+CMD ["tail", "-f", "/dev/null"]
