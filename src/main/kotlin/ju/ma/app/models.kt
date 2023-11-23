@@ -4,6 +4,20 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType
 import com.vladmihalcea.hibernate.type.json.JsonStringType
+import ju.ma.app.services.Coordinates
+import org.apache.commons.lang3.RandomStringUtils
+import org.hibernate.annotations.Formula
+import org.hibernate.annotations.Type
+import org.hibernate.annotations.TypeDef
+import org.hibernate.annotations.TypeDefs
+import org.hibernate.annotations.UpdateTimestamp
+import org.hibernate.envers.AuditTable
+import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
+import org.hibernate.envers.RelationTargetAuditMode
+import org.hibernate.envers.RevisionEntity
+import org.hibernate.envers.RevisionNumber
+import org.hibernate.envers.RevisionTimestamp
 import java.io.Serializable
 import java.time.Instant
 import java.util.Objects
@@ -27,17 +41,6 @@ import javax.persistence.OneToMany
 import javax.persistence.OneToOne
 import javax.persistence.SequenceGenerator
 import javax.persistence.Table
-import ju.ma.app.services.Coordinates
-import org.apache.commons.lang3.RandomStringUtils
-import org.hibernate.annotations.Formula
-import org.hibernate.annotations.Type
-import org.hibernate.annotations.TypeDef
-import org.hibernate.annotations.TypeDefs
-import org.hibernate.annotations.UpdateTimestamp
-import org.hibernate.envers.Audited;
-import org.hibernate.envers.AuditTable;
-import org.hibernate.envers.NotAudited
-import org.hibernate.envers.RelationTargetAuditMode
 
 
 @TypeDefs(
@@ -178,6 +181,24 @@ class Donor(
 }
 
 @Entity
+@Table(name = "custom_rev_info")
+@RevisionEntity(CustomRevisionEntityListener::class)
+class CustomRevisionInfo {
+
+    @Id
+    @GeneratedValue
+    @RevisionNumber
+    private val id: Long? = null
+
+    @RevisionTimestamp
+    private val timestamp: Long? = null
+
+    @Column(name = "custom_user")
+    var customUser: String = "user"
+}
+
+
+@Entity
 @Table(name = "kits")
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 @AuditTable(value = "kit_audit_trail")
@@ -200,6 +221,7 @@ class Kit(
     var updatedAt: Instant = Instant.now(),
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb")
+    @NotAudited
     var attributes: KitAttributes = KitAttributes(),
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb")
@@ -299,6 +321,7 @@ class KitImage(
 @JsonIgnoreProperties(ignoreUnknown = true)
 class KitAttributes(
     @JsonIgnore
+    @NotAudited
     var kit: Kit? = null,
     var otherType: String? = null,
     var pickup: String = "",
