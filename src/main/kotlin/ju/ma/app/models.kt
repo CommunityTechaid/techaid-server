@@ -180,6 +180,11 @@ class Donor(
     }
 }
 
+
+/*
+* This entity is used to hold the information of audits used by Hibernate Enver.
+* It is completely managed by the plugin. The id and the timestamp are mandatory fields
+*/
 @Entity
 @Table(name = "custom_rev_info")
 @RevisionEntity(CustomRevisionEntityListener::class)
@@ -188,10 +193,10 @@ class CustomRevisionInfo {
     @Id
     @GeneratedValue
     @RevisionNumber
-    private val id: Long? = null
+    val id: Long? = null
 
     @RevisionTimestamp
-    private val timestamp: Long? = null
+    val timestamp: Long? = null
 
     @Column(name = "custom_user")
     var customUser: String = "user"

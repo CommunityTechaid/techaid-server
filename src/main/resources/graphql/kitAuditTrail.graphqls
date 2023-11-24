@@ -1,0 +1,20 @@
+
+type CustomRevisionInfo {
+    id: Long,
+    timestamp: Long,
+    customUser: String
+}
+
+enum RevisionType {
+    ADD, DEL, MOD
+}
+
+type Revision {
+    entity: Kit
+    revision: CustomRevisionInfo,
+    type: String
+}
+
+extend type Query {
+    kitAudits(where: Long): [Revision]
+}
