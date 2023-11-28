@@ -69,6 +69,8 @@ auth0:
   domain: ${AUTH0_DOMAIN:}
   client-id: ${AUTH0_CLIENT_ID:}
   client-secret: ${AUTH0_CLIENT_SECRET:}
+  #cutsom attribute added for parsing JTWToken
+  token-attribute: ${TOKEN_ATTRIBUTE}
 spring:
   security:
     oauth2:

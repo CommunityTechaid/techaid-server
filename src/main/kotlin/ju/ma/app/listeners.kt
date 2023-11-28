@@ -9,12 +9,9 @@ class CustomRevisionEntityListener(
     private var filterService: FilterService
 ) : RevisionListener {
 
-    /*
-    todo Change this with better logic
-     */
     override fun newRevision(revisionEntity: Any?) {
         val customRevisionInfo: CustomRevisionInfo = revisionEntity as CustomRevisionInfo
-        customRevisionInfo.customUser = filterService.currentUser?.name.toString()
+        customRevisionInfo.customUser = filterService.userDetails().email
     }
 
 }

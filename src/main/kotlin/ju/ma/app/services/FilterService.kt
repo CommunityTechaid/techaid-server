@@ -6,12 +6,17 @@ import ju.ma.app.QDonor
 import ju.ma.app.QKit
 import ju.ma.app.QKitVolunteer
 import ju.ma.app.QVolunteer
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.stereotype.Service
 
 @Service
 class FilterService {
+
+    @Value("\${auth0.token-attribute}")
+    private lateinit var tokenAttribute: String
+
     val currentUser: JwtAuthenticationToken?
         get() {
             val auth = SecurityContextHolder.getContext().authentication ?: return null
@@ -27,8 +32,8 @@ class FilterService {
 
     fun userDetails(): OAuthUser {
         currentUser?.let { user ->
-            val name = user.tokenAttributes["https://lambeth-techaid.ju.ma/name"]?.toString() ?: ""
-            val email = user.tokenAttributes["https://lambeth-techaid.ju.ma/email"]?.toString() ?: ""
+            val name = user.tokenAttributes["$tokenAttribute/name"]?.toString() ?: ""
+            val email = user.tokenAttributes["$tokenAttribute/email"]?.toString() ?: ""
             return OAuthUser(name.trim(), email.trim())
         }
         return OAuthUser("", "")
@@ -41,7 +46,7 @@ class FilterService {
             return filter
         }
         if (hasAuthority("read:kits:assigned")) {
-            user.tokenAttributes["https://lambeth-techaid.ju.ma/email"]?.toString()?.let { email ->
+            user.tokenAttributes["$tokenAttribute/email"]?.toString()?.let { email ->
                 if (!email.isNullOrBlank()) {
                     return filter.and(
                         JPAExpressions.selectOne().from(QKit.kit.volunteers, QKitVolunteer.kitVolunteer)
@@ -60,7 +65,7 @@ class FilterService {
             return filter
         }
         if (hasAuthority("read:volunteers:assigned")) {
-            user.tokenAttributes["https://lambeth-techaid.ju.ma/email"]?.toString()?.let { email ->
+            user.tokenAttributes["$tokenAttribute/email"]?.toString()?.let { email ->
                 if (!email.isNullOrBlank()) {
                     return filter.and(
                         QVolunteer.volunteer.email.eq(email)
@@ -78,7 +83,7 @@ class FilterService {
             return filter
         }
         if (hasAuthority("read:donors:assigned")) {
-            user.tokenAttributes["https://lambeth-techaid.ju.ma/email"]?.toString()?.let { email ->
+            user.tokenAttributes["$tokenAttribute/email"]?.toString()?.let { email ->
                 if (!email.isNullOrBlank()) {
                     return filter.and(
                         JPAExpressions.selectOne().from(QDonor.donor.kits, QKit.kit)

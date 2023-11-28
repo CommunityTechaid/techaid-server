@@ -31,6 +31,7 @@ services:
       SHOW_SQL: "${SHOW_SQL:-true}"
       METABASE_SECRET_KEY:
       METABASE_SITE_URL:
+      TOKEN_ATTRIBUTE: ${TOKEN_ATTRIBUTE}
     command: []
     volumes:
       - ./src/main/resources/application-local.yml:/app/config/application-local.yml:ro
