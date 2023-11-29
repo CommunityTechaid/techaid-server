@@ -1,10 +1,12 @@
-version: '3.3'
+version: '3.6'
 services:
   web:
     build:
       context: ./
       dockerfile: Dockerfile
     image: stretech:1.0.0
+    # name is explicitly defined as the other containers like dashboard depends on this name
+    container_name: techaid-server-web-1
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
@@ -51,6 +53,7 @@ services:
 #    volumes:
 #      - ./docker/proxy.conf:/etc/nginx/nginx.conf
   postgres:
+    #using the latest version of postgres
     image: postgres:16
     environment:
       POSTGRES_DB: stretech
@@ -70,3 +73,8 @@ services:
 
 volumes:
   pgdata: {}
+
+networks:
+  # explicitly defining name because dashboard depends on this name to connect to the same network
+  default:
+    name: techaid-server_default
