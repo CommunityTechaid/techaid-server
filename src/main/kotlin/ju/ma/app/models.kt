@@ -6,6 +6,7 @@ import com.vladmihalcea.hibernate.type.json.JsonBinaryType
 import com.vladmihalcea.hibernate.type.json.JsonStringType
 import ju.ma.app.services.Coordinates
 import org.apache.commons.lang3.RandomStringUtils
+import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.Formula
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
@@ -224,6 +225,15 @@ class Kit(
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
+
+    @OneToMany(
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        mappedBy = "kit"
+    )
+    var notes: MutableSet<Note> = mutableSetOf(),
+
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb")
     @NotAudited
@@ -342,6 +352,22 @@ class KitAttributes(
     @get:JsonIgnore
     val images by lazy { listOf<DeviceImage>() }
 }
+@Entity
+@Table(name = "note")
+class Note(
+    @Id
+    @GeneratedValue
+    var id: Long = 0,
+    var content: String,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    var user: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("kitId")
+    var kit: Kit
+) {}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class DeviceImage(
