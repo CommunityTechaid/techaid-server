@@ -238,6 +238,7 @@ class Kit(
     @Column(columnDefinition = "jsonb")
     @NotAudited
     var attributes: KitAttributes = KitAttributes(),
+    @NotAudited
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb")
     var coordinates: Coordinates? = null,
@@ -354,6 +355,7 @@ class KitAttributes(
 }
 @Entity
 @Table(name = "note")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class Note(
     @Id
     @GeneratedValue
@@ -363,9 +365,8 @@ class Note(
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
-    var user: String? = null,
+    var volunteer: String? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("kitId")
     var kit: Kit
 ) {}
 

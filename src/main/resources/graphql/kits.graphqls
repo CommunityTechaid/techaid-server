@@ -103,6 +103,7 @@ type Kit {
     volunteers: [KitVolunteer!]
     coordinates: Coordinates
     organisation: Organisation
+    notes: [Note]!
 }
 
 enum  KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }

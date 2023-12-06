@@ -1,0 +1,24 @@
+type Note {
+    id: ID!
+    content: String
+    volunteer: String
+    createdAt: String
+    updatedAt: String
+    kit: Kit!
+}
+
+input CreateNoteInput{
+    content: String
+    kitId: ID!
+}
+
+input UpdateNoteInput{
+    id: ID!
+    content: String
+}
+
+extend type Mutation {
+    createNote(data: CreateNoteInput!) : Note!
+    updateNote(data: UpdateNoteInput!): Note!
+    deleteNote(id: ID!): Boolean
+}
