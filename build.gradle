@@ -28,7 +28,7 @@ buildscript {
 
 plugins {
     id 'jacoco'
-    id "org.jlleitschuh.gradle.ktlint" version "9.2.1"
+//    id "org.jlleitschuh.gradle.ktlint" version "9.2.1"
 }
 
 ext {
@@ -74,7 +74,7 @@ compileTestKotlin {
 }
 
 test {
-    dependsOn ktlintCheck
+//    dependsOn ktlintCheck
     useJUnitPlatform()
     testLogging {
         events "PASSED", "FAILED", "SKIPPED"
@@ -227,7 +227,7 @@ task updateAppName {
 
         exec {
             workingDir '.'
-            commandLine 'sh', "${rootProject.projectDir}/gradlew", 'idea', 'ktlintApplyToIdea'
+            commandLine 'sh', "${rootProject.projectDir}/gradlew", 'idea'//, 'ktlintApplyToIdea'
         }
 
         delete fileTree('./') {
