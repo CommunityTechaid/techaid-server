@@ -1,0 +1,21 @@
+FROM gradle:6.0.1-jdk11  as builder
+USER root
+COPY ./src /app/src
+COPY ./build.gradle settings.gradle /app/
+WORKDIR /app
+#generate wrapper
+RUN gradle wrapper --gradle-version 6.0.1
+
+FROM eclipse-temurin:11
+
+COPY ./ /app
+
+COPY --from=builder /app/gradlew /app/gradlew
+
+WORKDIR /app
+
+# Fetch project dependencies
+RUN chmod +x start.sh && ./gradlew getDeps
+
+# script which watches source file changes in background and executes bootRun
+CMD ["tail", "-f", "/dev/null"]
