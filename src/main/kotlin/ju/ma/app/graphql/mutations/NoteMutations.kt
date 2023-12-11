@@ -47,13 +47,12 @@ class NoteMutations(
             ?: throw EntityNotFoundException("Unable to locate a note with id: ${data.id}")
 
         if (userEmail == note.volunteer){
-            notes.delete(note)
+            return notes.save(data.apply(note).apply {
+                volunteer = userEmail
+            })
         } else {
             throw Exception("You cannot edit other user's notes")
         }
-        return notes.save(data.apply(note).apply {
-            volunteer = userEmail
-        })
     }
 
     fun deleteNote(id: Long): Boolean {
