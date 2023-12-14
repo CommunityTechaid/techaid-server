@@ -8,6 +8,7 @@ import ju.ma.app.services.Coordinates
 import org.apache.commons.lang3.RandomStringUtils
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.Formula
+import org.hibernate.annotations.OrderBy
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
 import org.hibernate.annotations.TypeDefs
@@ -232,6 +233,7 @@ class Kit(
         orphanRemoval = true,
         mappedBy = "kit"
     )
+    @OrderBy(clause = "updatedAt DESC")
     var notes: MutableSet<Note> = mutableSetOf(),
 
     @Type(type = "jsonb")

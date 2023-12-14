@@ -230,6 +230,7 @@ input UpdateKitInput {
     logisticIds: [ID]
     donorId: ID
     organisationId: ID
+    note: CreateNoteInput
 }
 
 extend type Query {

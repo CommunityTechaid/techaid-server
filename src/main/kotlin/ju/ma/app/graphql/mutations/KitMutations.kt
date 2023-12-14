@@ -1,10 +1,6 @@
 package ju.ma.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
-import javax.persistence.EntityNotFoundException
-import javax.validation.Valid
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
 import ju.ma.app.DonorRepository
 import ju.ma.app.ImageRepository
 import ju.ma.app.Kit
@@ -13,6 +9,7 @@ import ju.ma.app.KitRepository
 import ju.ma.app.KitStatus
 import ju.ma.app.KitType
 import ju.ma.app.KitVolunteerType
+import ju.ma.app.Note
 import ju.ma.app.Organisation
 import ju.ma.app.OrganisationRepository
 import ju.ma.app.QKit
@@ -27,6 +24,10 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
+import javax.persistence.EntityNotFoundException
+import javax.validation.Valid
+import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotNull
 
 @Component
 @Validated
@@ -125,6 +126,14 @@ class KitMutations(
                     ?: throw EntityNotFoundException("Unable to locate an organisation with id: ${data.organisationId}")
                 org.addKit(this)
                 // notifyOrganisation(this.volunteers.map { it.volunteer }, this, org)
+            }
+
+            if (data.note != null) {
+                if (data.note.content !== ""){
+                    val note = Note(content = data.note.content, kit = this, volunteer = filterService.userDetails().email)
+                    notes.add(note)
+                }
+
             }
         }
     }
@@ -309,7 +318,8 @@ data class UpdateKitInput(
     val logisticIds: List<Long>? = null,
     val donorId: Long? = null,
     val organisationId: Long? = null,
-    val archived: Boolean? = null
+    val archived: Boolean? = null,
+    val note: CreateNoteInput? = null
 ) {
     fun apply(entity: Kit): Kit {
         val self = this

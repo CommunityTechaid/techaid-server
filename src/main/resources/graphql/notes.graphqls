@@ -9,7 +9,6 @@ type Note {
 
 input CreateNoteInput{
     content: String
-    kitId: ID!
 }
 
 input UpdateNoteInput{
