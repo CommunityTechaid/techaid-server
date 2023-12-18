@@ -130,7 +130,10 @@ class KitMutations(
 
             if (data.note != null) {
                 if (data.note.content !== ""){
-                    val note = Note(content = data.note.content, kit = this, volunteer = filterService.userDetails().email)
+                    val volunteer = filterService.userDetails().name.ifBlank {
+                        filterService.userDetails().email
+                    }
+                    val note = Note(content = data.note.content, kit = this, volunteer = volunteer)
                     notes.add(note)
                 }
 

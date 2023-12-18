@@ -360,7 +360,8 @@ class KitAttributes(
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class Note(
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "note-seq-generator")
+    @SequenceGenerator(name = "note-seq-generator", sequenceName = "note_sequence", allocationSize = 1)
     var id: Long = 0,
     var content: String,
     @CreationTimestamp
