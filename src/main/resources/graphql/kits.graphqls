@@ -218,6 +218,11 @@ input CreateKitInput {
     serialNo: String
 }
 
+input MinCreateKitInput {
+    serialNo: String!,
+    donorId: ID
+}
+
 input UpdateKitInput {
     id: ID!
     type: KitType!
@@ -246,6 +251,7 @@ extend type Query {
 
 extend type Mutation {
     createKit(data: CreateKitInput!) : Kit!
+    minCreateKit(data: MinCreateKitInput!): Kit!
     updateKit(data: UpdateKitInput!): Kit!
     deleteKit(id: ID!): Boolean
 }

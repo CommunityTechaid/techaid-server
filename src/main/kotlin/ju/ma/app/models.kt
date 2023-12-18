@@ -257,7 +257,8 @@ class Kit(
     // @OneToOne(mappedBy = "kit", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     // @PrimaryKeyJoinColumn
     // var images: KitImage? = null
-    var serialNo: String
+    @Column(unique = true)
+    var serialNo: String? = null
 ) : BaseEntity() {
     fun addVolunteer(volunteer: Volunteer, type: KitVolunteerType) {
         val entity = KitVolunteer(this, volunteer, KitVolunteerId(this.id, volunteer.id, type))

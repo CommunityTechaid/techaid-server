@@ -60,6 +60,24 @@ class KitMutations(
         return kit
     }
 
+    fun minCreateKit(@Valid data: MinCreateKitInput): Kit{
+        val details = filterService.userDetails()
+        val volunteer = if (details.email.isNotBlank()) {
+            volunteers.findByEmail(details.email)
+        } else {
+            null
+        }
+        val kit = kits.save(data.entity.apply {
+            if (data.donorId != null) {
+                val user = donors.findById(data.donorId).toNullable()
+                    ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
+                user.addKit(this)
+            }
+        })
+        volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
+        return kit
+    }
+
     fun updateKit(@Valid data: UpdateKitInput): Kit {
         val self = this
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
@@ -227,6 +245,22 @@ class KitMutations(
     }
 }
 
+data class MinCreateKitInput(
+    val serialNo: String,
+    val donorId: Long?
+){
+
+    val entity by lazy {
+        val kit = Kit(
+            serialNo = serialNo,
+            age = 0,
+            location = "",
+            model = ""
+        )
+        kit
+    }
+
+}
 data class CreateKitInput(
     val type: KitType,
     val otherType: String? = null,
@@ -237,7 +271,7 @@ data class CreateKitInput(
     val location: String,
     val age: Int,
     val attributes: KitAttributesInput,
-    val serialNo: String
+    val serialNo: String? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -325,7 +359,7 @@ data class UpdateKitInput(
     val organisationId: Long? = null,
     val archived: Boolean? = null,
     val note: CreateNoteInput? = null,
-    val serialNo: String
+    val serialNo: String? = null
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
