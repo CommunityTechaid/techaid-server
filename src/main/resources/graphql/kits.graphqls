@@ -103,7 +103,8 @@ type Kit {
     volunteers: [KitVolunteer!]
     coordinates: Coordinates
     organisation: Organisation
-    notes: [Note]!
+    notes: [Note]!,
+    serialNo: String
 }
 
 enum  KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }
@@ -213,7 +214,8 @@ input CreateKitInput {
     model: String!
     location: String!
     age: Int!
-    attributes: KitAttributesInput!
+    attributes: KitAttributesInput!,
+    serialNo: String
 }
 
 input UpdateKitInput {
@@ -230,7 +232,8 @@ input UpdateKitInput {
     logisticIds: [ID]
     donorId: ID
     organisationId: ID
-    note: CreateNoteInput
+    note: CreateNoteInput,
+    serialNo: String
 }
 
 extend type Query {

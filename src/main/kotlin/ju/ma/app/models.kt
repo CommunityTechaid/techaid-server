@@ -253,10 +253,11 @@ class Kit(
     @NotAudited
     @JsonIgnore
     @OneToMany(mappedBy = "kit", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
-    var volunteers: MutableSet<KitVolunteer> = mutableSetOf()
+    var volunteers: MutableSet<KitVolunteer> = mutableSetOf(),
     // @OneToOne(mappedBy = "kit", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     // @PrimaryKeyJoinColumn
     // var images: KitImage? = null
+    var serialNo: String
 ) : BaseEntity() {
     fun addVolunteer(volunteer: Volunteer, type: KitVolunteerType) {
         val entity = KitVolunteer(this, volunteer, KitVolunteerId(this.id, volunteer.id, type))

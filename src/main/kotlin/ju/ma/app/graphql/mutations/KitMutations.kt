@@ -236,7 +236,8 @@ data class CreateKitInput(
     @get:NotBlank
     val location: String,
     val age: Int,
-    val attributes: KitAttributesInput
+    val attributes: KitAttributesInput,
+    val serialNo: String
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -244,7 +245,8 @@ data class CreateKitInput(
             status = status ?: KitStatus.DONATION_NEW,
             model = model,
             location = location,
-            age = age
+            age = age,
+            serialNo = serialNo
         )
         kit.attributes = attributes.apply(kit)
         kit
@@ -322,7 +324,8 @@ data class UpdateKitInput(
     val donorId: Long? = null,
     val organisationId: Long? = null,
     val archived: Boolean? = null,
-    val note: CreateNoteInput? = null
+    val note: CreateNoteInput? = null,
+    val serialNo: String
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -334,6 +337,7 @@ data class UpdateKitInput(
             age = self.age
             attributes = self.attributes.apply(entity)
             archived = self.archived ?: archived
+            serialNo = self.serialNo
         }
     }
 }
