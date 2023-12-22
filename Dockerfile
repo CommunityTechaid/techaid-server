@@ -17,7 +17,7 @@ RUN apk add --no-cache --update \
 ENV TZ=UTC
 RUN cp /usr/share/zoneinfo/UTC /etc/localtime
 WORKDIR /app
-COPY ./CHECKS /app
+#COPY ./CHECKS /app
 COPY ./Procfile /app
 # COPY ./DOKKU_SCALE /app
 ENTRYPOINT [ "/sbin/tini", "--"]
