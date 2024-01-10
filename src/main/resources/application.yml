@@ -126,7 +126,7 @@ spring:
     #   create: creates the schema, destroying previous data
     #   create-drop: drop the schema when the SessionFactory is closed explicitly, usually when app is stopped
     #   none: do nothing
-    hibernate.ddl-auto: ${DDL_AUTO:${ddl-auto:none}}
+    hibernate.ddl-auto: ${DDL_AUTO:${ddl-auto:update}}
   flyway:
     out-of-order: true
     locations:
