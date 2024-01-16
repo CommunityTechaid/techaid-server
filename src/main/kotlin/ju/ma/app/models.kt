@@ -258,7 +258,12 @@ class Kit(
     // @PrimaryKeyJoinColumn
     // var images: KitImage? = null
     @Column(unique = true)
-    var serialNo: String? = null
+    var serialNo: String? = null,
+    var storageCapacity: Int? = null,
+    var typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
+    var ramCapacity: Int? = null,
+    var cpu: String? = null,
+    var tpmVersion: String? = null
 ) : BaseEntity() {
     fun addVolunteer(volunteer: Volunteer, type: KitVolunteerType) {
         val entity = KitVolunteer(this, volunteer, KitVolunteerId(this.id, volunteer.id, type))
@@ -421,6 +426,8 @@ enum class KitStatus {
     DISTRIBUTION_RECYCLED,
     DISTRIBUTION_REPAIR_RETURN
 }
+
+enum class KitStorageType {HDD, SSD, HYBRID, UNKNOWN}
 
 enum class KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }
 

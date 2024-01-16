@@ -7,6 +7,7 @@ import ju.ma.app.Kit
 import ju.ma.app.KitAttributes
 import ju.ma.app.KitRepository
 import ju.ma.app.KitStatus
+import ju.ma.app.KitStorageType
 import ju.ma.app.KitType
 import ju.ma.app.KitVolunteerType
 import ju.ma.app.Note
@@ -359,7 +360,12 @@ data class UpdateKitInput(
     val organisationId: Long? = null,
     val archived: Boolean? = null,
     val note: CreateNoteInput? = null,
-    val serialNo: String? = null
+    val serialNo: String? = null,
+    val storageCapacity: Int? = null,
+    val typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
+    val ramCapacity: Int? = null,
+    val cpu: String? = null,
+    val tpmVersion: String? = null
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -372,6 +378,11 @@ data class UpdateKitInput(
             attributes = self.attributes.apply(entity)
             archived = self.archived ?: archived
             serialNo = self.serialNo
+            storageCapacity = self.storageCapacity
+            typeOfStorage = self.typeOfStorage
+            ramCapacity = self.ramCapacity
+            cpu = self.cpu
+            tpmVersion = self.tpmVersion
         }
     }
 }

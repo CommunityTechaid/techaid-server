@@ -2,6 +2,10 @@ enum KitType {
     OTHER, LAPTOP, TABLET, SMARTPHONE, ALLINONE, CHROMEBOOK, DESKTOP, COMMSDEVICE
 }
 
+enum KitStorageType {
+    HDD, SSD, HYBRID, UNKNOWN
+}
+
 type KitStatusCount {
     status: KitStatus
     count: Int
@@ -104,7 +108,12 @@ type Kit {
     coordinates: Coordinates
     organisation: Organisation
     notes: [Note]!,
-    serialNo: String
+    serialNo: String,
+    storageCapacity: Int,
+    typeOfStorage: KitStorageType,
+    ramCapacity: Int,
+    cpu: String,
+    tpmVersion: String
 }
 
 enum  KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }
@@ -238,7 +247,12 @@ input UpdateKitInput {
     donorId: ID
     organisationId: ID
     note: CreateNoteInput,
-    serialNo: String
+    serialNo: String,
+    storageCapacity: Int,
+    typeOfStorage: KitStorageType,
+    ramCapacity: Int,
+    cpu: String,
+    tpmVersion: String
 }
 
 extend type Query {
