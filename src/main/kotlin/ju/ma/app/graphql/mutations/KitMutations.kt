@@ -61,7 +61,7 @@ class KitMutations(
         return kit
     }
 
-    fun minCreateKit(@Valid data: MinCreateKitInput): Kit{
+    fun quickCreateKit(@Valid data: QuickCreateKitInput): Kit{
         val details = filterService.userDetails()
         val volunteer = if (details.email.isNotBlank()) {
             volunteers.findByEmail(details.email)
@@ -246,7 +246,7 @@ class KitMutations(
     }
 }
 
-data class MinCreateKitInput(
+data class QuickCreateKitInput(
     val serialNo: String,
     val donorId: Long?
 ){
