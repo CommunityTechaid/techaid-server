@@ -4,8 +4,8 @@ import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.EnumPath
 import com.querydsl.jpa.JPAExpressions
-import java.time.Instant
 import ju.ma.app.KitStatus
+import ju.ma.app.KitStorageType
 import ju.ma.app.KitType
 import ju.ma.app.QKit
 import ju.ma.app.QKitVolunteer
@@ -15,6 +15,7 @@ import ju.ma.graphql.JsonComparison
 import ju.ma.graphql.LongComparision
 import ju.ma.graphql.TextComparison
 import ju.ma.graphql.TimeComparison
+import java.time.Instant
 
 class KitStatusComparison(
     /**
@@ -140,6 +141,68 @@ class KitTypeComparison(
     }
 }
 
+class KitStorageTypeComparison(
+    /**
+     * Matches values equal to
+     */
+    var _eq: KitStorageType? = null,
+    /**
+     * Matches values greater than
+     */
+    var _gt: KitStorageType? = null,
+    /**
+     * Matches values greater than or equal to
+     */
+    var _gte: KitStorageType? = null,
+    /**
+     * Matches values contained in the collection
+     */
+    var _in: MutableList<KitStorageType>? = null,
+    /**
+     * Matches values that are null
+     */
+    var _is_null: Boolean? = null,
+    /**
+     * Matches values less than
+     */
+    var _lt: KitStorageType? = null,
+    /**
+     * Matches values less than or equal to
+     */
+    var _lte: KitStorageType? = null,
+    /**
+     * Matches values not equal to
+     */
+    var _neq: KitStorageType? = null,
+    /**
+     * Matches values not in the collection
+     */
+    var _nin: MutableList<KitStorageType>? = null
+    ) {
+        /**
+         * Returns a filter for the specified [path]
+         */
+        fun build(path: EnumPath<KitStorageType>): BooleanBuilder {
+            val builder = BooleanBuilder()
+            _eq?.let { builder.and(path.eq(it)) }
+            _gt?.let { builder.and(path.gt(it)) }
+            _gte?.let { builder.and(path.goe(it)) }
+            _in?.let { builder.and(path.`in`(it)) }
+            _is_null?.let {
+                if (it) {
+                    builder.and(path.isNull)
+                } else {
+                    builder.and(path.isNotNull)
+                }
+            }
+            _lt?.let { builder.and(path.lt(it)) }
+            _lte?.let { builder.and(path.loe(it)) }
+            _neq?.let { builder.and(path.ne(it)) }
+            _nin?.let { builder.and(path.notIn(it)) }
+            return builder
+        }
+}
+
 class KitAttributesWhereInput(
     var otherType: TextComparison? = null,
     var pickup: TextComparison? = null,
@@ -202,6 +265,12 @@ class KitWhereInput(
     var volunteer: VolunteerWhereInput? = null,
     var organisation: OrganisationWhereInput? = null,
     var donor: DonorWhereInput? = null,
+    var serialNo: TextComparison? = null,
+    var storageCapacity: IntegerComparision? = null,
+    var typeOfStorage: KitStorageTypeComparison? = null,
+    var ramCapacity: IntegerComparision? = null,
+    var cpu: TextComparison? = null,
+    var tpmVersion: TextComparison? = null,
     var AND: MutableList<KitWhereInput> = mutableListOf(),
     var OR: MutableList<KitWhereInput> = mutableListOf(),
     var NOT: MutableList<KitWhereInput> = mutableListOf()
@@ -224,6 +293,12 @@ class KitWhereInput(
                 .where(it.build(QKitVolunteer.kitVolunteer.volunteer)).exists())
         }
         donor?.let { builder.and(it.build(entity.donor)) }
+        serialNo?.let { builder.and(it.build(entity.serialNo)) }
+        storageCapacity?.let {builder.and(it.build(entity.storageCapacity))}
+        typeOfStorage?.let {builder.and(it.build(entity.typeOfStorage))}
+        ramCapacity?.let {builder.and(it.build(entity.ramCapacity))}
+        cpu?.let {builder.and(it.build(entity.cpu))}
+        tpmVersion?.let {builder.and(it.build(entity.tpmVersion))}
 
         if (AND.isNotEmpty()) {
             AND.forEach {

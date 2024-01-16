@@ -92,6 +92,27 @@ input KitStatusComparison {
     _nin: [KitStatus]
 }
 
+input KitStorageTypeComparison {
+    "Matches values that are equal to"
+    _eq: KitStorageType
+    "Matches values that are greater than"
+    _gt: KitStorageType
+    "Matches values that are greater than or equal to"
+    _gte: KitStorageType
+    "Matches values contained in the collection"
+    _in: [KitStorageType]
+    "Matches values that are null/not null"
+    _is_null: Boolean
+    "Matches values that are less than"
+    _lt: KitStorageType
+    "Matches values that are less than or equal to"
+    _lte: KitStorageType
+    "Matches values that are not equal to"
+    _neq: KitStorageType
+    "Matches values that are not contained in the collection"
+    _nin: [KitStorageType]
+}
+
 type Kit {
     id: ID!
     type: KitType
@@ -201,6 +222,12 @@ input KitWhereInput {
     volunteer: VolunteerWhereInput
     donor: DonorWhereInput
     organisation: OrganisationWhereInput
+    serialNo: String,
+    storageCapacity: Int,
+    typeOfStorage: KitStorageTypeComparison,
+    ramCapacity: Int,
+    cpu: String,
+    tpmVersion: String
     AND: [KitWhereInput!]
     OR: [KitWhereInput!]
     NOT: [KitWhereInput!]
