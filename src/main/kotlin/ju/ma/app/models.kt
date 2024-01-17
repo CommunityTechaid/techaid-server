@@ -363,6 +363,7 @@ class Note(
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "note-seq-generator")
     @SequenceGenerator(name = "note-seq-generator", sequenceName = "note_sequence", allocationSize = 1)
     var id: Long = 0,
+    @Column(length = 4096)
     var content: String,
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
