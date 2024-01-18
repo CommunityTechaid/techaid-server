@@ -17,6 +17,7 @@ import ju.ma.app.QKit
 import ju.ma.app.Volunteer
 import ju.ma.app.VolunteerRepository
 import ju.ma.app.services.FilterService
+import ju.ma.app.services.KitService
 import ju.ma.app.services.LocationService
 import ju.ma.app.services.MailService
 import ju.ma.app.services.createEmail
@@ -42,7 +43,8 @@ class KitMutations(
     private val locationService: LocationService,
     private val filterService: FilterService,
     private val mailService: MailService,
-    private val imgRepo: ImageRepository
+    private val imgRepo: ImageRepository,
+    private val kitService: KitService
 ) : GraphQLMutationResolver {
 
     fun createKit(@Valid data: CreateKitInput): Kit {
@@ -157,6 +159,17 @@ class KitMutations(
                 }
 
             }
+        }
+    }
+
+
+    fun autoUpdateKit(@Valid data: AutoUpdateKitInput): Kit {
+        val self = this
+        val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.serialNo.eq(data.serialNo))).toNullable()
+            ?: throw EntityNotFoundException("Unable to locate a kit with serialNo: ${data.serialNo}")
+
+        return data.apply(entity).apply {
+            type = kitService.lookupDeviceType(data.type)
         }
     }
 
@@ -386,3 +399,31 @@ data class UpdateKitInput(
         }
     }
 }
+
+data class AutoUpdateKitInput(
+    val type: Int,
+    val model: String = "",
+    val status: KitStatus = KitStatus.DONATION_NEW,
+    @get:NotBlank
+    val serialNo: String? = null,
+    val storageCapacity: Int? = null,
+    val typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
+    val ramCapacity: Int? = null,
+    val cpu: String? = null,
+    val tpmVersion: String? = null
+) {
+    fun apply(entity: Kit): Kit {
+        val self = this
+        return entity.apply {
+            model = self.model
+            status = self.status
+            serialNo = self.serialNo
+            storageCapacity = self.storageCapacity
+            typeOfStorage = self.typeOfStorage
+            ramCapacity = self.ramCapacity
+            cpu = self.cpu
+            tpmVersion = self.tpmVersion
+        }
+    }
+}
+
