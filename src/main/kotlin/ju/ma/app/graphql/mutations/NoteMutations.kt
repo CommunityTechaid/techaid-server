@@ -66,7 +66,7 @@ class NoteMutations(
         if (volunteer == note.volunteer){
             notes.delete(note)
         } else {
-            throw Exception("You cannot delete other user's notes")
+            throw IllegalArgumentException("You cannot delete other user's notes")
         }
         return true
     }
