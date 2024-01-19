@@ -17,7 +17,9 @@ input UpdateNoteInput{
 }
 
 extend type Mutation {
-    createNote(data: CreateNoteInput!) : Note!
-    updateNote(data: UpdateNoteInput!): Note!
+    # Creation of note is handled by the updateKit Mutation
+    # createNote(data: CreateNoteInput!) : Note!
+    # Update note is currently not a required feature
+    #updateNote(data: UpdateNoteInput!): Note!
     deleteNote(id: ID!): Boolean
 }

@@ -4,7 +4,6 @@ import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import ju.ma.app.KitRepository
 import ju.ma.app.Note
 import ju.ma.app.NoteRepository
-import ju.ma.app.QKit
 import ju.ma.app.services.FilterService
 import ju.ma.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 import javax.persistence.EntityNotFoundException
-import javax.validation.Valid
 import javax.validation.constraints.NotNull
 
 @Component
@@ -25,6 +23,8 @@ class NoteMutations(
     private val kits: KitRepository
 ) : GraphQLMutationResolver {
 
+    /* The creation of the note is handled by the updateKit mutation. This method is being left here in case it is needed in future.
+    * It is commented to avoid confusion while reading the code because I was confused.
     fun createNote(@Valid data: CreateNoteInput): Note {
 
         val userEmail = filterService.userDetails().email
@@ -38,8 +38,9 @@ class NoteMutations(
         )
 
         return notes.save(note)
-    }
+    }*/
 
+    /* Updating a note is not a feature that is being provided. Leaving the method commented here in case it is needed in the future.
     fun updateNote(@Valid data: UpdateNoteInput): Note {
 
         val userEmail = filterService.userDetails().email
@@ -53,14 +54,16 @@ class NoteMutations(
         } else {
             throw Exception("You cannot edit other user's notes")
         }
-    }
+    }*/
 
     fun deleteNote(id: Long): Boolean {
 
-        val userEmail = filterService.userDetails().email
+        val volunteer = filterService.userDetails().name.ifBlank {
+            filterService.userDetails().email
+        }
         val note: Note = notes.findById(id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a note with id: $id")
-        if (userEmail == note.volunteer){
+        if (volunteer == note.volunteer){
             notes.delete(note)
         } else {
             throw Exception("You cannot delete other user's notes")
