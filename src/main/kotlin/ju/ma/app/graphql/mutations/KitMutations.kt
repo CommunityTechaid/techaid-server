@@ -373,12 +373,15 @@ data class UpdateKitInput(
     val organisationId: Long? = null,
     val archived: Boolean? = null,
     val note: CreateNoteInput? = null,
+    val make: String? = null,
+    val deviceVersion: String? = null,
     val serialNo: String? = null,
     val storageCapacity: Int? = null,
     val typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
     val ramCapacity: Int? = null,
-    val cpu: String? = null,
-    val tpmVersion: String? = null
+    val cpuType: String? = null,
+    val tpmVersion: String? = null,
+    val cpuCores: Int? = null
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -390,12 +393,15 @@ data class UpdateKitInput(
             age = self.age
             attributes = self.attributes.apply(entity)
             archived = self.archived ?: archived
+            make = self.make
+            deviceVersion = self.deviceVersion
             serialNo = self.serialNo
             storageCapacity = self.storageCapacity
             typeOfStorage = self.typeOfStorage
             ramCapacity = self.ramCapacity
-            cpu = self.cpu
+            cpuType = self.cpuType
             tpmVersion = self.tpmVersion
+            cpuCores = self.cpuCores
         }
     }
 }
@@ -404,25 +410,31 @@ data class AutoUpdateKitInput(
     val type: Int,
     val model: String = "",
     val status: KitStatus = KitStatus.DONATION_NEW,
+    val make: String? = null,
+    val deviceVersion: String? = null,
     @get:NotBlank
     val serialNo: String? = null,
     val storageCapacity: Int? = null,
     val typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
     val ramCapacity: Int? = null,
-    val cpu: String? = null,
-    val tpmVersion: String? = null
+    val cpuType: String? = null,
+    val tpmVersion: String? = null,
+    val cpuCores: Int? = null
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
         return entity.apply {
             model = self.model
             status = self.status
+            make = self.make
+            deviceVersion = self.deviceVersion
             serialNo = self.serialNo
             storageCapacity = self.storageCapacity
             typeOfStorage = self.typeOfStorage
             ramCapacity = self.ramCapacity
-            cpu = self.cpu
+            cpuType = self.cpuType
             tpmVersion = self.tpmVersion
+            cpuCores = self.cpuCores
         }
     }
 }

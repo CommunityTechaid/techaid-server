@@ -129,12 +129,15 @@ type Kit {
     coordinates: Coordinates
     organisation: Organisation
     notes: [Note]!,
+    make: String,
+    deviceVersion: String,
     serialNo: String,
     storageCapacity: Int,
     typeOfStorage: KitStorageType,
     ramCapacity: Int,
-    cpu: String,
-    tpmVersion: String
+    cpuType: String,
+    tpmVersion: String,
+    cpuCores: Int
 }
 
 enum  KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }
@@ -222,12 +225,15 @@ input KitWhereInput {
     volunteer: VolunteerWhereInput
     donor: DonorWhereInput
     organisation: OrganisationWhereInput
+    make: String,
+    deviceVersion: String,
     serialNo: String,
     storageCapacity: Int,
     typeOfStorage: KitStorageTypeComparison,
     ramCapacity: Int,
-    cpu: String,
+    cpuType: String,
     tpmVersion: String
+    cpuCores: Int,
     AND: [KitWhereInput!]
     OR: [KitWhereInput!]
     NOT: [KitWhereInput!]
@@ -264,12 +270,15 @@ input AutoUpdateKitInput {
     type: Int
     status: KitStatus
     model: String
+    make: String,
+    deviceVersion:String,
     serialNo: String!,
     storageCapacity: Int,
     typeOfStorage: KitStorageType,
     ramCapacity: Int,
-    cpu: String,
-    tpmVersion: String
+    cpuType: String,
+    tpmVersion: String,
+    cpuCores: Int
 }
 
 input UpdateKitInput {
@@ -287,12 +296,15 @@ input UpdateKitInput {
     donorId: ID
     organisationId: ID
     note: CreateNoteInput,
+    make: String,
+    deviceVersion: String,
     serialNo: String,
     storageCapacity: Int,
     typeOfStorage: KitStorageType,
     ramCapacity: Int,
-    cpu: String,
-    tpmVersion: String
+    cpuType: String,
+    tpmVersion: String,
+    cpuCores: Int
 }
 
 extend type Query {

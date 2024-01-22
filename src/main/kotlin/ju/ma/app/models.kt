@@ -257,13 +257,16 @@ class Kit(
     // @OneToOne(mappedBy = "kit", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     // @PrimaryKeyJoinColumn
     // var images: KitImage? = null
+    var make: String? = null,
+    var deviceVersion: String? = null,
     @Column(unique = true)
     var serialNo: String? = null,
     var storageCapacity: Int? = null,
     var typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
     var ramCapacity: Int? = null,
-    var cpu: String? = null,
-    var tpmVersion: String? = null
+    var cpuType: String? = null,
+    var tpmVersion: String? = null,
+    var cpuCores: Int? = null
 ) : BaseEntity() {
     fun addVolunteer(volunteer: Volunteer, type: KitVolunteerType) {
         val entity = KitVolunteer(this, volunteer, KitVolunteerId(this.id, volunteer.id, type))

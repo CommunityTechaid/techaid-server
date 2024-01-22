@@ -265,12 +265,15 @@ class KitWhereInput(
     var volunteer: VolunteerWhereInput? = null,
     var organisation: OrganisationWhereInput? = null,
     var donor: DonorWhereInput? = null,
+    var make: TextComparison? = null,
+    var deviceVersion: TextComparison? = null,
     var serialNo: TextComparison? = null,
     var storageCapacity: IntegerComparision? = null,
     var typeOfStorage: KitStorageTypeComparison? = null,
     var ramCapacity: IntegerComparision? = null,
-    var cpu: TextComparison? = null,
+    var cpuType: TextComparison? = null,
     var tpmVersion: TextComparison? = null,
+    var cpuCores: IntegerComparision? = null,
     var AND: MutableList<KitWhereInput> = mutableListOf(),
     var OR: MutableList<KitWhereInput> = mutableListOf(),
     var NOT: MutableList<KitWhereInput> = mutableListOf()
@@ -293,13 +296,15 @@ class KitWhereInput(
                 .where(it.build(QKitVolunteer.kitVolunteer.volunteer)).exists())
         }
         donor?.let { builder.and(it.build(entity.donor)) }
+        make?.let { builder.and(it.build(entity.make)) }
+        deviceVersion?.let { builder.and(it.build(entity.deviceVersion)) }
         serialNo?.let { builder.and(it.build(entity.serialNo)) }
         storageCapacity?.let {builder.and(it.build(entity.storageCapacity))}
         typeOfStorage?.let {builder.and(it.build(entity.typeOfStorage))}
         ramCapacity?.let {builder.and(it.build(entity.ramCapacity))}
-        cpu?.let {builder.and(it.build(entity.cpu))}
+        cpuType?.let {builder.and(it.build(entity.cpuType))}
         tpmVersion?.let {builder.and(it.build(entity.tpmVersion))}
-
+        cpuCores?.let { builder.and(it.build(entity.cpuCores)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))
