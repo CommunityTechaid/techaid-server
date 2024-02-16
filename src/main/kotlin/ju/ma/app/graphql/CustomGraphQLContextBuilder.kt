@@ -1,4 +1,4 @@
-package ju.ma.app.graphql
+package cta.app.graphql
 
 import graphql.servlet.GraphQLContext
 import graphql.servlet.GraphQLContextBuilder

@@ -1,9 +1,9 @@
-package ju.ma.app.config
+package cta.app.config
 
-import ju.ma.auth.AuthService
-import ju.ma.auth.CorsFilter
-import ju.ma.auth.SecretAuthenticationFilter
-import ju.ma.auth.TokenAuthenticationFilter
+import cta.auth.AuthService
+import cta.auth.CorsFilter
+import cta.auth.SecretAuthenticationFilter
+import cta.auth.TokenAuthenticationFilter
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

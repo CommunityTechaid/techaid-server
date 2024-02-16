@@ -1,12 +1,12 @@
-package ju.ma.app.graphql.mutations
+package cta.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import javax.persistence.EntityNotFoundException
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
-import ju.ma.app.EmailTemplate
-import ju.ma.app.EmailTemplateRepository
-import ju.ma.toNullable
+import cta.app.EmailTemplate
+import cta.app.EmailTemplateRepository
+import cta.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional

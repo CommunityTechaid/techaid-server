@@ -1,14 +1,14 @@
-package ju.ma.app.graphql.queries
+package cta.app.graphql.queries
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import java.util.Optional
-import ju.ma.app.Organisation
-import ju.ma.app.OrganisationRepository
-import ju.ma.app.RequestCount
-import ju.ma.app.graphql.filters.OrganisationWhereInput
-import ju.ma.app.services.FilterService
-import ju.ma.graphql.KeyValuePair
-import ju.ma.graphql.PaginationInput
+import cta.app.Organisation
+import cta.app.OrganisationRepository
+import cta.app.RequestCount
+import cta.app.graphql.filters.OrganisationWhereInput
+import cta.app.services.FilterService
+import cta.graphql.KeyValuePair
+import cta.graphql.PaginationInput
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
 import org.springframework.security.access.prepost.PreAuthorize

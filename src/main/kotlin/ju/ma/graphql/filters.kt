@@ -1,4 +1,4 @@
-package ju.ma.graphql
+package cta.graphql
 
 import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder

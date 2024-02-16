@@ -1,4 +1,4 @@
-package ju.ma.controllers
+package cta.controllers
 
 import com.auth0.AuthenticationController
 import com.auth0.jwk.JwkProviderBuilder
@@ -37,7 +37,7 @@ class HugoController {
     lateinit var authScopes: String
     @Value("\${hugo.github.token:}")
     lateinit var githubToken: String
-    val redirectUrl: String = "https://lambeth-techaid.ju.ma/api"
+    val redirectUrl: String = "https://api.communitytechaid.org.uk"
 
     private val controller: AuthenticationController by lazy {
         AuthenticationController.newBuilder(authDomain, authClientId, authClientSecret)

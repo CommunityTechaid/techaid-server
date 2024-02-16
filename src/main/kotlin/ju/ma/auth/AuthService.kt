@@ -1,4 +1,4 @@
-package ju.ma.auth
+package cta.auth
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority

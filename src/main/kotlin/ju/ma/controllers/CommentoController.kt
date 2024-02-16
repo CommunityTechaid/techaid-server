@@ -1,4 +1,4 @@
-package ju.ma.controllers
+package cta.controllers
 
 import com.auth0.AuthenticationController
 import com.auth0.jwk.JwkProviderBuilder

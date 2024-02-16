@@ -1,8 +1,8 @@
-package ju.ma.app.graphql.queries
+package cta.app.graphql.queries
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
-import ju.ma.app.services.Coordinates
-import ju.ma.app.services.LocationService
+import cta.app.services.Coordinates
+import cta.app.services.LocationService
 import org.springframework.stereotype.Component
 
 @Component

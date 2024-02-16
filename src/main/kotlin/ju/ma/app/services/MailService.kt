@@ -1,4 +1,4 @@
-package ju.ma.app.services
+package cta.app.services
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
@@ -38,7 +38,7 @@ class MailService {
             .build()
             .setRefreshToken(refreshToken)
         credential.refreshToken()
-        Gmail.Builder(transport, jsonFactory, credential).setApplicationName("Lambeth Techaid").build()
+        Gmail.Builder(transport, jsonFactory, credential).setApplicationName("Community Techaid").build()
     }
 
     fun emails(filter: EmailFilter, userId: String = address): EmailPage {

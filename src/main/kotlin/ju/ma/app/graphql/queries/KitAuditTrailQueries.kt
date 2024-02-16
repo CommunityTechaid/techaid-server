@@ -1,8 +1,8 @@
-package ju.ma.app.graphql.queries
+package cta.app.graphql.queries
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
-import ju.ma.app.CustomRevisionInfo
-import ju.ma.app.Kit
+import cta.app.CustomRevisionInfo
+import cta.app.Kit
 import org.hibernate.envers.AuditReader
 import org.hibernate.envers.AuditReaderFactory
 import org.hibernate.envers.RevisionType

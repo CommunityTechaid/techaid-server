@@ -1,4 +1,4 @@
-package ju.ma.commands
+package cta.commands
 
 import java.util.EnumSet
 import java.util.concurrent.Callable

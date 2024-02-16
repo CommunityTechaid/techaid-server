@@ -1,11 +1,11 @@
-package ju.ma.app.services
+package cta.app.services
 
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.jpa.JPAExpressions
-import ju.ma.app.QDonor
-import ju.ma.app.QKit
-import ju.ma.app.QKitVolunteer
-import ju.ma.app.QVolunteer
+import cta.app.QDonor
+import cta.app.QKit
+import cta.app.QKitVolunteer
+import cta.app.QVolunteer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken

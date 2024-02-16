@@ -1,10 +1,10 @@
-package ju.ma.app
+package cta.app
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType
 import com.vladmihalcea.hibernate.type.json.JsonStringType
-import ju.ma.app.services.Coordinates
+import cta.app.services.Coordinates
 import org.apache.commons.lang3.RandomStringUtils
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.Formula

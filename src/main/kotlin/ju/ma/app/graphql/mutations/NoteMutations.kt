@@ -1,11 +1,11 @@
-package ju.ma.app.graphql.mutations
+package cta.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
-import ju.ma.app.KitRepository
-import ju.ma.app.Note
-import ju.ma.app.NoteRepository
-import ju.ma.app.services.FilterService
-import ju.ma.toNullable
+import cta.app.KitRepository
+import cta.app.Note
+import cta.app.NoteRepository
+import cta.app.services.FilterService
+import cta.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional

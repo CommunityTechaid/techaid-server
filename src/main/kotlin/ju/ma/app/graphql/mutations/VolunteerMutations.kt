@@ -1,18 +1,18 @@
-package ju.ma.app.graphql.mutations
+package cta.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import javax.persistence.EntityNotFoundException
 import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
-import ju.ma.app.Capacity
-import ju.ma.app.QVolunteer
-import ju.ma.app.Volunteer
-import ju.ma.app.VolunteerAttributes
-import ju.ma.app.VolunteerRepository
-import ju.ma.app.services.FilterService
-import ju.ma.app.services.LocationService
-import ju.ma.toNullable
+import cta.app.Capacity
+import cta.app.QVolunteer
+import cta.app.Volunteer
+import cta.app.VolunteerAttributes
+import cta.app.VolunteerRepository
+import cta.app.services.FilterService
+import cta.app.services.LocationService
+import cta.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional

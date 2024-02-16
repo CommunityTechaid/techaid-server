@@ -1,4 +1,4 @@
-package ju.ma.app
+package cta.app
 
 import java.time.Instant
 import javax.persistence.Entity

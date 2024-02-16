@@ -1,11 +1,11 @@
-package ju.ma.app.graphql.filters
+package cta.app.graphql.filters
 
 import com.querydsl.core.BooleanBuilder
 import java.time.Instant
-import ju.ma.app.QDonor
-import ju.ma.graphql.LongComparision
-import ju.ma.graphql.TextComparison
-import ju.ma.graphql.TimeComparison
+import cta.app.QDonor
+import cta.graphql.LongComparision
+import cta.graphql.TextComparison
+import cta.graphql.TimeComparison
 
 class DonorWhereInput(
     var id: LongComparision? = null,

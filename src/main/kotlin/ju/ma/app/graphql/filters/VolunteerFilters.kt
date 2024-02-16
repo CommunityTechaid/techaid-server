@@ -1,15 +1,15 @@
-package ju.ma.app.graphql.filters
+package cta.app.graphql.filters
 
 import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import java.time.Instant
-import ju.ma.app.QVolunteer
-import ju.ma.graphql.BooleanComparison
-import ju.ma.graphql.IntegerComparision
-import ju.ma.graphql.JsonComparison
-import ju.ma.graphql.LongComparision
-import ju.ma.graphql.TextComparison
-import ju.ma.graphql.TimeComparison
+import cta.app.QVolunteer
+import cta.graphql.BooleanComparison
+import cta.graphql.IntegerComparision
+import cta.graphql.JsonComparison
+import cta.graphql.LongComparision
+import cta.graphql.TextComparison
+import cta.graphql.TimeComparison
 
 class VolunteerWhereInput(
     var id: LongComparision? = null,

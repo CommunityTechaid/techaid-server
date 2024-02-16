@@ -1,4 +1,4 @@
-package ju.ma.graphql
+package cta.graphql
 
 import com.querydsl.core.types.Expression
 import com.querydsl.core.types.Order

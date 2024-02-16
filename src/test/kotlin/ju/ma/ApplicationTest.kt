@@ -1,4 +1,4 @@
-package ju.ma
+package cta
 
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.junit.jupiter.api.Test

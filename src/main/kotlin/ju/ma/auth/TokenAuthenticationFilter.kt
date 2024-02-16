@@ -1,4 +1,4 @@
-package ju.ma.auth
+package cta.auth
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.IOException

@@ -1,25 +1,25 @@
-package ju.ma.app.graphql.mutations
+package cta.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
-import ju.ma.app.DonorRepository
-import ju.ma.app.ImageRepository
-import ju.ma.app.Kit
-import ju.ma.app.KitAttributes
-import ju.ma.app.KitRepository
-import ju.ma.app.KitStatus
-import ju.ma.app.KitType
-import ju.ma.app.KitVolunteerType
-import ju.ma.app.Note
-import ju.ma.app.Organisation
-import ju.ma.app.OrganisationRepository
-import ju.ma.app.QKit
-import ju.ma.app.Volunteer
-import ju.ma.app.VolunteerRepository
-import ju.ma.app.services.FilterService
-import ju.ma.app.services.LocationService
-import ju.ma.app.services.MailService
-import ju.ma.app.services.createEmail
-import ju.ma.toNullable
+import cta.app.DonorRepository
+import cta.app.ImageRepository
+import cta.app.Kit
+import cta.app.KitAttributes
+import cta.app.KitRepository
+import cta.app.KitStatus
+import cta.app.KitType
+import cta.app.KitVolunteerType
+import cta.app.Note
+import cta.app.Organisation
+import cta.app.OrganisationRepository
+import cta.app.QKit
+import cta.app.Volunteer
+import cta.app.VolunteerRepository
+import cta.app.services.FilterService
+import cta.app.services.LocationService
+import cta.app.services.MailService
+import cta.app.services.createEmail
+import cta.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -147,13 +147,13 @@ class KitMutations(
             val msg = createEmail(
                 to = v.email,
                 from = mailService.address,
-                subject = "Lambeth Techaid: Device Assigned",
+                subject = "Community Techaid: Device Assigned",
                 bodyText = """
                     Hi ${v.name},
                     
-                    ${user.name} assigned you to the ${kit.type} device (${kit.model}) https://app.techaid.ju.ma/dashboard/devices/${kit.id} as a { ${type.name} }.
+                    ${user.name} assigned you to the ${kit.type} device (${kit.model}) https://app.communitytechaid.org.uk/dashboard/devices/${kit.id} as a { ${type.name} }.
                     
-                    Lambeth Techaid
+                    Community Techaid
                 """.trimIndent(),
                 mimeType = "plain",
                 charset = "UTF-8"
@@ -172,14 +172,14 @@ class KitMutations(
             val msg = createEmail(
                 to = v.email,
                 from = mailService.address,
-                subject = "Lambeth Techaid: Device Status Updated",
+                subject = "Community Techaid: Device Status Updated",
                 bodyText = """
                     Hi ${v.name},
                     
-                    ${user.name} updated the status of ${kit.type} device (${kit.model}) https://app.techaid.ju.ma/dashboard/devices/${kit.id} 
+                    ${user.name} updated the status of ${kit.type} device (${kit.model}) https://app.communitytechaid.org.uk/dashboard/devices/${kit.id} 
                     from { $previousStatus } to ${kit.status}
                     
-                    Lambeth Techaid
+                    Community Techaid
                 """.trimIndent(),
                 mimeType = "plain",
                 charset = "UTF-8"
@@ -198,14 +198,14 @@ class KitMutations(
             val msg = createEmail(
                 to = v.email,
                 from = mailService.address,
-                subject = "Lambeth Techaid: Device Assigned to Organisation",
+                subject = "Community Techaid: Device Assigned to Organisation",
                 bodyText = """
                     Hi ${v.name},
                     
-                    ${user.name} assigned the ${kit.type} device (${kit.model}) https://app.techaid.ju.ma/dashboard/devices/${kit.id} 
-                    to the organisation { ${org.name} } to https://app.techaid.ju.ma/dashboard/organisations/${org.id} 
+                    ${user.name} assigned the ${kit.type} device (${kit.model}) https://app.communitytechaid.org.uk/dashboard/devices/${kit.id} 
+                    to the organisation { ${org.name} } to https://app.communitytechaid.org.uk/dashboard/organisations/${org.id} 
                     
-                    Lambeth Techaid
+                    Community Techaid
                 """.trimIndent(),
                 mimeType = "plain",
                 charset = "UTF-8"

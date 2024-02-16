@@ -1,7 +1,7 @@
-package ju.ma.controllers
+package cta.controllers
 
 import javax.servlet.http.HttpServletResponse
-import ju.ma.app.KitRepository
+import cta.app.KitRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity

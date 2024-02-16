@@ -1,4 +1,4 @@
-package ju.ma.auth
+package cta.auth
 
 import java.io.IOException
 import java.util.TreeMap

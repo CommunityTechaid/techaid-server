@@ -1,14 +1,14 @@
-package ju.ma.app.graphql.mutations
+package cta.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import javax.validation.Valid
-import ju.ma.app.Donor
-import ju.ma.app.DonorRepository
-import ju.ma.app.Kit
-import ju.ma.app.KitRepository
-import ju.ma.app.Volunteer
-import ju.ma.app.VolunteerRepository
-import ju.ma.app.services.LocationService
+import cta.app.Donor
+import cta.app.DonorRepository
+import cta.app.Kit
+import cta.app.KitRepository
+import cta.app.Volunteer
+import cta.app.VolunteerRepository
+import cta.app.services.LocationService
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 

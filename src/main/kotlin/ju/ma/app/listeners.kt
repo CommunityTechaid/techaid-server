@@ -1,6 +1,6 @@
-package ju.ma.app
+package cta.app
 
-import ju.ma.app.services.FilterService
+import cta.app.services.FilterService
 import org.hibernate.envers.RevisionListener
 import org.springframework.stereotype.Component
 

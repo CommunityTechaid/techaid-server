@@ -1,4 +1,4 @@
-package ju.ma.app.graphql
+package cta.app.graphql
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
@@ -14,10 +14,10 @@ import com.google.api.services.gmail.model.Thread
 import javax.mail.internet.MimeMessage
 import javax.validation.Valid
 import javax.validation.constraints.NotBlank
-import ju.ma.app.services.EmailFilter
-import ju.ma.app.services.EmailPage
-import ju.ma.app.services.MailService
-import ju.ma.app.services.createEmail
+import cta.app.services.EmailFilter
+import cta.app.services.EmailPage
+import cta.app.services.MailService
+import cta.app.services.createEmail
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated

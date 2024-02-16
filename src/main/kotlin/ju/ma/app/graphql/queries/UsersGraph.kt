@@ -1,4 +1,4 @@
-package ju.ma.app.graphql.queries
+package cta.app.graphql.queries
 
 import com.auth0.client.mgmt.filter.PageFilter
 import com.auth0.client.mgmt.filter.RolesFilter
@@ -11,8 +11,8 @@ import com.auth0.json.mgmt.users.UsersPage
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.coxautodev.graphql.tools.GraphQLResolver
-import ju.ma.auth.Auth0Service
-import ju.ma.graphql.PaginationInput
+import cta.auth.Auth0Service
+import cta.graphql.PaginationInput
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated

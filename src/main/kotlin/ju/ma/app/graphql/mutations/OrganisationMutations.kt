@@ -1,20 +1,20 @@
-package ju.ma.app.graphql.mutations
+package cta.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import javax.persistence.EntityNotFoundException
 import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
-import ju.ma.app.Capacity
-import ju.ma.app.Organisation
-import ju.ma.app.OrganisationAttributes
-import ju.ma.app.OrganisationRepository
-import ju.ma.app.Volunteer
-import ju.ma.app.VolunteerRepository
-import ju.ma.app.services.FilterService
-import ju.ma.app.services.MailService
-import ju.ma.app.services.createEmail
-import ju.ma.toNullable
+import cta.app.Capacity
+import cta.app.Organisation
+import cta.app.OrganisationAttributes
+import cta.app.OrganisationRepository
+import cta.app.Volunteer
+import cta.app.VolunteerRepository
+import cta.app.services.FilterService
+import cta.app.services.MailService
+import cta.app.services.createEmail
+import cta.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -77,13 +77,13 @@ class OrganisationMutations(
             val msg = createEmail(
                 to = v.email,
                 from = mailService.address,
-                subject = "Lambeth Techaid: Organisation Assigned",
+                subject = "Community Techaid: Organisation Assigned",
                 bodyText = """
                     Hi ${v.name},
                     
-                    ${user.name} assigned you to the organisation ${org.name} https://app.techaid.ju.ma/dashboard/organisations/${org.id}.
+                    ${user.name} assigned you to the organisation ${org.name} https://app.communitytechaid.org.uk/dashboard/organisations/${org.id}.
                     
-                    Lambeth Techaid
+                    Community Techaid
                 """.trimIndent(),
                 mimeType = "plain",
                 charset = "UTF-8"

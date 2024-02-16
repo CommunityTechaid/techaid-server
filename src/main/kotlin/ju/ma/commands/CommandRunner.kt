@@ -1,4 +1,4 @@
-package ju.ma.commands
+package cta.commands
 
 import javax.annotation.PostConstruct
 import kotlin.system.exitProcess

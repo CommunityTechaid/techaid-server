@@ -1,20 +1,20 @@
-package ju.ma.app.graphql.filters
+package cta.app.graphql.filters
 
 import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.EnumPath
 import com.querydsl.jpa.JPAExpressions
 import java.time.Instant
-import ju.ma.app.KitStatus
-import ju.ma.app.KitType
-import ju.ma.app.QKit
-import ju.ma.app.QKitVolunteer
-import ju.ma.graphql.BooleanComparison
-import ju.ma.graphql.IntegerComparision
-import ju.ma.graphql.JsonComparison
-import ju.ma.graphql.LongComparision
-import ju.ma.graphql.TextComparison
-import ju.ma.graphql.TimeComparison
+import cta.app.KitStatus
+import cta.app.KitType
+import cta.app.QKit
+import cta.app.QKitVolunteer
+import cta.graphql.BooleanComparison
+import cta.graphql.IntegerComparision
+import cta.graphql.JsonComparison
+import cta.graphql.LongComparision
+import cta.graphql.TextComparison
+import cta.graphql.TimeComparison
 
 class KitStatusComparison(
     /**

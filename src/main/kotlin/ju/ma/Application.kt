@@ -1,4 +1,4 @@
-package ju.ma
+package cta
 
 import java.util.UUID
 import org.springframework.boot.autoconfigure.SpringBootApplication

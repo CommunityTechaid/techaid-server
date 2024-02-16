@@ -1,4 +1,4 @@
-package ju.ma.auth
+package cta.auth
 
 import com.auth0.client.auth.AuthAPI
 import com.auth0.client.mgmt.ManagementAPI

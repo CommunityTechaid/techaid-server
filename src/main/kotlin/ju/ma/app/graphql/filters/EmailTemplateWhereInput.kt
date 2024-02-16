@@ -1,12 +1,12 @@
-package ju.ma.app.graphql.filters
+package cta.app.graphql.filters
 
 import com.querydsl.core.BooleanBuilder
 import java.time.Instant
-import ju.ma.app.QEmailTemplate
-import ju.ma.graphql.BooleanComparison
-import ju.ma.graphql.LongComparision
-import ju.ma.graphql.TextComparison
-import ju.ma.graphql.TimeComparison
+import cta.app.QEmailTemplate
+import cta.graphql.BooleanComparison
+import cta.graphql.LongComparision
+import cta.graphql.TextComparison
+import cta.graphql.TimeComparison
 
 class EmailTemplateWhereInput(
     var id: LongComparision? = null,

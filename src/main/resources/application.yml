@@ -54,7 +54,7 @@ hugo:
   github:
     token: ${HUGO_GITHUB_TOKEN:}
 commento:
-  url: ${COMMENTO_URL:https://commento.ju.ma}
+  url: ${COMMENTO_URL:https://commento.cta}
   key: ${COMMENTO_KEY:}
   auth:
     domain: ${COMMENTO_AUTH_DOMAIN:}
@@ -69,7 +69,7 @@ auth0:
   domain: ${AUTH0_DOMAIN:}
   client-id: ${AUTH0_CLIENT_ID:}
   client-secret: ${AUTH0_CLIENT_SECRET:}
-  #cutsom attribute added for parsing JTWToken
+  #custom attribute added for parsing JTWToken
   token-attribute: ${TOKEN_ATTRIBUTE}
 spring:
   security:
@@ -144,7 +144,7 @@ logging.level:
   com.alphasights: INFO
   org.apache.tomcat: WARN
   org.apache.catalina: WARN
-  ju.ma: DEBUG
+  cta: DEBUG
   org.springframework.security: WARN
   org.hibernate.type: TRACE
 

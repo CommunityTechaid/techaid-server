@@ -1,4 +1,4 @@
-package ju.ma.app
+package cta.app
 
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor

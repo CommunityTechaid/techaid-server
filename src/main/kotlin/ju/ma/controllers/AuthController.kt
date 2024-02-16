@@ -1,6 +1,6 @@
-package ju.ma.controllers
+package cta.controllers
 
-import ju.ma.auth.AppUser
+import cta.auth.AppUser
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

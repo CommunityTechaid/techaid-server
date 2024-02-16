@@ -1,4 +1,4 @@
-package ju.ma.app.services
+package cta.app.services
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import mu.KotlinLogging

@@ -1,4 +1,4 @@
-package ju.ma.controllers
+package cta.controllers
 
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model

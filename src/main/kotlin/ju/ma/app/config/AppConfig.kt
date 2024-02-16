@@ -1,4 +1,4 @@
-package ju.ma.app.config
+package cta.app.config
 
 import org.springframework.context.annotation.Configuration
 

@@ -1,4 +1,4 @@
-package ju.ma.app.graphql
+package cta.app.graphql
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm

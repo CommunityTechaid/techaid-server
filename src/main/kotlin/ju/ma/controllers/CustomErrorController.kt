@@ -1,4 +1,4 @@
-package ju.ma.controllers
+package cta.controllers
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
