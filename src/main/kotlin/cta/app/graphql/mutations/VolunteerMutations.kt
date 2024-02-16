@@ -94,9 +94,9 @@ data class VolunteerAttributesInput(
 ) {
     fun apply(entity: Volunteer): VolunteerAttributes {
         val self = this
-        if (entity.attributes == null) {
-            entity.attributes = VolunteerAttributes()
-        }
+        // if (entity.attributes == null) {
+        //     entity.attributes = VolunteerAttributes()
+        // }
         return entity.attributes.apply {
             accepts = self.accepts ?: listOf()
             dropOffAvailability = self.dropOffAvailability ?: ""

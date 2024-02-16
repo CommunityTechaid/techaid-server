@@ -43,6 +43,7 @@ class KitAuditTrailQueries(
         * We need to manually typecast this (I think. I did not find a straightforward way of doing it otherwise)
         */
         for (row in results) {
+            @Suppress("UNCHECKED_CAST")
             val array = row as Array<Any>
             val entity: Kit = array[0] as Kit
             val revisionEntity: CustomRevisionInfo  = array[1] as CustomRevisionInfo
