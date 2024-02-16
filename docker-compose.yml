@@ -4,7 +4,7 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile.dev
-    image: stretech:1.0.0
+    image: techaid-api:1.0.0
     # name is explicitly defined as the other containers like dashboard depends on this name
     container_name: techaid-server-web-1
     environment:
@@ -47,7 +47,7 @@ services:
     #using the latest version of postgres
     image: postgres:16
     environment:
-      POSTGRES_DB: stretech
+      POSTGRES_DB: techaid-api
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
     ports:

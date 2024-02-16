@@ -1,5 +1,5 @@
 spring.application:
-  name: stretech
+  name: techaid-api
   environment: unknown
 spring.devtools:
   livereload:
@@ -67,7 +67,7 @@ spring:
     mapper:
       accept-case-insensitive-enums: true
   datasource:
-    url: ${DATASOURCE_URL:${db-url:jdbc:postgresql://localhost:5432/stretech}}
+    url: ${DATASOURCE_URL:${db-url:jdbc:postgresql://localhost:5432/techaid_api}}
     username: ${POSTGRES_USER:${DATASOURCE_USERNAME:${db-user:}}}
     password: ${POSTGRES_PASSWORD:${DATASOURCE_PASSWORD:${db-pass:}}}
   jpa:
