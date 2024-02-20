@@ -14,8 +14,11 @@ import java.util.Properties
 import javax.mail.Session
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
+import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+
+private val logger = KotlinLogging.logger {}
 
 @Service
 class MailService {
@@ -27,6 +30,8 @@ class MailService {
     lateinit var refreshToken: String
     @Value("\${gmail.address}")
     lateinit var address: String
+    @Value("\${gmail.enabled}")
+    var emailEnabled: Boolean = false
 
     val gmail: Gmail by lazy {
         val jsonFactory = JacksonFactory.getDefaultInstance()
@@ -37,6 +42,7 @@ class MailService {
             .setClientSecrets(clientId, clientSecret)
             .build()
             .setRefreshToken(refreshToken)
+        logger.info("MailService startup. Enabled: $emailEnabled FromAddress: $address")
         credential.refreshToken()
         Gmail.Builder(transport, jsonFactory, credential).setApplicationName("Lambeth Techaid").build()
     }
