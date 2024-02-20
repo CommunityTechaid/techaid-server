@@ -50,7 +50,7 @@ import javax.persistence.Table
     TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 )
 @MappedSuperclass
-class BaseEntity
+open class BaseEntity
 
 @Entity
 @Table(name = "volunteers")
