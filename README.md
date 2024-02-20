@@ -1,6 +1,6 @@
 # TechAid Api
 
-Provides backing services for the dashboard site at https://lambeth-techaid.ju.ma/app/
+Provides backing services for the dashboard site at https://app.communitytechaid.org.uk/
 
 ```bash
 # It's best to run with docker 

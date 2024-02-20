@@ -4,7 +4,7 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile.dev
-    image: stretech:1.0.0
+    image: techaid-api:1.0.0
     # name is explicitly defined as the other containers like dashboard depends on this name
     container_name: techaid-server-web-1
     environment:
@@ -22,17 +22,8 @@ services:
       GMAIL_CLIENT_ID:
       GMAIL_CLIENT_SECRET:
       GMAIL_REFRESH_TOKEN:
-      COMMENTO_AUTH_DOMAIN:
-      COMMENTO_KEY:
-      COMMENTO_AUTH_CLIENT_ID:
-      COMMENTO_AUTH_CLIENT_SECRET:
-      COMMENTO_AUTH_AUDIENCE:
-      COMMENTO_AUTH_SCOPES:
-      COMMENTO_AUTH_REDIRECT:
       DDL_AUTO: update
       SHOW_SQL: "${SHOW_SQL:-true}"
-      METABASE_SECRET_KEY:
-      METABASE_SITE_URL:
       TOKEN_ATTRIBUTE: ${TOKEN_ATTRIBUTE}
     command: []
     volumes:
@@ -56,7 +47,7 @@ services:
     #using the latest version of postgres
     image: postgres:16
     environment:
-      POSTGRES_DB: stretech
+      POSTGRES_DB: techaid-api
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
     ports:

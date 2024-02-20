@@ -44,7 +44,7 @@ apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
-group = 'ju.ma'
+group = 'cta'
 version = '0.0.2-SNAPSHOT'
 sourceCompatibility = '1.8'
 
@@ -205,7 +205,7 @@ idea {
 
 task updateAppName {
     doLast {
-        def from = project.hasProperty('previousName')? project.property('previousName') : 'stretech'
+        def from = project.hasProperty('previousName')? project.property('previousName') : 'techaid-api'
         if(!project.hasProperty('appName')) {
             throw new GradleException('No appName specified. \n\n\t **** Please run the task with ./gradlew -PappName=<app-name> updateAppName ****')
         }

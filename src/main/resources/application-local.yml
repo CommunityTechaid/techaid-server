@@ -18,5 +18,5 @@ auth:
           Access-Control-Allow-Headers: 'Content-Type, Authorization, X-Auth-Admin-Secret'
 
 logging.level:
-  ju.ma: DEBUG
+  cta: DEBUG
   org.springframework.security: WARN

@@ -12,4 +12,4 @@ auth:
           Access-Control-Allow-Headers: '*'
 
 logging.level:
-  ju.ma: DEBUG
+  cta: DEBUG
