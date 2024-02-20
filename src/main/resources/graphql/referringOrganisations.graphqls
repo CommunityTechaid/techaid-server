@@ -1,0 +1,45 @@
+type ReferringOrganisation {
+    id: ID
+    name: String
+    domain: String
+    address: String
+    createdAt: String
+    updatedAt: String
+}
+
+input CreateReferringOrganisationInput {
+    name: String
+    domain: String
+    address: String
+}
+
+input UpdateReferringOrganisationInput {
+    id: ID!
+    name: String
+    domain: String
+    address: String
+}
+
+input ReferringOrganisationWhereInput {
+    id: LongComparison
+    name: TextComparison
+    address: TextComparison
+    domain: TextComparison
+    createdAt: TimeComparison
+    updatedAt: TimeComparison
+    AND: [ReferringOrganisationWhereInput!]
+    OR: [ReferringOrganisationWhereInput!]
+    NOT: [ReferringOrganisationWhereInput!]
+}
+
+
+extend type Query {
+    referringOrganisations(where: ReferringOrganisationWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisation!]!
+    referringOrganisation(where: ReferringOrganisationWhereInput!): ReferringOrganisation
+}
+
+extend type Mutation {
+    createReferringOrganisation(data: CreateReferringOrganisationInput!) : ReferringOrganisation!
+    updateReferringOrganisation(data: UpdateReferringOrganisationInput!): ReferringOrganisation!
+    deleteReferringOrganisation(id: ID!): Boolean
+}

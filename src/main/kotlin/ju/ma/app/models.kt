@@ -582,3 +582,23 @@ class OrganisationAttributes(
     var needs: List<String> = listOf(),
     var clientRef: String = ""
 )
+
+@Entity
+@Table(name = "referring_organisations")
+class ReferringOrganisation(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation-seq-generator")
+    @SequenceGenerator(
+        name = "referring_organisation-seq-generator",
+        sequenceName = "referring_organisation_sequence",
+        allocationSize = 1
+    )
+    var id: Long = 0,
+    var name: String,
+    var domain: String = "",
+    var address: String,
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now()
+
+)

@@ -90,3 +90,6 @@ interface EmailTemplateRepository : PagingAndSortingRepository<EmailTemplate, Lo
 
 interface NoteRepository: PagingAndSortingRepository<Note, Long>,
     QuerydslPredicateExecutor<Note>
+
+interface ReferringOrganisationRepository: PagingAndSortingRepository<ReferringOrganisation, Long>,
+    QuerydslPredicateExecutor<ReferringOrganisation>
