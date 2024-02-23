@@ -599,6 +599,37 @@ class ReferringOrganisation(
     var address: String,
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
-    var updatedAt: Instant = Instant.now()
+    var updatedAt: Instant = Instant.now(),
+    @OneToMany(
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        mappedBy = "referringOrganisation"
+    )
+    @OrderBy(clause = "updatedAt DESC")
+    var referringOrganisationContact: MutableSet<ReferringOrganisationContact> = mutableSetOf()
+
+)
+
+
+@Entity
+@Table(name = "referring_organisation_contacts")
+class ReferringOrganisationContact(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation_contacts-seq-generator")
+    @SequenceGenerator(
+        name = "referring_organisation_contacts-seq-generator",
+        sequenceName = "referring_organisation_contacts_sequence",
+        allocationSize = 1
+    )
+    var id: Long = 0,
+    var name: String,
+    var email: String = "",
+    var phoneNumber: String,
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    @ManyToOne
+    var referringOrganisation: ReferringOrganisation
 
 )

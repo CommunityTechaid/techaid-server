@@ -93,3 +93,6 @@ interface NoteRepository: PagingAndSortingRepository<Note, Long>,
 
 interface ReferringOrganisationRepository: PagingAndSortingRepository<ReferringOrganisation, Long>,
     QuerydslPredicateExecutor<ReferringOrganisation>
+
+interface ReferringOrganisationContactRepository: PagingAndSortingRepository<ReferringOrganisationContact, Long>,
+    QuerydslPredicateExecutor<ReferringOrganisationContact>

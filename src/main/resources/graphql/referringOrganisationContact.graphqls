@@ -1,0 +1,49 @@
+type ReferringOrganisationContact {
+    id: ID
+    name: String
+    email: String
+    phoneNumber: String
+    createdAt: String
+    updatedAt: String
+    referringOrganisation: ReferringOrganisation
+}
+
+input CreateReferringOrganisationContactInput {
+    name: String!
+    email: String!
+    phoneNumber: String
+    referringOrganisation: ID!
+}
+
+input UpdateReferringOrganisationContactInput {
+    id: ID!
+    name: String
+    email: String
+    phoneNumber: String
+    referringOrganisation: ID
+}
+
+input ReferringOrganisationContactWhereInput {
+    id: LongComparison
+    name: TextComparison
+    email: TextComparison
+    phoneNumber: TextComparison
+    referringOrganisation: ReferringOrganisationWhereInput
+    createdAt: TimeComparison
+    updatedAt: TimeComparison
+    AND: [ReferringOrganisationContactWhereInput!]
+    OR: [ReferringOrganisationContactWhereInput!]
+    NOT: [ReferringOrganisationContactWhereInput!]
+}
+
+
+extend type Query {
+    referringOrganisationContacts(where: ReferringOrganisationContactWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationContact!]!
+    referringOrganisationContact(where: ReferringOrganisationContactWhereInput!): ReferringOrganisationContact
+}
+
+extend type Mutation {
+    createReferringOrganisationContact(data: CreateReferringOrganisationContactInput!) : ReferringOrganisationContact!
+    updateReferringOrganisationContact(data: UpdateReferringOrganisationContactInput!): ReferringOrganisationContact!
+    deleteReferringOrganisationContact(id: ID!): Boolean
+}
