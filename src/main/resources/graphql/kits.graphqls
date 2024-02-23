@@ -2,6 +2,10 @@ enum KitType {
     OTHER, LAPTOP, TABLET, SMARTPHONE, ALLINONE, CHROMEBOOK, DESKTOP, COMMSDEVICE
 }
 
+enum KitStorageType {
+    HDD, SSD, HYBRID, UNKNOWN
+}
+
 type KitStatusCount {
     status: KitStatus
     count: Int
@@ -88,6 +92,27 @@ input KitStatusComparison {
     _nin: [KitStatus]
 }
 
+input KitStorageTypeComparison {
+    "Matches values that are equal to"
+    _eq: KitStorageType
+    "Matches values that are greater than"
+    _gt: KitStorageType
+    "Matches values that are greater than or equal to"
+    _gte: KitStorageType
+    "Matches values contained in the collection"
+    _in: [KitStorageType]
+    "Matches values that are null/not null"
+    _is_null: Boolean
+    "Matches values that are less than"
+    _lt: KitStorageType
+    "Matches values that are less than or equal to"
+    _lte: KitStorageType
+    "Matches values that are not equal to"
+    _neq: KitStorageType
+    "Matches values that are not contained in the collection"
+    _nin: [KitStorageType]
+}
+
 type Kit {
     id: ID!
     type: KitType
@@ -103,6 +128,16 @@ type Kit {
     volunteers: [KitVolunteer!]
     coordinates: Coordinates
     organisation: Organisation
+    notes: [Note]!,
+    make: String,
+    deviceVersion: String,
+    serialNo: String,
+    storageCapacity: Int,
+    typeOfStorage: KitStorageType,
+    ramCapacity: Int,
+    cpuType: String,
+    tpmVersion: String,
+    cpuCores: Int
 }
 
 enum  KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }
@@ -190,6 +225,15 @@ input KitWhereInput {
     volunteer: VolunteerWhereInput
     donor: DonorWhereInput
     organisation: OrganisationWhereInput
+    make: String,
+    deviceVersion: String,
+    serialNo: String,
+    storageCapacity: Int,
+    typeOfStorage: KitStorageTypeComparison,
+    ramCapacity: Int,
+    cpuType: String,
+    tpmVersion: String
+    cpuCores: Int,
     AND: [KitWhereInput!]
     OR: [KitWhereInput!]
     NOT: [KitWhereInput!]
@@ -212,7 +256,29 @@ input CreateKitInput {
     model: String!
     location: String!
     age: Int!
-    attributes: KitAttributesInput!
+    attributes: KitAttributesInput!,
+    serialNo: String
+}
+
+input QuickCreateKitInput {
+    serialNo: String!,
+    donorId: ID
+}
+
+
+input AutoUpdateKitInput {
+    type: Int
+    status: KitStatus
+    model: String
+    make: String,
+    deviceVersion:String,
+    serialNo: String!,
+    storageCapacity: Int,
+    typeOfStorage: KitStorageType,
+    ramCapacity: Int,
+    cpuType: String,
+    tpmVersion: String,
+    cpuCores: Int
 }
 
 input UpdateKitInput {
@@ -229,6 +295,16 @@ input UpdateKitInput {
     logisticIds: [ID]
     donorId: ID
     organisationId: ID
+    note: CreateNoteInput,
+    make: String,
+    deviceVersion: String,
+    serialNo: String,
+    storageCapacity: Int,
+    typeOfStorage: KitStorageType,
+    ramCapacity: Int,
+    cpuType: String,
+    tpmVersion: String,
+    cpuCores: Int
 }
 
 extend type Query {
@@ -241,6 +317,8 @@ extend type Query {
 
 extend type Mutation {
     createKit(data: CreateKitInput!) : Kit!
+    quickCreateKit(data: QuickCreateKitInput!): Kit!
     updateKit(data: UpdateKitInput!): Kit!
+    autoUpdateKit(data:AutoUpdateKitInput!): Kit!
     deleteKit(id: ID!): Boolean
 }

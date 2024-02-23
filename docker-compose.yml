@@ -1,41 +1,36 @@
-version: '3.3'
+version: '3.6'
 services:
   web:
     build:
       context: ./
-      dockerfile: Dockerfile
-    image: stretech:1.0.0
+      dockerfile: Dockerfile.dev
+    image: techaid-api:1.0.0
+    # name is explicitly defined as the other containers like dashboard depends on this name
+    container_name: techaid-server-web-1
     environment:
-      SPRING_PROFILES_ACTIVE: ${ACTIVE_PROFILE:-local}
-      DATASOURCE_PASSWORD: ${DB_PASS:-password}
-      DATASOURCE_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/stretech}
-      DATASOURCE_USERNAME: ${DB_USER:-postgres}
-      AUTH0_AUDIENCE:
-      AUTH0_DOMAIN:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+      DATASOURCE_PASSWORD: ${DB_PASS}
+      DATASOURCE_URL: ${DB_URL}
+      DATASOURCE_USERNAME: ${DB_USER}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_CLIENT_ID:
       AUTH0_CLIENT_SECRET:
-      JWT_ISSUER:
+      JWT_ISSUER: ${JWT_ISSUER}
       GOOGLE_PLACES_KEY:
       GMAIL_CLIENT_ID:
       GMAIL_CLIENT_SECRET:
       GMAIL_REFRESH_TOKEN:
-      COMMENTO_AUTH_DOMAIN:
-      COMMENTO_KEY:
-      COMMENTO_AUTH_CLIENT_ID:
-      COMMENTO_AUTH_CLIENT_SECRET:
-      COMMENTO_AUTH_AUDIENCE:
-      COMMENTO_AUTH_SCOPES:
-      COMMENTO_AUTH_REDIRECT:
-      DDL_AUTO:
+      DDL_AUTO: update
       SHOW_SQL: "${SHOW_SQL:-true}"
-      METABASE_SECRET_KEY:
-      METABASE_SITE_URL:
+      TOKEN_ATTRIBUTE: ${TOKEN_ATTRIBUTE}
     command: []
     volumes:
       - ./src/main/resources/application-local.yml:/app/config/application-local.yml:ro
       - ./src/main/resources/application.yml:/app/config/application.yml:ro
       - ./src/main/resources/db:/db
-      - ./build/libs/stretech-0.0.2-SNAPSHOT.jar:/app/app.jar
+      - ./src:/app/src
     depends_on:
       - postgres
     ports:
@@ -49,12 +44,28 @@ services:
 #    volumes:
 #      - ./docker/proxy.conf:/etc/nginx/nginx.conf
   postgres:
-    image: postgres:11.5
+    #using the latest version of postgres
+    image: postgres:16
     environment:
-      POSTGRES_DB: stretech
+      POSTGRES_DB: techaid-api
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
+    ports:
+      - 5423:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
+  adminer:
+    image: adminer
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - 8900:8080
+
 volumes:
   pgdata: {}
+
+networks:
+  # explicitly defining name because dashboard depends on this name to connect to the same network
+  default:
+    name: techaid-server_default

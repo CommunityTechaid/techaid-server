@@ -48,8 +48,8 @@ jobs:
       - checkout
       - run: apk add --no-cache git openssh-client
       - run: mkdir -p ~/.ssh
-      - run: ssh-keyscan "techaid.ju.ma" >> ~/.ssh/known_hosts
-      - run: git push ssh://dokku@techaid.ju.ma/api HEAD:refs/heads/master
+      - run: ssh-keyscan "techaid.cta" >> ~/.ssh/known_hosts
+      - run: git push ssh://dokku@techaid.cta/api HEAD:refs/heads/master
 
 version: 2.1
 workflows:

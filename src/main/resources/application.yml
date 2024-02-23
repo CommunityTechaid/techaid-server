@@ -1,7 +1,9 @@
 spring.application:
-  name: stretech
+  name: techaid-api
   environment: unknown
-
+spring.devtools:
+  livereload:
+    enabled: true
 management:
   context-path: /actuator
   endpoints:
@@ -35,7 +37,8 @@ gmail:
   client-id: ${GMAIL_CLIENT_ID:}
   client-secret: ${GMAIL_CLIENT_SECRET:}
   refresh-token: ${GMAIL_REFRESH_TOKEN:}
-  address: ${GMAIL_ADDRESS:covidtechaid@gmail.com}
+  address: ${GMAIL_ADDRESS:communitytechaid@gmail.com}
+  enabled: ${GMAIL_ENABLED:false}
 
 server:
   port: ${PORT:8080}
@@ -44,29 +47,13 @@ server:
     max-http-form-post-size: 50MB
   forward-headers-strategy: NATIVE
 
-metabase:
-  site-url: ${METABASE_SITE_URL:}
-  secret-key: ${METABASE_SECRET_KEY:}
-
-hugo:
-  github:
-    token: ${HUGO_GITHUB_TOKEN:}
-commento:
-  url: ${COMMENTO_URL:https://commento.ju.ma}
-  key: ${COMMENTO_KEY:}
-  auth:
-    domain: ${COMMENTO_AUTH_DOMAIN:}
-    client-id: ${COMMENTO_AUTH_CLIENT_ID:}
-    client-secret: ${COMMENTO_AUTH_CLIENT_SECRET:}
-    audience: ${COMMENTO_AUTH_AUDIENCE:}
-    scopes: ${COMMENTO_AUTH_SCOPES:openid email profile}
-    redirect: ${COMMENTO_AUTH_REDIRECT:}
-    key: ${COMMENTO_KEY:}
 auth0:
   audience: ${AUTH0_AUDIENCE:}
   domain: ${AUTH0_DOMAIN:}
   client-id: ${AUTH0_CLIENT_ID:}
   client-secret: ${AUTH0_CLIENT_SECRET:}
+  #custom attribute added for parsing JTWToken
+  token-attribute: ${TOKEN_ATTRIBUTE}
 spring:
   security:
     oauth2:
@@ -81,7 +68,7 @@ spring:
     mapper:
       accept-case-insensitive-enums: true
   datasource:
-    url: ${DATASOURCE_URL:${db-url:jdbc:postgresql://localhost:5432/stretech}}
+    url: ${DATASOURCE_URL:${db-url:jdbc:postgresql://localhost:5432/techaid_api}}
     username: ${POSTGRES_USER:${DATASOURCE_USERNAME:${db-user:}}}
     password: ${POSTGRES_PASSWORD:${DATASOURCE_PASSWORD:${db-pass:}}}
   jpa:
@@ -109,13 +96,20 @@ spring:
         # wasn't fetched in the initial query. This will work, but it's far better to use a DTO projection or
         # a JOIN FETCH query to retrieve the data
         enable_lazy_load_no_trans: true
+        envers:
+          audit_table_suffix: _AUD
+          revision_field_name: revision_id
+          revision_type_field_name: revision_type
+          audit_strategy: org.hibernate.envers.strategy.ValidityAuditStrategy
+
+
     # Hibernate ddl auto (create, create-drop, validate, update, none)
     #   validate: validate the schema, makes no changes to the database, will throw exception if table not found
     #   update: update the schema, creates the schema if none exists
     #   create: creates the schema, destroying previous data
     #   create-drop: drop the schema when the SessionFactory is closed explicitly, usually when app is stopped
     #   none: do nothing
-    hibernate.ddl-auto: ${DDL_AUTO:${ddl-auto:none}}
+    hibernate.ddl-auto: ${DDL_AUTO:${ddl-auto:update}}
   flyway:
     out-of-order: true
     locations:
@@ -133,8 +127,9 @@ logging.level:
   com.alphasights: INFO
   org.apache.tomcat: WARN
   org.apache.catalina: WARN
-  ju.ma: DEBUG
+  cta: DEBUG
   org.springframework.security: WARN
+  org.hibernate.type: TRACE
 
 auth:
   admin-secret: ${AUTH_ADMIN_SECRET:password}

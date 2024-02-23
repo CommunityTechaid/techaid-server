@@ -1,4 +1,0 @@
-WAIT=10
-TIMEOUT=120
-ATTEMPTS=10
-#/actuator/health

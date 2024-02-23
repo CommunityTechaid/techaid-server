@@ -28,7 +28,7 @@ buildscript {
 
 plugins {
     id 'jacoco'
-    id "org.jlleitschuh.gradle.ktlint" version "9.2.1"
+//    id "org.jlleitschuh.gradle.ktlint" version "9.2.1"
 }
 
 ext {
@@ -44,13 +44,13 @@ apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
-group = 'ju.ma'
+group = 'cta'
 version = '0.0.2-SNAPSHOT'
 sourceCompatibility = '1.8'
 
 repositories {
     mavenCentral()
-    jcenter()
+    google()
 }
 
 allOpen {
@@ -74,7 +74,7 @@ compileTestKotlin {
 }
 
 test {
-    dependsOn ktlintCheck
+//    dependsOn ktlintCheck
     useJUnitPlatform()
     testLogging {
         events "PASSED", "FAILED", "SKIPPED"
@@ -121,6 +121,7 @@ bootRun {
 }
 
 dependencies {
+    def hibernate_version = dependencyManagement.importedProperties['hibernate.version']
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
@@ -129,15 +130,15 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 
     /* Gmail */
-    compile 'com.google.api-client:google-api-client:1.23.0'
-    compile 'com.google.apis:google-api-services-gmail:v1-rev83-1.23.0'
+    implementation 'com.google.api-client:google-api-client:1.23.0'
+    implementation 'com.google.apis:google-api-services-gmail:v1-rev83-1.23.0'
     implementation 'com.sun.mail:javax.mail:1.6.2'
 
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
     implementation 'org.springframework.security:spring-security-config'
     implementation 'com.auth0:auth0:1.15.0'
-    compile 'com.auth0:mvc-auth-commons:1.+'
+    implementation 'com.auth0:mvc-auth-commons:1.+'
     implementation 'com.auth0:java-jwt:3.10.3'
 
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
@@ -150,16 +151,16 @@ dependencies {
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
-    compile "io.github.microutils:kotlin-logging:1.6.26"
+    implementation "io.github.microutils:kotlin-logging:1.6.26"
 
     /* Graphql */
     implementation "com.graphql-java-kickstart:graphql-spring-boot-starter:${graphQLVersion}"
     runtimeOnly "com.graphql-java-kickstart:graphiql-spring-boot-starter:${graphQLVersion}"
     runtimeOnly "com.graphql-java-kickstart:voyager-spring-boot-starter:${graphQLVersion}"
-    testCompile "com.graphql-java-kickstart:graphql-spring-boot-starter-test:${graphQLVersion}"
+    testImplementation "com.graphql-java-kickstart:graphql-spring-boot-starter-test:${graphQLVersion}"
 
     /* Utility Dependencies */
-    compile "info.picocli:picocli-spring-boot-starter:4.0.2"
+    implementation "info.picocli:picocli-spring-boot-starter:4.0.2"
 
     /* Logging / Monitoring Dependencies */
     implementation 'net.logstash.logback:logstash-logback-encoder:6.3'
@@ -179,14 +180,20 @@ dependencies {
     implementation 'org.flywaydb:flyway-core:6.3.0'
     implementation 'com.vladmihalcea:hibernate-types-52:2.9.8'
     implementation 'com.github.alexliesenfeld:querydsl-jpa-postgres-json:0.0.7'
-    compile "com.querydsl:querydsl-jpa:4.2.2"
+    implementation "com.querydsl:querydsl-jpa:4.2.2"
     kapt "com.querydsl:querydsl-apt:4.2.2:jpa"
     runtimeOnly 'org.postgresql:postgresql'
     /* Making use of embedded postgres db when running unit tests */
     testImplementation 'io.zonky.test:embedded-database-spring-test:1.5.3'
     /* Providing In-Memory H2 database as the default spring data-source */
     testImplementation 'com.h2database:h2:1.4.200'
+    implementation "org.hibernate:hibernate-envers:${hibernate_version}"
+
+    /* Devtools for hot reload */
+    compileOnly("org.springframework.boot:spring-boot-devtools")
 }
+
+
 
 idea {
     module {
@@ -198,7 +205,7 @@ idea {
 
 task updateAppName {
     doLast {
-        def from = project.hasProperty('previousName')? project.property('previousName') : 'stretech'
+        def from = project.hasProperty('previousName')? project.property('previousName') : 'techaid-api'
         if(!project.hasProperty('appName')) {
             throw new GradleException('No appName specified. \n\n\t **** Please run the task with ./gradlew -PappName=<app-name> updateAppName ****')
         }
@@ -220,11 +227,25 @@ task updateAppName {
 
         exec {
             workingDir '.'
-            commandLine 'sh', "${rootProject.projectDir}/gradlew", 'idea', 'ktlintApplyToIdea'
+            commandLine 'sh', "${rootProject.projectDir}/gradlew", 'idea'//, 'ktlintApplyToIdea'
         }
 
         delete fileTree('./') {
             include '*.iml,*.ipr,*.iws'
         }
+    }
+}
+
+task getDeps(type: Copy) {
+    from sourceSets.main.runtimeClasspath
+    into 'runtime/'
+
+    doFirst {
+        ant.delete(dir: 'runtime')
+        ant.mkdir(dir: 'runtime')
+    }
+
+    doLast {
+        ant.delete(dir: 'runtime')
     }
 }
