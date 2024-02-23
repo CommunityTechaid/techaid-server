@@ -607,7 +607,7 @@ class ReferringOrganisation(
         mappedBy = "referringOrganisation"
     )
     @OrderBy(clause = "updatedAt DESC")
-    var referringOrganisationContact: MutableSet<ReferringOrganisationContact> = mutableSetOf()
+    var referringOrganisationContacts: MutableSet<ReferringOrganisationContact> = mutableSetOf()
 
 )
 

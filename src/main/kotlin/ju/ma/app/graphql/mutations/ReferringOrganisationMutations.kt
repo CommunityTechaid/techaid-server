@@ -71,6 +71,7 @@ data class UpdateReferringOrganisationInput(
         return entity.apply {
             name = self.name
             address = self.address
+            domain = self.domain
         }
     }
 }

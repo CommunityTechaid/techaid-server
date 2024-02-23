@@ -5,6 +5,7 @@ type ReferringOrganisation {
     address: String
     createdAt: String
     updatedAt: String
+    referringOrganisationContacts: [ReferringOrganisationContact]
 }
 
 input CreateReferringOrganisationInput {
