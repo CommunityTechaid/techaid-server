@@ -256,8 +256,17 @@ input CreateKitInput {
     model: String!
     location: String!
     age: Int!
-    attributes: KitAttributesInput!,
+    attributes: KitAttributesInput!
+    note: CreateNoteInput
+    make: String
+    deviceVersion: String
     serialNo: String
+    storageCapacity: Int
+    typeOfStorage: KitStorageType
+    ramCapacity: Int
+    cpuType: String
+    tpmVersion: String
+    cpuCores: Int
 }
 
 input QuickCreateKitInput {

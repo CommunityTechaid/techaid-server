@@ -58,6 +58,13 @@ class KitMutations(
             if (location.isNotBlank()) {
                 coordinates = locationService.findCoordinates(location)
             }
+
+            if (data.note != null) {
+                if (data.note.content !== ""){
+                    val note = Note(content = data.note.content, kit = this, volunteer = details.email)
+                    notes.add(note)
+                }
+            }
         })
         volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
         return kit
@@ -285,6 +292,7 @@ data class CreateKitInput(
     val location: String,
     val age: Int,
     val attributes: KitAttributesInput,
+    val note: CreateNoteInput? = null,
     val make: String? = null,
     val deviceVersion: String? = null,
     val serialNo: String? = null,
