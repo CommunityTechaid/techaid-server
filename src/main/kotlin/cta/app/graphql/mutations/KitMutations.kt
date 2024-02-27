@@ -285,7 +285,15 @@ data class CreateKitInput(
     val location: String,
     val age: Int,
     val attributes: KitAttributesInput,
-    val serialNo: String? = null
+    val make: String? = null,
+    val deviceVersion: String? = null,
+    val serialNo: String? = null,
+    val storageCapacity: Int? = null, 
+    val typeOfStorage: KitStorageType? = null,
+    val ramCapacity: Int? = null,
+    val cpuType: String? = null,
+    val tpmVersion: String? = null,
+    val cpuCores: Int? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -294,7 +302,15 @@ data class CreateKitInput(
             model = model,
             location = location,
             age = age,
-            serialNo = serialNo
+            make = make,
+            deviceVersion = deviceVersion,
+            serialNo = serialNo,
+            storageCapacity = storageCapacity,
+            typeOfStorage = typeOfStorage ?: KitStorageType.UNKNOWN,
+            ramCapacity = ramCapacity,
+            cpuType = cpuType,
+            tpmVersion = tpmVersion,
+            cpuCores = cpuCores
         )
         kit.attributes = attributes.apply(kit)
         kit
