@@ -11,9 +11,9 @@ import com.google.api.services.gmail.model.MessagePart
 import com.google.api.services.gmail.model.MessagePartBody
 import com.google.api.services.gmail.model.MessagePartHeader
 import com.google.api.services.gmail.model.Thread
-import javax.mail.internet.MimeMessage
-import javax.validation.Valid
-import javax.validation.constraints.NotBlank
+import jakarta.mail.internet.MimeMessage
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import cta.app.services.EmailFilter
 import cta.app.services.EmailPage
 import cta.app.services.MailService

@@ -52,9 +52,9 @@ repositories {
  
 
 allOpen {
-    annotation("javax.persistence.Entity")
-    annotation("javax.persistence.MappedSuperclass")
-    annotation("javax.persistence.Embeddable")
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
 }
 
 compileKotlin {
@@ -130,7 +130,7 @@ dependencies {
     /* Gmail */
     implementation 'com.google.api-client:google-api-client:1.23.0'
     implementation 'com.google.apis:google-api-services-gmail:v1-rev83-1.23.0'
-    implementation 'com.sun.mail:javax.mail:1.6.2'
+    implementation 'jakarta.mail:jakarta.mail-api:2.1.0'
 
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
@@ -189,6 +189,9 @@ dependencies {
 
     /* Devtools for hot reload */
     compileOnly("org.springframework.boot:spring-boot-devtools:${springBootVersion}")
+
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    
 }
 
 

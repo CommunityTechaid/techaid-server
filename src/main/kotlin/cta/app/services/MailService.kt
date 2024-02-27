@@ -11,9 +11,9 @@ import com.google.api.services.gmail.model.ListThreadsResponse
 import com.google.api.services.gmail.model.Message
 import java.io.ByteArrayOutputStream
 import java.util.Properties
-import javax.mail.Session
-import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeMessage
+import jakarta.mail.Session
+import jakarta.mail.internet.InternetAddress
+import jakarta.mail.internet.MimeMessage
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
@@ -161,7 +161,7 @@ fun createEmail(
     val email = MimeMessage(session)
     email.setFrom(InternetAddress(from))
     email.addRecipient(
-        javax.mail.Message.RecipientType.TO,
+        jakarta.mail.Message.RecipientType.TO,
         InternetAddress(to)
     )
     email.subject = subject

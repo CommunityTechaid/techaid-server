@@ -5,9 +5,9 @@ import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.querydsl.core.BooleanBuilder
 import java.time.Instant
 import java.util.Optional
-import javax.persistence.EntityNotFoundException
-import javax.validation.Valid
-import javax.validation.constraints.NotBlank
+import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import cta.app.Faq
 import cta.app.FaqRepository
 import cta.app.Post

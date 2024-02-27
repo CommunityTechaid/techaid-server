@@ -8,10 +8,9 @@ import cta.app.services.Coordinates
 import org.apache.commons.lang3.RandomStringUtils
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.Formula
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.OrderBy
 import org.hibernate.annotations.Type
-import org.hibernate.annotations.TypeDef
-import org.hibernate.annotations.TypeDefs
 import org.hibernate.annotations.UpdateTimestamp
 import org.hibernate.envers.AuditTable
 import org.hibernate.envers.Audited
@@ -23,32 +22,33 @@ import org.hibernate.envers.RevisionTimestamp
 import java.io.Serializable
 import java.time.Instant
 import java.util.Objects
-import javax.persistence.Basic
-import javax.persistence.CascadeType
-import javax.persistence.Column
-import javax.persistence.Embeddable
-import javax.persistence.EmbeddedId
-import javax.persistence.Entity
-import javax.persistence.EnumType
-import javax.persistence.Enumerated
-import javax.persistence.FetchType
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-import javax.persistence.MappedSuperclass
-import javax.persistence.MapsId
-import javax.persistence.OneToMany
-import javax.persistence.OneToOne
-import javax.persistence.SequenceGenerator
-import javax.persistence.Table
+import jakarta.persistence.AttributeConverter
+import jakarta.persistence.Basic
+import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
+import jakarta.persistence.Convert
+import jakarta.persistence.Embeddable
+import jakarta.persistence.EmbeddedId
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.MappedSuperclass
+import jakarta.persistence.MapsId
+import jakarta.persistence.OneToMany
+import jakarta.persistence.OneToOne
+import jakarta.persistence.SequenceGenerator
+import jakarta.persistence.Table
+import org.hibernate.type.SqlTypes
+import org.hibernate.type.YesNoConverter
 
 
-@TypeDefs(
-    TypeDef(name = "json", typeClass = JsonStringType::class),
-    TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
-)
+@JdbcTypeCode(SqlTypes.JSON)
 @MappedSuperclass
 open class BaseEntity
 
@@ -78,10 +78,10 @@ class Volunteer(
     var kitCount: Int = 0,
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
-    @Type(type = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var coordinates: Coordinates? = null,
-    @Type(type = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var attributes: VolunteerAttributes = VolunteerAttributes(),
     @JsonIgnore
@@ -154,7 +154,7 @@ class Donor(
     var kitCount: Int = 0,
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
-    @Type(type = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var coordinates: Coordinates? = null,
     @OneToMany(
@@ -221,7 +221,7 @@ class Kit(
     var model: String,
     var location: String,
     var age: Int,
-    @Type(type = "yes_no")
+    @Convert(converter=YesNoConverter::class)
     var archived: Boolean = false,
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
@@ -236,12 +236,12 @@ class Kit(
     @OrderBy(clause = "updatedAt DESC")
     var notes: MutableSet<Note> = mutableSetOf(),
 
-    @Type(type = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     @NotAudited
     var attributes: KitAttributes = KitAttributes(),
     @NotAudited
-    @Type(type = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var coordinates: Coordinates? = null,
     @ManyToOne(fetch = FetchType.LAZY)
@@ -324,7 +324,7 @@ class KitImage(
     @Id
     @Column(name = "kit_id")
     var id: Long? = kit?.id,
-    @Type(type = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Basic(fetch = FetchType.LAZY)
     var images: MutableList<DeviceImage> = mutableListOf()
 ) : BaseEntity() {
@@ -524,10 +524,10 @@ class Organisation(
     var kitCount: Int = 0,
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
-    @Type(type = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var attributes: OrganisationAttributes = OrganisationAttributes(),
-    @Type(type = "yes_no")
+    @Convert(converter=YesNoConverter::class)
     var archived: Boolean = false,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "volunteer_id")

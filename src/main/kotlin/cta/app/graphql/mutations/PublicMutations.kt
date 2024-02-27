@@ -1,7 +1,7 @@
 package cta.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
-import javax.validation.Valid
+import jakarta.validation.Valid
 import cta.app.Donor
 import cta.app.DonorRepository
 import cta.app.Kit

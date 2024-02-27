@@ -1,9 +1,9 @@
 package cta.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
-import javax.persistence.EntityNotFoundException
-import javax.validation.Valid
-import javax.validation.constraints.NotNull
+import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotNull
 import cta.app.EmailTemplate
 import cta.app.EmailTemplateRepository
 import cta.toNullable
