@@ -65,6 +65,14 @@ class KitMutations(
                     notes.add(note)
                 }
             }
+
+            if (data.donorId == null) {
+                donor?.removeKit(this)
+            } else if (data.donorId != donor?.id) {
+                val user = donors.findById(data.donorId).toNullable()
+                    ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
+                user.addKit(this)
+            }
         })
         volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
         return kit
@@ -292,6 +300,7 @@ data class CreateKitInput(
     val location: String,
     val age: Int,
     val attributes: KitAttributesInput,
+    val donorId: Long? = null,
     val note: CreateNoteInput? = null,
     val make: String? = null,
     val deviceVersion: String? = null,

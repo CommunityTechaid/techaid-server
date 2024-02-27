@@ -257,6 +257,7 @@ input CreateKitInput {
     location: String!
     age: Int!
     attributes: KitAttributesInput!
+    donorId: ID
     note: CreateNoteInput
     make: String
     deviceVersion: String
