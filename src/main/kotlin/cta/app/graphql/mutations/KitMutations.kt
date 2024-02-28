@@ -58,6 +58,19 @@ class KitMutations(
             if (location.isNotBlank()) {
                 coordinates = locationService.findCoordinates(location)
             }
+
+            if (data.note != null) {
+                if (data.note.content !== ""){
+                    val note = Note(content = data.note.content, kit = this, volunteer = details.email)
+                    notes.add(note)
+                }
+            }
+
+            if (data.donorId != null) {
+                val user = donors.findById(data.donorId).toNullable()
+                    ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
+                user.addKit(this)
+            }
         })
         volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
         return kit
@@ -285,7 +298,17 @@ data class CreateKitInput(
     val location: String,
     val age: Int,
     val attributes: KitAttributesInput,
-    val serialNo: String? = null
+    val donorId: Long? = null,
+    val note: CreateNoteInput? = null,
+    val make: String? = null,
+    val deviceVersion: String? = null,
+    val serialNo: String? = null,
+    val storageCapacity: Int? = null, 
+    val typeOfStorage: KitStorageType? = null,
+    val ramCapacity: Int? = null,
+    val cpuType: String? = null,
+    val tpmVersion: String? = null,
+    val cpuCores: Int? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -294,7 +317,15 @@ data class CreateKitInput(
             model = model,
             location = location,
             age = age,
-            serialNo = serialNo
+            make = make,
+            deviceVersion = deviceVersion,
+            serialNo = serialNo,
+            storageCapacity = storageCapacity,
+            typeOfStorage = typeOfStorage ?: KitStorageType.UNKNOWN,
+            ramCapacity = ramCapacity,
+            cpuType = cpuType,
+            tpmVersion = tpmVersion,
+            cpuCores = cpuCores
         )
         kit.attributes = attributes.apply(kit)
         kit
