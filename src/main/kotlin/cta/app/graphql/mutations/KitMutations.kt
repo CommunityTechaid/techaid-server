@@ -66,9 +66,7 @@ class KitMutations(
                 }
             }
 
-            if (data.donorId == null) {
-                donor?.removeKit(this)
-            } else if (data.donorId != donor?.id) {
+            if (data.donorId != null) {
                 val user = donors.findById(data.donorId).toNullable()
                     ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
                 user.addKit(this)
