@@ -60,7 +60,7 @@ class KitMutations(
             }
 
             if (data.note != null) {
-                if (data.note.content !== ""){
+                if (data.note.content !== "") {
                     val note = Note(content = data.note.content, kit = this, volunteer = details.email)
                     notes.add(note)
                 }
@@ -76,7 +76,7 @@ class KitMutations(
         return kit
     }
 
-    fun quickCreateKit(@Valid data: QuickCreateKitInput): Kit{
+    fun quickCreateKit(@Valid data: QuickCreateKitInput): Kit {
         val details = filterService.userDetails()
         val volunteer = if (details.email.isNotBlank()) {
             volunteers.findByEmail(details.email)
@@ -163,7 +163,7 @@ class KitMutations(
             }
 
             if (data.note != null) {
-                if (data.note.content !== ""){
+                if (data.note.content !== "") {
                     val volunteer = filterService.userDetails().name.ifBlank {
                         filterService.userDetails().email
                     }
@@ -176,14 +176,27 @@ class KitMutations(
     }
 
 
-    fun autoUpdateKit(@Valid data: AutoUpdateKitInput): Kit {
-        val self = this
-        val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.serialNo.eq(data.serialNo))).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a kit with serialNo: ${data.serialNo}")
+    fun autoCreateKit(@Valid data: AutoCreateKitInput): Kit {
 
-        return data.apply(entity).apply {
-            type = kitService.lookupDeviceType(data.type)
+        val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.serialNo.eq(data.serialNo))).toNullable()
+
+        /**
+         * Create kit only if another Kit with the serial number does not exist. The philosophy is that as far as the
+         * auto create script is concerned, the serial number is unique and if it is not, it is an edge case that falls
+         * beyond the domain of it and requires manual intervention. We DO NOT want the script silently replacing Kit
+         * details in case of a serialNo collision.
+         */
+        if (entity != null) {
+            throw RuntimeException("Serial ${data.serialNo} exists with CTA ID# ${entity.id}");
         }
+
+        return kits.save(data.entity.apply {
+            if (data.donorId != null){
+                val donor = donors.findById(data.donorId).toNullable() ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
+                data.entity.donor = donor;
+            }
+        })
+
     }
 
     fun notifyAssigned(volunteers: List<Volunteer>, kit: Kit, type: KitVolunteerType) {
@@ -303,7 +316,7 @@ data class CreateKitInput(
     val make: String? = null,
     val deviceVersion: String? = null,
     val serialNo: String? = null,
-    val storageCapacity: Int? = null, 
+    val storageCapacity: Int? = null,
     val typeOfStorage: KitStorageType? = null,
     val ramCapacity: Int? = null,
     val cpuType: String? = null,
@@ -437,14 +450,15 @@ data class UpdateKitInput(
     }
 }
 
-data class AutoUpdateKitInput(
-    val type: Int,
+data class AutoCreateKitInput(
+    val type: KitType,
     val model: String = "",
     val status: KitStatus = KitStatus.DONATION_NEW,
     val make: String? = null,
     val deviceVersion: String? = null,
     @get:NotBlank
     val serialNo: String? = null,
+    val donorId: Long?,
     val storageCapacity: Int? = null,
     val typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
     val ramCapacity: Int? = null,
@@ -452,21 +466,26 @@ data class AutoUpdateKitInput(
     val tpmVersion: String? = null,
     val cpuCores: Int? = null
 ) {
-    fun apply(entity: Kit): Kit {
-        val self = this
-        return entity.apply {
-            model = self.model
-            status = self.status
-            make = self.make
-            deviceVersion = self.deviceVersion
-            serialNo = self.serialNo
-            storageCapacity = self.storageCapacity
-            typeOfStorage = self.typeOfStorage
-            ramCapacity = self.ramCapacity
-            cpuType = self.cpuType
-            tpmVersion = self.tpmVersion
-            cpuCores = self.cpuCores
-        }
+    val entity by lazy {
+        val kit = Kit(
+            type = type,
+            model = model,
+            status = status,
+            make = make,
+            deviceVersion = deviceVersion,
+            serialNo = serialNo,
+            storageCapacity = storageCapacity,
+            typeOfStorage = typeOfStorage,
+            ramCapacity = ramCapacity,
+            cpuType = cpuType,
+            tpmVersion = tpmVersion,
+            cpuCores = cpuCores,
+            age = 0,
+            location = ""
+        )
+        kit
     }
+
+
 }
 
