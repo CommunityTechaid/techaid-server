@@ -19,7 +19,7 @@ import javax.validation.constraints.NotNull
 @Validated
 @Transactional
 
-class ReferringOrganisationContact(
+class ReferringOrganisationContactMutations(
 
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
     private val referringOrganisations: ReferringOrganisationRepository
