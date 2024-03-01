@@ -1,5 +1,5 @@
 spring.application:
-  name: stretech
+  name: techaid-api
   environment: unknown
 spring.devtools:
   livereload:
@@ -37,7 +37,8 @@ gmail:
   client-id: ${GMAIL_CLIENT_ID:}
   client-secret: ${GMAIL_CLIENT_SECRET:}
   refresh-token: ${GMAIL_REFRESH_TOKEN:}
-  address: ${GMAIL_ADDRESS:covidtechaid@gmail.com}
+  address: ${GMAIL_ADDRESS:communitytechaid@gmail.com}
+  enabled: ${GMAIL_ENABLED:false}
 
 server:
   port: ${PORT:8080}
@@ -46,30 +47,12 @@ server:
     max-http-form-post-size: 50MB
   forward-headers-strategy: NATIVE
 
-metabase:
-  site-url: ${METABASE_SITE_URL:}
-  secret-key: ${METABASE_SECRET_KEY:}
-
-hugo:
-  github:
-    token: ${HUGO_GITHUB_TOKEN:}
-commento:
-  url: ${COMMENTO_URL:https://commento.ju.ma}
-  key: ${COMMENTO_KEY:}
-  auth:
-    domain: ${COMMENTO_AUTH_DOMAIN:}
-    client-id: ${COMMENTO_AUTH_CLIENT_ID:}
-    client-secret: ${COMMENTO_AUTH_CLIENT_SECRET:}
-    audience: ${COMMENTO_AUTH_AUDIENCE:}
-    scopes: ${COMMENTO_AUTH_SCOPES:openid email profile}
-    redirect: ${COMMENTO_AUTH_REDIRECT:}
-    key: ${COMMENTO_KEY:}
 auth0:
   audience: ${AUTH0_AUDIENCE:}
   domain: ${AUTH0_DOMAIN:}
   client-id: ${AUTH0_CLIENT_ID:}
   client-secret: ${AUTH0_CLIENT_SECRET:}
-  #cutsom attribute added for parsing JTWToken
+  #custom attribute added for parsing JTWToken
   token-attribute: ${TOKEN_ATTRIBUTE}
 spring:
   security:
@@ -85,7 +68,7 @@ spring:
     mapper:
       accept-case-insensitive-enums: true
   datasource:
-    url: ${DATASOURCE_URL:${db-url:jdbc:postgresql://localhost:5432/stretech}}
+    url: ${DATASOURCE_URL:${db-url:jdbc:postgresql://localhost:5432/techaid_api}}
     username: ${POSTGRES_USER:${DATASOURCE_USERNAME:${db-user:}}}
     password: ${POSTGRES_PASSWORD:${DATASOURCE_PASSWORD:${db-pass:}}}
   jpa:
@@ -144,7 +127,7 @@ logging.level:
   com.alphasights: INFO
   org.apache.tomcat: WARN
   org.apache.catalina: WARN
-  ju.ma: DEBUG
+  cta: DEBUG
   org.springframework.security: WARN
   org.hibernate.type: TRACE
 

@@ -10,10 +10,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - lambeth-techaid-api.ju.ma
+        - api.communitytechaid.org.uk
       secretName: techaid-server-api-tls-cert
   rules:
-    - host: lambeth-techaid-api.ju.ma
+    - host: api.communitytechaid.org.uk
       http:
         paths:
           - path: /
