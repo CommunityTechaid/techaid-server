@@ -276,18 +276,19 @@ input QuickCreateKitInput {
 }
 
 
-input AutoUpdateKitInput {
-    type: Int
+input AutoCreateKitInput {
+    type: KitType
     status: KitStatus
     model: String
-    make: String,
-    deviceVersion:String,
-    serialNo: String!,
-    storageCapacity: Int,
-    typeOfStorage: KitStorageType,
-    ramCapacity: Int,
-    cpuType: String,
-    tpmVersion: String,
+    make: String
+    deviceVersion:String
+    serialNo: String!
+    donorId: ID
+    storageCapacity: Int
+    typeOfStorage: KitStorageType
+    ramCapacity: Int
+    cpuType: String
+    tpmVersion: String
     cpuCores: Int
 }
 
@@ -329,6 +330,6 @@ extend type Mutation {
     createKit(data: CreateKitInput!) : Kit!
     quickCreateKit(data: QuickCreateKitInput!): Kit!
     updateKit(data: UpdateKitInput!): Kit!
-    autoUpdateKit(data:AutoUpdateKitInput!): Kit!
+    autoCreateKit(data:AutoCreateKitInput!): Kit!
     deleteKit(id: ID!): Boolean
 }
