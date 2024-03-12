@@ -27,6 +27,7 @@ import javax.persistence.Basic
 import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Embeddable
+import javax.persistence.Embedded
 import javax.persistence.EmbeddedId
 import javax.persistence.Entity
 import javax.persistence.EnumType
@@ -121,6 +122,7 @@ data class VolunteerAttributes(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+//todo DELETE
 data class Capacity(
     val phones: Int = 0,
     val tablets: Int = 0,
@@ -131,6 +133,20 @@ data class Capacity(
     val chromebooks: Int? = 0,
     val commsDevices: Int? = 0
 )
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Embeddable
+data class DeviceRequestItems(
+    val phones: Int? = 0,
+    val tablets: Int? = 0,
+    val laptops: Int? = 0,
+    val allInOnes: Int? = 0,
+    val desktops: Int? = 0,
+    val other: Int? = 0,
+    val chromebooks: Int? = 0,
+    val commsDevices: Int? = 0
+)
+
 
 @Entity
 @Table(name = "donors")
@@ -630,6 +646,38 @@ class ReferringOrganisationContact(
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
     @ManyToOne
-    var referringOrganisation: ReferringOrganisation
+    var referringOrganisation: ReferringOrganisation,
+    @Formula(
+        """
+        ( SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id )
+    """
+    )
+    var requestCount: Int = 0
+
+)
+
+enum class DeviceRequestStatus {
+    NEW
+}
+
+@Entity
+@Table(name = "device_requests")
+class DeviceRequest(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_requests-seq-generator")
+    @SequenceGenerator(
+        name = "device_requests-seq-generator",
+        sequenceName = "device_requests_sequence",
+        allocationSize = 1
+    )
+    var id: Long = 0,
+    @Embedded
+    var deviceRequestItems: DeviceRequestItems,
+    var status: DeviceRequestStatus = DeviceRequestStatus.NEW,
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    @ManyToOne
+    var referringOrganisationContact: ReferringOrganisationContact
 
 )

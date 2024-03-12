@@ -1,0 +1,99 @@
+type DeviceRequest {
+    id: ID
+    deviceRequestItems: DeviceRequestItems
+    status: DeviceRequestStatus
+    createdAt: String
+    updatedAt: String
+    referringOrganisationContact: ReferringOrganisationContact
+}
+
+type DeviceRequestItems {
+    phones: Int
+    tablets: Int
+    laptops: Int
+    allInOnes: Int
+    desktops: Int
+    commsDevices: Int
+    other: Int
+}
+
+input DeviceRequestItemsInput {
+    phones: Int
+    tablets: Int
+    laptops: Int
+    allInOnes: Int
+    desktops: Int
+    commsDevices: Int
+    other: Int
+}
+
+#input DeviceRequestItemsWhereInput {
+#    phones: IntegerComparison
+#    tablets: IntegerComparison
+#    laptops: IntegerComparison
+#    allInOnes: IntegerComparison
+#    desktops: IntegerComparison
+#    filters: [JsonComparison!]
+#    AND: [DeviceRequestItemsWhereInput]
+#    OR: [DeviceRequestItemsWhereInput]
+#    NOT: [DeviceRequestItemsWhereInput]
+#}
+
+input CreateDeviceRequestInput {
+    deviceRequestItems: DeviceRequestItemsInput
+    referringOrganisationContact: ID!
+}
+
+input UpdateDeviceRequestInput {
+    id: ID
+    status: DeviceRequestStatus
+    deviceRequestItems: DeviceRequestItemsInput
+    referringOrganisationContact: ID!
+}
+
+input DeviceRequestWhereInput {
+    id: LongComparison
+#    deviceRequestItems: DeviceRequestItemsWhereInput
+    referringOrganisationContact: ReferringOrganisationContactWhereInput
+    status: DeviceRequestStatusComparison
+    AND: [DeviceRequestWhereInput!]
+    OR: [DeviceRequestWhereInput!]
+    NOT: [DeviceRequestWhereInput!]
+}
+
+input DeviceRequestStatusComparison{
+    "Matches values that are equal to"
+    _eq: DeviceRequestStatus
+    "Matches values that are greater than"
+    _gt: DeviceRequestStatus
+    "Matches values that are greater than or equal to"
+    _gte: DeviceRequestStatus
+    "Matches values contained in the collection"
+    _in: [DeviceRequestStatus]
+    "Matches values that are null/not null"
+    _is_null: Boolean
+    "Matches values that are less than"
+    _lt: DeviceRequestStatus
+    "Matches values that are less than or equal to"
+    _lte: DeviceRequestStatus
+    "Matches values that are not equal to"
+    _neq: DeviceRequestStatus
+    "Matches values that are not contained in the collection"
+    _nin: [DeviceRequestStatus]
+}
+
+enum DeviceRequestStatus{
+    NEW
+}
+
+
+extend type Query {
+    deviceRequests(where: DeviceRequestWhereInput!, orderBy: [KeyValuePair!]): [DeviceRequest!]!
+    deviceRequest(where: DeviceRequestWhereInput!): DeviceRequest
+}
+
+extend type Mutation {
+    createDeviceRequest(data: CreateDeviceRequestInput!) : DeviceRequest!
+    updateDeviceRequest(data: UpdateDeviceRequestInput!): DeviceRequest!
+    deleteDeviceRequest(id: ID!): Boolean
+}

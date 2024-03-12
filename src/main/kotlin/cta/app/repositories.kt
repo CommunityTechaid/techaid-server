@@ -96,3 +96,5 @@ interface ReferringOrganisationRepository: PagingAndSortingRepository<ReferringO
 
 interface ReferringOrganisationContactRepository: PagingAndSortingRepository<ReferringOrganisationContact, Long>,
     QuerydslPredicateExecutor<ReferringOrganisationContact>
+interface DeviceRequestRepository: PagingAndSortingRepository<DeviceRequest, Long>,
+    QuerydslPredicateExecutor<DeviceRequest>

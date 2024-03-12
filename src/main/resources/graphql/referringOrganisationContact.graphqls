@@ -6,6 +6,7 @@ type ReferringOrganisationContact {
     createdAt: String
     updatedAt: String
     referringOrganisation: ReferringOrganisation
+    requestCount: Int
 }
 
 input CreateReferringOrganisationContactInput {
