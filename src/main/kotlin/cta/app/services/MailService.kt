@@ -2,7 +2,7 @@ package cta.app.services
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.gson.GsonFactory
 import com.google.api.client.util.Base64
 import com.google.api.services.gmail.Gmail
 import com.google.api.services.gmail.model.Draft
@@ -29,7 +29,7 @@ class MailService {
     lateinit var address: String
 
     val gmail: Gmail by lazy {
-        val jsonFactory = JacksonFactory.getDefaultInstance()
+        val jsonFactory = GsonFactory.getDefaultInstance()
         val transport = GoogleNetHttpTransport.newTrustedTransport()
         val credential = GoogleCredential.Builder()
             .setJsonFactory(jsonFactory)

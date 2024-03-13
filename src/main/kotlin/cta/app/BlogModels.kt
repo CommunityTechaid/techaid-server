@@ -10,6 +10,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
+import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
 
 @Entity
@@ -47,6 +48,6 @@ class Faq(
     var position: Int = 0
 )
 
-interface PostRepository : PagingAndSortingRepository<Post, Long>, QuerydslPredicateExecutor<Post>
+interface PostRepository : PagingAndSortingRepository<Post, Long>, QuerydslPredicateExecutor<Post>, CrudRepository<Post, Long>
 
-interface FaqRepository : PagingAndSortingRepository<Faq, Long>, QuerydslPredicateExecutor<Faq>
+interface FaqRepository : PagingAndSortingRepository<Faq, Long>, QuerydslPredicateExecutor<Faq>, CrudRepository<Faq, Long>

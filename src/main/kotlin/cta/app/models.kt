@@ -6,12 +6,6 @@ import com.vladmihalcea.hibernate.type.json.JsonBinaryType
 import com.vladmihalcea.hibernate.type.json.JsonStringType
 import cta.app.services.Coordinates
 import org.apache.commons.lang3.RandomStringUtils
-import org.hibernate.annotations.CreationTimestamp
-import org.hibernate.annotations.Formula
-import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.annotations.OrderBy
-import org.hibernate.annotations.Type
-import org.hibernate.annotations.UpdateTimestamp
 import org.hibernate.envers.AuditTable
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
@@ -44,13 +38,12 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.SequenceGenerator
 import jakarta.persistence.Table
+import org.hibernate.annotations.*
 import org.hibernate.type.SqlTypes
 import org.hibernate.type.YesNoConverter
 
-
-@JdbcTypeCode(SqlTypes.JSON)
 @MappedSuperclass
-open class BaseEntity
+class BaseEntity
 
 @Entity
 @Table(name = "volunteers")

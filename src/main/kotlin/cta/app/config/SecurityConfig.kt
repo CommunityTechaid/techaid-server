@@ -10,10 +10,12 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
 import org.springframework.security.authentication.AbstractAuthenticationToken
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2Error
@@ -26,6 +28,7 @@ import org.springframework.security.oauth2.jwt.JwtValidators
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
+import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
@@ -35,11 +38,11 @@ private val logger = KotlinLogging.logger {}
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
+@EnableMethodSecurity(securedEnabled = true)
 class SecurityConfig(
     private val corsFilter: CorsFilter,
     private val authService: AuthService
-) : WebSecurityConfigurerAdapter() {
+) {
     @Value("\${auth0.audience}")
     private var audience: String = ""
 
@@ -56,19 +59,27 @@ class SecurityConfig(
         return jwtDecoder
     }
 
-    fun secretAuthenticationFilter(): SecretAuthenticationFilter {
+    @Bean
+    public fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager {
+        return authenticationConfiguration.getAuthenticationManager()
+    }
+
+    fun secretAuthenticationFilter(authenticationConfiguration: AuthenticationConfiguration): SecretAuthenticationFilter {
         val filter = SecretAuthenticationFilter()
-        filter.setAuthenticationManager(authenticationManagerBean())
+        filter.setAuthenticationManager(authenticationManager(authenticationConfiguration))
         filter.setAuthenticationFailureHandler(SimpleUrlAuthenticationFailureHandler("/login?error=true"))
         return filter
     }
 
-    public override fun configure(http: HttpSecurity) {
+    @Bean
+    public fun filterChain(
+        http: HttpSecurity,
+        authenticationConfiguration: AuthenticationConfiguration): SecurityFilterChain {
         http.csrf().disable()
         http.headers().httpStrictTransportSecurity().disable()
         http.addFilterBefore(corsFilter, SessionManagementFilter::class.java)
         http.addFilterBefore(TokenAuthenticationFilter(authService), BasicAuthenticationFilter::class.java)
-        http.addFilterBefore(secretAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
+        http.addFilterBefore(secretAuthenticationFilter(authenticationConfiguration), UsernamePasswordAuthenticationFilter::class.java)
         http.oauth2ResourceServer().jwt().jwtAuthenticationConverter(Auth0TokenConverter())
         http.authorizeRequests()
             .anyRequest().permitAll()
@@ -77,6 +88,7 @@ class SecurityConfig(
             .loginPage("/login")
             .defaultSuccessUrl("/login", true)
             .failureUrl("/login?error")
+        return http.build()
     }
 }
 

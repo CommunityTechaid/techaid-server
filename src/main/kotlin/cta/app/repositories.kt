@@ -2,15 +2,25 @@ package cta.app
 
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
+import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
 
-interface VolunteerRepository : PagingAndSortingRepository<Volunteer, Long>, QuerydslPredicateExecutor<Volunteer> {
+interface VolunteerRepository :
+        PagingAndSortingRepository<Volunteer, Long>,
+        CrudRepository<Volunteer, Long>,
+        QuerydslPredicateExecutor<Volunteer> {
     fun findByEmail(email: String): Volunteer?
 }
 
-interface ImageRepository : PagingAndSortingRepository<KitImage, Long>, QuerydslPredicateExecutor<KitImage>
+interface ImageRepository :
+        PagingAndSortingRepository<KitImage, Long>,
+        CrudRepository<KitImage, Long>,
+        QuerydslPredicateExecutor<KitImage>
 
-interface DonorRepository : PagingAndSortingRepository<Donor, Long>, QuerydslPredicateExecutor<Donor> {
+interface DonorRepository :
+        PagingAndSortingRepository<Donor, Long>,
+        CrudRepository<Donor, Long>,
+        QuerydslPredicateExecutor<Donor> {
     fun findByEmail(email: String): Donor?
     fun findByPhoneNumber(phone: String): Donor?
 }
@@ -25,7 +35,10 @@ interface KitTypeCount {
     val count: Long
 }
 
-interface KitRepository : PagingAndSortingRepository<Kit, Long>, QuerydslPredicateExecutor<Kit> {
+interface KitRepository :
+        PagingAndSortingRepository<Kit, Long>,
+        CrudRepository<Kit, Long>,
+        QuerydslPredicateExecutor<Kit> {
     @Query(
         """
         SELECT k.status AS status, count(*) AS count from Kit k where k.archived != 'Y' group by k.status 
@@ -52,7 +65,9 @@ interface RequestCount {
     val commsDevices: Long
 }
 
-interface OrganisationRepository : PagingAndSortingRepository<Organisation, Long>,
+interface OrganisationRepository :
+    PagingAndSortingRepository<Organisation, Long>,
+    CrudRepository<Organisation, Long>,
     QuerydslPredicateExecutor<Organisation> {
     @Query(
         """
@@ -85,8 +100,12 @@ interface OrganisationRepository : PagingAndSortingRepository<Organisation, Long
     fun requestCount(): RequestCount
 }
 
-interface EmailTemplateRepository : PagingAndSortingRepository<EmailTemplate, Long>,
-    QuerydslPredicateExecutor<EmailTemplate>
+interface EmailTemplateRepository :
+        PagingAndSortingRepository<EmailTemplate, Long>,
+        CrudRepository<EmailTemplate, Long>,
+        QuerydslPredicateExecutor<EmailTemplate>
 
-interface NoteRepository: PagingAndSortingRepository<Note, Long>,
-    QuerydslPredicateExecutor<Note>
+interface NoteRepository:
+        PagingAndSortingRepository<Note, Long>,
+        CrudRepository<Note, Long>,
+        QuerydslPredicateExecutor<Note>

@@ -1,6 +1,6 @@
 package cta.commands
 
-import javax.annotation.PostConstruct
+import jakarta.annotation.PostConstruct
 import kotlin.system.exitProcess
 import mu.KotlinLogging
 import org.springframework.boot.CommandLineRunner

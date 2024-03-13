@@ -1,10 +1,11 @@
 package cta.controllers
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
+import org.springframework.boot.web.error.ErrorAttributeOptions
 import org.springframework.boot.web.servlet.error.ErrorAttributes
 import org.springframework.boot.web.servlet.error.ErrorController
 import org.springframework.http.HttpStatus
@@ -63,19 +64,16 @@ class CustomErrorController : ErrorController {
     }
 
     /**
-     * Returns the path of the error page
-     */
-    override fun getErrorPath(): String {
-        return "/error"
-    }
-
-    /**
      * Extracts the error attributes from the http request. Includes the error stack trace
      * if requested
      */
     private fun getErrorAttributes(request: HttpServletRequest, includeStackTrace: Boolean): Map<String, Any> {
         val requestAttributes = ServletWebRequest(request)
-        return errorAttributes.getErrorAttributes(requestAttributes, includeStackTrace)
+        val errorOptions = if(includeStackTrace)
+            ErrorAttributeOptions.defaults().including(ErrorAttributeOptions.Include.STACK_TRACE)
+        else ErrorAttributeOptions.defaults()
+
+        return errorAttributes.getErrorAttributes(requestAttributes, errorOptions)
     }
 }
 

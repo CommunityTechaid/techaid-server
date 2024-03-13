@@ -9,6 +9,8 @@ buildscript {
         kotlinVersion = '1.9.22' //Latest as of Feb. 2024 
         // Versions @ https://github.com/spring-projects/spring-boot/releases
         springBootVersion = '3.2.2' //Latest as of Feb. 2024
+
+        graphQLVersion = '5.7.3'
     }
     repositories {
         mavenCentral()
@@ -24,12 +26,17 @@ buildscript {
 }
 
 plugins {
-    id 'jacoco'
-//    id "org.jlleitschuh.gradle.ktlint" version "9.2.1"
+    id 'org.springframework.boot' version '3.2.3'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'com.netflix.dgs.codegen' version '6.0.3'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.22'
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.22'
 }
 
-ext {
-    graphQLVersion = '5.7.3'
+
+plugins {
+    id 'jacoco'
+//    id "org.jlleitschuh.gradle.ktlint" version "9.2.1"
 }
 
 apply plugin: 'kotlin'
@@ -128,8 +135,9 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 
     /* Gmail */
-    implementation 'com.google.api-client:google-api-client:1.23.0'
-    implementation 'com.google.apis:google-api-services-gmail:v1-rev83-1.23.0'
+    implementation 'com.google.api-client:google-api-client-gson:2.3.0'
+    implementation 'com.google.api-client:google-api-client:1.35.0'
+    implementation 'com.google.apis:google-api-services-gmail:v1-rev20211108-1.32.1'
     implementation 'jakarta.mail:jakarta.mail-api:2.1.0'
 
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
@@ -152,10 +160,14 @@ dependencies {
     implementation "io.github.microutils:kotlin-logging:1.6.26"
 
     /* Graphql */
+//    implementation 'org.springframework.boot:spring-boot-starter-graphql'
     implementation "com.graphql-java-kickstart:graphql-spring-boot-starter:${graphQLVersion}"
     runtimeOnly "com.graphql-java-kickstart:graphiql-spring-boot-starter:${graphQLVersion}"
     runtimeOnly "com.graphql-java-kickstart:voyager-spring-boot-starter:${graphQLVersion}"
     testImplementation "com.graphql-java-kickstart:graphql-spring-boot-starter-test:${graphQLVersion}"
+
+    //Tony A - March 6, 2024 - This is the recommended package for using latest jakarta with graphql
+    implementation "com.graphql-java-kickstart:graphql-java-servlet:15.1.0"
 
     /* Utility Dependencies */
     implementation "info.picocli:picocli-spring-boot-starter:4.0.2"
@@ -187,11 +199,13 @@ dependencies {
     testImplementation 'com.h2database:h2:1.4.200'
     implementation "org.hibernate:hibernate-envers:${hibernate_version}"
 
+    implementation("org.hibernate.tool:hibernate-tools-orm:${hibernate_version}")
+    implementation("org.hibernate.tool:hibernate-tools-utils:${hibernate_version}")
+
     /* Devtools for hot reload */
     compileOnly("org.springframework.boot:spring-boot-devtools:${springBootVersion}")
 
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    
 }
 
 
