@@ -29,6 +29,12 @@ class DeviceRequestMutations(
 
         val referringOrganisationContact = referringOrganisationContacts.findById(data.referringOrganisationContact).toNullable() ?:
         throw EntityNotFoundException("No referring contact found with id: ${data.referringOrganisationContact}")
+
+        //Throw an exception if DEVICE_REQUEST_LIMIT is reached
+        if (referringOrganisationContact.requestCount == DEVICE_REQUEST_LIMIT){
+            throw RuntimeException("Could not create new requests. This user already has ${DEVICE_REQUEST_LIMIT} requests open")
+        }
+
         val deviceRequest = DeviceRequest(
             deviceRequestItems = data.deviceRequestItems.entity,
             referringOrganisationContact = referringOrganisationContact
@@ -62,6 +68,10 @@ class DeviceRequestMutations(
                 ?: throw EntityNotFoundException("No device request with id: $id")
         deviceRequests.delete(entity)
         return true
+    }
+
+    companion object {
+        const val DEVICE_REQUEST_LIMIT = 3;
     }
 }
 

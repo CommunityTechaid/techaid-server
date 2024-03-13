@@ -278,6 +278,7 @@ class Kit(
     @Column(unique = true)
     var serialNo: String? = null,
     var storageCapacity: Int? = null,
+
     var typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
     var ramCapacity: Int? = null,
     var cpuType: String? = null,
@@ -647,14 +648,20 @@ class ReferringOrganisationContact(
     var updatedAt: Instant = Instant.now(),
     @ManyToOne
     var referringOrganisation: ReferringOrganisation,
+    // A better way would be to use the DeviceRequestStatus enum here but for some reason, it is not considered a constant expression.
+    //todo update status FINISHED
     @Formula(
         """
-        ( SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id )
+         (SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id AND d.status NOT LIKE 'FINISHED')
     """
     )
     var requestCount: Int = 0
 
-)
+) {
+    companion object {
+        const val STATUS = "FINISHED"
+    }
+}
 
 enum class DeviceRequestStatus {
     NEW
@@ -673,6 +680,7 @@ class DeviceRequest(
     var id: Long = 0,
     @Embedded
     var deviceRequestItems: DeviceRequestItems,
+    @Enumerated(EnumType.STRING)
     var status: DeviceRequestStatus = DeviceRequestStatus.NEW,
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
