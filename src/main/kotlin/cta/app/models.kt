@@ -262,6 +262,7 @@ class Kit(
     @Column(unique = true)
     var serialNo: String? = null,
     var storageCapacity: Int? = null,
+    @Enumerated(EnumType.STRING)
     var typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
     var ramCapacity: Int? = null,
     var cpuType: String? = null,
