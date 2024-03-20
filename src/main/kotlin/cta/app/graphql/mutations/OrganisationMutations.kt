@@ -72,21 +72,22 @@ class OrganisationMutations(
             from = mailService.address,
             subject = "Community TechAid: Device Request Acknowledged",
             bodyText = """
-            Dear ${org.name}
-
-            <b>Your Community TechAid reference: ${org.id}. Your client reference: ${org.attributes.clientRef}. Your device request(s): 
-
-            ${deviceRequest}
-            
-            Thank you for your request. We need you to complete our recipient data form <a href="https://ghjngk6ao4g.typeform.com/to/TzlNC6kN">here</a>. 
-            
-            The request should be for <b>one individual</b> and they must be a resident of Lambeth or Southwark. Please make <b>no more than 3 requests</b> at a time. If you have made more than 3, we will have to close your other requests down and ask that you resubmit them when your first 3 have been completed.
-            
-            Your request will take between 4-6 weeks to fulfil after we have received your data form. If we do not have this back within 7 days we will be unable to continue with your request and it will be closed down.
-            If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7724.
-            
-            Best wishes
-            
+            Dear ${org.name}<br>
+            <br>
+            <b>Your Community TechAid reference: ${org.id}. Your client reference: ${org.attributes.clientRef}. Your device request(s): <br>
+            <br>
+            ${deviceRequest} <br>
+            </b> <br>
+            Thank you for your request. We need you to complete our recipient data form <a href="https://ghjngk6ao4g.typeform.com/to/TzlNC6kN">here</a>.<br> 
+            <br>
+            The request should be for <b>one individual</b> and they must be a resident of Lambeth or Southwark. Please make <b>no more than 3 requests</b> at a time. If you have made more than 3, we will have to close your other requests down and ask that you resubmit them when your first 3 have been completed. <br>
+            <br>            
+            Your request will take between 4-6 weeks to fulfil after we have received your data form. If we do not have this back within 7 days we will be unable to continue with your request and it will be closed down. <br>
+            <br>
+            If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7724. <br>
+            <br>
+            Best wishes <br>
+            <br>
             <b>Community TechAid Distribution Team</b>
             """.trimIndent(),
             mimeType = "html",
