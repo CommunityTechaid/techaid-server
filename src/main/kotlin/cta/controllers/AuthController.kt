@@ -15,7 +15,7 @@ import org.springframework.web.servlet.ModelAndView
 
 @RestController
 class AuthController {
-    @GetMapping("/", "/**/{path:[^\\.]*}")
+    @GetMapping("/", "/*/*/{path:[^\\.]*}")
     fun angularRouter(model: ModelMap): ModelAndView {
         return ModelAndView("forward:/index.html", model)
     }

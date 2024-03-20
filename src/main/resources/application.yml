@@ -76,7 +76,7 @@ spring:
     properties:
       hibernate:
         #        dialect: org.hibernate.dialect.PostgreSQL95Dialect
-        dialect: com.github.alexliesenfeld.querydsl.jpa.hibernate.PostgreSQLJsonDialect
+        #dialect: com.github.alexliesenfeld.querydsl.jpa.hibernate.PostgreSQLJsonDialect
         # Make hibernate correctly handle java.sql.SQLFeatureNotSupportedException when attempting to detect
         # The available functions for the selected dialect
         #

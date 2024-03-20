@@ -1,12 +1,12 @@
-FROM gradle:7-jdk11  as builder
+FROM gradle:8.6-jdk17  as builder
 USER root
 COPY ./src /app/src
 COPY ./build.gradle settings.gradle /app/
 WORKDIR /app
 #generate wrapper
-RUN gradle wrapper --gradle-version 7.0
+RUN gradle wrapper --gradle-version 8.6
 
-FROM eclipse-temurin:11
+FROM eclipse-temurin:17
 
 COPY ./ /app
 

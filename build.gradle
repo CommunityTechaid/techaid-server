@@ -174,9 +174,9 @@ dependencies {
 
     /* Logging / Monitoring Dependencies */
     implementation 'net.logstash.logback:logstash-logback-encoder:6.3'
-    implementation 'ch.qos.logback:logback-classic:1.2.3'
-    implementation 'com.datadoghq:dd-trace-api:0.44.0'
-    implementation 'io.micrometer:micrometer-registry-datadog'
+    implementation 'ch.qos.logback:logback-classic:1.4.14'
+    // implementation 'com.datadoghq:dd-trace-api:0.44.0'
+    // implementation 'io.micrometer:micrometer-registry-datadog'
 
     /* Making use of JUnit 5 */
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
@@ -187,7 +187,7 @@ dependencies {
 
     /* Hibernate / DB specific dependencies */
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.flywaydb:flyway-core:6.3.0'
+    implementation 'org.flywaydb:flyway-core:9.22.3'
     implementation 'com.vladmihalcea:hibernate-types-52:2.9.8'
     implementation 'com.github.alexliesenfeld:querydsl-jpa-postgres-json:0.0.7'
     implementation "com.querydsl:querydsl-jpa:5.0.0:jakarta"

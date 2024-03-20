@@ -43,14 +43,14 @@ interface KitRepository :
         """
         SELECT k.status AS status, count(*) AS count from Kit k where k.archived != 'Y' group by k.status 
     """
-    )
+    , nativeQuery = true)
     fun statusCount(): List<KitStatusCount>
 
     @Query(
         """
         SELECT k.type AS type, count(*) AS count from Kit k where k.archived != 'Y' group by k.type
     """
-    )
+    , nativeQuery = true)
     fun typeCount(): List<KitTypeCount>
 }
 
