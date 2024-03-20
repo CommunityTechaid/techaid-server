@@ -88,22 +88,8 @@ class OrganisationMutations(
             Best wishes
             
             <b>Community TechAid Distribution Team</b>
-
-
-
-                Thank you for your request for 
-
-                Your request ID is  and your reference is 
-
-                In order to confirm your request we need you to complete our recipient data form here: https://ghjngk6ao4g.typeform.com/to/TzlNC6kN
-
-                Once this has been completed, your request will take approximately 4 weeks to fulfill. If your request needs changing or your client no longer needs a device please let us know by replying to this email or calling us on 020 3488 7742
-
-                Best wishes
-                Distribution Team
-                Community TechAid
             """.trimIndent(),
-            mimeType = "plain",
+            mimeType = "html",
             charset = "UTF-8"
         )
         try {
