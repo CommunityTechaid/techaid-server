@@ -227,7 +227,7 @@ input KitWhereInput {
     organisation: OrganisationWhereInput
     make: String,
     deviceVersion: String,
-    serialNo: String,
+    serialNo: TextComparison,
     storageCapacity: Int,
     typeOfStorage: KitStorageTypeComparison,
     ramCapacity: Int,
