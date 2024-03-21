@@ -61,7 +61,7 @@ class OrganisationMutations(
         if(request.desktops > 0) deviceRequest += "Desktops: ${request.desktops}\n";
         if(request.other > 0) deviceRequest += "Other: ${request.other}\n";
         if((request.chromebooks?: 0) > 0) deviceRequest += "Chromebooks: ${request.chromebooks}\n";
-        if((request.commsDevices?: 0) > 0) deviceRequest += "Comms Devices: ${request.commsDevices}\n";
+        if((request.commsDevices?: 0) > 0) deviceRequest += "SIM card (6 months, 20GB data, unlimited UK calls): ${request.commsDevices}\n";
         return deviceRequest;
     }
 
