@@ -61,7 +61,7 @@ class OrganisationMutations(
         if(request.desktops > 0) deviceRequest += "Desktops: ${request.desktops}\n";
         if(request.other > 0) deviceRequest += "Other: ${request.other}\n";
         if((request.chromebooks?: 0) > 0) deviceRequest += "Chromebooks: ${request.chromebooks}\n";
-        if((request.commsDevices?: 0) > 0) deviceRequest += "Comms Devices: ${request.commsDevices}\n";
+        if((request.commsDevices?: 0) > 0) deviceRequest += "SIM card (6 months, 20GB data, unlimited UK calls): ${request.commsDevices}\n";
         return deviceRequest;
     }
 
@@ -72,38 +72,25 @@ class OrganisationMutations(
             from = mailService.address,
             subject = "Community TechAid: Device Request Acknowledged",
             bodyText = """
-            Dear ${org.name}
-
-            <b>Your Community TechAid reference: ${org.id}. Your client reference: ${org.attributes.clientRef}. Your device request(s): 
-
-            ${deviceRequest}
-            
-            Thank you for your request. We need you to complete our recipient data form <a href="https://ghjngk6ao4g.typeform.com/to/TzlNC6kN">here</a>. 
-            
-            The request should be for <b>one individual</b> and they must be a resident of Lambeth or Southwark. Please make <b>no more than 3 requests</b> at a time. If you have made more than 3, we will have to close your other requests down and ask that you resubmit them when your first 3 have been completed.
-            
-            Your request will take between 4-6 weeks to fulfil after we have received your data form. If we do not have this back within 7 days we will be unable to continue with your request and it will be closed down.
-            If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7724.
-            
-            Best wishes
-            
+            Dear ${org.name}<br>
+            <br>
+            <b>Your Community TechAid reference: ${org.id}. Your client reference: ${org.attributes.clientRef}. Your device request(s): <br>
+            <br>
+            ${deviceRequest} <br>
+            </b> <br>
+            Thank you for your request. We need you to complete our recipient data form <a href="https://ghjngk6ao4g.typeform.com/to/TzlNC6kN">here</a>.<br> 
+            <br>
+            The request should be for <b>one individual</b> and they must be a resident of Lambeth or Southwark. Please make <b>no more than 3 requests</b> at a time. If you have made more than 3, we will have to close your other requests down and ask that you resubmit them when your first 3 have been completed. <br>
+            <br>            
+            Your request will take between 4-6 weeks to fulfil after we have received your data form. If we do not have this back within 7 days we will be unable to continue with your request and it will be closed down. <br>
+            <br>
+            If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7724. <br>
+            <br>
+            Best wishes <br>
+            <br>
             <b>Community TechAid Distribution Team</b>
-
-
-
-                Thank you for your request for 
-
-                Your request ID is  and your reference is 
-
-                In order to confirm your request we need you to complete our recipient data form here: https://ghjngk6ao4g.typeform.com/to/TzlNC6kN
-
-                Once this has been completed, your request will take approximately 4 weeks to fulfill. If your request needs changing or your client no longer needs a device please let us know by replying to this email or calling us on 020 3488 7742
-
-                Best wishes
-                Distribution Team
-                Community TechAid
             """.trimIndent(),
-            mimeType = "plain",
+            mimeType = "html",
             charset = "UTF-8"
         )
         try {
