@@ -39,6 +39,7 @@ gmail:
   refresh-token: ${GMAIL_REFRESH_TOKEN:}
   address: ${GMAIL_ADDRESS:communitytechaid@gmail.com}
   enabled: ${GMAIL_ENABLED:false}
+  bcc-address: ${GMAIL_BCC_ADDRESS:distributions@communitytechaid.org.uk}
 
 server:
   port: ${PORT:8080}

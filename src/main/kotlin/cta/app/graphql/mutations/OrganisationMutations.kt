@@ -15,6 +15,7 @@ import cta.app.services.FilterService
 import cta.app.services.MailService
 import cta.app.services.createEmail
 import cta.toNullable
+import javax.mail.internet.InternetAddress
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -93,6 +94,13 @@ class OrganisationMutations(
             mimeType = "html",
             charset = "UTF-8"
         )
+
+        if(!mailService.bcc_address.isNullOrEmpty()) {
+            msg.addRecipient(
+                javax.mail.Message.RecipientType.BCC,
+                InternetAddress(mailService.bcc_address))
+        }
+        
         try {
             mailService.sendMessage(msg)
         } catch (e: Exception) {
