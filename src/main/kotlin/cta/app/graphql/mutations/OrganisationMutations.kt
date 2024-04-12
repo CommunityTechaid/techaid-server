@@ -99,9 +99,9 @@ Best wishes <br>
 """;
 
 val emailFooter = """
-<p class="c2"><span class="c8">Distributions Team</span></p>
+<p class="c2"><span class="c8"><b>Distributions Team</b></span></p>
 <br>
-<p class="c3"><span class="c8">Community TechAid</span></p>
+<p class="c3"><span class="c8"><b>Community TechAid</b></span></p>
 <br>
 <p class="c3"><span class="c11"><a class="c7" href="http://communitytechaid.org.uk">communitytechaid.org.uk</a></span></p>
 <p class="c10">
