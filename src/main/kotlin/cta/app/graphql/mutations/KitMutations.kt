@@ -307,8 +307,7 @@ data class CreateKitInput(
     val status: KitStatus? = null,
     @get:NotBlank
     val model: String = "",
-    @get:NotBlank
-    val location: String,
+    val location: String?,
     val age: Int,
     val attributes: KitAttributesInput,
     val donorId: Long? = null,
@@ -328,7 +327,7 @@ data class CreateKitInput(
             type = type,
             status = status ?: KitStatus.DONATION_NEW,
             model = model,
-            location = location,
+            //location = location,
             age = age,
             make = make,
             deviceVersion = deviceVersion,
@@ -406,8 +405,7 @@ data class UpdateKitInput(
     val status: KitStatus,
     @get:NotBlank
     val model: String = "",
-    @get:NotBlank
-    val location: String,
+    val location: String?,
     val age: Int,
     val attributes: KitAttributesInput,
     val organiserIds: List<Long>? = null,
@@ -433,7 +431,7 @@ data class UpdateKitInput(
             type = self.type
             status = self.status
             model = self.model
-            location = self.location
+            //location = self.location
             age = self.age
             attributes = self.attributes.apply(entity)
             archived = self.archived ?: archived

@@ -219,7 +219,7 @@ class Kit(
     @Enumerated(EnumType.STRING)
     var status: KitStatus = KitStatus.DONATION_NEW,
     var model: String,
-    var location: String,
+    var location: String = "",
     var age: Int,
     @Type(type = "yes_no")
     var archived: Boolean = false,

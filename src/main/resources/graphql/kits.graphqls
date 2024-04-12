@@ -254,7 +254,7 @@ input CreateKitInput {
     type: KitType!
     status: KitStatus
     model: String!
-    location: String!
+    location: String
     age: Int!
     attributes: KitAttributesInput!
     donorId: ID
@@ -299,7 +299,7 @@ input UpdateKitInput {
     model: String!
     age: Int!
     archived: Boolean
-    location: String!
+    location: String
     attributes: KitAttributesInput!
     organiserIds: [ID]
     technicianIds: [ID]
