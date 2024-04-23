@@ -32,6 +32,8 @@ class MailService {
     lateinit var address: String
     @Value("\${gmail.enabled}")
     var emailEnabled: Boolean = false
+    @Value("\${gmail.bcc-address}")
+    lateinit var bcc_address: String
 
     val gmail: Gmail by lazy {
         val jsonFactory = JacksonFactory.getDefaultInstance()
