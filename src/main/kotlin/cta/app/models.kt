@@ -614,6 +614,8 @@ class ReferringOrganisation(
     var name: String,
     var domain: String = "",
     var address: String,
+    var website: String,
+    var phoneNumber: String,
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
@@ -640,7 +642,8 @@ class ReferringOrganisationContact(
         allocationSize = 1
     )
     var id: Long = 0,
-    var name: String,
+    var firstName: String,
+    var surname: String,
     var email: String = "",
     var phoneNumber: String,
     var createdAt: Instant = Instant.now(),

@@ -44,6 +44,8 @@ data class CreateReferringOrganisationInput(
     @get:NotBlank
     var name: String,
     var domain: String,
+    var website: String,
+    var phoneNumber: String,
     @get:NotBlank
     var address: String
 ) {
@@ -51,7 +53,9 @@ data class CreateReferringOrganisationInput(
         val org = ReferringOrganisation(
             name = name,
             domain = domain,
-            address = address
+            address = address,
+            website = website,
+            phoneNumber = phoneNumber
         )
         org
     }
@@ -63,6 +67,8 @@ data class UpdateReferringOrganisationInput(
     @get:NotBlank
     var name: String,
     var domain: String = "",
+    var website: String,
+    var phoneNumber: String,
     @get:NotBlank
     var address: String
 ) {
@@ -72,6 +78,8 @@ data class UpdateReferringOrganisationInput(
             name = self.name
             address = self.address
             domain = self.domain
+            website = self.website
+            phoneNumber = self.phoneNumber
         }
     }
 }

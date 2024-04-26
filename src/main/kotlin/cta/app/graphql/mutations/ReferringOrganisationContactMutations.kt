@@ -30,7 +30,8 @@ class ReferringOrganisationContactMutations(
             ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
 
         val referringOrganisationContact = ReferringOrganisationContact (
-            name = data.name,
+            firstName = data.firstName,
+            surname = data.surname,
             email = data.email,
             phoneNumber = data.phoneNumber,
             referringOrganisation = referringOrganisation
@@ -66,7 +67,9 @@ class ReferringOrganisationContactMutations(
 
 data class CreateReferringOrganisationContactInput(
     @get:NotBlank
-    var name: String,
+    var firstName: String,
+    @get:NotBlank
+    var surname: String,
     @get:NotBlank
     var email: String = "",
     var phoneNumber: String,
@@ -80,7 +83,9 @@ data class UpdateReferringOrganisationContactInput(
     @get:NotNull
     val id: Long,
     @get:NotBlank
-    var name: String,
+    var firstName: String,
+    @get:NotBlank
+    var surname: String,
     @get:NotBlank
     var email: String = "",
     var phoneNumber: String,
@@ -90,7 +95,8 @@ data class UpdateReferringOrganisationContactInput(
     fun apply(entity: ReferringOrganisationContact): ReferringOrganisationContact {
         val self = this
         return entity.apply {
-            name = self.name
+            firstName = self.firstName
+            surname  = self.surname
             email = self.email
             phoneNumber = self.phoneNumber
 

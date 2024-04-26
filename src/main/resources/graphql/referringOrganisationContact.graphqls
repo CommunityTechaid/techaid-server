@@ -1,6 +1,7 @@
 type ReferringOrganisationContact {
     id: ID
-    name: String
+    firstName: String
+    surname: String
     email: String
     phoneNumber: String
     createdAt: String
@@ -10,7 +11,8 @@ type ReferringOrganisationContact {
 }
 
 input CreateReferringOrganisationContactInput {
-    name: String!
+    firstName: String!
+    surname: String!
     email: String!
     phoneNumber: String
     referringOrganisation: ID!
@@ -18,7 +20,8 @@ input CreateReferringOrganisationContactInput {
 
 input UpdateReferringOrganisationContactInput {
     id: ID!
-    name: String
+    firstName: String
+    surname: String
     email: String
     phoneNumber: String
     referringOrganisation: ID
@@ -26,7 +29,8 @@ input UpdateReferringOrganisationContactInput {
 
 input ReferringOrganisationContactWhereInput {
     id: LongComparison
-    name: TextComparison
+    firstName: TextComparison
+    surname: TextComparison
     email: TextComparison
     phoneNumber: TextComparison
     referringOrganisation: ReferringOrganisationWhereInput

@@ -3,6 +3,8 @@ type ReferringOrganisation {
     name: String
     domain: String
     address: String
+    website: String
+    phoneNumber: String
     createdAt: String
     updatedAt: String
     referringOrganisationContacts: [ReferringOrganisationContact]
@@ -37,6 +39,8 @@ type ReferringOrganisationPage {
 input CreateReferringOrganisationInput {
     name: String
     domain: String
+    website: String
+    phoneNumber: String
     address: String
 }
 
@@ -44,6 +48,8 @@ input UpdateReferringOrganisationInput {
     id: ID!
     name: String
     domain: String
+    website: String
+    phoneNumber: String
     address: String
 }
 

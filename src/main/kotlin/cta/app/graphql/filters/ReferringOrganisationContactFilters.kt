@@ -9,7 +9,8 @@ import java.time.Instant
 
 class ReferringOrganisationContactWhereInput(
     var id: LongComparision? = null,
-    var name: TextComparison? = null,
+    var firstName: TextComparison? = null,
+    var surname: TextComparison? = null,
     var email: TextComparison? = null,
     var phoneNumber: TextComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
@@ -22,7 +23,8 @@ class ReferringOrganisationContactWhereInput(
     fun build(entity: QReferringOrganisationContact = QReferringOrganisationContact.referringOrganisationContact): BooleanBuilder {
         val builder = BooleanBuilder()
         id?.let { builder.and(it.build(entity.id)) }
-        name?.let { builder.and(it.build(entity.name)) }
+        firstName?.let { builder.and(it.build(entity.firstName)) }
+        surname?.let { builder.and(it.build(entity.surname)) }
         phoneNumber?.let { builder.and(it.build(entity.phoneNumber)) }
         email?.let { builder.and(it.build(entity.email)) }
         referringOrganisation?.let { builder.and(it.build(entity.referringOrganisation)) }
