@@ -274,8 +274,8 @@ class KitMutations(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        } */
-    }
+        } 
+    } */
 
     @PreAuthorize("hasAnyAuthority('delete:kits')")
     fun deleteKit(id: Long): Boolean {
