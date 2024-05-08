@@ -150,7 +150,9 @@ val emailFooter = """
     fun updateOrganisation(@Valid data: UpdateOrganisationInput): Organisation {
         val entity = organisations.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a organisation with id: ${data.id}")
-        return data.apply(entity).apply {
+        return data.apply(entity)
+        
+        /* .apply {
             if (data.volunteerId == null) {
                 volunteer?.removeOrganisation(this)
             } else if (data.volunteerId != volunteer?.id) {
@@ -159,7 +161,7 @@ val emailFooter = """
                 owner.addOrganisation(this)
                 notifyAssigned(listOf(owner), this)
             }
-        }
+        } */
     }
 
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
@@ -170,7 +172,7 @@ val emailFooter = """
         return true
     }
 
-    fun notifyAssigned(volunteers: List<Volunteer>, org: Organisation) {
+    /* fun notifyAssigned(volunteers: List<Volunteer>, org: Organisation) {
         val user = filterService.userDetails()
         volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
             val msg = createEmail(
@@ -193,7 +195,7 @@ val emailFooter = """
                 e.printStackTrace()
             }
         }
-    }
+    } */
 }
 
 data class CreateOrganisationInput(

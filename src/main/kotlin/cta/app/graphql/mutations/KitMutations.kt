@@ -72,7 +72,7 @@ class KitMutations(
                 user.addKit(this)
             }
         })
-        volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
+        //volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
         return kit
     }
 
@@ -90,7 +90,7 @@ class KitMutations(
                 user.addKit(this)
             }
         })
-        volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
+        //volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
         return kit
     }
 
@@ -98,9 +98,10 @@ class KitMutations(
         val self = this
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a kit with id: ${data.id}")
-        val organisers = entity.volunteers.filter { it.type == KitVolunteerType.ORGANISER }.map { it.id.volunteerId }
+
+/*      val organisers = entity.volunteers.filter { it.type == KitVolunteerType.ORGANISER }.map { it.id.volunteerId }
         val logistics = entity.volunteers.filter { it.type == KitVolunteerType.LOGISTICS }.map { it.id.volunteerId }
-        val technicians = entity.volunteers.filter { it.type == KitVolunteerType.TECHNICIAN }.map { it.id.volunteerId }
+        val technicians = entity.volunteers.filter { it.type == KitVolunteerType.TECHNICIAN }.map { it.id.volunteerId } */
 
         val previousStatus = entity.status
         return data.apply(entity).apply {
@@ -108,7 +109,7 @@ class KitMutations(
                 coordinates = locationService.findCoordinates(location)
             }
 
-            if (previousStatus != this.status) {
+/*             if (previousStatus != this.status) {
                 notifyStatus(entity.volunteers.map { it.volunteer }, this, previousStatus)
             }
 
@@ -143,7 +144,7 @@ class KitMutations(
                         KitVolunteerType.TECHNICIAN
                     ), this, KitVolunteerType.TECHNICIAN
                 )
-            }
+            } */
 
             if (data.donorId == null) {
                 donor?.removeKit(this)
@@ -199,7 +200,7 @@ class KitMutations(
 
     }
 
-    fun notifyAssigned(volunteers: List<Volunteer>, kit: Kit, type: KitVolunteerType) {
+/*     fun notifyAssigned(volunteers: List<Volunteer>, kit: Kit, type: KitVolunteerType) {
         val user = filterService.userDetails()
         volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
             val msg = createEmail(
@@ -222,9 +223,9 @@ class KitMutations(
                 e.printStackTrace()
             }
         }
-    }
+    } */
 
-    fun notifyStatus(volunteers: List<Volunteer>, kit: Kit, previousStatus: KitStatus) {
+/*     fun notifyStatus(volunteers: List<Volunteer>, kit: Kit, previousStatus: KitStatus) {
         val user = filterService.userDetails()
         volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
             val msg = createEmail(
@@ -248,9 +249,9 @@ class KitMutations(
                 e.printStackTrace()
             }
         }
-    }
+    } */
 
-    fun notifyOrganisation(volunteers: List<Volunteer>, kit: Kit, org: Organisation) {
+    /* fun notifyOrganisation(volunteers: List<Volunteer>, kit: Kit, org: Organisation) {
         val user = filterService.userDetails()
         volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
             val msg = createEmail(
@@ -273,7 +274,7 @@ class KitMutations(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
+        } */
     }
 
     @PreAuthorize("hasAnyAuthority('delete:kits')")
@@ -408,9 +409,9 @@ data class UpdateKitInput(
     val location: String?,
     val age: Int,
     val attributes: KitAttributesInput,
-    val organiserIds: List<Long>? = null,
-    val technicianIds: List<Long>? = null,
-    val logisticIds: List<Long>? = null,
+    val organiserIds: List<Long>? = null, //No longer used
+    val technicianIds: List<Long>? = null, //No longer used
+    val logisticIds: List<Long>? = null, //No longer used
     val donorId: Long? = null,
     val organisationId: Long? = null,
     val archived: Boolean? = null,
