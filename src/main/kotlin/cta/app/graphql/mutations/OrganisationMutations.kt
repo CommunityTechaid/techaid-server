@@ -80,7 +80,7 @@ class OrganisationMutations(
 <body class="c5 doc-content">
 """;
         val emailBody = """
-Dear ${org.name}<br>
+Dear ${org.contact} of ${org.name}<br>
 <br>
 <b>Your Community TechAid reference: ${org.id}. Your client reference: ${org.attributes.clientRef}. Your device request(s): <br>
 <br>
