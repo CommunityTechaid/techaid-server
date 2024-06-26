@@ -43,19 +43,19 @@ class ReferringOrganisationMutations(
 data class CreateReferringOrganisationInput(
     @get:NotBlank
     var name: String,
-    var domain: String,
-    var website: String,
-    var phoneNumber: String,
+    var domain: String?,
+    var website: String?,
+    var phoneNumber: String?,
     @get:NotBlank
     var address: String
 ) {
     val entity by lazy {
         val org = ReferringOrganisation(
             name = name,
-            domain = domain,
+            domain = domain ?: "",
             address = address,
-            website = website,
-            phoneNumber = phoneNumber
+            website = website ?: "",
+            phoneNumber = phoneNumber?: ""
         )
         org
     }
