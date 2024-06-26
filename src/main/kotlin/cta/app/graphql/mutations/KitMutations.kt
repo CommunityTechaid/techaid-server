@@ -200,6 +200,14 @@ class KitMutations(
 
     }
 
+    fun autoUpdateKit(@Valid data: AutoUpdateKitInput): Kit {
+        val self = this
+        val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
+            ?: throw RuntimeException("Unable to locate a kit with CTA id: ${data.id}")
+
+        return data.apply(entity);
+    }
+
 /*     fun notifyAssigned(volunteers: List<Volunteer>, kit: Kit, type: KitVolunteerType) {
         val user = filterService.userDetails()
         volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
@@ -487,4 +495,40 @@ data class AutoCreateKitInput(
 
 
 }
+
+data class AutoUpdateKitInput(
+    val id: Long,
+    val type: KitType?,
+    val model: String = "",
+    val status: KitStatus = KitStatus.DONATION_NEW,
+    val make: String? = null,
+    val deviceVersion: String? = null,
+    val serialNo: String? = null,
+    val storageCapacity: Int? = null,
+    val typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
+    val ramCapacity: Int? = null,
+    val cpuType: String? = null,
+    val tpmVersion: String? = null,
+    val cpuCores: Int? = null
+) {
+    fun apply(entity: Kit): Kit {
+        val self = this
+        return entity.apply {
+            type = self.type ?: KitType.OTHER
+            model = self.model
+            status = self.status
+            make = self.make
+            deviceVersion = self.deviceVersion
+            serialNo = self.serialNo
+            storageCapacity = self.storageCapacity
+            typeOfStorage = self.typeOfStorage
+            ramCapacity = self.ramCapacity
+            cpuType = self.cpuType
+            tpmVersion = self.tpmVersion
+            cpuCores = self.cpuCores
+        }
+    }
+}
+
+
 
