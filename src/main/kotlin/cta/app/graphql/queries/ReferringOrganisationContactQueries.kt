@@ -6,6 +6,7 @@ import cta.app.ReferringOrganisationContactRepository
 import cta.app.graphql.filters.ReferringOrganisationContactWhereInput
 import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
