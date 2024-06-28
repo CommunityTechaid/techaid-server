@@ -6,6 +6,7 @@ import cta.app.DeviceRequestRepository
 import cta.app.graphql.filters.DeviceRequestWhereInput
 import cta.app.services.FilterService
 import cta.graphql.KeyValuePair
+import cta.graphql.PaginationInput
 import org.springframework.data.domain.Sort
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
@@ -43,7 +44,6 @@ class DeviceRequestQueries(
         }
     }
 
-    
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     fun deviceRequestConnections(page: PaginationInput?, where: DeviceRequestWhereInput?): Page<DeviceRequest> {
         val f: PaginationInput = page ?: PaginationInput()
