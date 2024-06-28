@@ -29,6 +29,15 @@ class ReferringOrganisationContactQueries(
     }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    fun referringOrganisationContactsConnection(page: PaginationInput?, where: ReferringOrganisationContactWhereInput?): Page<ReferringOrganisationContact> {
+        val f: PaginationInput = page ?: PaginationInput()
+        if (where == null) {
+            return referringOrganisationContacts.findAll(f.create())
+        }
+        return referringOrganisationContacts.findAll(where.build(), f.create())
+    }
+
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     fun referringOrganisationContact(where: ReferringOrganisationContactWhereInput): Optional<ReferringOrganisationContact> =
         referringOrganisationContacts.findOne(where.build())
 }
