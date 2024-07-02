@@ -5,6 +5,10 @@ type DeviceRequest {
     createdAt: String
     updatedAt: String
     referringOrganisationContact: ReferringOrganisationContact
+    isSales: Boolean,
+    clientRef: String,
+    details: String
+    deviceRequestNeeds: DeviceRequestNeeds
 }
 
 "A representation of a page result from a query"
@@ -53,6 +57,20 @@ input DeviceRequestItemsInput {
     other: Int
 }
 
+
+type DeviceRequestNeeds{
+    hasInternet: Boolean
+    hasMobilityIssues: Boolean
+    needQuickStart: Boolean
+}
+
+input DeviceRequestNeedsInput{
+    hasInternet: Boolean
+    hasMobilityIssues: Boolean
+    needQuickStart: Boolean
+}
+
+
 #input DeviceRequestItemsWhereInput {
 #    phones: IntegerComparison
 #    tablets: IntegerComparison
@@ -68,20 +86,33 @@ input DeviceRequestItemsInput {
 input CreateDeviceRequestInput {
     deviceRequestItems: DeviceRequestItemsInput
     referringOrganisationContact: ID!
+    isSales: Boolean,
+    clientRef: String,
+    details: String
+    deviceRequestNeeds: DeviceRequestNeedsInput
+
 }
 
 input UpdateDeviceRequestInput {
-    id: ID
+    id: ID!
     status: DeviceRequestStatus
     deviceRequestItems: DeviceRequestItemsInput
     referringOrganisationContact: ID!
+    isSales: Boolean,
+    clientRef: String,
+    details: String
+    deviceRequestNeeds: DeviceRequestNeedsInput
 }
+
 
 input DeviceRequestWhereInput {
     id: LongComparison
 #    deviceRequestItems: DeviceRequestItemsWhereInput
-    referringOrganisationContact: ReferringOrganisationContactWhereInput
     status: DeviceRequestStatusComparison
+    referringOrganisationContact: ReferringOrganisationContactWhereInput
+    isSales: BooleanComparison
+    clientRef: TextComparison
+    details: TextComparison
     AND: [DeviceRequestWhereInput!]
     OR: [DeviceRequestWhereInput!]
     NOT: [DeviceRequestWhereInput!]

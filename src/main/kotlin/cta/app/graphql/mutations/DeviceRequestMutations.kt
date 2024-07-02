@@ -3,9 +3,12 @@ package cta.app.graphql.mutations
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestItems
+import cta.app.DeviceRequestNeeds
+import cta.app.DeviceRequestNoteRepository
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
 import cta.app.ReferringOrganisationContactRepository
+import cta.app.services.FilterService
 import cta.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
@@ -23,7 +26,9 @@ import javax.validation.constraints.NotNull
 class DeviceRequestMutations(
 
     private val deviceRequests: DeviceRequestRepository,
-    private val referringOrganisationContacts: ReferringOrganisationContactRepository
+    private val referringOrganisationContacts: ReferringOrganisationContactRepository,
+    private val filterService: FilterService,
+    private val deviceRequestNotes: DeviceRequestNoteRepository
 ) : GraphQLMutationResolver {
     fun createDeviceRequest(@Valid data: CreateDeviceRequestInput): DeviceRequest {
 
@@ -37,8 +42,13 @@ class DeviceRequestMutations(
 
         val deviceRequest = DeviceRequest(
             deviceRequestItems = data.deviceRequestItems.entity,
-            referringOrganisationContact = referringOrganisationContact
+            referringOrganisationContact = referringOrganisationContact,
+            isSales = data.isSales,
+            clientRef = data.clientRef,
+            details = data.details,
+            deviceRequestNeeds = data.deviceRequestNeeds.entity
         )
+
         return deviceRequests.save(deviceRequest)
     }
 
@@ -79,9 +89,13 @@ data class CreateDeviceRequestInput(
     @get:NotNull
     var deviceRequestItems: DeviceRequestItemsInput,
     @get:NotNull
-    var referringOrganisationContact: Long
-
-)
+    var referringOrganisationContact: Long,
+    var isSales: Boolean,
+    var clientRef: String,
+    var details: String,
+    var deviceRequestNeeds: DeviceRequestNeedsInput
+){
+}
 
 
 data class DeviceRequestItemsInput(
@@ -106,18 +120,41 @@ data class DeviceRequestItemsInput(
     }
 }
 
+data class DeviceRequestNeedsInput(
+    var hasInternet: Boolean?,
+    var hasMobilityIssues: Boolean?,
+    var needQuickStart: Boolean?
+) {
+    val entity by lazy {
+        DeviceRequestNeeds(
+            hasInternet = hasInternet,
+            hasMobilityIssues = hasMobilityIssues,
+            needQuickStart = needQuickStart
+        )
+    }
+}
+
 data class UpdateDeviceRequestInput(
     @get:NotNull
     val id: Long,
     val deviceRequestItems: DeviceRequestItemsInput,
     val referringOrganisationContact: Long? = null,
-    val status: DeviceRequestStatus = DeviceRequestStatus.NEW
+    val status: DeviceRequestStatus = DeviceRequestStatus.NEW,
+    val isSales: Boolean?,
+    val clientRef: String,
+    val details: String,
+    val deviceRequestNeeds: DeviceRequestNeedsInput
 ){
     fun apply(entity: DeviceRequest): DeviceRequest {
         val self = this
         return entity.apply {
             deviceRequestItems = self.deviceRequestItems.entity
             status = self.status
+            isSales = self.isSales ?: false
+            clientRef = self.clientRef
+            details = self.details
+            deviceRequestNeeds = self.deviceRequestNeeds.entity
+
         }
     }
 }

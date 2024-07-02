@@ -25,6 +25,7 @@ class DeviceRequestWhereInput(
         id?.let { builder.and(it.build(entity.id)) }
         //deviceRequestItems?.let { builder.and(it.build(entity)) }
         status?.let { builder.and(it.build(entity.status)) }
+
         referringOrganisationContact?.let { builder.and(it.build(entity.referringOrganisationContact)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }

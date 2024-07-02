@@ -134,19 +134,6 @@ data class Capacity(
     val commsDevices: Int? = 0
 )
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-@Embeddable
-data class DeviceRequestItems(
-    val phones: Int? = 0,
-    val tablets: Int? = 0,
-    val laptops: Int? = 0,
-    val allInOnes: Int? = 0,
-    val desktops: Int? = 0,
-    val other: Int? = 0,
-    val chromebooks: Int? = 0,
-    val commsDevices: Int? = 0
-)
-
 
 @Entity
 @Table(name = "donors")
@@ -670,6 +657,29 @@ enum class DeviceRequestStatus {
     NEW
 }
 
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Embeddable
+data class DeviceRequestItems(
+    val phones: Int? = 0,
+    val tablets: Int? = 0,
+    val laptops: Int? = 0,
+    val allInOnes: Int? = 0,
+    val desktops: Int? = 0,
+    val other: Int? = 0,
+    val chromebooks: Int? = 0,
+    val commsDevices: Int? = 0
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Embeddable
+data class DeviceRequestNeeds(
+    var hasInternet: Boolean?,
+    var hasMobilityIssues: Boolean?,
+    var needQuickStart: Boolean?
+)
+
+
 @Entity
 @Table(name = "device_requests")
 class DeviceRequest(
@@ -689,6 +699,37 @@ class DeviceRequest(
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
     @ManyToOne
-    var referringOrganisationContact: ReferringOrganisationContact
-
+    var referringOrganisationContact: ReferringOrganisationContact,
+    var isSales: Boolean = false,
+    var clientRef: String,
+    var details: String,
+    @Embedded
+    var deviceRequestNeeds: DeviceRequestNeeds,
+    @OneToMany(
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        mappedBy = "deviceRequest"
+    )
+    @OrderBy(clause = "updatedAt DESC")
+    var deviceRequestNotes: MutableSet<DeviceRequestNote> = mutableSetOf()
 )
+
+@Entity
+@Table(name = "device_requests_notes")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+class DeviceRequestNote(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_requests_note-seq-generator")
+    @SequenceGenerator(name = "device_requests_note-seq-generator", sequenceName = "device_requests_note_sequence", allocationSize = 1)
+    var id: Long = 0,
+    @Column(name = "content", length = 4096)
+    var content: String,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    var volunteer: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var deviceRequest: DeviceRequest
+) {}
