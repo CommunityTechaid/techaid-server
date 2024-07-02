@@ -72,7 +72,7 @@ class KitMutations(
                 user.addKit(this)
             }
         })
-        volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
+        //volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
         return kit
     }
 
@@ -90,7 +90,7 @@ class KitMutations(
                 user.addKit(this)
             }
         })
-        volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
+        //volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
         return kit
     }
 
@@ -98,9 +98,10 @@ class KitMutations(
         val self = this
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a kit with id: ${data.id}")
-        val organisers = entity.volunteers.filter { it.type == KitVolunteerType.ORGANISER }.map { it.id.volunteerId }
+
+/*      val organisers = entity.volunteers.filter { it.type == KitVolunteerType.ORGANISER }.map { it.id.volunteerId }
         val logistics = entity.volunteers.filter { it.type == KitVolunteerType.LOGISTICS }.map { it.id.volunteerId }
-        val technicians = entity.volunteers.filter { it.type == KitVolunteerType.TECHNICIAN }.map { it.id.volunteerId }
+        val technicians = entity.volunteers.filter { it.type == KitVolunteerType.TECHNICIAN }.map { it.id.volunteerId } */
 
         val previousStatus = entity.status
         return data.apply(entity).apply {
@@ -108,7 +109,7 @@ class KitMutations(
                 coordinates = locationService.findCoordinates(location)
             }
 
-            if (previousStatus != this.status) {
+/*             if (previousStatus != this.status) {
                 notifyStatus(entity.volunteers.map { it.volunteer }, this, previousStatus)
             }
 
@@ -143,7 +144,7 @@ class KitMutations(
                         KitVolunteerType.TECHNICIAN
                     ), this, KitVolunteerType.TECHNICIAN
                 )
-            }
+            } */
 
             if (data.donorId == null) {
                 donor?.removeKit(this)
@@ -199,7 +200,15 @@ class KitMutations(
 
     }
 
-    fun notifyAssigned(volunteers: List<Volunteer>, kit: Kit, type: KitVolunteerType) {
+    fun autoUpdateKit(@Valid data: AutoUpdateKitInput): Kit {
+        val self = this
+        val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
+            ?: throw RuntimeException("Unable to locate a kit with CTA id: ${data.id}")
+
+        return data.apply(entity);
+    }
+
+/*     fun notifyAssigned(volunteers: List<Volunteer>, kit: Kit, type: KitVolunteerType) {
         val user = filterService.userDetails()
         volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
             val msg = createEmail(
@@ -222,9 +231,9 @@ class KitMutations(
                 e.printStackTrace()
             }
         }
-    }
+    } */
 
-    fun notifyStatus(volunteers: List<Volunteer>, kit: Kit, previousStatus: KitStatus) {
+/*     fun notifyStatus(volunteers: List<Volunteer>, kit: Kit, previousStatus: KitStatus) {
         val user = filterService.userDetails()
         volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
             val msg = createEmail(
@@ -248,9 +257,9 @@ class KitMutations(
                 e.printStackTrace()
             }
         }
-    }
+    } */
 
-    fun notifyOrganisation(volunteers: List<Volunteer>, kit: Kit, org: Organisation) {
+    /* fun notifyOrganisation(volunteers: List<Volunteer>, kit: Kit, org: Organisation) {
         val user = filterService.userDetails()
         volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
             val msg = createEmail(
@@ -273,8 +282,8 @@ class KitMutations(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
-    }
+        } 
+    } */
 
     @PreAuthorize("hasAnyAuthority('delete:kits')")
     fun deleteKit(id: Long): Boolean {
@@ -307,8 +316,7 @@ data class CreateKitInput(
     val status: KitStatus? = null,
     @get:NotBlank
     val model: String = "",
-    @get:NotBlank
-    val location: String,
+    val location: String?,
     val age: Int,
     val attributes: KitAttributesInput,
     val donorId: Long? = null,
@@ -328,7 +336,7 @@ data class CreateKitInput(
             type = type,
             status = status ?: KitStatus.DONATION_NEW,
             model = model,
-            location = location,
+            //location = location,
             age = age,
             make = make,
             deviceVersion = deviceVersion,
@@ -406,13 +414,12 @@ data class UpdateKitInput(
     val status: KitStatus,
     @get:NotBlank
     val model: String = "",
-    @get:NotBlank
-    val location: String,
+    val location: String?,
     val age: Int,
     val attributes: KitAttributesInput,
-    val organiserIds: List<Long>? = null,
-    val technicianIds: List<Long>? = null,
-    val logisticIds: List<Long>? = null,
+    val organiserIds: List<Long>? = null, //No longer used
+    val technicianIds: List<Long>? = null, //No longer used
+    val logisticIds: List<Long>? = null, //No longer used
     val donorId: Long? = null,
     val organisationId: Long? = null,
     val archived: Boolean? = null,
@@ -433,7 +440,7 @@ data class UpdateKitInput(
             type = self.type
             status = self.status
             model = self.model
-            location = self.location
+            //location = self.location
             age = self.age
             attributes = self.attributes.apply(entity)
             archived = self.archived ?: archived
@@ -488,4 +495,40 @@ data class AutoCreateKitInput(
 
 
 }
+
+data class AutoUpdateKitInput(
+    val id: Long,
+    val type: KitType?,
+    val model: String = "",
+    val status: KitStatus = KitStatus.DONATION_NEW,
+    val make: String? = null,
+    val deviceVersion: String? = null,
+    val serialNo: String? = null,
+    val storageCapacity: Int? = null,
+    val typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
+    val ramCapacity: Int? = null,
+    val cpuType: String? = null,
+    val tpmVersion: String? = null,
+    val cpuCores: Int? = null
+) {
+    fun apply(entity: Kit): Kit {
+        val self = this
+        return entity.apply {
+            type = self.type ?: KitType.OTHER
+            model = self.model
+            status = self.status
+            make = self.make
+            deviceVersion = self.deviceVersion
+            serialNo = self.serialNo
+            storageCapacity = self.storageCapacity
+            typeOfStorage = self.typeOfStorage
+            ramCapacity = self.ramCapacity
+            cpuType = self.cpuType
+            tpmVersion = self.tpmVersion
+            cpuCores = self.cpuCores
+        }
+    }
+}
+
+
 

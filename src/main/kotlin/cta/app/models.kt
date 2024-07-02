@@ -235,7 +235,7 @@ class Kit(
     @Enumerated(EnumType.STRING)
     var status: KitStatus = KitStatus.DONATION_NEW,
     var model: String,
-    var location: String,
+    var location: String = "",
     var age: Int,
     @Type(type = "yes_no")
     var archived: Boolean = false,
@@ -560,7 +560,7 @@ class Organisation(
     var archived: Boolean = false,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "volunteer_id")
-    var volunteer: Volunteer? = null,
+    var volunteer: Volunteer? = null, //Not actually used by Organisations, but leaving to avoid *potential* breaking changes with the front-end
     @OneToMany(
         mappedBy = "organisation",
         fetch = FetchType.LAZY,

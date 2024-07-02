@@ -254,7 +254,7 @@ input CreateKitInput {
     type: KitType!
     status: KitStatus
     model: String!
-    location: String!
+    location: String
     age: Int!
     attributes: KitAttributesInput!
     donorId: ID
@@ -292,6 +292,22 @@ input AutoCreateKitInput {
     cpuCores: Int
 }
 
+input AutoUpdateKitInput {
+    id: ID!
+    type: KitType
+    status: KitStatus
+    model: String
+    make: String,
+    deviceVersion:String,
+    serialNo: String,
+    storageCapacity: Int,
+    typeOfStorage: KitStorageType,
+    ramCapacity: Int,
+    cpuType: String,
+    tpmVersion: String,
+    cpuCores: Int
+}
+
 input UpdateKitInput {
     id: ID!
     type: KitType!
@@ -299,7 +315,7 @@ input UpdateKitInput {
     model: String!
     age: Int!
     archived: Boolean
-    location: String!
+    location: String
     attributes: KitAttributesInput!
     organiserIds: [ID]
     technicianIds: [ID]
@@ -331,5 +347,6 @@ extend type Mutation {
     quickCreateKit(data: QuickCreateKitInput!): Kit!
     updateKit(data: UpdateKitInput!): Kit!
     autoCreateKit(data:AutoCreateKitInput!): Kit!
+    autoUpdateKit(data:AutoUpdateKitInput!): Kit!
     deleteKit(id: ID!): Boolean
 }
