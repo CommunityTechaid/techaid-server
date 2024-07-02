@@ -4,6 +4,7 @@ import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestItems
 import cta.app.DeviceRequestNeeds
+import cta.app.DeviceRequestNote
 import cta.app.DeviceRequestNoteRepository
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
@@ -65,6 +66,17 @@ class DeviceRequestMutations(
                     referringOrganisationContacts.findById(data.referringOrganisationContact).toNullable()
                         ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
                 entity.referringOrganisationContact = referringOrganisationContact
+            }
+
+            if (data.deviceRequestNote != null) {
+                if (data.deviceRequestNote.content !== "") {
+                    val volunteer = filterService.userDetails().name.ifBlank {
+                        filterService.userDetails().email
+                    }
+                    val deviceRequestNote = DeviceRequestNote(content = data.deviceRequestNote.content, deviceRequest = this, volunteer = volunteer)
+                    deviceRequestNotes.add(deviceRequestNote)
+                }
+
             }
         }
 
@@ -134,6 +146,8 @@ data class DeviceRequestNeedsInput(
     }
 }
 
+
+
 data class UpdateDeviceRequestInput(
     @get:NotNull
     val id: Long,
@@ -143,6 +157,7 @@ data class UpdateDeviceRequestInput(
     val isSales: Boolean?,
     val clientRef: String,
     val details: String,
+    val deviceRequestNote: DeviceRequestNoteInput? = null,
     val deviceRequestNeeds: DeviceRequestNeedsInput
 ){
     fun apply(entity: DeviceRequest): DeviceRequest {
@@ -154,7 +169,6 @@ data class UpdateDeviceRequestInput(
             clientRef = self.clientRef
             details = self.details
             deviceRequestNeeds = self.deviceRequestNeeds.entity
-
         }
     }
 }

@@ -9,6 +9,7 @@ type DeviceRequest {
     clientRef: String,
     details: String
     deviceRequestNeeds: DeviceRequestNeeds
+    deviceRequestNotes: [DeviceRequestNote]
 }
 
 "A representation of a page result from a query"
@@ -101,6 +102,7 @@ input UpdateDeviceRequestInput {
     isSales: Boolean,
     clientRef: String,
     details: String
+    deviceRequestNote: DeviceRequestNoteInput
     deviceRequestNeeds: DeviceRequestNeedsInput
 }
 
