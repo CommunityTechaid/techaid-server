@@ -100,7 +100,7 @@ data class UpdateReferringOrganisationContactInput(
             surname  = self.surname
             email = self.email
             phoneNumber = self.phoneNumber
-            archived = self.archived
+            archived = self.archived ?: archived
         }
     }
 }

@@ -2,6 +2,7 @@ package cta.app.graphql.filters
 
 import com.querydsl.core.BooleanBuilder
 import cta.app.QReferringOrganisation
+import cta.graphql.BooleanComparison
 import cta.graphql.LongComparision
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison

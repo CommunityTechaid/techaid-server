@@ -81,7 +81,7 @@ data class UpdateReferringOrganisationInput(
             domain = self.domain
             website = self.website
             phoneNumber = self.phoneNumber
-            archived = self.archived
+            archived = self.archived ?: archived
         }
     }
 }
