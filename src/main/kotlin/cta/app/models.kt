@@ -640,10 +640,10 @@ class ReferringOrganisationContact(
         allocationSize = 1
     )
     var id: Long = 0,
-    var firstName: String,
-    var surname: String,
+    var fullName: String,
     var email: String = "",
     var phoneNumber: String,
+    var address: String,
     @Type(type = "yes_no")
     var archived: Boolean = false,
     @CreationTimestamp
