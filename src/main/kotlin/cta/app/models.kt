@@ -616,7 +616,15 @@ class ReferringOrganisation(
         mappedBy = "referringOrganisation"
     )
     @OrderBy(clause = "updatedAt DESC")
-    var referringOrganisationContacts: MutableSet<ReferringOrganisationContact> = mutableSetOf()
+    var referringOrganisationContacts: MutableSet<ReferringOrganisationContact> = mutableSetOf(),
+    @OneToMany(
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        mappedBy = "referringOrganisation"
+    )
+    @OrderBy(clause = "updatedAt DESC")
+    var referringOrganisationNotes: MutableSet<ReferringOrganisationNote> = mutableSetOf()
 
 )
 
@@ -651,7 +659,16 @@ class ReferringOrganisationContact(
          (SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id AND d.status NOT LIKE 'FINISHED')
     """
     )
-    var requestCount: Int = 0
+    var requestCount: Int = 0,
+    @OneToMany(
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        mappedBy = "referringOrganisationContact"
+    )
+    @OrderBy(clause = "updatedAt DESC")
+    var referringOrganisationContactNotes: MutableSet<ReferringOrganisationContactNote> = mutableSetOf()
+
 
 ) {
     companion object {
@@ -739,4 +756,44 @@ class DeviceRequestNote(
     var volunteer: String? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     var deviceRequest: DeviceRequest
+) {}
+
+
+@Entity
+@Table(name = "referring_organisations_notes")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+class ReferringOrganisationNote(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisations_note-seq-generator")
+    @SequenceGenerator(name = "referring_organisations_note-seq-generator", sequenceName = "referring_organisations_note_sequence", allocationSize = 1)
+    var id: Long = 0,
+    @Column(name = "content", length = 4096)
+    var content: String,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    var volunteer: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var referringOrganisation: ReferringOrganisation
+) {}
+
+
+@Entity
+@Table(name = "referring_organisation_contacts_notes")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+class ReferringOrganisationContactNote(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation_contacts_note-seq-generator")
+    @SequenceGenerator(name = "referring_organisation_contacts_note-seq-generator", sequenceName = "referring_organisation_contacts_note_sequence", allocationSize = 1)
+    var id: Long = 0,
+    @Column(name = "content", length = 4096)
+    var content: String,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    var volunteer: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var referringOrganisationContact: ReferringOrganisationContact
 ) {}

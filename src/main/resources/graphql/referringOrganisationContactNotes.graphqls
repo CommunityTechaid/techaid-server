@@ -1,0 +1,17 @@
+type ReferringOrganisationContactNotes{
+
+    id: ID!
+    content: String
+    volunteer: String
+    createdAt: String
+    updatedAt: String
+    referringOrganisationContact: ReferringOrganisationContact!
+}
+
+input ReferringOrganisationContactNoteInput{
+    content: String
+}
+
+extend type Mutation{
+    deleteReferringOrganisationContactNote(id: ID!): Boolean
+}

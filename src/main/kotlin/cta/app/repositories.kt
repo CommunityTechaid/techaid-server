@@ -101,3 +101,9 @@ interface DeviceRequestRepository: PagingAndSortingRepository<DeviceRequest, Lon
 
 interface DeviceRequestNoteRepository: PagingAndSortingRepository<DeviceRequestNote, Long>,
     QuerydslPredicateExecutor<DeviceRequestNote>
+
+interface ReferringOrganisationNoteRepository: PagingAndSortingRepository<ReferringOrganisationNote, Long>,
+    QuerydslPredicateExecutor<ReferringOrganisationNote>
+
+interface ReferringOrganisationContactNoteRepository: PagingAndSortingRepository<ReferringOrganisationContactNote, Long>,
+    QuerydslPredicateExecutor<ReferringOrganisationContactNote>
