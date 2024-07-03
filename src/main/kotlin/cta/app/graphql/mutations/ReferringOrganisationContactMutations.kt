@@ -90,7 +90,8 @@ data class UpdateReferringOrganisationContactInput(
     var email: String = "",
     var phoneNumber: String,
     @get:NotNull
-    var referringOrganisation: Long
+    var referringOrganisation: Long,
+    val archived: Boolean? = null
 ) {
     fun apply(entity: ReferringOrganisationContact): ReferringOrganisationContact {
         val self = this
@@ -99,7 +100,7 @@ data class UpdateReferringOrganisationContactInput(
             surname  = self.surname
             email = self.email
             phoneNumber = self.phoneNumber
-
+            archived = self.archived
         }
     }
 }

@@ -603,6 +603,9 @@ class ReferringOrganisation(
     var address: String,
     var website: String,
     var phoneNumber: String,
+    @Type(type = "yes_no")
+    var archived: Boolean = false,
+    @CreationTimestamp
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
@@ -633,6 +636,9 @@ class ReferringOrganisationContact(
     var surname: String,
     var email: String = "",
     var phoneNumber: String,
+    @Type(type = "yes_no")
+    var archived: Boolean = false,
+    @CreationTimestamp
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
@@ -695,6 +701,7 @@ class DeviceRequest(
     var deviceRequestItems: DeviceRequestItems,
     @Enumerated(EnumType.STRING)
     var status: DeviceRequestStatus = DeviceRequestStatus.NEW,
+    @CreationTimestamp
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),

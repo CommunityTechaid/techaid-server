@@ -5,6 +5,7 @@ type ReferringOrganisation {
     address: String
     website: String
     phoneNumber: String
+    archived: Boolean
     createdAt: String
     updatedAt: String
     referringOrganisationContacts: [ReferringOrganisationContact]
@@ -51,6 +52,7 @@ input UpdateReferringOrganisationInput {
     website: String
     phoneNumber: String
     address: String
+    archived: Boolean
 }
 
 input ReferringOrganisationWhereInput {
@@ -58,6 +60,7 @@ input ReferringOrganisationWhereInput {
     name: TextComparison
     address: TextComparison
     domain: TextComparison
+    archived: BooleanComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
     AND: [ReferringOrganisationWhereInput!]

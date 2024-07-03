@@ -70,7 +70,8 @@ data class UpdateReferringOrganisationInput(
     var website: String,
     var phoneNumber: String,
     @get:NotBlank
-    var address: String
+    var address: String,
+    val archived: Boolean? = null
 ) {
     fun apply(entity: ReferringOrganisation): ReferringOrganisation {
         val self = this
@@ -80,6 +81,7 @@ data class UpdateReferringOrganisationInput(
             domain = self.domain
             website = self.website
             phoneNumber = self.phoneNumber
+            archived = self.archived
         }
     }
 }

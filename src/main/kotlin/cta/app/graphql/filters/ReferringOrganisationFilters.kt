@@ -12,6 +12,7 @@ class ReferringOrganisationWhereInput(
     var name: TextComparison? = null,
     var domain: TextComparison? = null,
     var address: TextComparison? = null,
+    var archived: BooleanComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
     var AND: MutableList<ReferringOrganisationWhereInput> = mutableListOf(),
@@ -24,6 +25,7 @@ class ReferringOrganisationWhereInput(
         name?.let { builder.and(it.build(entity.name)) }
         domain?.let { builder.and(it.build(entity.domain)) }
         address?.let { builder.and(it.build(entity.address)) }
+        archived?.let { builder.and(it.build(entity.archived)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         if (AND.isNotEmpty()) {

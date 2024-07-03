@@ -13,6 +13,7 @@ class ReferringOrganisationContactWhereInput(
     var surname: TextComparison? = null,
     var email: TextComparison? = null,
     var phoneNumber: TextComparison? = null,
+    var archived: BooleanComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
     var referringOrganisation: ReferringOrganisationWhereInput? = null,
@@ -28,6 +29,7 @@ class ReferringOrganisationContactWhereInput(
         phoneNumber?.let { builder.and(it.build(entity.phoneNumber)) }
         email?.let { builder.and(it.build(entity.email)) }
         referringOrganisation?.let { builder.and(it.build(entity.referringOrganisation)) }
+        archived?.let { builder.and(it.build(entity.archived)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         if (AND.isNotEmpty()) {
