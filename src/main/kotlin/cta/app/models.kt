@@ -677,7 +677,13 @@ class ReferringOrganisationContact(
 }
 
 enum class DeviceRequestStatus {
-    NEW
+    NEW,
+    PROCESSING_EQUALITIES_DATA_COMPLETE,
+    PROCESSING_COLLECTION_DELIVERY_ARRANGED,
+    PROCESSING_ON_HOLD,
+    REQUEST_COMPLETED,
+    REQUEST_DECLINED,
+    REQUEST_CANCELLED
 }
 
 
