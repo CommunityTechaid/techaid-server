@@ -60,6 +60,7 @@ input ReferringOrganisationWhereInput {
     name: TextComparison
     address: TextComparison
     domain: TextComparison
+    website: TextComparison
     archived: BooleanComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
