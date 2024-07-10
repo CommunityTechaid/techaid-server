@@ -514,9 +514,9 @@ data class AutoUpdateKitInput(
     fun apply(entity: Kit): Kit {
         val self = this
         return entity.apply {
-            type = self.type ?: type
+            type = self.type ?: type ?: (type ?: KitType.OTHER)
             model = self.model ?: model
-            status = self.status ?: status
+            status = self.status ?: status ?: (status ?: KitStatus.DONATION_NEW)
             make = self.make  ?: make
             deviceVersion = self.deviceVersion ?: deviceVersion
             serialNo = self.serialNo ?: serialNo
