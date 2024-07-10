@@ -499,33 +499,33 @@ data class AutoCreateKitInput(
 data class AutoUpdateKitInput(
     val id: Long,
     val type: KitType?,
-    val model: String = "",
-    val status: KitStatus = KitStatus.DONATION_NEW,
-    val make: String? = null,
-    val deviceVersion: String? = null,
-    val serialNo: String? = null,
-    val storageCapacity: Int? = null,
-    val typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
-    val ramCapacity: Int? = null,
-    val cpuType: String? = null,
-    val tpmVersion: String? = null,
-    val cpuCores: Int? = null
+    val model: String?,
+    val status: KitStatus?,
+    val make: String?,
+    val deviceVersion: String?,
+    val serialNo: String?,
+    val storageCapacity: Int?,
+    val typeOfStorage: KitStorageType?,
+    val ramCapacity: Int?,
+    val cpuType: String?,
+    val tpmVersion: String?,
+    val cpuCores: Int?
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
         return entity.apply {
-            type = self.type ?: KitType.OTHER
-            model = self.model
-            status = self.status
-            make = self.make
-            deviceVersion = self.deviceVersion
-            serialNo = self.serialNo
-            storageCapacity = self.storageCapacity
-            typeOfStorage = self.typeOfStorage
-            ramCapacity = self.ramCapacity
-            cpuType = self.cpuType
-            tpmVersion = self.tpmVersion
-            cpuCores = self.cpuCores
+            type = self.type ?: type
+            model = self.model ?: model
+            status = self.status ?: status
+            make = self.make  ?: make
+            deviceVersion = self.deviceVersion ?: deviceVersion
+            serialNo = self.serialNo ?: serialNo
+            storageCapacity = self.storageCapacity ?: storageCapacity
+            typeOfStorage = self.typeOfStorage ?: (typeOfStorage ?: KitStorageType.UNKNOWN)
+            ramCapacity = self.ramCapacity ?: ramCapacity
+            cpuType = self.cpuType ?: cpuType
+            tpmVersion = self.tpmVersion ?: tpmVersion
+            cpuCores = self.cpuCores ?: cpuCores
         }
     }
 }
