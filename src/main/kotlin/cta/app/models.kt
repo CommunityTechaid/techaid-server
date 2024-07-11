@@ -262,7 +262,6 @@ class Kit(
     // var images: KitImage? = null
     var make: String? = null,
     var deviceVersion: String? = null,
-    @Column(unique = true)
     var serialNo: String? = null,
     var storageCapacity: Int? = null,
     @Enumerated(EnumType.STRING)
