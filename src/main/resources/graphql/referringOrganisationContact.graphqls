@@ -4,6 +4,7 @@ type ReferringOrganisationContact {
     address: String
     email: String
     phoneNumber: String
+    requestCount: Int
     archived: Boolean
     createdAt: String
     updatedAt: String

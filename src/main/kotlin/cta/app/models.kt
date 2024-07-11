@@ -603,6 +603,17 @@ class ReferringOrganisation(
     var address: String,
     var website: String,
     var phoneNumber: String,
+    @Formula(
+        """
+        (SELECT COUNT(*) 
+        FROM device_requests dr 
+        INNER JOIN referring_organisation_contacts roc 
+            ON dr.referring_organisation_contact_id = roc.id 
+        WHERE dr.status='NEW' 
+            AND roc.referring_organisation_id = id)
+    """
+    )
+    var requestCount: Int = 0,
     @Type(type = "yes_no")
     var archived: Boolean = false,
     @CreationTimestamp
@@ -644,6 +655,15 @@ class ReferringOrganisationContact(
     var email: String = "",
     var phoneNumber: String,
     var address: String,
+    @Formula(
+        """
+        (SELECT COUNT(*) 
+        FROM device_requests dr 
+        WHERE dr.referring_organisation_contact_id = id 
+            AND dr.status='NEW')
+    """
+    )
+    var requestCount: Int = 0,
     @Type(type = "yes_no")
     var archived: Boolean = false,
     @CreationTimestamp
