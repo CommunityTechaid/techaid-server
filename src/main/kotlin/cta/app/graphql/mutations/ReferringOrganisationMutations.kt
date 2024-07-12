@@ -66,8 +66,8 @@ data class UpdateReferringOrganisationInput(
     val id: Long,
     @get:NotBlank
     var name: String,
-    var domain: String = "",
-    var website: String,
+    var domain: String? = null,
+    var website: String? = null,
     var phoneNumber: String,
     @get:NotBlank
     var address: String,
