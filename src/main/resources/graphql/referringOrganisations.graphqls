@@ -49,10 +49,10 @@ input CreateReferringOrganisationInput {
 input UpdateReferringOrganisationInput {
     id: ID!
     name: String
-    domain: String
-    website: String
+    domain: String!
+    website: String!
     phoneNumber: String
-    address: String
+    address: String!
     archived: Boolean
 }
 
