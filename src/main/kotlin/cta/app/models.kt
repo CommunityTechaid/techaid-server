@@ -654,15 +654,6 @@ class ReferringOrganisationContact(
     var email: String = "",
     var phoneNumber: String,
     var address: String,
-    @Formula(
-        """
-        (SELECT COUNT(*) 
-        FROM device_requests dr 
-        WHERE dr.referring_organisation_contact_id = id 
-            AND dr.status='NEW')
-    """
-    )
-    var requestCount: Int = 0,
     @Type(type = "yes_no")
     var archived: Boolean = false,
     @CreationTimestamp
@@ -672,10 +663,9 @@ class ReferringOrganisationContact(
     @ManyToOne
     var referringOrganisation: ReferringOrganisation,
     // A better way would be to use the DeviceRequestStatus enum here but for some reason, it is not considered a constant expression.
-    //todo update status FINISHED
     @Formula(
         """
-         (SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id AND d.status NOT LIKE 'FINISHED')
+         (SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id AND d.status = 'NEW')
     """
     )
     var requestCount: Int = 0,
