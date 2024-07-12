@@ -47,13 +47,13 @@ input CreateReferringOrganisationInput {
 }
 
 input UpdateReferringOrganisationInput {
-    id: ID!
+    id: ID
     name: String
     domain: String!
     website: String!
     phoneNumber: String
-    address: String!
-    archived: Boolean
+    address: String
+    archived: Boolean!
 }
 
 input ReferringOrganisationWhereInput {
