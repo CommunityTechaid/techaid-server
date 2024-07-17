@@ -151,11 +151,22 @@ enum DeviceRequestStatus{
     REQUEST_CANCELLED
 }
 
+type RequestCount {
+    phones: Int
+    laptops: Int
+    tablets: Int
+    allInOnes: Int
+    desktops: Int
+    chromebooks: Int
+    commsDevices: Int
+    other: Int
+}
 
 extend type Query {
     deviceRequestConnection(page: PaginationInput, where: DeviceRequestWhereInput): DeviceRequestPage
     deviceRequests(where: DeviceRequestWhereInput!, orderBy: [KeyValuePair!]): [DeviceRequest!]!
     deviceRequest(where: DeviceRequestWhereInput!): DeviceRequest
+    requestCount: RequestCount
 }
 
 extend type Mutation {

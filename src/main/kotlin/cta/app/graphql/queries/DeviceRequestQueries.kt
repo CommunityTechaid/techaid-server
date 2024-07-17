@@ -19,13 +19,13 @@ class DeviceRequestQueries(
     private val filterService: FilterService
 ) : GraphQLQueryResolver {
 
-    /*fun requestCount(): RequestCount? {
+    fun requestCount(): RequestCount? {
         if (filterService.authenticated()) {
             return deviceRequests.requestCount()
         }
         return null
     }
-*/
+
     /*  @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
       fun organisationsConnection(page: PaginationInput?, where: DeviceRequestWhereInput?): Page<DeviceRequest> {
           val f: PaginationInput = page ?: PaginationInput()

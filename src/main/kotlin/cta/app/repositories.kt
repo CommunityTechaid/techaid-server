@@ -52,8 +52,49 @@ interface ReferringOrganisationRepository: PagingAndSortingRepository<ReferringO
 
 interface ReferringOrganisationContactRepository: PagingAndSortingRepository<ReferringOrganisationContact, Long>,
     QuerydslPredicateExecutor<ReferringOrganisationContact>
+
+interface RequestCount {
+    val phones: Long
+    val laptops: Long
+    val tablets: Long
+    val allInOnes: Long
+    val desktops: Long
+    val other: Long
+    val chromebooks: Long
+    val commsDevices: Long
+}
 interface DeviceRequestRepository: PagingAndSortingRepository<DeviceRequest, Long>,
-    QuerydslPredicateExecutor<DeviceRequest>
+    QuerydslPredicateExecutor<DeviceRequest> {
+    @Query(
+        """
+        SELECT
+            coalesce(sum(src.phones),0) AS phones,
+            coalesce(sum(src.laptops),0) AS laptops,
+            coalesce(sum(src.tablets),0) AS tablets,
+            coalesce(sum(src.allInOnes),0) AS allInOnes,
+            coalesce(sum(src.desktops),0) AS desktops,
+            coalesce(sum(src.other),0) AS other,
+            coalesce(sum(src.chromebooks),0) AS chromebooks,
+            coalesce(sum(src.commsDevices),0) AS commsDevices
+        FROM (
+            SELECT 
+                id,
+                coalesce(phones, 0) as phones,
+                coalesce(laptops, 0) as laptops,
+                coalesce(tablets, 0) as tablets,
+                coalesce(all_in_ones, 0) as allInOnes,
+                coalesce(desktops, 0) as desktops,
+                coalesce(other, 0) as other,
+                coalesce(chromebooks, 0) as chromebooks,
+                coalesce(comms_devices, 0) as commsDevices 
+            FROM device_requests dr
+            WHERE dr.status not in ('REQUEST_COMPLETED','REQUEST_DECLINED','REQUEST_CANCELLED') 
+        ) AS src
+    """,
+        nativeQuery = true
+    )
+    fun requestCount(): RequestCount
+}
 
 interface DeviceRequestNoteRepository: PagingAndSortingRepository<DeviceRequestNote, Long>,
     QuerydslPredicateExecutor<DeviceRequestNote>
