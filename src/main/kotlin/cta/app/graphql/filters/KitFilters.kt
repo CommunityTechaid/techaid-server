@@ -263,7 +263,7 @@ class KitWhereInput(
     var updatedAt: TimeComparison<Instant>? = null,
     var attributes: KitAttributesWhereInput? = null,
     var volunteer: VolunteerWhereInput? = null,
-    var organisation: OrganisationWhereInput? = null,
+    var deviceRequest: DeviceRequestWhereInput? = null,
     var donor: DonorWhereInput? = null,
     var make: TextComparison? = null,
     var deviceVersion: TextComparison? = null,
@@ -290,7 +290,7 @@ class KitWhereInput(
         archived?.let { builder.and(it.build(entity.archived)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         attributes?.let { builder.and(it.build(entity)) }
-        organisation?.let { builder.and(it.build(entity.organisation)) }
+        deviceRequest?.let { builder.and(it.build(entity.deviceRequest)) }
         volunteer?.let {
             builder.and(JPAExpressions.selectOne().from(entity.volunteers, QKitVolunteer.kitVolunteer)
                 .where(it.build(QKitVolunteer.kitVolunteer.volunteer)).exists())

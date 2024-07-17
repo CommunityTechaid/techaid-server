@@ -87,31 +87,8 @@ class Volunteer(
     var attributes: VolunteerAttributes = VolunteerAttributes(),
     @JsonIgnore
     @OneToMany(mappedBy = "volunteer", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
-    var kits: MutableSet<KitVolunteer> = mutableSetOf(),
-    @OneToMany(
-        mappedBy = "volunteer",
-        fetch = FetchType.LAZY,
-        cascade = [CascadeType.ALL],
-        orphanRemoval = false
-    )
-    var organisations: MutableSet<Organisation> = mutableSetOf()
-) : BaseEntity() {
-    fun addOrganisation(org: Organisation) {
-        organisations.add(org)
-        org.volunteer = this
-    }
-
-    fun removeOrganisation(org: Organisation) {
-        organisations.removeIf {
-            if (org == it) {
-                org.volunteer = null
-                true
-            } else {
-                false
-            }
-        }
-    }
-}
+    var kits: MutableSet<KitVolunteer> = mutableSetOf()
+) : BaseEntity()
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class VolunteerAttributes(
@@ -251,8 +228,8 @@ class Kit(
     @JoinColumn(name = "donor_id")
     var donor: Donor? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organisation_id")
-    var organisation: Organisation? = null,
+    @JoinColumn(name = "device_request_id")
+    var deviceRequest: DeviceRequest? = null,
     @NotAudited
     @JsonIgnore
     @OneToMany(mappedBy = "kit", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
@@ -514,79 +491,6 @@ class EmailTemplate(
 )
 
 @Entity
-@Table(name = "organisations")
-class Organisation(
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "organisation-seq-generator")
-    @SequenceGenerator(
-        name = "organisation-seq-generator",
-        sequenceName = "organisation_sequence",
-        allocationSize = 1
-    )
-    var id: Long = 0,
-    var name: String,
-    // var website: String,
-    var contact: String,
-    var phoneNumber: String,
-    var email: String,
-    var address: String,
-    var createdAt: Instant = Instant.now(),
-    @Formula(
-        """
-        (SELECT COUNT(*) FROM kits k where k.organisation_id = id)
-    """
-    )
-    var kitCount: Int = 0,
-    @UpdateTimestamp
-    var updatedAt: Instant = Instant.now(),
-    @Type(type = "jsonb")
-    @Column(columnDefinition = "jsonb")
-    var attributes: OrganisationAttributes = OrganisationAttributes(),
-    @Type(type = "yes_no")
-    var archived: Boolean = false,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "volunteer_id")
-    var volunteer: Volunteer? = null, //Not actually used by Organisations, but leaving to avoid *potential* breaking changes with the front-end
-    @OneToMany(
-        mappedBy = "organisation",
-        fetch = FetchType.LAZY,
-        cascade = [CascadeType.ALL],
-        orphanRemoval = false
-    )
-    var kits: MutableSet<Kit> = mutableSetOf()
-) {
-    fun addKit(kit: Kit) {
-        kits.add(kit)
-        kit.organisation = this
-    }
-
-    fun removeKit(kit: Kit) {
-        kits.removeIf {
-            if (kit == it) {
-                kit.organisation = null
-                true
-            } else {
-                false
-            }
-        }
-    }
-}
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-class OrganisationAttributes(
-    var request: Capacity = Capacity(),
-    var alternateRequest: Capacity = Capacity(),
-    var accepts: List<String> = listOf(),
-    var alternateAccepts: List<String> = listOf(),
-    var notes: String = "",
-    var details: String = "",
-    var isIndividual: Boolean = false,
-    var isResident: Boolean = false,
-    var needs: List<String> = listOf(),
-    var clientRef: String = ""
-)
-
-@Entity
 @Table(name = "referring_organisations")
 class ReferringOrganisation(
     @Id
@@ -751,8 +655,31 @@ class DeviceRequest(
         mappedBy = "deviceRequest"
     )
     @OrderBy(clause = "updatedAt DESC")
-    var deviceRequestNotes: MutableSet<DeviceRequestNote> = mutableSetOf()
-)
+    var deviceRequestNotes: MutableSet<DeviceRequestNote> = mutableSetOf(),
+    @OneToMany(
+        mappedBy = "deviceRequest",
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = false
+    )
+    var kits: MutableSet<Kit> = mutableSetOf()
+){
+    fun addKit(kit: Kit) {
+        kits.add(kit)
+        kit.deviceRequest = this
+    }
+
+    fun removeKit(kit: Kit) {
+        kits.removeIf {
+            if (kit == it) {
+                kit.deviceRequest = null
+                true
+            } else {
+                false
+            }
+        }
+    }
+}
 
 @Entity
 @Table(name = "device_requests_notes")

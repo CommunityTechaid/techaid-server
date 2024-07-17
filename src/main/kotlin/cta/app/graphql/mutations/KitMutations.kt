@@ -11,8 +11,8 @@ import cta.app.KitStorageType
 import cta.app.KitType
 import cta.app.KitVolunteerType
 import cta.app.Note
-import cta.app.Organisation
-import cta.app.OrganisationRepository
+import cta.app.DeviceRequest
+import cta.app.DeviceRequestRepository
 import cta.app.QKit
 import cta.app.Volunteer
 import cta.app.VolunteerRepository
@@ -38,7 +38,7 @@ import javax.validation.constraints.NotNull
 class KitMutations(
     private val kits: KitRepository,
     private val donors: DonorRepository,
-    private val organisations: OrganisationRepository,
+    private val deviceRequests: DeviceRequestRepository,
     private val volunteers: VolunteerRepository,
     private val locationService: LocationService,
     private val filterService: FilterService,
@@ -154,13 +154,12 @@ class KitMutations(
                 user.addKit(this)
             }
 
-            if (data.organisationId == null) {
-                organisation?.removeKit(this)
-            } else if (data.organisationId != organisation?.id) {
-                val org = organisations.findById(data.organisationId).toNullable()
-                    ?: throw EntityNotFoundException("Unable to locate an organisation with id: ${data.organisationId}")
-                org.addKit(this)
-                // notifyOrganisation(this.volunteers.map { it.volunteer }, this, org)
+            if (data.deviceRequestId == null) {
+                deviceRequest?.removeKit(this)
+            } else if (data.deviceRequestId != deviceRequest?.id) {
+                val devRequest = deviceRequests.findById(data.deviceRequestId).toNullable()
+                    ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.deviceRequestId}")
+                    devRequest.addKit(this)
             }
 
             if (data.note != null) {
@@ -207,83 +206,6 @@ class KitMutations(
 
         return data.apply(entity);
     }
-
-/*     fun notifyAssigned(volunteers: List<Volunteer>, kit: Kit, type: KitVolunteerType) {
-        val user = filterService.userDetails()
-        volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
-            val msg = createEmail(
-                to = v.email,
-                from = mailService.address,
-                subject = "Community Techaid: Device Assigned",
-                bodyText = """
-                    Hi ${v.name},
-                    
-                    ${user.name} assigned you to the ${kit.type} device (${kit.model}) https://app.communitytechaid.org.uk/dashboard/devices/${kit.id} as a { ${type.name} }.
-                    
-                    Community Techaid
-                """.trimIndent(),
-                mimeType = "plain",
-                charset = "UTF-8"
-            )
-            try {
-                mailService.sendMessage(msg)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    } */
-
-/*     fun notifyStatus(volunteers: List<Volunteer>, kit: Kit, previousStatus: KitStatus) {
-        val user = filterService.userDetails()
-        volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
-            val msg = createEmail(
-                to = v.email,
-                from = mailService.address,
-                subject = "Community Techaid: Device Status Updated",
-                bodyText = """
-                    Hi ${v.name},
-                    
-                    ${user.name} updated the status of ${kit.type} device (${kit.model}) https://app.communitytechaid.org.uk/dashboard/devices/${kit.id} 
-                    from { $previousStatus } to ${kit.status}
-                    
-                    Community Techaid
-                """.trimIndent(),
-                mimeType = "plain",
-                charset = "UTF-8"
-            )
-            try {
-                mailService.sendMessage(msg)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    } */
-
-    /* fun notifyOrganisation(volunteers: List<Volunteer>, kit: Kit, org: Organisation) {
-        val user = filterService.userDetails()
-        volunteers.filter { it.email.isNotBlank() && it.email != user.email }.forEach { v ->
-            val msg = createEmail(
-                to = v.email,
-                from = mailService.address,
-                subject = "Community Techaid: Device Assigned to Organisation",
-                bodyText = """
-                    Hi ${v.name},
-                    
-                    ${user.name} assigned the ${kit.type} device (${kit.model}) https://app.communitytechaid.org.uk/dashboard/devices/${kit.id} 
-                    to the organisation { ${org.name} } to https://app.communitytechaid.org.uk/dashboard/organisations/${org.id} 
-                    
-                    Community Techaid
-                """.trimIndent(),
-                mimeType = "plain",
-                charset = "UTF-8"
-            )
-            try {
-                mailService.sendMessage(msg)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        } 
-    } */
 
     @PreAuthorize("hasAnyAuthority('delete:kits')")
     fun deleteKit(id: Long): Boolean {
@@ -421,7 +343,7 @@ data class UpdateKitInput(
     val technicianIds: List<Long>? = null, //No longer used
     val logisticIds: List<Long>? = null, //No longer used
     val donorId: Long? = null,
-    val organisationId: Long? = null,
+    val deviceRequestId: Long? = null,
     val archived: Boolean? = null,
     val note: CreateNoteInput? = null,
     val make: String? = null,

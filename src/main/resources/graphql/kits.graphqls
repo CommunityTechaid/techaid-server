@@ -127,7 +127,7 @@ type Kit {
     donor: Donor
     volunteers: [KitVolunteer!]
     coordinates: Coordinates
-    organisation: Organisation
+    deviceRequest: DeviceRequest
     notes: [Note]!,
     make: String,
     deviceVersion: String,
@@ -224,7 +224,7 @@ input KitWhereInput {
     attributes: KitAttributesWhereInput
     volunteer: VolunteerWhereInput
     donor: DonorWhereInput
-    organisation: OrganisationWhereInput
+    deviceRequest: DeviceRequestWhereInput
     make: String,
     deviceVersion: String,
     serialNo: TextComparison,
@@ -321,7 +321,7 @@ input UpdateKitInput {
     technicianIds: [ID]
     logisticIds: [ID]
     donorId: ID
-    organisationId: ID
+    deviceRequestId: ID
     note: CreateNoteInput,
     make: String,
     deviceVersion: String,

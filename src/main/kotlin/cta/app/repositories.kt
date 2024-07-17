@@ -41,50 +41,6 @@ interface KitRepository : PagingAndSortingRepository<Kit, Long>, QuerydslPredica
     fun typeCount(): List<KitTypeCount>
 }
 
-interface RequestCount {
-    val phones: Long
-    val laptops: Long
-    val tablets: Long
-    val allInOnes: Long
-    val desktops: Long
-    val other: Long
-    val chromebooks: Long
-    val commsDevices: Long
-}
-
-interface OrganisationRepository : PagingAndSortingRepository<Organisation, Long>,
-    QuerydslPredicateExecutor<Organisation> {
-    @Query(
-        """
-        SELECT
-            coalesce(sum(src.phones),0) AS phones,
-            coalesce(sum(src.laptops),0) AS laptops,
-            coalesce(sum(src.tablets),0) AS tablets,
-            coalesce(sum(src.allInOnes),0) AS allInOnes,
-            coalesce(sum(src.desktops),0) AS desktops,
-            coalesce(sum(src.other),0) AS other,
-            coalesce(sum(src.chromebooks),0) AS chromebooks,
-            coalesce(sum(src.commsDevices),0) AS commsDevices
-        FROM (
-          SELECT 
-              id,
-              coalesce((attributes->'request'->'phones')\:\:int +  (attributes->'alternateRequest'->'phones')\:\:int, 0) as phones,
-              coalesce((attributes->'request'->'laptops')\:\:int +  (attributes->'alternateRequest'->'laptops')\:\:int, 0) as laptops,
-              coalesce((attributes->'request'->'tablets')\:\:int +  (attributes->'alternateRequest'->'tablets')\:\:int, 0) as tablets,
-              coalesce((attributes->'request'->'allInOnes')\:\:int +  (attributes->'alternateRequest'->'allInOnes')\:\:int, 0) as allInOnes,
-              coalesce((attributes->'request'->'desktops')\:\:int +  (attributes->'alternateRequest'->'desktops')\:\:int, 0) as desktops,
-              coalesce((attributes->'request'->'other')\:\:int +  (attributes->'alternateRequest'->'other')\:\:int, 0) as other,
-              coalesce((attributes->'request'->'chromebooks')\:\:int +  (attributes->'alternateRequest'->'chromebooks')\:\:int, 0) as chromebooks,
-              coalesce((attributes->'request'->'commsDevices')\:\:int +  (attributes->'alternateRequest'->'commsDevices')\:\:int, 0) as commsDevices 
-          FROM organisations org
-          WHERE org.archived != 'Y' 
-        ) AS src
-    """,
-        nativeQuery = true
-    )
-    fun requestCount(): RequestCount
-}
-
 interface EmailTemplateRepository : PagingAndSortingRepository<EmailTemplate, Long>,
     QuerydslPredicateExecutor<EmailTemplate>
 
