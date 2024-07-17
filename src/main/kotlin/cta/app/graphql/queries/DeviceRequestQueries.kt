@@ -46,7 +46,7 @@ class DeviceRequestQueries(
     }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
-    fun deviceRequestConnections(page: PaginationInput?, where: DeviceRequestWhereInput?): Page<DeviceRequest> {
+    fun deviceRequestConnection(page: PaginationInput?, where: DeviceRequestWhereInput?): Page<DeviceRequest> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
             return deviceRequests.findAll(f.create())

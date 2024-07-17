@@ -153,7 +153,7 @@ enum DeviceRequestStatus{
 
 
 extend type Query {
-    deviceRequestConnections(page: PaginationInput, where: DeviceRequestWhereInput): DeviceRequestPage
+    deviceRequestConnection(page: PaginationInput, where: DeviceRequestWhereInput): DeviceRequestPage
     deviceRequests(where: DeviceRequestWhereInput!, orderBy: [KeyValuePair!]): [DeviceRequest!]!
     deviceRequest(where: DeviceRequestWhereInput!): DeviceRequest
 }
