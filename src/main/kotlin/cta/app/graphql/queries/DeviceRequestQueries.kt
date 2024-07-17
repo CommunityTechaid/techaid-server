@@ -3,6 +3,7 @@ package cta.app.graphql.queries
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestRepository
+import cta.app.RequestCount
 import cta.app.graphql.filters.DeviceRequestWhereInput
 import cta.app.services.FilterService
 import cta.graphql.KeyValuePair
