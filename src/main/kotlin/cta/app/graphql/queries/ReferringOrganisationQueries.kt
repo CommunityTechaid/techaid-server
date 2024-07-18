@@ -35,6 +35,22 @@ class ReferringOrganisationQueries(
         }
         return referringOrganisations.findAll(where.build(), f.create())
     }
+
+    fun referringOrganisationsPublic(where: ReferringOrganisationWhereInput, orderBy: MutableList<KeyValuePair>?): List<ReferringOrganisationPublic> {
+        return if (orderBy != null) {
+            val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
+            referringOrganisations.findAll(where.build(), sort).map{ReferringOrganisationPublic(it.id, it.name)}.toList()
+        } else {
+            referringOrganisations.findAll(where.build()).map{ReferringOrganisationPublic(it.id, it.name)}.toList()
+        }
+    }
+
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     fun referringOrganisation(where: ReferringOrganisationWhereInput): Optional<ReferringOrganisation> = referringOrganisations.findOne(where.build())
+}
+
+data class ReferringOrganisationPublic(
+    val id: Long,
+    val name: String
+){
 }

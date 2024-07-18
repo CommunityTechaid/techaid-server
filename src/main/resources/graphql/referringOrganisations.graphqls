@@ -38,6 +38,11 @@ type ReferringOrganisationPage {
     number: Int
 }
 
+type ReferringOrganisationPublic {
+    id: ID
+    name: String
+}
+
 input CreateReferringOrganisationInput {
     name: String
     domain: String
@@ -73,6 +78,7 @@ input ReferringOrganisationWhereInput {
 
 extend type Query {
     referringOrganisationsConnection(page: PaginationInput, where: ReferringOrganisationWhereInput): ReferringOrganisationPage
+    referringOrganisationsPublic(where: ReferringOrganisationWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationPublic]
     referringOrganisations(where: ReferringOrganisationWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisation!]!
     referringOrganisation(where: ReferringOrganisationWhereInput!): ReferringOrganisation
 }
