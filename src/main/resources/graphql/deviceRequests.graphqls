@@ -5,9 +5,10 @@ type DeviceRequest {
     createdAt: String
     updatedAt: String
     referringOrganisationContact: ReferringOrganisationContact
-    isSales: Boolean,
-    clientRef: String,
+    isSales: Boolean
+    clientRef: String
     details: String
+    kitCount: Int
     deviceRequestNeeds: DeviceRequestNeeds
     deviceRequestNotes: [DeviceRequestNote]
 }

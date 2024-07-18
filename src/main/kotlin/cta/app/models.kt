@@ -646,6 +646,12 @@ class DeviceRequest(
     var isSales: Boolean = false,
     var clientRef: String,
     var details: String,
+    @Formula(
+        """
+        (SELECT COUNT(*) FROM kits k where k.organisation_id = id)
+    """
+    )
+    var kitCount: Int = 0,
     @Embedded
     var deviceRequestNeeds: DeviceRequestNeeds,
     @OneToMany(
