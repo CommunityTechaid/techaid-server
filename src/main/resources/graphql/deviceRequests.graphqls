@@ -100,7 +100,7 @@ input UpdateDeviceRequestInput {
     id: ID!
     status: DeviceRequestStatus
     deviceRequestItems: DeviceRequestItemsInput
-    referringOrganisationContact: ID!
+    referringOrganisationContactId: ID
     isSales: Boolean,
     clientRef: String,
     details: String
