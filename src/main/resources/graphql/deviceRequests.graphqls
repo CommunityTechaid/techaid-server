@@ -9,6 +9,7 @@ type DeviceRequest {
     clientRef: String
     details: String
     kitCount: Int
+    kits: [Kit!]
     deviceRequestNeeds: DeviceRequestNeeds
     deviceRequestNotes: [DeviceRequestNote]
 }
