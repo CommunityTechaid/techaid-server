@@ -70,9 +70,20 @@ input ReferringOrganisationContactWhereInput {
     NOT: [ReferringOrganisationContactWhereInput!]
 }
 
+input ReferringOrganisationContactPublicWhereInput{
+    fullName: TextComparison
+    email: TextComparison
+    referringOrganisation: ReferringOrganisationWhereInput
+    AND: [ReferringOrganisationContactPublicWhereInput!]
+    OR: [ReferringOrganisationContactPublicWhereInput!]
+    NOT: [ReferringOrganisationContactPublicWhereInput!]
+}
+
+
 
 extend type Query {
     referringOrganisationContactsConnection(page: PaginationInput, where: ReferringOrganisationContactWhereInput): ReferringOrganisationContactPage
+    referringOrganisationContactsPublic(where: ReferringOrganisationContactPublicWhereInput!, orderBy: [KeyValuePair!]): [ID]
     referringOrganisationContacts(where: ReferringOrganisationContactWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationContact!]!
     referringOrganisationContact(where: ReferringOrganisationContactWhereInput!): ReferringOrganisationContact
 }

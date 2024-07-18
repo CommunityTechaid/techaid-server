@@ -82,7 +82,7 @@ data class UpdateReferringOrganisationContactInput(
     @get:NotNull
     val id: Long,
     @get:NotBlank
-    var firstName: String,
+    var fullName: String,
     var address: String? = null,
     @get:NotBlank
     var email: String = "",
@@ -94,7 +94,7 @@ data class UpdateReferringOrganisationContactInput(
     fun apply(entity: ReferringOrganisationContact): ReferringOrganisationContact {
         val self = this
         return entity.apply {
-            firstName = self.firstName
+            fullName = self.fullName
             address  = self.address ?: ""
             email = self.email
             phoneNumber = self.phoneNumber

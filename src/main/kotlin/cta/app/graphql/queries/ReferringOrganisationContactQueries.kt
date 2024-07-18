@@ -39,6 +39,18 @@ class ReferringOrganisationContactQueries(
         return referringOrganisationContacts.findAll(where.build(), f.create())
     }
 
+    fun referringOrganisationContactsPublic(
+        where: ReferringOrganisationContactWhereInput,
+        orderBy: MutableList<KeyValuePair>?
+    ): List<Long> {
+        return if (orderBy != null) {
+            val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
+            referringOrganisationContacts.findAll(where.build(), sort).map { it.id }.toList()
+        } else {
+            referringOrganisationContacts.findAll(where.build()).map{ it.id }.toList()
+        }
+    }
+
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     fun referringOrganisationContact(where: ReferringOrganisationContactWhereInput): Optional<ReferringOrganisationContact> =
         referringOrganisationContacts.findOne(where.build())

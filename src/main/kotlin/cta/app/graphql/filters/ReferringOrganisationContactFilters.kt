@@ -53,3 +53,37 @@ class ReferringOrganisationContactWhereInput(
         return builder
     }
 }
+
+data class ReferringOrganisationContactPublicWhereInput(
+    var fullName: TextComparison? = null,
+    var email: TextComparison? = null,
+    var referringOrganisation: ReferringOrganisationWhereInput? = null,
+    var AND: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
+    var OR: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
+    var NOT: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf()
+) {
+    fun build(entity: QReferringOrganisationContact = QReferringOrganisationContact.referringOrganisationContact): BooleanBuilder {
+        val builder = BooleanBuilder()
+        fullName?.let { builder.and(it.build(entity.fullName)) }
+        email?.let { builder.and(it.build(entity.email)) }
+        referringOrganisation?.let { builder.and(it.build(entity.referringOrganisation)) }
+        if (AND.isNotEmpty()) {
+            AND.forEach {
+                builder.and(it.build(entity))
+            }
+        }
+
+        if (OR.isNotEmpty()) {
+            OR.forEach {
+                builder.or(it.build(entity))
+            }
+        }
+
+        if (NOT.isNotEmpty()) {
+            NOT.forEach {
+                builder.andNot(it.build(entity))
+            }
+        }
+        return builder
+    }
+}
