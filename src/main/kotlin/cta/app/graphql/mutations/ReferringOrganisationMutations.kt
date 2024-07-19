@@ -46,14 +46,13 @@ data class CreateReferringOrganisationInput(
     var domain: String?,
     var website: String?,
     var phoneNumber: String?,
-    @get:NotBlank
-    var address: String
+    var address: String?
 ) {
     val entity by lazy {
         val org = ReferringOrganisation(
             name = name,
             domain = domain ?: "",
-            address = address,
+            address = address?: "",
             website = website ?: "",
             phoneNumber = phoneNumber?: ""
         )
