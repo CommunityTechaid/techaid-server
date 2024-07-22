@@ -5,6 +5,7 @@ import com.querydsl.core.types.dsl.EnumPath
 import cta.app.DeviceRequestStatus
 import cta.app.KitStatus
 import cta.app.QDeviceRequest
+import cta.graphql.BooleanComparison
 import cta.graphql.LongComparision
 import cta.graphql.TimeComparison
 import java.time.Instant
@@ -12,6 +13,7 @@ import java.time.Instant
 class DeviceRequestWhereInput(
     var id: LongComparision? = null,
     //var deviceRequestItems: DeviceRequestItemsWhereInput? = null,
+    var isSales: BooleanComparison? = null,
     var status: DeviceRequestStatusComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
@@ -25,7 +27,7 @@ class DeviceRequestWhereInput(
         id?.let { builder.and(it.build(entity.id)) }
         //deviceRequestItems?.let { builder.and(it.build(entity)) }
         status?.let { builder.and(it.build(entity.status)) }
-
+        isSales?.let {builder.and(it.build(entity.isSales))}
         referringOrganisationContact?.let { builder.and(it.build(entity.referringOrganisationContact)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
