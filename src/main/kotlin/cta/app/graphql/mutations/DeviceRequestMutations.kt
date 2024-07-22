@@ -92,7 +92,7 @@ class DeviceRequestMutations(
         val emailBody = """
 Dear ${request.referringOrganisationContact.fullName} of ${request.referringOrganisationContact.referringOrganisation.name}<br>
 <br>
-<b>Your Community TechAid reference: ${request.id}. Your client reference: ${request.clientRef}. Your device request(s): <br>
+<b>Your Community TechAid request # ${request.id}. Your client reference: ${request.clientRef}. Your device request(s): <br>
 <br>
 ${formattedItems} <br>
 </b> <br>
