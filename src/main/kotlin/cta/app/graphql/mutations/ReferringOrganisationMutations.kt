@@ -43,16 +43,12 @@ class ReferringOrganisationMutations(
 data class CreateReferringOrganisationInput(
     @get:NotBlank
     var name: String,
-    var domain: String?,
     var website: String?,
-    var phoneNumber: String?,
-    var address: String?
+    var phoneNumber: String?
 ) {
     val entity by lazy {
         val org = ReferringOrganisation(
             name = name,
-            domain = domain ?: "",
-            address = address?: "",
             website = website ?: "",
             phoneNumber = phoneNumber?: ""
         )
@@ -65,19 +61,14 @@ data class UpdateReferringOrganisationInput(
     val id: Long,
     @get:NotBlank
     var name: String,
-    var domain: String? = null,
     var website: String? = null,
     var phoneNumber: String,
-    @get:NotBlank
-    var address: String,
     val archived: Boolean? = null
 ) {
     fun apply(entity: ReferringOrganisation): ReferringOrganisation {
         val self = this
         return entity.apply {
             name = self.name
-            address = self.address
-            domain = self.domain
             website = self.website
             phoneNumber = self.phoneNumber
             archived = self.archived ?: archived

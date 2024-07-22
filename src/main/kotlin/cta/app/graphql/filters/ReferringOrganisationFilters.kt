@@ -11,8 +11,6 @@ import java.time.Instant
 class ReferringOrganisationWhereInput(
     var id: LongComparision? = null,
     var name: TextComparison? = null,
-    var domain: TextComparison? = null,
-    var address: TextComparison? = null,
     var website: TextComparison? = null,
     var archived: BooleanComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
@@ -25,8 +23,6 @@ class ReferringOrganisationWhereInput(
         val builder = BooleanBuilder()
         id?.let { builder.and(it.build(entity.id)) }
         name?.let { builder.and(it.build(entity.name)) }
-        domain?.let { builder.and(it.build(entity.domain)) }
-        address?.let { builder.and(it.build(entity.address)) }
         website?.let {builder.and(it.build(entity.website))}
         archived?.let { builder.and(it.build(entity.archived)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }

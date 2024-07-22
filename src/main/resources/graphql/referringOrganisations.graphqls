@@ -1,8 +1,6 @@
 type ReferringOrganisation {
     id: ID
     name: String
-    domain: String
-    address: String
     website: String
     phoneNumber: String
     requestCount: Int
@@ -54,18 +52,14 @@ input CreateReferringOrganisationInput {
 input UpdateReferringOrganisationInput {
     id: ID
     name: String
-    domain: String!
     website: String!
     phoneNumber: String
-    address: String
     archived: Boolean!
 }
 
 input ReferringOrganisationWhereInput {
     id: LongComparison
     name: TextComparison
-    address: TextComparison
-    domain: TextComparison
     website: TextComparison
     archived: BooleanComparison
     createdAt: TimeComparison
