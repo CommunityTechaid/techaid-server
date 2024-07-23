@@ -7,6 +7,7 @@ import cta.app.KitStatus
 import cta.app.QDeviceRequest
 import cta.graphql.BooleanComparison
 import cta.graphql.LongComparision
+import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
 import java.time.Instant
 
@@ -14,6 +15,7 @@ class DeviceRequestWhereInput(
     var id: LongComparision? = null,
     //var deviceRequestItems: DeviceRequestItemsWhereInput? = null,
     var isSales: BooleanComparison? = null,
+    var clientRef: TextComparison? = null,
     var status: DeviceRequestStatusComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
@@ -28,6 +30,7 @@ class DeviceRequestWhereInput(
         //deviceRequestItems?.let { builder.and(it.build(entity)) }
         status?.let { builder.and(it.build(entity.status)) }
         isSales?.let {builder.and(it.build(entity.isSales))}
+        clientRef?.let {builder.and(it.build(entity.clientRef))}
         referringOrganisationContact?.let { builder.and(it.build(entity.referringOrganisationContact)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
