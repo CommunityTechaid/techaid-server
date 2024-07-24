@@ -51,7 +51,10 @@ interface ReferringOrganisationRepository: PagingAndSortingRepository<ReferringO
     QuerydslPredicateExecutor<ReferringOrganisation>
 
 interface ReferringOrganisationContactRepository: PagingAndSortingRepository<ReferringOrganisationContact, Long>,
-    QuerydslPredicateExecutor<ReferringOrganisationContact>
+    QuerydslPredicateExecutor<ReferringOrganisationContact>{
+
+        fun findOneByFullNameAndEmailAndReferringOrganisation(fullName: String, email: String, referringOrganisation: ReferringOrganisation): ReferringOrganisationContact?
+    }
 
 interface RequestCount {
     val phones: Long

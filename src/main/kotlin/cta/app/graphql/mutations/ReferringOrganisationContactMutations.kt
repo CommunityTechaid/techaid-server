@@ -29,7 +29,21 @@ class ReferringOrganisationContactMutations(
         val referringOrganisation = referringOrganisations.findById(data.referringOrganisation).toNullable()
             ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
 
-        val referringOrganisationContact = ReferringOrganisationContact (
+        /**
+         * We add another level of check here to verify that a user with the same full name and email does not already exist.
+         * We do this to ensure that no duplicate users have the same full name and email ID due to errors in the frontend
+         */
+        var referringOrganisationContact: ReferringOrganisationContact?;
+        try {
+            referringOrganisationContact = referringOrganisationContacts.findOneByFullNameAndEmailAndReferringOrganisation(data.fullName, data.email, referringOrganisation)
+            if (referringOrganisationContact != null){
+                return referringOrganisationContact
+            }
+        }catch (exception: Exception){
+            throw RuntimeException("There was an error when saving the details of user " + data.fullName + ". Please contact CTA.")
+        }
+
+        referringOrganisationContact = ReferringOrganisationContact (
             fullName = data.fullName,
             address = data.address ?: "",
             email = data.email,
