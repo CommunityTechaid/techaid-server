@@ -59,14 +59,14 @@ class ReferringOrganisationContactMutations(
         val entity = referringOrganisationContacts.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a organisation contact with id: ${data.id}")
 
-        if (entity.referringOrganisation.id != data.referringOrganisation){
-            val referringOrganisation = referringOrganisations.findById(data.referringOrganisation).toNullable()
-                ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
-
-            entity.referringOrganisation = referringOrganisation
+        return data.apply(entity).apply {
+            if (entity.referringOrganisation.id != data.referringOrganisationId){
+                val referringOrganisation = referringOrganisations.findById(data.referringOrganisationId).toNullable()
+                    ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
+    
+                referringOrganisation.addContact(this);
+            }
         }
-
-        return data.apply(entity)
     }
 
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
@@ -102,7 +102,7 @@ data class UpdateReferringOrganisationContactInput(
     var email: String = "",
     var phoneNumber: String,
     @get:NotNull
-    var referringOrganisation: Long,
+    var referringOrganisationId: Long,
     val archived: Boolean? = null
 ) {
     fun apply(entity: ReferringOrganisationContact): ReferringOrganisationContact {

@@ -51,7 +51,7 @@ input UpdateReferringOrganisationContactInput {
     address: String
     email: String
     phoneNumber: String
-    referringOrganisation: ID
+    referringOrganisationId: ID
     archived: Boolean
 }
 

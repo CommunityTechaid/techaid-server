@@ -537,8 +537,12 @@ class ReferringOrganisation(
     )
     @OrderBy(clause = "updatedAt DESC")
     var referringOrganisationNotes: MutableSet<ReferringOrganisationNote> = mutableSetOf()
-
-)
+) {
+    fun addContact(contact: ReferringOrganisationContact) {
+        referringOrganisationContacts.add(contact)
+        contact.referringOrganisation = this
+    }
+}
 
 
 @Entity
