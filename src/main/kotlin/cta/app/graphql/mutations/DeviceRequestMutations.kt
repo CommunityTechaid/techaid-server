@@ -98,9 +98,9 @@ ${formattedItems} <br>
 </b> <br>
 Thank you for your request. We need you to complete our recipient data form <a href="${typeFormURL}">here</a>.<br> 
 <br>
-The request should be for <b>one individual</b> and they must be a resident of Lambeth or Southwark. Please make <b>no more than 3 requests</b> at a time. If you have made more than 3, we will have to close your other requests down and ask that you resubmit them when your first 3 have been completed. <br>
-<br>            
-Your request will take between 4-6 weeks to fulfil after we have received your data form. If we do not have this back within 7 days we will be unable to continue with your request and it will be closed down. <br>
+Your request will take between 4-6 weeks to fulfil after we have received your data form. If we do not have this back within 7 days we will be unable to continue with your request and it will be closed down.<br>
+<br>
+We take requests from charities, schools and other community organisations. The request should be for <b>1 individual</b> and they must be a resident of Lambeth or Southwark. Due to the demand on our service, you can only request 1 device per client and <b>only make 3 requests </b>at a time.<br>
 <br>
 If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7724. <br>
 <br>
