@@ -43,10 +43,8 @@ type ReferringOrganisationPublic {
 
 input CreateReferringOrganisationInput {
     name: String
-    domain: String
     website: String
     phoneNumber: String
-    address: String
 }
 
 input UpdateReferringOrganisationInput {
