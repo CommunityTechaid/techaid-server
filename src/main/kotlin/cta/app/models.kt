@@ -503,7 +503,7 @@ class ReferringOrganisation(
     var id: Long = 0,
     var name: String,
     var website: String? = null,
-    var phoneNumber: String,
+    var phoneNumber: String? = null,
     @Formula(
         """
         (SELECT COUNT(*) 
