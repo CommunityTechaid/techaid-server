@@ -9,9 +9,9 @@ import cta.app.DeviceRequestNoteRepository
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
 import cta.app.ReferringOrganisationContactRepository
-import cta.app.services.createEmail
 import cta.app.services.FilterService
 import cta.app.services.MailService
+import cta.app.services.createEmail
 import cta.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
@@ -40,7 +40,7 @@ class DeviceRequestMutations(
         throw EntityNotFoundException("No referring contact found with id: ${data.referringOrganisationContact}")
 
         //Throw an exception if DEVICE_REQUEST_LIMIT is reached
-        if (referringOrganisationContact.requestCount == DEVICE_REQUEST_LIMIT){
+        if (referringOrganisationContact.requestCount > DEVICE_REQUEST_LIMIT){
             throw RuntimeException("Could not create new requests. This user already has ${DEVICE_REQUEST_LIMIT} requests open")
         }
 

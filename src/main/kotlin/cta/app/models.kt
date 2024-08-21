@@ -571,7 +571,10 @@ class ReferringOrganisationContact(
     // A better way would be to use the DeviceRequestStatus enum here but for some reason, it is not considered a constant expression.
     @Formula(
         """
-         (SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id AND d.status = 'NEW')
+         (
+            SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id 
+            AND d.status NOT IN ('REQUEST_CANCELLED','REQUEST_COMPLETED','REQUEST_DECLINED')
+         )
     """
     )
     var requestCount: Int = 0,
