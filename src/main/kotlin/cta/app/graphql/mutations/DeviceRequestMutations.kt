@@ -163,10 +163,10 @@ val emailFooter = """
 
         return data.apply(entity).apply {
 
-            if (data.referringOrganisationContact != null) {
+            if (data.referringOrganisationContactId != null) {
 
                 val referringOrganisationContact =
-                    referringOrganisationContacts.findById(data.referringOrganisationContact).toNullable()
+                    referringOrganisationContacts.findById(data.referringOrganisationContactId).toNullable()
                         ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
                 entity.referringOrganisationContact = referringOrganisationContact
             }
@@ -255,7 +255,7 @@ data class UpdateDeviceRequestInput(
     @get:NotNull
     val id: Long,
     val deviceRequestItems: DeviceRequestItemsInput,
-    val referringOrganisationContact: Long? = null,
+    val referringOrganisationContactId: Long? = null,
     val status: DeviceRequestStatus = DeviceRequestStatus.NEW,
     val isSales: Boolean?,
     val clientRef: String,
