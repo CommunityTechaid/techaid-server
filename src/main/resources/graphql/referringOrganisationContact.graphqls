@@ -74,6 +74,7 @@ input ReferringOrganisationContactPublicWhereInput{
     fullName: TextComparison
     email: TextComparison
     referringOrganisation: ReferringOrganisationWhereInput
+    archived: BooleanComparison
     AND: [ReferringOrganisationContactPublicWhereInput!]
     OR: [ReferringOrganisationContactPublicWhereInput!]
     NOT: [ReferringOrganisationContactPublicWhereInput!]

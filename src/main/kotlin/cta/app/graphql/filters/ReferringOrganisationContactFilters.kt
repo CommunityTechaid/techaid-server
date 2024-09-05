@@ -58,6 +58,7 @@ data class ReferringOrganisationContactPublicWhereInput(
     var fullName: TextComparison? = null,
     var email: TextComparison? = null,
     var referringOrganisation: ReferringOrganisationWhereInput? = null,
+    var archived: BooleanComparison? = null,
     var AND: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
     var OR: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
     var NOT: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf()
@@ -67,6 +68,7 @@ data class ReferringOrganisationContactPublicWhereInput(
         fullName?.let { builder.and(it.build(entity.fullName)) }
         email?.let { builder.and(it.build(entity.email)) }
         referringOrganisation?.let { builder.and(it.build(entity.referringOrganisation)) }
+        archived?.let { builder.and(it.build(entity.archived)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))
