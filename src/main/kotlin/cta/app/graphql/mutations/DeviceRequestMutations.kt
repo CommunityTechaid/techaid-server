@@ -40,7 +40,7 @@ class DeviceRequestMutations(
         throw EntityNotFoundException("No referring contact found with id: ${data.referringOrganisationContact}")
 
         //Throw an exception if DEVICE_REQUEST_LIMIT is reached
-        if (referringOrganisationContact.requestCount > DEVICE_REQUEST_LIMIT){
+        if (referringOrganisationContact.requestCount >= DEVICE_REQUEST_LIMIT){
             throw RuntimeException("Could not create new requests. This user already has ${DEVICE_REQUEST_LIMIT} requests open")
         }
 
