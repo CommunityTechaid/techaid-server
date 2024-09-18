@@ -653,7 +653,7 @@ class DeviceRequest(
     var details: String,
     @Formula(
         """
-        (SELECT COUNT(*) FROM kits k where k.organisation_id = id)
+        (SELECT COUNT(*) FROM kits k where k.device_request_id = id)
     """
     )
     var kitCount: Int = 0,
