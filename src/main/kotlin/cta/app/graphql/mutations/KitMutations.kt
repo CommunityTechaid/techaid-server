@@ -361,20 +361,20 @@ data class UpdateKitInput(
         return entity.apply {
             type = self.type
             status = self.status
-            model = self.model
+            model = self.model ?: model
             //location = self.location
             age = self.age
             attributes = self.attributes.apply(entity)
             archived = self.archived ?: archived
-            make = self.make
-            deviceVersion = self.deviceVersion
-            serialNo = self.serialNo
-            storageCapacity = self.storageCapacity
-            typeOfStorage = self.typeOfStorage
-            ramCapacity = self.ramCapacity
-            cpuType = self.cpuType
-            tpmVersion = self.tpmVersion
-            cpuCores = self.cpuCores
+            make = self.make ?: make
+            deviceVersion = self.deviceVersion ?: deviceVersion
+            serialNo = self.serialNo ?: serialNo
+            storageCapacity = self.storageCapacity ?: storageCapacity
+            typeOfStorage = self.typeOfStorage ?: (typeOfStorage ?: KitStorageType.UNKNOWN)
+            ramCapacity = self.ramCapacity ?: ramCapacity
+            cpuType = self.cpuType ?: cpuType
+            tpmVersion = self.tpmVersion ?: tpmVersion
+            cpuCores = self.cpuCores ?: cpuCores
         }
     }
 }
