@@ -234,9 +234,6 @@ class Kit(
     @JsonIgnore
     @OneToMany(mappedBy = "kit", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
     var volunteers: MutableSet<KitVolunteer> = mutableSetOf(),
-    // @OneToOne(mappedBy = "kit", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    // @PrimaryKeyJoinColumn
-    // var images: KitImage? = null
     var make: String? = null,
     var deviceVersion: String? = null,
     var serialNo: String? = null,
@@ -304,28 +301,6 @@ class Kit(
     override fun hashCode() = 13
 }
 
-@Entity
-@Table(name = "kit_images")
-class KitImage(
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "kit_id")
-    var kit: Kit?,
-    @Id
-    @Column(name = "kit_id")
-    var id: Long? = kit?.id,
-    @Type(type = "jsonb")
-    @Basic(fetch = FetchType.LAZY)
-    var images: MutableList<DeviceImage> = mutableListOf()
-) : BaseEntity() {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is KitImage) return false
-        if (id != other.id) return false
-        return images == other.images
-    }
-}
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 class KitAttributes(
     @JsonIgnore
@@ -341,10 +316,7 @@ class KitAttributes(
     var status: List<String> = listOf(),
     var network: String? = null,
     var otherNetwork: String? = "UNKNOWN"
-) {
-    @get:JsonIgnore
-    val images by lazy { listOf<DeviceImage>() }
-}
+)
 @Entity
 @Table(name = "note")
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
@@ -363,18 +335,6 @@ class Note(
     @ManyToOne(fetch = FetchType.LAZY)
     var kit: Kit
 ) {}
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-class DeviceImage(
-    val image: String,
-    val id: String = RandomStringUtils.random(5, true, true)
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is DeviceImage) return false
-        return id == other.id
-    }
-}
 
 enum class KitType {
     OTHER,

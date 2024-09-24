@@ -2,7 +2,6 @@ package cta.app.graphql.mutations
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import cta.app.DonorRepository
-import cta.app.ImageRepository
 import cta.app.Kit
 import cta.app.KitAttributes
 import cta.app.KitRepository
@@ -43,7 +42,6 @@ class KitMutations(
     private val locationService: LocationService,
     private val filterService: FilterService,
     private val mailService: MailService,
-    private val imgRepo: ImageRepository,
     private val kitService: KitService
 ) : GraphQLMutationResolver {
 
@@ -275,10 +273,7 @@ data class CreateKitInput(
     }
 }
 
-data class KitImageInput(val image: String? = null, val url: String? = null, val id: String? = null)
-
 data class KitAttributesInput(
-    val images: MutableList<KitImageInput>?,
     val otherType: String? = null,
     val state: String,
     val consent: String,
@@ -292,28 +287,6 @@ data class KitAttributesInput(
 ) {
     fun apply(entity: Kit): KitAttributes {
         val self = this
-        // val inputImages = images ?: listOf<KitImageInput>()
-        // val kitImages = entity.images ?: KitImage(entity)
-        // val imageMap = kitImages.images.map { it.id to it }.toMap().toMutableMap()
-        // val newMap = inputImages.filter { !it.id.isNullOrBlank() }.map { it.id!! to it }.toMap()
-        // imageMap.keys.forEach {
-        //     if (!newMap.containsKey(it)) {
-        //         imageMap.remove(it)
-        //     }
-        // }
-        // inputImages?.forEach {
-        //     if (it.image != null) {
-        //         val img = DeviceImage(image = it.image)
-        //         imageMap[img.id] = img
-        //     }
-        // }
-
-        // if (imageMap.isNotEmpty()) {
-        //     kitImages.images = imageMap.values.toMutableList()
-        //     entity.images = kitImages
-        // } else {
-        //     entity.images = null
-        // }
 
         return entity.attributes.apply {
             otherType = self.otherType

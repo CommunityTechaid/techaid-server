@@ -3,7 +3,6 @@ package cta.app.graphql.queries
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.coxautodev.graphql.tools.GraphQLResolver
 import java.util.Optional
-import cta.app.DeviceImage
 import cta.app.Kit
 import cta.app.KitAttributes
 import cta.app.KitRepository
@@ -52,13 +51,6 @@ class KitQueries(
     }
 
     fun kit(where: KitWhereInput): Optional<Kit> = kits.findOne(filterService.kitFilter().and(where.build()))
-}
-
-@Component
-class kitAttributeResolver : GraphQLResolver<KitAttributes> {
-    fun getImages(attr: KitAttributes): List<DeviceImage> {
-        return listOf()
-    }
 }
 
 @Component

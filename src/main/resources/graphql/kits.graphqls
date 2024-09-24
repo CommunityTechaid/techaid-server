@@ -37,17 +37,6 @@ input KitTypeComparison {
     _nin: [KitType]
 }
 
-type KitImage {
-    image: String
-    id: ID
-}
-
-input KitImageInput {
-    image: String
-    id: ID
-    url: String
-}
-
 enum KitStatus {
     DONATION_NEW,
     DONATION_DECLINED,
@@ -163,14 +152,12 @@ type KitAttributes {
     notes: String
     pickupAvailability: String
     credentials: String
-    images: [KitImage!]
     status: [String]
     network: String
     otherNetwork: String
 }
 
 input KitAttributesInput {
-    images: [KitImageInput!]
     state: String
     consent: String
     pickup: String
