@@ -71,7 +71,6 @@ input ReferringOrganisationContactWhereInput {
 }
 
 input ReferringOrganisationContactPublicWhereInput{
-    fullName: TextComparison
     email: TextComparison
     referringOrganisation: ReferringOrganisationWhereInput
     archived: BooleanComparison
@@ -80,11 +79,16 @@ input ReferringOrganisationContactPublicWhereInput{
     NOT: [ReferringOrganisationContactPublicWhereInput!]
 }
 
+type ReferringOrganisationContactPublic{
+    id: ID!
+    fullName: String
+}
+
 
 
 extend type Query {
     referringOrganisationContactsConnection(page: PaginationInput, where: ReferringOrganisationContactWhereInput): ReferringOrganisationContactPage
-    referringOrganisationContactsPublic(where: ReferringOrganisationContactPublicWhereInput!, orderBy: [KeyValuePair!]): [ID]
+    referringOrganisationContactsPublic(where: ReferringOrganisationContactPublicWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationContactPublic]
     referringOrganisationContacts(where: ReferringOrganisationContactWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationContact!]!
     referringOrganisationContact(where: ReferringOrganisationContactWhereInput!): ReferringOrganisationContact
 }

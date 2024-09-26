@@ -3,6 +3,7 @@ package cta.app.graphql.queries
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import cta.app.ReferringOrganisationContact
 import cta.app.ReferringOrganisationContactRepository
+import cta.app.graphql.filters.ReferringOrganisationContactPublicWhereInput
 import cta.app.graphql.filters.ReferringOrganisationContactWhereInput
 import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
@@ -40,14 +41,14 @@ class ReferringOrganisationContactQueries(
     }
 
     fun referringOrganisationContactsPublic(
-        where: ReferringOrganisationContactWhereInput,
+        where: ReferringOrganisationContactPublicWhereInput,
         orderBy: MutableList<KeyValuePair>?
-    ): List<Long> {
+    ): List<ReferringOrganisationContactPublic> {
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
-            referringOrganisationContacts.findAll(where.build(), sort).map { it.id }.toList()
+            referringOrganisationContacts.findAll(where.build(), sort).map { ReferringOrganisationContactPublic(it.id, it.fullName) }.toList()
         } else {
-            referringOrganisationContacts.findAll(where.build()).map{ it.id }.toList()
+            referringOrganisationContacts.findAll(where.build()).map{ ReferringOrganisationContactPublic(it.id, it.fullName) }.toList()
         }
     }
 
@@ -55,3 +56,8 @@ class ReferringOrganisationContactQueries(
     fun referringOrganisationContact(where: ReferringOrganisationContactWhereInput): Optional<ReferringOrganisationContact> =
         referringOrganisationContacts.findOne(where.build())
 }
+
+data class ReferringOrganisationContactPublic(
+    val id: Long,
+    val fullName: String? = null
+){}
