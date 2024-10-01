@@ -1,5 +1,6 @@
 package cta.app.graphql.filters
 
+import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.EnumPath
 import cta.app.DeviceRequestStatus
@@ -9,11 +10,13 @@ import cta.graphql.BooleanComparison
 import cta.graphql.LongComparision
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
+import cta.graphql.IntegerComparision
+import cta.graphql.JsonComparison
 import java.time.Instant
 
 class DeviceRequestWhereInput(
     var id: LongComparision? = null,
-    //var deviceRequestItems: DeviceRequestItemsWhereInput? = null,
+    var deviceRequestItems: DeviceRequestItemsWhereInput? = null,
     var isSales: BooleanComparison? = null,
     var clientRef: TextComparison? = null,
     var status: DeviceRequestStatusComparison? = null,
@@ -27,7 +30,7 @@ class DeviceRequestWhereInput(
     fun build(entity: QDeviceRequest = QDeviceRequest.deviceRequest): BooleanBuilder {
         val builder = BooleanBuilder()
         id?.let { builder.and(it.build(entity.id)) }
-        //deviceRequestItems?.let { builder.and(it.build(entity)) }
+        deviceRequestItems?.let { builder.and(it.build(entity)) }
         status?.let { builder.and(it.build(entity.status)) }
         isSales?.let {builder.and(it.build(entity.isSales))}
         clientRef?.let {builder.and(it.build(entity.clientRef))}
@@ -117,13 +120,13 @@ class DeviceRequestStatusComparison(
     }
 }
 
-/*
 class DeviceRequestItemsWhereInput(
     var phones: IntegerComparision? = null,
     var tablets: IntegerComparision? = null,
     var laptops: IntegerComparision? = null,
     var allInOnes: IntegerComparision? = null,
     var desktops: IntegerComparision? = null,
+    var commsDevices: IntegerComparision? = null,
     var filters: List<JsonComparison>? = null,
     var AND: MutableList<DeviceRequestItemsWhereInput> = mutableListOf(),
     var OR: MutableList<DeviceRequestItemsWhereInput> = mutableListOf(),
@@ -138,6 +141,7 @@ class DeviceRequestItemsWhereInput(
         laptops?.let { builder.and(it.build(json.get("deviceRequestItems.laptops").asInt())) }
         allInOnes?.let { builder.and(it.build(json.get("deviceRequestItems.allInOnes").asInt())) }
         desktops?.let { builder.and(it.build(json.get("deviceRequestItems.desktops").asInt())) }
+        commsDevices?.let { builder.and(it.build(json.get("deviceRequestItems.commsDevices").asInt())) }
         filters?.let { filter ->
             filter.forEach { builder.and(it.build(json.get("deviceRequestItems"))) }
         }
@@ -160,5 +164,5 @@ class DeviceRequestItemsWhereInput(
         }
         return builder
     }
-}*/
+}
 

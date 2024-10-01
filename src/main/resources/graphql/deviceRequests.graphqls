@@ -73,18 +73,18 @@ input DeviceRequestNeedsInput{
     needQuickStart: Boolean
 }
 
-
-#input DeviceRequestItemsWhereInput {
-#    phones: IntegerComparison
-#    tablets: IntegerComparison
-#    laptops: IntegerComparison
-#    allInOnes: IntegerComparison
-#    desktops: IntegerComparison
-#    filters: [JsonComparison!]
-#    AND: [DeviceRequestItemsWhereInput]
-#    OR: [DeviceRequestItemsWhereInput]
-#    NOT: [DeviceRequestItemsWhereInput]
-#}
+input DeviceRequestItemsWhereInput {
+   phones: IntegerComparison
+   tablets: IntegerComparison
+   laptops: IntegerComparison
+   allInOnes: IntegerComparison
+   desktops: IntegerComparison
+   commsDevices: IntegerComparison
+   filters: [JsonComparison!]
+   AND: [DeviceRequestItemsWhereInput]
+   OR: [DeviceRequestItemsWhereInput]
+   NOT: [DeviceRequestItemsWhereInput]
+}
 
 input CreateDeviceRequestInput {
     deviceRequestItems: DeviceRequestItemsInput
@@ -111,7 +111,7 @@ input UpdateDeviceRequestInput {
 
 input DeviceRequestWhereInput {
     id: LongComparison
-#    deviceRequestItems: DeviceRequestItemsWhereInput
+    deviceRequestItems: DeviceRequestItemsWhereInput
     status: DeviceRequestStatusComparison
     referringOrganisationContact: ReferringOrganisationContactWhereInput
     isSales: BooleanComparison
