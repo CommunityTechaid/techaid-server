@@ -13,6 +13,8 @@ interface DonorRepository : PagingAndSortingRepository<Donor, Long>, QuerydslPre
     fun findByPhoneNumber(phone: String): Donor?
 }
 
+interface DropPointRepository : PagingAndSortingRepository<DropPoint, Long>, QuerydslPredicateExecutor<DropPoint> 
+
 interface KitStatusCount {
     val status: KitStatus
     val count: Long

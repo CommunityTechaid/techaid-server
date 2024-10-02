@@ -1,0 +1,76 @@
+type DropPoint {
+    id: ID!
+    name: String
+    address: String
+    website: String
+    createdAt: String
+    updatedAt: String
+    donors: [Donor!]
+    donorCount: Int
+}
+
+input CreateDropPointInput {
+    name: String
+    address: String
+    website: String
+}
+
+input UpdateDropPointInput {
+    id: ID!
+    name: String
+    postCode: String
+    phoneNumber: String
+    email: String
+    referral: String
+    consent: Boolean
+}
+
+"A representation of a page result from a query"
+type DropPointPage {
+    "The list of deals retrieved from the server"
+    content: [DropPoint!]
+    "The number of total pages"
+    totalPages: Int
+    "The total amount of elements in this request"
+    totalElements: Int
+    "The size of the current page"
+    size: Int
+    "Returns whether the current page is the first"
+    first: Boolean
+    "Returns whether the current page is the last"
+    last: Boolean
+    "Returns if there is a next page"
+    hasNext: Boolean
+    "Returns if there is a previous page"
+    hasPrevious: Boolean
+    "Number of elements in current slice"
+    numberOfElements: Int
+    "Returns whether the page has content at all"
+    hasContent: Boolean
+    "The number of the current page"
+    number: Int
+}
+
+input DropPointWhereInput {
+    id: LongComparison
+    name: TextComparison
+    address: TextComparison
+    createdAt: TimeComparison
+    updatedAt: TimeComparison
+    AND: [DropPointWhereInput!]
+    OR: [DropPointWhereInput!]
+    NOT: [DropPointWhereInput!]
+}
+
+extend type Query {
+    dropPointsConnection(page: PaginationInput, where: DropPointWhereInput): DropPointPage
+    dropPoints(where: DropPointWhereInput!, orderBy: [KeyValuePair!]): [DropPoint!]!
+    dropPoint(where: DropPointWhereInput!): DropPoint
+}
+
+extend type Mutation {
+    createDropPoint(data: CreateDropPointInput!) : DropPoint!
+    updateDropPoint(data: UpdateDropPointInput!): DropPoint!
+    deleteDropPoint(id: ID!): Boolean
+}
+

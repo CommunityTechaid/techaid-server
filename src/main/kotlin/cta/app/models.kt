@@ -111,7 +111,6 @@ data class Capacity(
     val commsDevices: Int? = 0
 )
 
-
 @Entity
 @Table(name = "donors")
 class Donor(
@@ -137,13 +136,18 @@ class Donor(
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb")
     var coordinates: Coordinates? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "drop_point_id")
+    var dropPoint: DropPoint? = null,
     @OneToMany(
         mappedBy = "donor",
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
         orphanRemoval = false
     )
-    var kits: MutableSet<Kit> = mutableSetOf()
+    var kits: MutableSet<Kit> = mutableSetOf(),
+    @Enumerated(EnumType.STRING)
+    var type: DonorType? = DonorType.INDIVIDUAL
 ) : BaseEntity() {
     fun addKit(kit: Kit) {
         kits.add(kit)
@@ -162,6 +166,54 @@ class Donor(
     }
 }
 
+enum class DonorType {
+    INDIVIDUAL,
+    BUSINESS
+}
+
+@Entity
+@Table(name = "dropPoints")
+class DropPoint(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "drop-point-seq-generator")
+    @SequenceGenerator(name = "drop-point-seq-generator", sequenceName = "drop_point_sequence", allocationSize = 1)
+    var id: Long = 0,
+    var name: String,
+    var address: String,
+    var website: String,
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    @Formula(
+        """
+        ( SELECT COUNT(*) FROM donors d where d.drop_point_id = id )
+    """
+    )
+    var donorCount: Int = 0,
+    @OneToMany(
+        mappedBy = "dropPoint",
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = false
+    )
+    var donors: MutableSet<Donor> = mutableSetOf()
+) : BaseEntity() { 
+    fun addDonor(donor: Donor) {
+        donors.add(donor)
+        donor.dropPoint = this
+    }
+
+    fun removeDonor(donor: Donor) {
+        donors.removeIf {
+            if (donor == it) {
+                donor.dropPoint = null
+                true
+            } else {
+                false
+            }
+        }
+    }
+}
 
 /*
 * This entity is used to hold the information of audits used by Hibernate Enver.
