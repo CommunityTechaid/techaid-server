@@ -55,6 +55,7 @@ input DropPointWhereInput {
     id: LongComparison
     name: TextComparison
     address: TextComparison
+    website: TextComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
     AND: [DropPointWhereInput!]

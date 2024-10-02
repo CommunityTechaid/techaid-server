@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull
 import cta.app.Donor
 import cta.app.DonorRepository
 import cta.app.DonorType
+import cta.app.DropPointRepository
 import cta.app.QDonor
 import cta.app.services.FilterService
 import cta.app.services.LocationService
@@ -23,6 +24,7 @@ import org.springframework.validation.annotation.Validated
 @Transactional
 class DonorMutations(
     private val donors: DonorRepository,
+    private val dropPoints: DropPointRepository,
     private val locationService: LocationService,
     private val filterService: FilterService
 ) : GraphQLMutationResolver {
@@ -32,6 +34,13 @@ class DonorMutations(
         if (donor.postCode.isNotBlank()) {
             donor.coordinates = locationService.findCoordinates(donor.postCode)
         }
+
+        if (data.dropPointId != null) {
+            val dropPoint = dropPoints.findById(data.dropPointId).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.dropPointId}")
+            dropPoint.addDonor(donor)
+        }
+
         return donor
     }
 
@@ -42,6 +51,15 @@ class DonorMutations(
             if (postCode.isNotBlank() && (coordinates == null || coordinates?.input != postCode)) {
                 coordinates = locationService.findCoordinates(postCode)
             }
+
+            if (data.dropPointId == null) {
+                dropPoint?.removeDonor(this)
+            } else if (data.dropPointId != dropPoint?.id) {
+                val dropPoint = dropPoints.findById(data.dropPointId).toNullable()
+                    ?: throw EntityNotFoundException("Unable to locate a drop point with id: ${data.dropPointId}")
+                dropPoint.addDonor(this)
+            }
+
         }
     }
 
@@ -63,7 +81,8 @@ data class CreateDonorInput(
     val referral: String = "",
     val name: String,
     val consent: Boolean,
-    val type: DonorType
+    val type: DonorType,
+    val dropPointId: Long? = null
 ) {
     val entity by lazy {
         Donor(
@@ -87,7 +106,8 @@ data class UpdateDonorInput(
     var name: String,
     val referral: String,
     val consent: Boolean,
-    val type: DonorType
+    val type: DonorType,
+    val dropPointId: Long? = null
 ) {
     fun apply(entity: Donor): Donor {
         val self = this

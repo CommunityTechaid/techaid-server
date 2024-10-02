@@ -94,6 +94,7 @@ class DonorWhereInput(
         postCode?.let { builder.and(it.build(entity.postCode)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
+        type?.let { builder.and(it.build(entity.type)) }
         name?.let { builder.and(it.build(entity.name)) }
         if (AND.isNotEmpty()) {
             AND.forEach {

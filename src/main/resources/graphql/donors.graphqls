@@ -14,8 +14,9 @@ type Donor {
     kitCount: Int
     kits: [Kit!]
     coordinates: Coordinates
-    consent: Boolean,
+    consent: Boolean
     type: DonorType
+    dropPoint: DropPoint
 }
 
 input DonorTypeComparison {
@@ -45,8 +46,9 @@ input CreateDonorInput {
     phoneNumber: String
     email: String
     referral: String
-    consent: Boolean,
+    consent: Boolean
     type: DonorType
+    dropPointId: ID
 }
 
 input UpdateDonorInput {
@@ -56,8 +58,9 @@ input UpdateDonorInput {
     phoneNumber: String
     email: String
     referral: String
-    consent: Boolean,
+    consent: Boolean
     type: DonorType
+    dropPointId: ID
 }
 
 input DonateItemInput {
