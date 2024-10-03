@@ -6,6 +6,7 @@ type Donor {
     id: ID!
     postCode: String
     name: String
+    businessName: String
     phoneNumber: String
     email: String
     referral: String
@@ -42,6 +43,7 @@ input DonorTypeComparison {
 
 input CreateDonorInput {
     name: String
+    businessName: String
     postCode: String
     phoneNumber: String
     email: String
@@ -54,6 +56,7 @@ input CreateDonorInput {
 input UpdateDonorInput {
     id: ID!
     name: String
+    businessName: String
     postCode: String
     phoneNumber: String
     email: String
@@ -102,6 +105,7 @@ type DonorPage {
 input DonorWhereInput {
     id: LongComparison
     name: TextComparison
+    businessName: TextComparison
     postCode: TextComparison
     phoneNumber: TextComparison
     email: TextComparison

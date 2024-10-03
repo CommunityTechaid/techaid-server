@@ -76,6 +76,7 @@ class DonorWhereInput(
     var postCode: TextComparison? = null,
     var phoneNumber: TextComparison? = null,
     var name: TextComparison? = null,
+    var businessName: TextComparison? = null,
     var email: TextComparison? = null,
     var type: DonorTypeComparison? = null,
     var referral: TextComparison? = null,
@@ -96,6 +97,7 @@ class DonorWhereInput(
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         type?.let { builder.and(it.build(entity.type)) }
         name?.let { builder.and(it.build(entity.name)) }
+        businessName?.let { builder.and(it.build(entity.businessName)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))
