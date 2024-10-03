@@ -6,6 +6,7 @@ import com.querydsl.core.types.dsl.EnumPath
 import cta.app.DeviceRequestStatus
 import cta.app.KitStatus
 import cta.app.QDeviceRequest
+import cta.app.QDeviceRequestItems
 import cta.graphql.BooleanComparison
 import cta.graphql.LongComparision
 import cta.graphql.TextComparison
@@ -30,7 +31,7 @@ class DeviceRequestWhereInput(
     fun build(entity: QDeviceRequest = QDeviceRequest.deviceRequest): BooleanBuilder {
         val builder = BooleanBuilder()
         id?.let { builder.and(it.build(entity.id)) }
-        deviceRequestItems?.let { builder.and(it.build(entity)) }
+        deviceRequestItems?.let { builder.and(it.build(entity.deviceRequestItems)) }
         status?.let { builder.and(it.build(entity.status)) }
         isSales?.let {builder.and(it.build(entity.isSales))}
         clientRef?.let {builder.and(it.build(entity.clientRef))}
@@ -127,24 +128,19 @@ class DeviceRequestItemsWhereInput(
     var allInOnes: IntegerComparision? = null,
     var desktops: IntegerComparision? = null,
     var commsDevices: IntegerComparision? = null,
-    var filters: List<JsonComparison>? = null,
     var AND: MutableList<DeviceRequestItemsWhereInput> = mutableListOf(),
     var OR: MutableList<DeviceRequestItemsWhereInput> = mutableListOf(),
     var NOT: MutableList<DeviceRequestItemsWhereInput> = mutableListOf()
 ) {
-    fun build(entity: QDeviceRequest = QDeviceRequest.deviceRequest): BooleanBuilder {
+    fun build(entity: QDeviceRequestItems = QDeviceRequestItems.deviceRequestItems): BooleanBuilder {
         val builder = BooleanBuilder()
-        val json = JsonPath.of(entity.deviceRequestItems)
-
-        phones?.let { builder.and(it.build(json.get("deviceRequestItems.phones").asInt())) }
-        tablets?.let { builder.and(it.build(json.get("deviceRequestItems.tablets").asInt())) }
-        laptops?.let { builder.and(it.build(json.get("deviceRequestItems.laptops").asInt())) }
-        allInOnes?.let { builder.and(it.build(json.get("deviceRequestItems.allInOnes").asInt())) }
-        desktops?.let { builder.and(it.build(json.get("deviceRequestItems.desktops").asInt())) }
-        commsDevices?.let { builder.and(it.build(json.get("deviceRequestItems.commsDevices").asInt())) }
-        filters?.let { filter ->
-            filter.forEach { builder.and(it.build(json.get("deviceRequestItems"))) }
-        }
+        
+        phones?.let { builder.and(it.build(entity.phones)) }
+        tablets?.let { builder.and(it.build(entity.tablets)) }
+        laptops?.let { builder.and(it.build(entity.laptops)) }
+        allInOnes?.let { builder.and(it.build(entity.allInOnes)) }
+        desktops?.let { builder.and(it.build(entity.desktops)) }
+        commsDevices?.let { builder.and(it.build(entity.commsDevices)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))
