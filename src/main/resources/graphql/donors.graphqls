@@ -113,6 +113,7 @@ input DonorWhereInput {
     type: DonorTypeComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
+    dropPoint: DropPointWhereInput
     AND: [DonorWhereInput!]
     OR: [DonorWhereInput!]
     NOT: [DonorWhereInput!]

@@ -122,7 +122,7 @@ class Donor(
     var phoneNumber: String,
     var email: String,
     var name: String,
-    var businessName: String,
+    var businessName: String? = null,
     var referral: String,
     var consent: Boolean,
     var createdAt: Instant = Instant.now(),

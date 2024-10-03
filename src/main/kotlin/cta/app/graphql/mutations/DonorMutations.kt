@@ -80,7 +80,7 @@ data class CreateDonorInput(
     val email: String = "",
     val referral: String = "",
     val name: String,
-    val businessName: String = "",
+    val businessName: String? = null,
     val consent: Boolean,
     val type: DonorType,
     val dropPointId: Long? = null
@@ -92,7 +92,7 @@ data class CreateDonorInput(
             email = email,
             referral = referral,
             name = name,
-            businessName = businessName,
+            businessName = businessName ?: null,
             consent = consent,
             type = type
         )
@@ -106,7 +106,7 @@ data class UpdateDonorInput(
     val phoneNumber: String,
     val email: String,
     var name: String,
-    var businessName: String,
+    var businessName: String? = null,
     val referral: String,
     val consent: Boolean,
     val type: DonorType,
@@ -120,7 +120,7 @@ data class UpdateDonorInput(
             email = if (email != self.email) self.email else this.email
             referral = self.referral
             name = self.name
-            businessName = self.businessName
+            businessName = self.businessName ?: null
             consent = self.consent
             type = self.type
         }
