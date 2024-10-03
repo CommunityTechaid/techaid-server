@@ -4,8 +4,8 @@ import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.EnumPath
 import com.querydsl.jpa.JPAExpressions
-import java.time.Instant
 import cta.app.KitStatus
+import cta.app.KitStorageType
 import cta.app.KitType
 import cta.app.QKit
 import cta.app.QKitVolunteer
@@ -15,6 +15,7 @@ import cta.graphql.JsonComparison
 import cta.graphql.LongComparision
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
+import java.time.Instant
 
 class KitStatusComparison(
     /**
@@ -140,6 +141,68 @@ class KitTypeComparison(
     }
 }
 
+class KitStorageTypeComparison(
+    /**
+     * Matches values equal to
+     */
+    var _eq: KitStorageType? = null,
+    /**
+     * Matches values greater than
+     */
+    var _gt: KitStorageType? = null,
+    /**
+     * Matches values greater than or equal to
+     */
+    var _gte: KitStorageType? = null,
+    /**
+     * Matches values contained in the collection
+     */
+    var _in: MutableList<KitStorageType>? = null,
+    /**
+     * Matches values that are null
+     */
+    var _is_null: Boolean? = null,
+    /**
+     * Matches values less than
+     */
+    var _lt: KitStorageType? = null,
+    /**
+     * Matches values less than or equal to
+     */
+    var _lte: KitStorageType? = null,
+    /**
+     * Matches values not equal to
+     */
+    var _neq: KitStorageType? = null,
+    /**
+     * Matches values not in the collection
+     */
+    var _nin: MutableList<KitStorageType>? = null
+    ) {
+        /**
+         * Returns a filter for the specified [path]
+         */
+        fun build(path: EnumPath<KitStorageType>): BooleanBuilder {
+            val builder = BooleanBuilder()
+            _eq?.let { builder.and(path.eq(it)) }
+            _gt?.let { builder.and(path.gt(it)) }
+            _gte?.let { builder.and(path.goe(it)) }
+            _in?.let { builder.and(path.`in`(it)) }
+            _is_null?.let {
+                if (it) {
+                    builder.and(path.isNull)
+                } else {
+                    builder.and(path.isNotNull)
+                }
+            }
+            _lt?.let { builder.and(path.lt(it)) }
+            _lte?.let { builder.and(path.loe(it)) }
+            _neq?.let { builder.and(path.ne(it)) }
+            _nin?.let { builder.and(path.notIn(it)) }
+            return builder
+        }
+}
+
 class KitAttributesWhereInput(
     var otherType: TextComparison? = null,
     var pickup: TextComparison? = null,
@@ -200,8 +263,17 @@ class KitWhereInput(
     var updatedAt: TimeComparison<Instant>? = null,
     var attributes: KitAttributesWhereInput? = null,
     var volunteer: VolunteerWhereInput? = null,
-    var organisation: OrganisationWhereInput? = null,
+    var deviceRequest: DeviceRequestWhereInput? = null,
     var donor: DonorWhereInput? = null,
+    var make: TextComparison? = null,
+    var deviceVersion: TextComparison? = null,
+    var serialNo: TextComparison? = null,
+    var storageCapacity: IntegerComparision? = null,
+    var typeOfStorage: KitStorageTypeComparison? = null,
+    var ramCapacity: IntegerComparision? = null,
+    var cpuType: TextComparison? = null,
+    var tpmVersion: TextComparison? = null,
+    var cpuCores: IntegerComparision? = null,
     var AND: MutableList<KitWhereInput> = mutableListOf(),
     var OR: MutableList<KitWhereInput> = mutableListOf(),
     var NOT: MutableList<KitWhereInput> = mutableListOf()
@@ -218,13 +290,21 @@ class KitWhereInput(
         archived?.let { builder.and(it.build(entity.archived)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         attributes?.let { builder.and(it.build(entity)) }
-        organisation?.let { builder.and(it.build(entity.organisation)) }
+        deviceRequest?.let { builder.and(it.build(entity.deviceRequest)) }
         volunteer?.let {
             builder.and(JPAExpressions.selectOne().from(entity.volunteers, QKitVolunteer.kitVolunteer)
                 .where(it.build(QKitVolunteer.kitVolunteer.volunteer)).exists())
         }
         donor?.let { builder.and(it.build(entity.donor)) }
-
+        make?.let { builder.and(it.build(entity.make)) }
+        deviceVersion?.let { builder.and(it.build(entity.deviceVersion)) }
+        serialNo?.let { builder.and(it.build(entity.serialNo)) }
+        storageCapacity?.let {builder.and(it.build(entity.storageCapacity))}
+        typeOfStorage?.let {builder.and(it.build(entity.typeOfStorage))}
+        ramCapacity?.let {builder.and(it.build(entity.ramCapacity))}
+        cpuType?.let {builder.and(it.build(entity.cpuType))}
+        tpmVersion?.let {builder.and(it.build(entity.tpmVersion))}
+        cpuCores?.let { builder.and(it.build(entity.cpuCores)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))

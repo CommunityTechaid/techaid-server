@@ -1,0 +1,82 @@
+type ReferringOrganisation {
+    id: ID
+    name: String
+    website: String
+    phoneNumber: String
+    requestCount: Int
+    archived: Boolean
+    createdAt: String
+    updatedAt: String
+    referringOrganisationContacts: [ReferringOrganisationContact]
+}
+
+"A representation of a page result from a query"
+type ReferringOrganisationPage {
+    "The list of deals retrieved from the server"
+    content: [ReferringOrganisation!]
+    "The number of total pages"
+    totalPages: Int
+    "The total amount of elements in this request"
+    totalElements: Int
+    "The size of the current page"
+    size: Int
+    "Returns whether the current page is the first"
+    first: Boolean
+    "Returns whether the current page is the last"
+    last: Boolean
+    "Returns if there is a next page"
+    hasNext: Boolean
+    "Returns if there is a previous page"
+    hasPrevious: Boolean
+    "Number of elements in current slice"
+    numberOfElements: Int
+    "Returns whether the page has content at all"
+    hasContent: Boolean
+    "The number of the current page"
+    number: Int
+}
+
+type ReferringOrganisationPublic {
+    id: ID
+    name: String
+}
+
+input CreateReferringOrganisationInput {
+    name: String
+    website: String
+    phoneNumber: String
+}
+
+input UpdateReferringOrganisationInput {
+    id: ID
+    name: String
+    website: String
+    phoneNumber: String
+    archived: Boolean
+}
+
+input ReferringOrganisationWhereInput {
+    id: LongComparison
+    name: TextComparison
+    website: TextComparison
+    archived: BooleanComparison
+    createdAt: TimeComparison
+    updatedAt: TimeComparison
+    AND: [ReferringOrganisationWhereInput!]
+    OR: [ReferringOrganisationWhereInput!]
+    NOT: [ReferringOrganisationWhereInput!]
+}
+
+
+extend type Query {
+    referringOrganisationsConnection(page: PaginationInput, where: ReferringOrganisationWhereInput): ReferringOrganisationPage
+    referringOrganisationsPublic(where: ReferringOrganisationWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationPublic]
+    referringOrganisations(where: ReferringOrganisationWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisation!]!
+    referringOrganisation(where: ReferringOrganisationWhereInput!): ReferringOrganisation
+}
+
+extend type Mutation {
+    createReferringOrganisation(data: CreateReferringOrganisationInput!) : ReferringOrganisation!
+    updateReferringOrganisation(data: UpdateReferringOrganisationInput!): ReferringOrganisation!
+    deleteReferringOrganisation(id: ID!): Boolean
+}

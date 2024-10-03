@@ -12,15 +12,7 @@ interface VolunteerRepository :
     fun findByEmail(email: String): Volunteer?
 }
 
-interface ImageRepository :
-        PagingAndSortingRepository<KitImage, Long>,
-        CrudRepository<KitImage, Long>,
-        QuerydslPredicateExecutor<KitImage>
-
-interface DonorRepository :
-        PagingAndSortingRepository<Donor, Long>,
-        CrudRepository<Donor, Long>,
-        QuerydslPredicateExecutor<Donor> {
+interface DonorRepository : PagingAndSortingRepository<Donor, Long>, QuerydslPredicateExecutor<Donor> {
     fun findByEmail(email: String): Donor?
     fun findByPhoneNumber(phone: String): Donor?
 }
@@ -54,6 +46,21 @@ interface KitRepository :
     fun typeCount(): List<KitTypeCount>
 }
 
+interface EmailTemplateRepository : PagingAndSortingRepository<EmailTemplate, Long>,
+    QuerydslPredicateExecutor<EmailTemplate>
+
+interface NoteRepository: PagingAndSortingRepository<Note, Long>,
+    QuerydslPredicateExecutor<Note>
+
+interface ReferringOrganisationRepository: PagingAndSortingRepository<ReferringOrganisation, Long>,
+    QuerydslPredicateExecutor<ReferringOrganisation>
+
+interface ReferringOrganisationContactRepository: PagingAndSortingRepository<ReferringOrganisationContact, Long>,
+    QuerydslPredicateExecutor<ReferringOrganisationContact>{
+
+        fun findOneByFullNameAndEmailAndReferringOrganisation(fullName: String, email: String, referringOrganisation: ReferringOrganisation): ReferringOrganisationContact?
+    }
+
 interface RequestCount {
     val phones: Long
     val laptops: Long
@@ -64,11 +71,10 @@ interface RequestCount {
     val chromebooks: Long
     val commsDevices: Long
 }
-
-interface OrganisationRepository :
-    PagingAndSortingRepository<Organisation, Long>,
+interface DeviceRequestRepository:
+    PagingAndSortingRepository<DeviceRequest, Long>,
     CrudRepository<Organisation, Long>,
-    QuerydslPredicateExecutor<Organisation> {
+    QuerydslPredicateExecutor<DeviceRequest> {
     @Query(
         """
         SELECT
@@ -81,18 +87,18 @@ interface OrganisationRepository :
             coalesce(sum(src.chromebooks),0) AS chromebooks,
             coalesce(sum(src.commsDevices),0) AS commsDevices
         FROM (
-          SELECT 
-              id,
-              coalesce((attributes->'request'->'phones')\:\:int +  (attributes->'alternateRequest'->'phones')\:\:int, 0) as phones,
-              coalesce((attributes->'request'->'laptops')\:\:int +  (attributes->'alternateRequest'->'laptops')\:\:int, 0) as laptops,
-              coalesce((attributes->'request'->'tablets')\:\:int +  (attributes->'alternateRequest'->'tablets')\:\:int, 0) as tablets,
-              coalesce((attributes->'request'->'allInOnes')\:\:int +  (attributes->'alternateRequest'->'allInOnes')\:\:int, 0) as allInOnes,
-              coalesce((attributes->'request'->'desktops')\:\:int +  (attributes->'alternateRequest'->'desktops')\:\:int, 0) as desktops,
-              coalesce((attributes->'request'->'other')\:\:int +  (attributes->'alternateRequest'->'other')\:\:int, 0) as other,
-              coalesce((attributes->'request'->'chromebooks')\:\:int +  (attributes->'alternateRequest'->'chromebooks')\:\:int, 0) as chromebooks,
-              coalesce((attributes->'request'->'commsDevices')\:\:int +  (attributes->'alternateRequest'->'commsDevices')\:\:int, 0) as commsDevices 
-          FROM organisations org
-          WHERE org.archived != 'Y' 
+            SELECT 
+                id,
+                coalesce(phones, 0) as phones,
+                coalesce(laptops, 0) as laptops,
+                coalesce(tablets, 0) as tablets,
+                coalesce(all_in_ones, 0) as allInOnes,
+                coalesce(desktops, 0) as desktops,
+                coalesce(other, 0) as other,
+                coalesce(chromebooks, 0) as chromebooks,
+                coalesce(comms_devices, 0) as commsDevices 
+            FROM device_requests dr
+            WHERE dr.status not in ('REQUEST_COMPLETED','REQUEST_DECLINED','REQUEST_CANCELLED') 
         ) AS src
     """,
         nativeQuery = true
@@ -100,12 +106,15 @@ interface OrganisationRepository :
     fun requestCount(): RequestCount
 }
 
-interface EmailTemplateRepository :
-        PagingAndSortingRepository<EmailTemplate, Long>,
-        CrudRepository<EmailTemplate, Long>,
-        QuerydslPredicateExecutor<EmailTemplate>
+interface DeviceRequestNoteRepository: PagingAndSortingRepository<DeviceRequestNote, Long>,
+    QuerydslPredicateExecutor<DeviceRequestNote>
 
-interface NoteRepository:
-        PagingAndSortingRepository<Note, Long>,
+interface ReferringOrganisationNoteRepository:
+        PagingAndSortingRepository<ReferringOrganisationNote, Long>,
+        CrudRepository<EmailTemplate, Long>,
+        QuerydslPredicateExecutor<ReferringOrganisationNote>
+
+interface ReferringOrganisationContactNoteRepository:
+        PagingAndSortingRepository<ReferringOrganisationContactNote, Long>,
         CrudRepository<Note, Long>,
-        QuerydslPredicateExecutor<Note>
+        QuerydslPredicateExecutor<ReferringOrganisationContactNote>

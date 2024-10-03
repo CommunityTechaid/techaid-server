@@ -42,6 +42,12 @@ import org.hibernate.annotations.*
 import org.hibernate.type.SqlTypes
 import org.hibernate.type.YesNoConverter
 
+
+@TypeDefs(
+    TypeDef(name = "json", typeClass = JsonStringType::class),
+    TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
+)
+
 @MappedSuperclass
 class BaseEntity
 
@@ -79,31 +85,8 @@ class Volunteer(
     var attributes: VolunteerAttributes = VolunteerAttributes(),
     @JsonIgnore
     @OneToMany(mappedBy = "volunteer", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
-    var kits: MutableSet<KitVolunteer> = mutableSetOf(),
-    @OneToMany(
-        mappedBy = "volunteer",
-        fetch = FetchType.LAZY,
-        cascade = [CascadeType.ALL],
-        orphanRemoval = false
-    )
-    var organisations: MutableSet<Organisation> = mutableSetOf()
-) : BaseEntity() {
-    fun addOrganisation(org: Organisation) {
-        organisations.add(org)
-        org.volunteer = this
-    }
-
-    fun removeOrganisation(org: Organisation) {
-        organisations.removeIf {
-            if (org == it) {
-                org.volunteer = null
-                true
-            } else {
-                false
-            }
-        }
-    }
-}
+    var kits: MutableSet<KitVolunteer> = mutableSetOf()
+) : BaseEntity()
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class VolunteerAttributes(
@@ -114,6 +97,7 @@ data class VolunteerAttributes(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+//todo DELETE
 data class Capacity(
     val phones: Int = 0,
     val tablets: Int = 0,
@@ -124,6 +108,7 @@ data class Capacity(
     val chromebooks: Int? = 0,
     val commsDevices: Int? = 0
 )
+
 
 @Entity
 @Table(name = "donors")
@@ -212,7 +197,7 @@ class Kit(
     @Enumerated(EnumType.STRING)
     var status: KitStatus = KitStatus.DONATION_NEW,
     var model: String,
-    var location: String,
+    var location: String = "",
     var age: Int,
     @Convert(converter=YesNoConverter::class)
     var archived: Boolean = false,
@@ -241,15 +226,22 @@ class Kit(
     @JoinColumn(name = "donor_id")
     var donor: Donor? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organisation_id")
-    var organisation: Organisation? = null,
+    @JoinColumn(name = "device_request_id")
+    var deviceRequest: DeviceRequest? = null,
     @NotAudited
     @JsonIgnore
     @OneToMany(mappedBy = "kit", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
-    var volunteers: MutableSet<KitVolunteer> = mutableSetOf()
-    // @OneToOne(mappedBy = "kit", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    // @PrimaryKeyJoinColumn
-    // var images: KitImage? = null
+    var volunteers: MutableSet<KitVolunteer> = mutableSetOf(),
+    var make: String? = null,
+    var deviceVersion: String? = null,
+    var serialNo: String? = null,
+    var storageCapacity: Int? = null,
+    @Enumerated(EnumType.STRING)
+    var typeOfStorage: KitStorageType = KitStorageType.UNKNOWN,
+    var ramCapacity: Int? = null,
+    var cpuType: String? = null,
+    var tpmVersion: String? = null,
+    var cpuCores: Int? = null
 ) : BaseEntity() {
     fun addVolunteer(volunteer: Volunteer, type: KitVolunteerType) {
         val entity = KitVolunteer(this, volunteer, KitVolunteerId(this.id, volunteer.id, type))
@@ -307,28 +299,6 @@ class Kit(
     override fun hashCode() = 13
 }
 
-@Entity
-@Table(name = "kit_images")
-class KitImage(
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "kit_id")
-    var kit: Kit?,
-    @Id
-    @Column(name = "kit_id")
-    var id: Long? = kit?.id,
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Basic(fetch = FetchType.LAZY)
-    var images: MutableList<DeviceImage> = mutableListOf()
-) : BaseEntity() {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is KitImage) return false
-        if (id != other.id) return false
-        return images == other.images
-    }
-}
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 class KitAttributes(
     @JsonIgnore
@@ -344,10 +314,7 @@ class KitAttributes(
     var status: List<String> = listOf(),
     var network: String? = null,
     var otherNetwork: String? = "UNKNOWN"
-) {
-    @get:JsonIgnore
-    val images by lazy { listOf<DeviceImage>() }
-}
+)
 @Entity
 @Table(name = "note")
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
@@ -366,18 +333,6 @@ class Note(
     @ManyToOne(fetch = FetchType.LAZY)
     var kit: Kit
 ) {}
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-class DeviceImage(
-    val image: String,
-    val id: String = RandomStringUtils.random(5, true, true)
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is DeviceImage) return false
-        return id == other.id
-    }
-}
 
 enum class KitType {
     OTHER,
@@ -412,6 +367,8 @@ enum class KitStatus {
     DISTRIBUTION_RECYCLED,
     DISTRIBUTION_REPAIR_RETURN
 }
+
+enum class KitStorageType {HDD, SSD, HYBRID, UNKNOWN}
 
 enum class KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }
 
@@ -492,56 +449,199 @@ class EmailTemplate(
 )
 
 @Entity
-@Table(name = "organisations")
-class Organisation(
+@Table(name = "referring_organisations")
+class ReferringOrganisation(
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "organisation-seq-generator")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation-seq-generator")
     @SequenceGenerator(
-        name = "organisation-seq-generator",
-        sequenceName = "organisation_sequence",
+        name = "referring_organisation-seq-generator",
+        sequenceName = "referring_organisation_sequence",
         allocationSize = 1
     )
     var id: Long = 0,
     var name: String,
-    // var website: String,
-    var contact: String,
-    var phoneNumber: String,
-    var email: String,
-    var address: String,
-    var createdAt: Instant = Instant.now(),
+    var website: String? = null,
+    var phoneNumber: String? = null,
     @Formula(
         """
-        (SELECT COUNT(*) FROM kits k where k.organisation_id = id)
+        (SELECT COUNT(*) 
+        FROM device_requests dr 
+        INNER JOIN referring_organisation_contacts roc 
+            ON dr.referring_organisation_contact_id = roc.id 
+        WHERE dr.status='NEW' 
+            AND roc.referring_organisation_id = id)
+    """
+    )
+    var requestCount: Int = 0,
+    @Type(type = "yes_no")
+    var archived: Boolean = false,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    @OneToMany(
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        mappedBy = "referringOrganisation"
+    )
+    @OrderBy(clause = "updatedAt DESC")
+    var referringOrganisationContacts: MutableSet<ReferringOrganisationContact> = mutableSetOf(),
+    @OneToMany(
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        mappedBy = "referringOrganisation"
+    )
+    @OrderBy(clause = "updatedAt DESC")
+    var referringOrganisationNotes: MutableSet<ReferringOrganisationNote> = mutableSetOf()
+) {
+    fun addContact(contact: ReferringOrganisationContact) {
+        referringOrganisationContacts.add(contact)
+        contact.referringOrganisation = this
+    }
+}
+
+
+@Entity
+@Table(name = "referring_organisation_contacts")
+class ReferringOrganisationContact(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation_contacts-seq-generator")
+    @SequenceGenerator(
+        name = "referring_organisation_contacts-seq-generator",
+        sequenceName = "referring_organisation_contacts_sequence",
+        allocationSize = 1
+    )
+    var id: Long = 0,
+    var fullName: String,
+    var email: String = "",
+    var phoneNumber: String,
+    var address: String,
+    @Type(type = "yes_no")
+    var archived: Boolean = false,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    @ManyToOne
+    var referringOrganisation: ReferringOrganisation,
+    // A better way would be to use the DeviceRequestStatus enum here but for some reason, it is not considered a constant expression.
+    @Formula(
+        """
+         (
+            SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id 
+            AND d.status NOT IN ('REQUEST_CANCELLED','REQUEST_COMPLETED','REQUEST_DECLINED')
+         )
+    """
+    )
+    var requestCount: Int = 0,
+    @OneToMany(
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        mappedBy = "referringOrganisationContact"
+    )
+    @OrderBy(clause = "updatedAt DESC")
+    var referringOrganisationContactNotes: MutableSet<ReferringOrganisationContactNote> = mutableSetOf()
+
+
+) {
+    companion object {
+        const val STATUS = "FINISHED"
+    }
+}
+
+enum class DeviceRequestStatus {
+    NEW,
+    PROCESSING_EQUALITIES_DATA_COMPLETE,
+    PROCESSING_COLLECTION_DELIVERY_ARRANGED,
+    PROCESSING_ON_HOLD,
+    REQUEST_COMPLETED,
+    REQUEST_DECLINED,
+    REQUEST_CANCELLED
+}
+
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Embeddable
+data class DeviceRequestItems(
+    val phones: Int? = 0,
+    val tablets: Int? = 0,
+    val laptops: Int? = 0,
+    val allInOnes: Int? = 0,
+    val desktops: Int? = 0,
+    val other: Int? = 0,
+    val chromebooks: Int? = 0,
+    val commsDevices: Int? = 0
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Embeddable
+data class DeviceRequestNeeds(
+    var hasInternet: Boolean?,
+    var hasMobilityIssues: Boolean?,
+    var needQuickStart: Boolean?
+)
+
+
+@Entity
+@Table(name = "device_requests")
+class DeviceRequest(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_requests-seq-generator")
+    @SequenceGenerator(
+        name = "device_requests-seq-generator",
+        sequenceName = "device_requests_sequence",
+        allocationSize = 1
+    )
+    var id: Long = 0,
+    @Embedded
+    var deviceRequestItems: DeviceRequestItems,
+    @Enumerated(EnumType.STRING)
+    var status: DeviceRequestStatus = DeviceRequestStatus.NEW,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    @ManyToOne
+    var referringOrganisationContact: ReferringOrganisationContact,
+    var isSales: Boolean = false,
+    var clientRef: String,
+    var details: String,
+    @Formula(
+        """
+        (SELECT COUNT(*) FROM kits k where k.device_request_id = id)
     """
     )
     var kitCount: Int = 0,
-    @UpdateTimestamp
-    var updatedAt: Instant = Instant.now(),
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    var attributes: OrganisationAttributes = OrganisationAttributes(),
-    @Convert(converter=YesNoConverter::class)
-    var archived: Boolean = false,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "volunteer_id")
-    var volunteer: Volunteer? = null,
+    @Embedded
+    var deviceRequestNeeds: DeviceRequestNeeds,
     @OneToMany(
-        mappedBy = "organisation",
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        mappedBy = "deviceRequest"
+    )
+    @OrderBy(clause = "updatedAt DESC")
+    var deviceRequestNotes: MutableSet<DeviceRequestNote> = mutableSetOf(),
+    @OneToMany(
+        mappedBy = "deviceRequest",
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
         orphanRemoval = false
     )
     var kits: MutableSet<Kit> = mutableSetOf()
-) {
+){
     fun addKit(kit: Kit) {
         kits.add(kit)
-        kit.organisation = this
+        kit.deviceRequest = this
     }
 
     fun removeKit(kit: Kit) {
         kits.removeIf {
             if (kit == it) {
-                kit.organisation = null
+                kit.deviceRequest = null
                 true
             } else {
                 false
@@ -550,16 +650,61 @@ class Organisation(
     }
 }
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-class OrganisationAttributes(
-    var request: Capacity = Capacity(),
-    var alternateRequest: Capacity = Capacity(),
-    var accepts: List<String> = listOf(),
-    var alternateAccepts: List<String> = listOf(),
-    var notes: String = "",
-    var details: String = "",
-    var isIndividual: Boolean = false,
-    var isResident: Boolean = false,
-    var needs: List<String> = listOf(),
-    var clientRef: String = ""
-)
+@Entity
+@Table(name = "device_requests_notes")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+class DeviceRequestNote(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_requests_note-seq-generator")
+    @SequenceGenerator(name = "device_requests_note-seq-generator", sequenceName = "device_requests_note_sequence", allocationSize = 1)
+    var id: Long = 0,
+    @Column(name = "content", length = 4096)
+    var content: String,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    var volunteer: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var deviceRequest: DeviceRequest
+) {}
+
+
+@Entity
+@Table(name = "referring_organisations_notes")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+class ReferringOrganisationNote(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisations_note-seq-generator")
+    @SequenceGenerator(name = "referring_organisations_note-seq-generator", sequenceName = "referring_organisations_note_sequence", allocationSize = 1)
+    var id: Long = 0,
+    @Column(name = "content", length = 4096)
+    var content: String,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    var volunteer: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var referringOrganisation: ReferringOrganisation
+) {}
+
+
+@Entity
+@Table(name = "referring_organisation_contacts_notes")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+class ReferringOrganisationContactNote(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation_contacts_note-seq-generator")
+    @SequenceGenerator(name = "referring_organisation_contacts_note-seq-generator", sequenceName = "referring_organisation_contacts_note_sequence", allocationSize = 1)
+    var id: Long = 0,
+    @Column(name = "content", length = 4096)
+    var content: String,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    var volunteer: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var referringOrganisationContact: ReferringOrganisationContact
+) {}

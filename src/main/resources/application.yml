@@ -37,7 +37,9 @@ gmail:
   client-id: ${GMAIL_CLIENT_ID:}
   client-secret: ${GMAIL_CLIENT_SECRET:}
   refresh-token: ${GMAIL_REFRESH_TOKEN:}
-  address: ${GMAIL_ADDRESS:covidtechaid@gmail.com}
+  address: ${GMAIL_ADDRESS:communitytechaid@gmail.com}
+  enabled: ${GMAIL_ENABLED:false}
+  bcc-address: ${GMAIL_BCC_ADDRESS:distributions@communitytechaid.org.uk}
 
 server:
   port: ${PORT:8080}

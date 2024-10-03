@@ -1,0 +1,17 @@
+type DeviceRequestNote{
+
+    id: ID!
+    content: String
+    volunteer: String
+    createdAt: String
+    updatedAt: String
+    deviceRequest: DeviceRequest!
+}
+
+input DeviceRequestNoteInput{
+    content: String
+}
+
+extend type Mutation{
+    deleteDeviceRequestNote(id: ID!): Boolean
+}

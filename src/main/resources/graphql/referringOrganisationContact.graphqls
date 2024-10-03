@@ -1,0 +1,100 @@
+type ReferringOrganisationContact {
+    id: ID
+    fullName: String
+    address: String
+    email: String
+    phoneNumber: String
+    archived: Boolean
+    createdAt: String
+    updatedAt: String
+    referringOrganisation: ReferringOrganisation
+    requestCount: Int
+}
+
+"A representation of a page result from a query"
+type ReferringOrganisationContactPage {
+    "The list of deals retrieved from the server"
+    content: [ReferringOrganisationContact!]
+    "The number of total pages"
+    totalPages: Int
+    "The total amount of elements in this request"
+    totalElements: Int
+    "The size of the current page"
+    size: Int
+    "Returns whether the current page is the first"
+    first: Boolean
+    "Returns whether the current page is the last"
+    last: Boolean
+    "Returns if there is a next page"
+    hasNext: Boolean
+    "Returns if there is a previous page"
+    hasPrevious: Boolean
+    "Number of elements in current slice"
+    numberOfElements: Int
+    "Returns whether the page has content at all"
+    hasContent: Boolean
+    "The number of the current page"
+    number: Int
+}
+
+input CreateReferringOrganisationContactInput {
+    fullName: String!
+    address: String
+    email: String!
+    phoneNumber: String
+    referringOrganisation: ID!
+}
+
+input UpdateReferringOrganisationContactInput {
+    id: ID!
+    fullName: String
+    address: String
+    email: String
+    phoneNumber: String
+    referringOrganisationId: ID
+    archived: Boolean
+}
+
+input ReferringOrganisationContactWhereInput {
+    id: LongComparison
+    fullName: TextComparison
+    address: TextComparison
+    email: TextComparison
+    phoneNumber: TextComparison
+    referringOrganisation: ReferringOrganisationWhereInput
+    archived: BooleanComparison
+    createdAt: TimeComparison
+    updatedAt: TimeComparison
+    AND: [ReferringOrganisationContactWhereInput!]
+    OR: [ReferringOrganisationContactWhereInput!]
+    NOT: [ReferringOrganisationContactWhereInput!]
+}
+
+input ReferringOrganisationContactPublicWhereInput{
+    email: TextComparison
+    referringOrganisation: ReferringOrganisationWhereInput
+    archived: BooleanComparison
+    AND: [ReferringOrganisationContactPublicWhereInput!]
+    OR: [ReferringOrganisationContactPublicWhereInput!]
+    NOT: [ReferringOrganisationContactPublicWhereInput!]
+}
+
+type ReferringOrganisationContactPublic{
+    id: ID!
+    fullName: String
+}
+
+
+
+extend type Query {
+    referringOrganisationContactsConnection(page: PaginationInput, where: ReferringOrganisationContactWhereInput): ReferringOrganisationContactPage
+    referringOrganisationContactsPublic(where: ReferringOrganisationContactPublicWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationContactPublic]
+    referringOrganisationContacts(where: ReferringOrganisationContactWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationContact!]!
+    referringOrganisationContact(where: ReferringOrganisationContactWhereInput!): ReferringOrganisationContact
+}
+
+extend type Mutation {
+    createReferringOrganisationContact(data: CreateReferringOrganisationContactInput!) : ReferringOrganisationContact!
+    updateReferringOrganisationContact(data: UpdateReferringOrganisationContactInput!): ReferringOrganisationContact!
+    deleteReferringOrganisationContact(id: ID!): Boolean
+}
