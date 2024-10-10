@@ -7,7 +7,6 @@ import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 import cta.app.Donor
 import cta.app.DonorRepository
-import cta.app.DonorType
 import cta.app.DonorParentRepository
 import cta.app.QDonor
 import cta.app.services.FilterService
@@ -82,7 +81,6 @@ data class CreateDonorInput(
     val name: String,
     val businessName: String? = null,
     val consent: Boolean,
-    val type: DonorType,
     val donorParentId: Long? = null
 ) {
     val entity by lazy {
@@ -93,8 +91,7 @@ data class CreateDonorInput(
             referral = referral,
             name = name,
             businessName = businessName ?: null,
-            consent = consent,
-            type = type
+            consent = consent
         )
     }
 }
@@ -109,7 +106,6 @@ data class UpdateDonorInput(
     var businessName: String? = null,
     val referral: String,
     val consent: Boolean,
-    val type: DonorType,
     val donorParentId: Long? = null
 ) {
     fun apply(entity: Donor): Donor {
@@ -122,7 +118,6 @@ data class UpdateDonorInput(
             name = self.name
             businessName = self.businessName ?: null
             consent = self.consent
-            type = self.type
         }
     }
 }

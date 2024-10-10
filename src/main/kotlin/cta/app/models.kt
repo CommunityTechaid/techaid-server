@@ -146,9 +146,7 @@ class Donor(
         cascade = [CascadeType.ALL],
         orphanRemoval = false
     )
-    var kits: MutableSet<Kit> = mutableSetOf(),
-    @Enumerated(EnumType.STRING)
-    var type: DonorType? = DonorType.INDIVIDUAL
+    var kits: MutableSet<Kit> = mutableSetOf()
 ) : BaseEntity() {
     fun addKit(kit: Kit) {
         kits.add(kit)
@@ -167,9 +165,9 @@ class Donor(
     }
 }
 
-enum class DonorType {
-    INDIVIDUAL,
-    BUSINESS
+enum class DonorParentType {
+    BUSINESS,
+    DROPPOINT
 }
 
 @Entity
@@ -197,7 +195,9 @@ class DonorParent(
         cascade = [CascadeType.ALL],
         orphanRemoval = false
     )
-    var donors: MutableSet<Donor> = mutableSetOf()
+    var donors: MutableSet<Donor> = mutableSetOf(),
+    @Enumerated(EnumType.STRING)
+    var type: DonorParentType? = DonorParentType.DROPPOINT
 ) : BaseEntity() { 
     fun addDonor(donor: Donor) {
         donors.add(donor)

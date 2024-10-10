@@ -7,6 +7,7 @@ import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 import cta.app.DonorParent
 import cta.app.DonorParentRepository
+import cta.app.DonorParentType
 import cta.app.QDonorParent
 import cta.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
@@ -46,13 +47,15 @@ data class CreateDonorParentInput(
     @get:NotBlank
     val name: String,
     val address: String,
-    val website: String
+    val website: String,
+    val type: DonorParentType
 ) {
     val entity by lazy {
         DonorParent(
             name = name,
             address = address,
-            website = website
+            website = website,
+            type = type
         )
     }
 }
@@ -62,7 +65,8 @@ data class UpdateDonorParentInput(
     val id: Long,
     var name: String,
     val address: String,
-    val website: String
+    val website: String,
+    val type: DonorParentType
 ) {
     fun apply(entity: DonorParent): DonorParent {
         val self = this
@@ -70,6 +74,7 @@ data class UpdateDonorParentInput(
             name = self.name
             address = self.address
             website = self.website
+            type = self.type
         }
     }
 }

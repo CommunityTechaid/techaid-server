@@ -1,7 +1,3 @@
-enum DonorType {
-    INDIVIDUAL, BUSINESS
-}
-
 type Donor {
     id: ID!
     postCode: String
@@ -16,29 +12,7 @@ type Donor {
     kits: [Kit!]
     coordinates: Coordinates
     consent: Boolean
-    type: DonorType
     donorParent: DonorParent
-}
-
-input DonorTypeComparison {
-    "Matches values that are equal to"
-    _eq: DonorType
-    "Matches values that are greater than"
-    _gt: DonorType
-    "Matches values that are greater than or equal to"
-    _gte: DonorType
-    "Matches values contained in the collection"
-    _in: [DonorType]
-    "Matches values that are null/not null"
-    _is_null: Boolean
-    "Matches values that are less than"
-    _lt: DonorType
-    "Matches values that are less than or equal to"
-    _lte: DonorType
-    "Matches values that are not equal to"
-    _neq: DonorType
-    "Matches values that are not contained in the collection"
-    _nin: [DonorType]
 }
 
 input CreateDonorInput {
@@ -49,7 +23,6 @@ input CreateDonorInput {
     email: String
     referral: String
     consent: Boolean
-    type: DonorType
     donorParentId: ID
 }
 
@@ -62,7 +35,6 @@ input UpdateDonorInput {
     email: String
     referral: String
     consent: Boolean
-    type: DonorType
     donorParentId: ID
 }
 
@@ -110,7 +82,6 @@ input DonorWhereInput {
     phoneNumber: TextComparison
     email: TextComparison
     referral: TextComparison
-    type: DonorTypeComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
     donorParent: DonorParentWhereInput
