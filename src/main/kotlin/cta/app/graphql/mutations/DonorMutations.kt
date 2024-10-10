@@ -79,7 +79,6 @@ data class CreateDonorInput(
     val email: String = "",
     val referral: String = "",
     val name: String,
-    val businessName: String? = null,
     val consent: Boolean,
     val donorParentId: Long? = null
 ) {
@@ -90,7 +89,6 @@ data class CreateDonorInput(
             email = email,
             referral = referral,
             name = name,
-            businessName = businessName ?: null,
             consent = consent
         )
     }
@@ -103,7 +101,6 @@ data class UpdateDonorInput(
     val phoneNumber: String,
     val email: String,
     var name: String,
-    var businessName: String? = null,
     val referral: String,
     val consent: Boolean,
     val donorParentId: Long? = null
@@ -116,7 +113,6 @@ data class UpdateDonorInput(
             email = if (email != self.email) self.email else this.email
             referral = self.referral
             name = self.name
-            businessName = self.businessName ?: null
             consent = self.consent
         }
     }

@@ -1,7 +1,6 @@
 package cta.app.graphql.filters
 
 import com.querydsl.core.BooleanBuilder
-import com.querydsl.core.types.dsl.EnumPath
 import java.time.Instant
 import cta.app.QDonor
 import cta.graphql.LongComparision
@@ -15,7 +14,6 @@ class DonorWhereInput(
     var postCode: TextComparison? = null,
     var phoneNumber: TextComparison? = null,
     var name: TextComparison? = null,
-    var businessName: TextComparison? = null,
     var email: TextComparison? = null,
     var referral: TextComparison? = null,
     var donorParent: DonorParentWhereInput? = null,
@@ -35,7 +33,6 @@ class DonorWhereInput(
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         name?.let { builder.and(it.build(entity.name)) }
-        businessName?.let { builder.and(it.build(entity.businessName)) }
         donorParent?.let { builder.and(it.build(entity.donorParent)) }
         if (AND.isNotEmpty()) {
             AND.forEach {

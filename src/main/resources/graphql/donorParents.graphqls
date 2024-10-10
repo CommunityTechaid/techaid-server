@@ -46,11 +46,8 @@ input CreateDonorParentInput {
 input UpdateDonorParentInput {
     id: ID!
     name: String
-    postCode: String
-    phoneNumber: String
-    email: String
-    referral: String
-    consent: Boolean
+    address: String
+    website: String
     type: DonorParentType
 }
 

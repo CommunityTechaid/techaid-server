@@ -122,7 +122,6 @@ class Donor(
     var phoneNumber: String,
     var email: String,
     var name: String,
-    var businessName: String? = null,
     var referral: String,
     var consent: Boolean,
     var createdAt: Instant = Instant.now(),
@@ -138,7 +137,7 @@ class Donor(
     @Column(columnDefinition = "jsonb")
     var coordinates: Coordinates? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "drop_point_id")
+    @JoinColumn(name = "donor_parent_id")
     var donorParent: DonorParent? = null,
     @OneToMany(
         mappedBy = "donor",
@@ -174,8 +173,8 @@ enum class DonorParentType {
 @Table(name = "donorParents")
 class DonorParent(
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "drop-point-seq-generator")
-    @SequenceGenerator(name = "drop-point-seq-generator", sequenceName = "drop_point_sequence", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "donor-parent-seq-generator")
+    @SequenceGenerator(name = "donor-parent-seq-generator", sequenceName = "donor_parent_sequence", allocationSize = 1)
     var id: Long = 0,
     var name: String,
     var address: String,
@@ -185,7 +184,7 @@ class DonorParent(
     var updatedAt: Instant = Instant.now(),
     @Formula(
         """
-        ( SELECT COUNT(*) FROM donors d where d.drop_point_id = id )
+        ( SELECT COUNT(*) FROM donors d where d.donor_parent_id = id )
     """
     )
     var donorCount: Int = 0,
