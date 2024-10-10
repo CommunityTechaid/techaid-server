@@ -17,7 +17,7 @@ type Donor {
     coordinates: Coordinates
     consent: Boolean
     type: DonorType
-    dropPoint: DropPoint
+    dropPoint: DonorParent
 }
 
 input DonorTypeComparison {
@@ -113,7 +113,7 @@ input DonorWhereInput {
     type: DonorTypeComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
-    dropPoint: DropPointWhereInput
+    dropPoint: DonorParentWhereInput
     AND: [DonorWhereInput!]
     OR: [DonorWhereInput!]
     NOT: [DonorWhereInput!]

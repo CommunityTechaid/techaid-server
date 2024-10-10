@@ -5,9 +5,9 @@ import javax.persistence.EntityNotFoundException
 import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
-import cta.app.DropPoint
-import cta.app.DropPointRepository
-import cta.app.QDropPoint
+import cta.app.DonorParent
+import cta.app.DonorParentRepository
+import cta.app.QDonorParent
 import cta.toNullable
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
@@ -18,22 +18,22 @@ import org.springframework.validation.annotation.Validated
 @Validated
 @PreAuthorize("hasAnyAuthority('write:dropPoints')")
 @Transactional
-class DropPointMutations(
-    private val dropPoints: DropPointRepository
+class DonorParentMutations(
+    private val dropPoints: DonorParentRepository
 ) : GraphQLMutationResolver {
 
-    fun createDropPoint(@Valid data: CreateDropPointInput): DropPoint {
+    fun createDonorParent(@Valid data: CreateDonorParentInput): DonorParent {
         return dropPoints.save(data.entity)
     }
 
-    fun updateDropPoint(@Valid data: UpdateDropPointInput): DropPoint {
+    fun updateDonorParent(@Valid data: UpdateDonorParentInput): DonorParent {
         val entity = dropPoints.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a drop point with id: ${data.id}")
         return data.apply(entity)
     }
 
     @PreAuthorize("hasAnyAuthority('delete:dropPoints')")
-    fun deleteDropPoint(id: Long): Boolean {
+    fun deleteDonorParent(id: Long): Boolean {
         val dropPoint = dropPoints.findById(id).toNullable()
             ?: throw EntityNotFoundException("No drop point with id: $id")
         dropPoint.donors.forEach { dropPoint.removeDonor(it) }
@@ -42,14 +42,14 @@ class DropPointMutations(
     }
 }
 
-data class CreateDropPointInput(
+data class CreateDonorParentInput(
     @get:NotBlank
     val name: String,
     val address: String,
     val website: String
 ) {
     val entity by lazy {
-        DropPoint(
+        DonorParent(
             name = name,
             address = address,
             website = website
@@ -57,14 +57,14 @@ data class CreateDropPointInput(
     }
 }
 
-data class UpdateDropPointInput(
+data class UpdateDonorParentInput(
     @get:NotNull
     val id: Long,
     var name: String,
     val address: String,
     val website: String
 ) {
-    fun apply(entity: DropPoint): DropPoint {
+    fun apply(entity: DonorParent): DonorParent {
         val self = this
         return entity.apply {
             name = self.name

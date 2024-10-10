@@ -1,4 +1,4 @@
-type DropPoint {
+type DonorParent {
     id: ID!
     name: String
     address: String
@@ -9,13 +9,13 @@ type DropPoint {
     donorCount: Int
 }
 
-input CreateDropPointInput {
+input CreateDonorParentInput {
     name: String
     address: String
     website: String
 }
 
-input UpdateDropPointInput {
+input UpdateDonorParentInput {
     id: ID!
     name: String
     postCode: String
@@ -26,9 +26,9 @@ input UpdateDropPointInput {
 }
 
 "A representation of a page result from a query"
-type DropPointPage {
+type DonorParentPage {
     "The list of deals retrieved from the server"
-    content: [DropPoint!]
+    content: [DonorParent!]
     "The number of total pages"
     totalPages: Int
     "The total amount of elements in this request"
@@ -51,27 +51,27 @@ type DropPointPage {
     number: Int
 }
 
-input DropPointWhereInput {
+input DonorParentWhereInput {
     id: LongComparison
     name: TextComparison
     address: TextComparison
     website: TextComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
-    AND: [DropPointWhereInput!]
-    OR: [DropPointWhereInput!]
-    NOT: [DropPointWhereInput!]
+    AND: [DonorParentWhereInput!]
+    OR: [DonorParentWhereInput!]
+    NOT: [DonorParentWhereInput!]
 }
 
 extend type Query {
-    dropPointsConnection(page: PaginationInput, where: DropPointWhereInput): DropPointPage
-    dropPoints(where: DropPointWhereInput!, orderBy: [KeyValuePair!]): [DropPoint!]!
-    dropPoint(where: DropPointWhereInput!): DropPoint
+    dropPointsConnection(page: PaginationInput, where: DonorParentWhereInput): DonorParentPage
+    dropPoints(where: DonorParentWhereInput!, orderBy: [KeyValuePair!]): [DonorParent!]!
+    dropPoint(where: DonorParentWhereInput!): DonorParent
 }
 
 extend type Mutation {
-    createDropPoint(data: CreateDropPointInput!) : DropPoint!
-    updateDropPoint(data: UpdateDropPointInput!): DropPoint!
-    deleteDropPoint(id: ID!): Boolean
+    createDonorParent(data: CreateDonorParentInput!) : DonorParent!
+    updateDonorParent(data: UpdateDonorParentInput!): DonorParent!
+    deleteDonorParent(id: ID!): Boolean
 }
 
