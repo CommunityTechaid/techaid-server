@@ -17,7 +17,7 @@ type Donor {
     coordinates: Coordinates
     consent: Boolean
     type: DonorType
-    dropPoint: DonorParent
+    donorParent: DonorParent
 }
 
 input DonorTypeComparison {
@@ -50,7 +50,7 @@ input CreateDonorInput {
     referral: String
     consent: Boolean
     type: DonorType
-    dropPointId: ID
+    donorParentId: ID
 }
 
 input UpdateDonorInput {
@@ -63,7 +63,7 @@ input UpdateDonorInput {
     referral: String
     consent: Boolean
     type: DonorType
-    dropPointId: ID
+    donorParentId: ID
 }
 
 input DonateItemInput {
@@ -113,7 +113,7 @@ input DonorWhereInput {
     type: DonorTypeComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
-    dropPoint: DonorParentWhereInput
+    donorParent: DonorParentWhereInput
     AND: [DonorWhereInput!]
     OR: [DonorWhereInput!]
     NOT: [DonorWhereInput!]

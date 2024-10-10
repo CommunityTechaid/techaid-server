@@ -139,7 +139,7 @@ class Donor(
     var coordinates: Coordinates? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "drop_point_id")
-    var dropPoint: DropPoint? = null,
+    var donorParent: DonorParent? = null,
     @OneToMany(
         mappedBy = "donor",
         fetch = FetchType.LAZY,
@@ -173,8 +173,8 @@ enum class DonorType {
 }
 
 @Entity
-@Table(name = "dropPoints")
-class DropPoint(
+@Table(name = "donorParents")
+class DonorParent(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "drop-point-seq-generator")
     @SequenceGenerator(name = "drop-point-seq-generator", sequenceName = "drop_point_sequence", allocationSize = 1)
@@ -192,7 +192,7 @@ class DropPoint(
     )
     var donorCount: Int = 0,
     @OneToMany(
-        mappedBy = "dropPoint",
+        mappedBy = "donorParent",
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
         orphanRemoval = false
@@ -201,13 +201,13 @@ class DropPoint(
 ) : BaseEntity() { 
     fun addDonor(donor: Donor) {
         donors.add(donor)
-        donor.dropPoint = this
+        donor.donorParent = this
     }
 
     fun removeDonor(donor: Donor) {
         donors.removeIf {
             if (donor == it) {
-                donor.dropPoint = null
+                donor.donorParent = null
                 true
             } else {
                 false

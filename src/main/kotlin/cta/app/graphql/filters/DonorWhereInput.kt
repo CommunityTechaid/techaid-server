@@ -80,7 +80,7 @@ class DonorWhereInput(
     var email: TextComparison? = null,
     var type: DonorTypeComparison? = null,
     var referral: TextComparison? = null,
-    var dropPoint: DropPointWhereInput? = null,
+    var donorParent: DonorParentWhereInput? = null,
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
     var AND: MutableList<DonorWhereInput> = mutableListOf(),
@@ -99,7 +99,7 @@ class DonorWhereInput(
         type?.let { builder.and(it.build(entity.type)) }
         name?.let { builder.and(it.build(entity.name)) }
         businessName?.let { builder.and(it.build(entity.businessName)) }
-        dropPoint?.let { builder.and(it.build(entity.dropPoint)) }
+        donorParent?.let { builder.and(it.build(entity.donorParent)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))

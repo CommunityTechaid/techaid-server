@@ -18,7 +18,7 @@ class DonorParentWhereInput(
     var OR: MutableList<DonorParentWhereInput> = mutableListOf(),
     var NOT: MutableList<DonorParentWhereInput> = mutableListOf()
 ) {
-    fun build(entity: QDonorParent = QDonorParent.dropPoint): BooleanBuilder {
+    fun build(entity: QDonorParent = QDonorParent.donorParent): BooleanBuilder {
         val builder = BooleanBuilder()
         id?.let { builder.and(it.build(entity.id)) }
         name?.let { builder.and(it.build(entity.name)) }

@@ -16,26 +16,26 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 
 @Component
-@PreAuthorize("hasAnyAuthority('app:admin', 'read:dropPoints')")
+@PreAuthorize("hasAnyAuthority('app:admin', 'read:donorParents')")
 class DonorParentQueries(
-    private val dropPoints: DonorParentRepository
+    private val donorParents: DonorParentRepository
 ) : GraphQLQueryResolver {
-    fun dropPointsConnection(page: PaginationInput?, where: DonorParentWhereInput?): Page<DonorParent> {
+    fun donorParentsConnection(page: PaginationInput?, where: DonorParentWhereInput?): Page<DonorParent> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
-            return dropPoints.findAll(f.create())
+            return donorParents.findAll(f.create())
         }
-        return dropPoints.findAll(where.build(), f.create())
+        return donorParents.findAll(where.build(), f.create())
     }
 
-    fun dropPoints(where: DonorParentWhereInput, orderBy: MutableList<KeyValuePair>?): List<DonorParent> {
+    fun donorParents(where: DonorParentWhereInput, orderBy: MutableList<KeyValuePair>?): List<DonorParent> {
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
-            dropPoints.findAll(where.build(), sort).toList()
+            donorParents.findAll(where.build(), sort).toList()
         } else {
-            dropPoints.findAll(where.build()).toList()
+            donorParents.findAll(where.build()).toList()
         }
     }
 
-    fun dropPoint(where: DonorParentWhereInput): Optional<DonorParent> = dropPoints.findOne(where.build())
+    fun donorParent(where: DonorParentWhereInput): Optional<DonorParent> = donorParents.findOne(where.build())
 }

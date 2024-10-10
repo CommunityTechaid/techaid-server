@@ -64,9 +64,9 @@ input DonorParentWhereInput {
 }
 
 extend type Query {
-    dropPointsConnection(page: PaginationInput, where: DonorParentWhereInput): DonorParentPage
-    dropPoints(where: DonorParentWhereInput!, orderBy: [KeyValuePair!]): [DonorParent!]!
-    dropPoint(where: DonorParentWhereInput!): DonorParent
+    donorParentsConnection(page: PaginationInput, where: DonorParentWhereInput): DonorParentPage
+    donorParents(where: DonorParentWhereInput!, orderBy: [KeyValuePair!]): [DonorParent!]!
+    donorParent(where: DonorParentWhereInput!): DonorParent
 }
 
 extend type Mutation {

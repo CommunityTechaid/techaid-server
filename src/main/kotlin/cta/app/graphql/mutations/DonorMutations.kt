@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull
 import cta.app.Donor
 import cta.app.DonorRepository
 import cta.app.DonorType
-import cta.app.DropPointRepository
+import cta.app.DonorParentRepository
 import cta.app.QDonor
 import cta.app.services.FilterService
 import cta.app.services.LocationService
@@ -24,7 +24,7 @@ import org.springframework.validation.annotation.Validated
 @Transactional
 class DonorMutations(
     private val donors: DonorRepository,
-    private val dropPoints: DropPointRepository,
+    private val donorParents: DonorParentRepository,
     private val locationService: LocationService,
     private val filterService: FilterService
 ) : GraphQLMutationResolver {
@@ -35,10 +35,10 @@ class DonorMutations(
             donor.coordinates = locationService.findCoordinates(donor.postCode)
         }
 
-        if (data.dropPointId != null) {
-            val dropPoint = dropPoints.findById(data.dropPointId).toNullable()
-                ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.dropPointId}")
-            dropPoint.addDonor(donor)
+        if (data.donorParentId != null) {
+            val donorParent = donorParents.findById(data.donorParentId).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorParentId}")
+            donorParent.addDonor(donor)
         }
 
         return donor
@@ -52,12 +52,12 @@ class DonorMutations(
                 coordinates = locationService.findCoordinates(postCode)
             }
 
-            if (data.dropPointId == null) {
-                dropPoint?.removeDonor(this)
-            } else if (data.dropPointId != dropPoint?.id) {
-                val dropPoint = dropPoints.findById(data.dropPointId).toNullable()
-                    ?: throw EntityNotFoundException("Unable to locate a drop point with id: ${data.dropPointId}")
-                dropPoint.addDonor(this)
+            if (data.donorParentId == null) {
+                donorParent?.removeDonor(this)
+            } else if (data.donorParentId != donorParent?.id) {
+                val donorParent = donorParents.findById(data.donorParentId).toNullable()
+                    ?: throw EntityNotFoundException("Unable to locate a parent donor with id: ${data.donorParentId}")
+                donorParent.addDonor(this)
             }
 
         }
@@ -83,7 +83,7 @@ data class CreateDonorInput(
     val businessName: String? = null,
     val consent: Boolean,
     val type: DonorType,
-    val dropPointId: Long? = null
+    val donorParentId: Long? = null
 ) {
     val entity by lazy {
         Donor(
@@ -110,7 +110,7 @@ data class UpdateDonorInput(
     val referral: String,
     val consent: Boolean,
     val type: DonorType,
-    val dropPointId: Long? = null
+    val donorParentId: Long? = null
 ) {
     fun apply(entity: Donor): Donor {
         val self = this

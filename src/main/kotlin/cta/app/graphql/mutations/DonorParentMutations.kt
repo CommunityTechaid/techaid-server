@@ -16,28 +16,28 @@ import org.springframework.validation.annotation.Validated
 
 @Component
 @Validated
-@PreAuthorize("hasAnyAuthority('write:dropPoints')")
+@PreAuthorize("hasAnyAuthority('write:donorParents')")
 @Transactional
 class DonorParentMutations(
-    private val dropPoints: DonorParentRepository
+    private val donorParents: DonorParentRepository
 ) : GraphQLMutationResolver {
 
     fun createDonorParent(@Valid data: CreateDonorParentInput): DonorParent {
-        return dropPoints.save(data.entity)
+        return donorParents.save(data.entity)
     }
 
     fun updateDonorParent(@Valid data: UpdateDonorParentInput): DonorParent {
-        val entity = dropPoints.findById(data.id).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a drop point with id: ${data.id}")
+        val entity = donorParents.findById(data.id).toNullable()
+            ?: throw EntityNotFoundException("Unable to locate a parent donor with id: ${data.id}")
         return data.apply(entity)
     }
 
-    @PreAuthorize("hasAnyAuthority('delete:dropPoints')")
+    @PreAuthorize("hasAnyAuthority('delete:donorParents')")
     fun deleteDonorParent(id: Long): Boolean {
-        val dropPoint = dropPoints.findById(id).toNullable()
-            ?: throw EntityNotFoundException("No drop point with id: $id")
-        dropPoint.donors.forEach { dropPoint.removeDonor(it) }
-        dropPoints.delete(dropPoint)
+        val donorParent = donorParents.findById(id).toNullable()
+            ?: throw EntityNotFoundException("No parent donor with id: $id")
+        donorParent.donors.forEach { donorParent.removeDonor(it) }
+        donorParents.delete(donorParent)
         return true
     }
 }
