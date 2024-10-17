@@ -97,23 +97,23 @@ data class CreateDonorInput(
 data class UpdateDonorInput(
     @get:NotNull
     val id: Long,
-    val postCode: String,
+    val postCode: String? = null,
     val phoneNumber: String,
     val email: String,
     var name: String,
-    val referral: String,
-    val consent: Boolean,
+    val referral: String? = null,
+    val consent: Boolean? = null,
     val donorParentId: Long? = null
 ) {
     fun apply(entity: Donor): Donor {
         val self = this
         return entity.apply {
-            postCode = self.postCode
+            postCode = if (self.postCode == null) postCode else self.postCode.toString()
             phoneNumber = if (phoneNumber != self.phoneNumber) self.phoneNumber else phoneNumber
             email = if (email != self.email) self.email else this.email
-            referral = self.referral
+            referral = if (self.referral == null) referral else self.referral.toString()
             name = self.name
-            consent = self.consent
+            consent = (self.consent == null) ? consent : self.consent 
         }
     }
 }
