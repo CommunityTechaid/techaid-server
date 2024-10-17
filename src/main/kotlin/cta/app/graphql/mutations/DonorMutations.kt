@@ -113,7 +113,7 @@ data class UpdateDonorInput(
             email = if (email != self.email) self.email else this.email
             referral = if (self.referral == null) referral else self.referral.toString()
             name = self.name
-            consent = (self.consent == null) ? consent : self.consent 
+            consent = if (self.consent == null) ? consent : self.consent 
         }
     }
 }
