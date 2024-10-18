@@ -67,6 +67,7 @@ data class UpdateDonorParentInput(
     val address: String,
     val website: String,
     val type: DonorParentType
+    val archived: Boolean? = null
 ) {
     fun apply(entity: DonorParent): DonorParent {
         val self = this
@@ -75,6 +76,7 @@ data class UpdateDonorParentInput(
             address = self.address
             website = self.website
             type = self.type
+            archived = self.archived ?: archived
         }
     }
 }

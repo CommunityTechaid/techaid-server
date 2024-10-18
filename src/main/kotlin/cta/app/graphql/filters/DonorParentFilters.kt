@@ -5,6 +5,7 @@ import com.querydsl.core.types.dsl.EnumPath
 import java.time.Instant
 import cta.app.DonorParentType
 import cta.app.QDonorParent
+import cta.graphql.BooleanComparison
 import cta.graphql.LongComparision
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
@@ -79,6 +80,7 @@ class DonorParentWhereInput(
     var type: DonorParentTypeComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
+    var archived: BooleanComparison? = null,
     var AND: MutableList<DonorParentWhereInput> = mutableListOf(),
     var OR: MutableList<DonorParentWhereInput> = mutableListOf(),
     var NOT: MutableList<DonorParentWhereInput> = mutableListOf()
@@ -92,6 +94,7 @@ class DonorParentWhereInput(
         type?.let { builder.and(it.build(entity.type)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
+        archived?.let { builder.and(it.build(entity.archived)) }
         if (AND.isNotEmpty()) {
             AND.forEach { builder.and(it.build(entity)) }
         }

@@ -103,7 +103,8 @@ data class UpdateDonorInput(
     var name: String,
     val referral: String? = null,
     val consent: Boolean? = null,
-    val donorParentId: Long? = null
+    val donorParentId: Long? = null,
+    val archived: Boolean? = null
 ) {
     fun apply(entity: Donor): Donor {
         val self = this
@@ -114,6 +115,7 @@ data class UpdateDonorInput(
             referral = if (self.referral == null) referral else self.referral.toString()
             name = self.name
             consent = if (self.consent == null) consent else self.consent 
+            archived = self.archived ?: archived
         }
     }
 }

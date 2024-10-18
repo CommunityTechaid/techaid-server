@@ -12,6 +12,7 @@ type DonorParent {
     updatedAt: String
     donors: [Donor!]
     donorCount: Int
+    archived: Boolean
 }
 
 
@@ -49,6 +50,7 @@ input UpdateDonorParentInput {
     address: String
     website: String
     type: DonorParentType
+    archived: Boolean
 }
 
 "A representation of a page result from a query"
@@ -85,6 +87,7 @@ input DonorParentWhereInput {
     createdAt: TimeComparison
     updatedAt: TimeComparison
     type: DonorParentTypeComparison
+    archived: BooleanComparison
     AND: [DonorParentWhereInput!]
     OR: [DonorParentWhereInput!]
     NOT: [DonorParentWhereInput!]

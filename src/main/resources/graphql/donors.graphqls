@@ -12,6 +12,7 @@ type Donor {
     coordinates: Coordinates
     consent: Boolean
     donorParent: DonorParent
+    archived: Boolean
 }
 
 input CreateDonorInput {
@@ -33,6 +34,7 @@ input UpdateDonorInput {
     referral: String
     consent: Boolean
     donorParentId: ID
+    archived: Boolean
 }
 
 input DonateItemInput {
@@ -81,6 +83,7 @@ input DonorWhereInput {
     createdAt: TimeComparison
     updatedAt: TimeComparison
     donorParent: DonorParentWhereInput
+    archived: BooleanComparison
     AND: [DonorWhereInput!]
     OR: [DonorWhereInput!]
     NOT: [DonorWhereInput!]
