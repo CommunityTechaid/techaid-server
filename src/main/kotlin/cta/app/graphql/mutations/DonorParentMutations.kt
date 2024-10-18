@@ -66,7 +66,7 @@ data class UpdateDonorParentInput(
     var name: String,
     val address: String,
     val website: String,
-    val type: DonorParentType
+    val type: DonorParentType,
     val archived: Boolean? = null
 ) {
     fun apply(entity: DonorParent): DonorParent {
