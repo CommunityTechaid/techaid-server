@@ -17,10 +17,10 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
-import javax.mail.internet.InternetAddress
-import javax.persistence.EntityNotFoundException
-import javax.validation.Valid
-import javax.validation.constraints.NotNull
+import jakarta.mail.internet.InternetAddress
+import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotNull
 
 
 @Component
@@ -145,7 +145,7 @@ val emailFooter = """
 
         if(!mailService.bcc_address.isNullOrEmpty()) {
             msg.addRecipient(
-                javax.mail.Message.RecipientType.BCC,
+                jakarta.mail.Message.RecipientType.BCC,
                 InternetAddress(mailService.bcc_address))
         }
         

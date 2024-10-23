@@ -2,7 +2,7 @@ package cta.commands
 
 import java.util.EnumSet
 import java.util.concurrent.Callable
-import javax.sql.DataSource
+import jakarta.sql.DataSource
 import mu.KotlinLogging
 import org.hibernate.boot.MetadataSources
 import org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy

@@ -473,7 +473,7 @@ class ReferringOrganisation(
     """
     )
     var requestCount: Int = 0,
-    @Type(type = "yes_no")
+    @Type(type = "yes_no",value="")
     var archived: Boolean = false,
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
