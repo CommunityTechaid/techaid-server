@@ -1,6 +1,5 @@
 package cta.app.graphql.queries
 
-import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestRepository
 import cta.app.RequestCount
@@ -10,16 +9,18 @@ import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
+import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import java.util.Optional
 
-@Component
+@Controller
 class DeviceRequestQueries(
     private val deviceRequests: DeviceRequestRepository,
     private val filterService: FilterService
-) : GraphQLQueryResolver {
+)  {
 
+    @QueryMapping
     fun requestCount(): RequestCount? {
         if (filterService.authenticated()) {
             return deviceRequests.requestCount()
@@ -27,16 +28,8 @@ class DeviceRequestQueries(
         return null
     }
 
-    /*  @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
-      fun organisationsConnection(page: PaginationInput?, where: DeviceRequestWhereInput?): Page<DeviceRequest> {
-          val f: PaginationInput = page ?: PaginationInput()
-          if (where == null) {
-              return deviceRequests.findAll(f.create())
-          }
-          return deviceRequests.findAll(where.build(), f.create())
-      }
-  */
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @QueryMapping
     fun deviceRequests(where: DeviceRequestWhereInput, orderBy: MutableList<KeyValuePair>?): List<DeviceRequest> {
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
@@ -47,6 +40,7 @@ class DeviceRequestQueries(
     }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @QueryMapping
     fun deviceRequestConnection(page: PaginationInput?, where: DeviceRequestWhereInput?): Page<DeviceRequest> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
@@ -56,5 +50,6 @@ class DeviceRequestQueries(
     }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @QueryMapping
     fun deviceRequest(where: DeviceRequestWhereInput): Optional<DeviceRequest> = deviceRequests.findOne(where.build())
 }

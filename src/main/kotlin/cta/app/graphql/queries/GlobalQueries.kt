@@ -1,12 +1,13 @@
 package cta.app.graphql.queries
 
-import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import cta.app.services.Coordinates
 import cta.app.services.LocationService
-import org.springframework.stereotype.Component
+import org.springframework.graphql.data.method.annotation.QueryMapping
+import org.springframework.stereotype.Controller
 
-@Component
-class GlobalQueries(private val locationService: LocationService) : GraphQLQueryResolver {
+@Controller
+class GlobalQueries(private val locationService: LocationService)  {
+    @QueryMapping
     fun location(address: String): Coordinates? {
         return locationService.findCoordinates(address)
     }

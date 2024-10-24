@@ -1,34 +1,33 @@
 package cta.app.graphql.queries
 
-import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import cta.app.CustomRevisionInfo
 import cta.app.Kit
+import jakarta.persistence.EntityManager
+import jakarta.persistence.PersistenceContext
 import org.hibernate.envers.AuditReader
 import org.hibernate.envers.AuditReaderFactory
 import org.hibernate.envers.RevisionType
 import org.hibernate.envers.query.AuditEntity
+import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
-import jakarta.persistence.EntityManager
-import jakarta.persistence.PersistenceContext
 
-
-@Component
+@Controller
 @PreAuthorize("hasAnyAuthority('read:kits', 'read:kits:assigned')")
 class KitAuditTrailQueries(
     @PersistenceContext
     private val em: EntityManager
-) : GraphQLQueryResolver {
+)  {
 
     @Transactional
+    @QueryMapping
     //This annotation is added so that the entity manager can be obtained.
     //Entity Manager might close otherwise
     fun kitAudits(where: Long): List<Revision> {
 
         val reader: AuditReader = AuditReaderFactory.get(em)
         val finalResults: MutableList<Revision> = mutableListOf()
-
 
         /*Use AuditReader to query the revisions as required and get the results as a list.
         Set selectedEntitiesOnly to true to get only the revisions of Kit instead of the extra information
@@ -52,14 +51,10 @@ class KitAuditTrailQueries(
             val revision = Revision(entity, revisionEntity, revisionType)
             //Keep adding the revisions into a list to return to graphQL query
             finalResults.add(revision)
-
         }
 
-
         return finalResults.toList()
-
     }
-
 }
 
 /*

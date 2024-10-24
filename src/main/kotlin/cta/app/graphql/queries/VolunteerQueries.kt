@@ -1,8 +1,5 @@
 package cta.app.graphql.queries
 
-import com.coxautodev.graphql.tools.GraphQLQueryResolver
-import com.coxautodev.graphql.tools.GraphQLResolver
-import java.util.Optional
 import cta.app.Volunteer
 import cta.app.VolunteerRepository
 import cta.app.graphql.filters.VolunteerWhereInput
@@ -11,15 +8,18 @@ import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
+import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
+import java.util.Optional
 
-@Component
+@Controller
 @PreAuthorize("hasAnyAuthority('read:volunteers', 'read:volunteers:assigned')")
 class VolunteerQueries(
     private val volunteers: VolunteerRepository,
     private val filterService: FilterService
-) : GraphQLQueryResolver {
+)  {
+    @QueryMapping
     fun volunteersConnection(page: PaginationInput?, where: VolunteerWhereInput?): Page<Volunteer> {
         val filter = filterService.volunteerFilter()
         val f: PaginationInput = page ?: PaginationInput()
@@ -29,6 +29,7 @@ class VolunteerQueries(
         return volunteers.findAll(filter.and(where.build()), f.create())
     }
 
+    @QueryMapping
     fun volunteers(where: VolunteerWhereInput, orderBy: MutableList<KeyValuePair>?): List<Volunteer> {
         val filter = filterService.volunteerFilter()
         return if (orderBy != null) {
@@ -39,20 +40,23 @@ class VolunteerQueries(
         }
     }
 
+    @QueryMapping
     fun volunteer(where: VolunteerWhereInput): Optional<Volunteer> =
         volunteers.findOne(filterService.volunteerFilter().and(where.build()))
 }
 
-@Component
-class VolunteerResolver : GraphQLResolver<Volunteer> {
+@Controller
+class VolunteerResolver {
     companion object {
         val EMAIL_MASK = Regex("(?<=.)[^@](?=[^@]*[^@]@)|(?:(?<=@.)|(?!^)\\G(?=[^@]*$)).(?!$)")
     }
 
+    @QueryMapping
     fun email(entity: Volunteer): String {
         return entity.email
     }
 
+    @QueryMapping
     fun phoneNumber(entity: Volunteer): String {
         return entity.phoneNumber
     }

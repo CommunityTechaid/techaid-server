@@ -1,6 +1,5 @@
 package cta.app.graphql.queries
 
-import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import cta.app.ReferringOrganisationContact
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.graphql.filters.ReferringOrganisationContactPublicWhereInput
@@ -9,16 +8,18 @@ import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
+import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import java.util.Optional
 
-@Component
+@Controller
 class ReferringOrganisationContactQueries(
     private val referringOrganisationContacts: ReferringOrganisationContactRepository
-) : GraphQLQueryResolver {
+)  {
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @QueryMapping
     fun referringOrganisationContacts(
         where: ReferringOrganisationContactWhereInput,
         orderBy: MutableList<KeyValuePair>?
@@ -32,6 +33,7 @@ class ReferringOrganisationContactQueries(
     }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @QueryMapping
     fun referringOrganisationContactsConnection(page: PaginationInput?, where: ReferringOrganisationContactWhereInput?): Page<ReferringOrganisationContact> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
@@ -40,6 +42,7 @@ class ReferringOrganisationContactQueries(
         return referringOrganisationContacts.findAll(where.build(), f.create())
     }
 
+    @QueryMapping
     fun referringOrganisationContactsPublic(
         where: ReferringOrganisationContactPublicWhereInput,
         orderBy: MutableList<KeyValuePair>?
@@ -48,11 +51,12 @@ class ReferringOrganisationContactQueries(
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
             referringOrganisationContacts.findAll(where.build(), sort).map { ReferringOrganisationContactPublic(it.id, it.fullName) }.toList()
         } else {
-            referringOrganisationContacts.findAll(where.build()).map{ ReferringOrganisationContactPublic(it.id, it.fullName) }.toList()
+            referringOrganisationContacts.findAll(where.build()).map { ReferringOrganisationContactPublic(it.id, it.fullName) }.toList()
         }
     }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @QueryMapping
     fun referringOrganisationContact(where: ReferringOrganisationContactWhereInput): Optional<ReferringOrganisationContact> =
         referringOrganisationContacts.findOne(where.build())
 }

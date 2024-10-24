@@ -160,14 +160,14 @@ dependencies {
     implementation "io.github.microutils:kotlin-logging:1.6.26"
 
     /* Graphql */
-//    implementation 'org.springframework.boot:spring-boot-starter-graphql'
-    implementation "com.graphql-java-kickstart:graphql-spring-boot-starter:${graphQLVersion}"
+    implementation 'org.springframework.boot:spring-boot-starter-graphql'
+    /*implementation "com.graphql-java-kickstart:graphql-spring-boot-starter:${graphQLVersion}"
     runtimeOnly "com.graphql-java-kickstart:graphiql-spring-boot-starter:${graphQLVersion}"
     runtimeOnly "com.graphql-java-kickstart:voyager-spring-boot-starter:${graphQLVersion}"
-    testImplementation "com.graphql-java-kickstart:graphql-spring-boot-starter-test:${graphQLVersion}"
+    testImplementation "com.graphql-java-kickstart:graphql-spring-boot-starter-test:${graphQLVersion}"*/
 
     //Tony A - March 6, 2024 - This is the recommended package for using latest jakarta with graphql
-    implementation "com.graphql-java-kickstart:graphql-java-servlet:15.1.0"
+/*    implementation "com.graphql-java-kickstart:graphql-java-servlet:15.1.0"*/
 
     /* Utility Dependencies */
     implementation "info.picocli:picocli-spring-boot-starter:4.0.2"

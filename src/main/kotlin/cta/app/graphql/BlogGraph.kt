@@ -1,13 +1,6 @@
 package cta.app.graphql
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
-import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.querydsl.core.BooleanBuilder
-import java.time.Instant
-import java.util.Optional
-import jakarta.persistence.EntityNotFoundException
-import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
 import cta.app.Faq
 import cta.app.FaqRepository
 import cta.app.Post
@@ -21,20 +14,28 @@ import cta.graphql.PaginationInput
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
 import cta.toNullable
+import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
+import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
+import java.time.Instant
+import java.util.Optional
 
-@Component
+@Controller
 class BlogQueries(
     private val posts: PostRepository,
     private val faqs: FaqRepository
-) : GraphQLQueryResolver {
+) {
     @PreAuthorize("hasAnyAuthority('read:content')")
+    @QueryMapping
     fun postsConnection(page: PaginationInput?, where: PostWhereInput?): Page<Post> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
@@ -44,6 +45,7 @@ class BlogQueries(
     }
 
     @PreAuthorize("hasAnyAuthority('read:content')")
+    @QueryMapping
     fun posts(where: PostWhereInput, orderBy: MutableList<KeyValuePair>?): List<Post> {
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
@@ -53,6 +55,7 @@ class BlogQueries(
         }
     }
 
+    @QueryMapping
     fun post(where: PostWhereInput): Post? {
         val post = posts.findOne(where.build()).toNullable() ?: return null
         if (post.secured) {
@@ -64,6 +67,7 @@ class BlogQueries(
     }
 
     @PreAuthorize("hasAnyAuthority('read:content')")
+    @QueryMapping
     fun faqsConnection(page: PaginationInput?, where: FaqWhereInput?): Page<Faq> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
@@ -72,6 +76,7 @@ class BlogQueries(
         return faqs.findAll(where.build(), f.create())
     }
 
+    @QueryMapping
     fun faqs(where: FaqWhereInput, orderBy: MutableList<KeyValuePair>?): List<Faq> {
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
@@ -81,42 +86,49 @@ class BlogQueries(
         }
     }
 
+    @QueryMapping
     fun faq(where: FaqWhereInput): Optional<Faq> = faqs.findOne(where.build())
 }
 
-@Component
+@Controller
 @Transactional
 @Validated
 @PreAuthorize("hasAnyAuthority('write:content')")
 class BlogMutations(
     private val posts: PostRepository,
     private val faqs: FaqRepository
-) : GraphQLMutationResolver {
+) {
+    @MutationMapping
     fun createPost(@Valid data: CreatePostInput): Post {
         return posts.save(data.entity)
     }
 
+    @MutationMapping
     fun updatePost(@Valid data: UpdatePostInput): Post {
         val entity = posts.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a post with id: ${data.id}")
         return data.apply(entity)
     }
 
+    @MutationMapping
     fun deletePost(id: Long): Boolean {
         posts.deleteById(id)
         return true
     }
 
+    @MutationMapping
     fun createFaq(@Valid data: CreateFaqInput): Faq {
         return faqs.save(data.entity)
     }
 
+    @MutationMapping
     fun updateFaq(@Valid data: UpdateFaqInput): Faq {
         val entity = faqs.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a faq with id: ${data.id}")
         return data.apply(entity)
     }
 
+    @MutationMapping
     fun deleteFaq(id: Long): Boolean {
         faqs.deleteById(id)
         return true
@@ -201,7 +213,7 @@ data class UpdateFaqInput(
     }
 }
 
-class PostWhereInput(
+data class PostWhereInput(
     var id: LongComparision? = null,
     var content: TextComparison? = null,
     var slug: TextComparison? = null,
@@ -243,7 +255,7 @@ class PostWhereInput(
     }
 }
 
-class FaqWhereInput(
+data class FaqWhereInput(
     var id: LongComparision? = null,
     var content: TextComparison? = null,
     var title: TextComparison? = null,

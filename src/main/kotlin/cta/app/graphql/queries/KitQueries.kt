@@ -1,8 +1,5 @@
 package cta.app.graphql.queries
 
-import com.coxautodev.graphql.tools.GraphQLQueryResolver
-import com.coxautodev.graphql.tools.GraphQLResolver
-import java.util.Optional
 import cta.app.Kit
 import cta.app.KitAttributes
 import cta.app.KitRepository
@@ -14,23 +11,30 @@ import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
+import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
+import java.util.Optional
 
-@Component
+@Controller
 @PreAuthorize("hasAnyAuthority('read:kits', 'read:kits:assigned')")
 class KitQueries(
     private val kits: KitRepository,
     private val filterService: FilterService
-) : GraphQLQueryResolver {
+)  {
+
+
+    @QueryMapping
     fun statusCount(): List<KitStatusCount> {
         return kits.statusCount()
     }
 
+    @QueryMapping
     fun typeCount(): List<KitTypeCount> {
         return kits.typeCount()
     }
 
+    @QueryMapping
     fun kitsConnection(page: PaginationInput?, where: KitWhereInput?): Page<Kit> {
         val f: PaginationInput = page ?: PaginationInput()
         val filter = filterService.kitFilter()
@@ -40,6 +44,7 @@ class KitQueries(
         return kits.findAll(filter.and(where.build()), f.create())
     }
 
+    @QueryMapping
     fun kits(where: KitWhereInput, orderBy: MutableList<KeyValuePair>?): List<Kit> {
         val filter = filterService.kitFilter()
         return if (orderBy != null) {
@@ -50,11 +55,13 @@ class KitQueries(
         }
     }
 
+    @QueryMapping
     fun kit(where: KitWhereInput): Optional<Kit> = kits.findOne(filterService.kitFilter().and(where.build()))
 }
 
-@Component
-class kitResolver : GraphQLResolver<Kit> {
+@Controller
+class kitResolver {
+    @QueryMapping
     fun getAttributes(kit: Kit): KitAttributes {
         val attr = kit.attributes
         attr.kit = kit
