@@ -73,7 +73,7 @@ interface RequestCount {
 }
 interface DeviceRequestRepository:
     PagingAndSortingRepository<DeviceRequest, Long>,
-    CrudRepository<Organisation, Long>,
+    CrudRepository<DeviceRequest, Long>,
     QuerydslPredicateExecutor<DeviceRequest> {
     @Query(
         """
@@ -111,10 +111,10 @@ interface DeviceRequestNoteRepository: PagingAndSortingRepository<DeviceRequestN
 
 interface ReferringOrganisationNoteRepository:
         PagingAndSortingRepository<ReferringOrganisationNote, Long>,
-        CrudRepository<EmailTemplate, Long>,
+        CrudRepository<ReferringOrganisationNote, Long>,
         QuerydslPredicateExecutor<ReferringOrganisationNote>
 
 interface ReferringOrganisationContactNoteRepository:
         PagingAndSortingRepository<ReferringOrganisationContactNote, Long>,
-        CrudRepository<Note, Long>,
+        CrudRepository<ReferringOrganisationContactNote, Long>,
         QuerydslPredicateExecutor<ReferringOrganisationContactNote>
