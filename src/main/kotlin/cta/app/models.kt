@@ -73,6 +73,7 @@ class Volunteer(
     var availability: String,
     var createdAt: Instant = Instant.now(),
     var consent: String,
+    @NotAudited
     @Formula(
         """
         (SELECT COUNT(*) FROM kit_volunteers k where k.volunteer_id = id)
@@ -81,12 +82,15 @@ class Volunteer(
     var kitCount: Int = 0,
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
+    @NotAudited
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb")
     var coordinates: Coordinates? = null,
+    @NotAudited
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb")
     var attributes: VolunteerAttributes = VolunteerAttributes(),
+    @NotAudited
     @JsonIgnore
     @OneToMany(mappedBy = "volunteer", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
     var kits: MutableSet<KitVolunteer> = mutableSetOf()
@@ -129,6 +133,7 @@ class Donor(
     var referral: String,
     var consent: Boolean,
     var createdAt: Instant = Instant.now(),
+    @NotAudited
     @Formula(
         """
         ( SELECT COUNT(*) FROM kits k where k.donor_id = id )
@@ -137,12 +142,14 @@ class Donor(
     var kitCount: Int = 0,
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
+    @NotAudited
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb")
     var coordinates: Coordinates? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "donor_parent_id")
     var donorParent: DonorParent? = null,
+    @NotAudited
     @OneToMany(
         mappedBy = "donor",
         fetch = FetchType.LAZY,
@@ -190,12 +197,14 @@ class DonorParent(
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
+    @NotAudited
     @Formula(
         """
         ( SELECT COUNT(*) FROM donors d where d.donor_parent_id = id )
     """
     )
     var donorCount: Int = 0,
+    @NotAudited
     @OneToMany(
         mappedBy = "donorParent",
         fetch = FetchType.LAZY,
@@ -528,6 +537,7 @@ class ReferringOrganisation(
     var name: String,
     var website: String? = null,
     var phoneNumber: String? = null,
+    @NotAudited
     @Formula(
         """
         (SELECT COUNT(*) 
@@ -545,6 +555,7 @@ class ReferringOrganisation(
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
+    @NotAudited
     @OneToMany(
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
@@ -553,6 +564,7 @@ class ReferringOrganisation(
     )
     @OrderBy(clause = "updatedAt DESC")
     var referringOrganisationContacts: MutableSet<ReferringOrganisationContact> = mutableSetOf(),
+    @NotAudited
     @OneToMany(
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
@@ -595,6 +607,7 @@ class ReferringOrganisationContact(
     @ManyToOne
     var referringOrganisation: ReferringOrganisation,
     // A better way would be to use the DeviceRequestStatus enum here but for some reason, it is not considered a constant expression.
+    @NotAudited
     @Formula(
         """
          (
@@ -604,6 +617,7 @@ class ReferringOrganisationContact(
     """
     )
     var requestCount: Int = 0,
+    @NotAudited
     @OneToMany(
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
@@ -679,6 +693,7 @@ class DeviceRequest(
     var isSales: Boolean = false,
     var clientRef: String,
     var details: String,
+    @NotAudited
     @Formula(
         """
         (SELECT COUNT(*) FROM kits k where k.device_request_id = id)
@@ -687,6 +702,7 @@ class DeviceRequest(
     var kitCount: Int = 0,
     @Embedded
     var deviceRequestNeeds: DeviceRequestNeeds,
+    @NotAudited
     @OneToMany(
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
@@ -695,6 +711,7 @@ class DeviceRequest(
     )
     @OrderBy(clause = "updatedAt DESC")
     var deviceRequestNotes: MutableSet<DeviceRequestNote> = mutableSetOf(),
+    @NotAudited
     @OneToMany(
         mappedBy = "deviceRequest",
         fetch = FetchType.LAZY,
