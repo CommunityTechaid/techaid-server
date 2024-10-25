@@ -55,6 +55,8 @@ class BaseEntity
 
 @Entity
 @Table(name = "volunteers")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "volunteers_audit_trail")
 class Volunteer(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "volunteer-seq-generator")
@@ -113,6 +115,8 @@ data class Capacity(
 
 @Entity
 @Table(name = "donors")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "donors_audit_trail")
 class Donor(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "donor-seq-generator")
@@ -173,6 +177,8 @@ enum class DonorParentType {
 
 @Entity
 @Table(name = "donorParents")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "donorParents_audit_trail")
 class DonorParent(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "donor-parent-seq-generator")
@@ -508,6 +514,8 @@ class EmailTemplate(
 
 @Entity
 @Table(name = "referring_organisations")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "referring_organisations_audit_trail")
 class ReferringOrganisation(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation-seq-generator")
@@ -563,6 +571,8 @@ class ReferringOrganisation(
 
 @Entity
 @Table(name = "referring_organisation_contacts")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "referring_organisation_contacts_audit_trail")
 class ReferringOrganisationContact(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation_contacts-seq-generator")
@@ -645,6 +655,8 @@ data class DeviceRequestNeeds(
 
 @Entity
 @Table(name = "device_requests")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "device_requests_audit_trail")
 class DeviceRequest(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_requests-seq-generator")
