@@ -103,7 +103,7 @@ class KitMutations(
 
         val previousStatus = entity.status
         return data.apply(entity).apply {
-            if (location.isNotBlank() && (coordinates == null || coordinates?.input != location)) {
+            if (location != null && location.isNotBlank() && (coordinates == null || coordinates?.input != location)) {
                 coordinates = locationService.findCoordinates(location)
             }
 
