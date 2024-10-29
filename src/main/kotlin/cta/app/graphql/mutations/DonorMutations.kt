@@ -29,7 +29,13 @@ class DonorMutations(
 ) : GraphQLMutationResolver {
 
     fun createDonor(@Valid data: CreateDonorInput): Donor {
-        val donor = fetchDonor(donors, data.entity)
+        //val donor = fetchDonor(donors, data.entity)
+        if (data.email.isNotBlank()) {
+            donors.findByEmail(data.email)?.let {
+                throw IllegalArgumentException("A donor with the email address ${data.email} already exits!")
+            }
+        }
+        val donor = donors.save(data.entity);
         if (donor.postCode.isNotBlank()) {
             donor.coordinates = locationService.findCoordinates(donor.postCode)
         }
@@ -73,8 +79,7 @@ class DonorMutations(
 }
 
 data class CreateDonorInput(
-    @get:NotBlank
-    val postCode: String,
+    val postCode: String = "",
     val phoneNumber: String = "",
     val email: String = "",
     val referral: String = "",

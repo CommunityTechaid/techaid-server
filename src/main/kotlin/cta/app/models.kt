@@ -388,6 +388,7 @@ class KitAttributes(
     var network: String? = null,
     var otherNetwork: String? = "UNKNOWN"
 )
+
 @Entity
 @Table(name = "note")
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)

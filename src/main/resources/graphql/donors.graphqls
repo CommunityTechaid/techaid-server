@@ -37,15 +37,15 @@ input UpdateDonorInput {
     archived: Boolean
 }
 
-input DonateItemInput {
-    kits: [CreateKitInput!]
-    donor: CreateDonorInput
-}
+# input DonateItemInput {
+#     kits: [CreateKitInput!]
+#     donor: CreateDonorInput
+# }
 
-type DonateItemPayload {
-    donor: Donor!
-    kits: [Kit!]
-}
+# type DonateItemPayload {
+#     donor: Donor!
+#     kits: [Kit!]
+# }
 
 "A representation of a page result from a query"
 type DonorPage {
@@ -99,6 +99,6 @@ extend type Mutation {
     createDonor(data: CreateDonorInput!) : Donor!
     updateDonor(data: UpdateDonorInput!): Donor!
     deleteDonor(id: ID!): Boolean
-    donateItem(data: DonateItemInput): DonateItemPayload!
+    # donateItem(data: DonateItemInput): DonateItemPayload!
 }
 
