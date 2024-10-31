@@ -391,7 +391,6 @@ class KitAttributes(
 
 @Entity
 @Table(name = "note")
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class Note(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "note-seq-generator")
@@ -740,7 +739,6 @@ class DeviceRequest(
 
 @Entity
 @Table(name = "device_requests_notes")
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class DeviceRequestNote(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_requests_note-seq-generator")
@@ -760,7 +758,6 @@ class DeviceRequestNote(
 
 @Entity
 @Table(name = "referring_organisations_notes")
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class ReferringOrganisationNote(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisations_note-seq-generator")
@@ -780,7 +777,6 @@ class ReferringOrganisationNote(
 
 @Entity
 @Table(name = "referring_organisation_contacts_notes")
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class ReferringOrganisationContactNote(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation_contacts_note-seq-generator")
