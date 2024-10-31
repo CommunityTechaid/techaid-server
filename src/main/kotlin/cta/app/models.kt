@@ -20,6 +20,7 @@ import jakarta.persistence.Basic
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
+import jakarta.persistence.Converts
 import jakarta.persistence.Embeddable
 import jakarta.persistence.Embedded
 import jakarta.persistence.EmbeddedId
@@ -43,11 +44,10 @@ import org.hibernate.type.SqlTypes
 import org.hibernate.type.YesNoConverter
 
 
-@TypeDefs(
-    TypeDef(name = "json", typeClass = JsonStringType::class),
-    TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
+@Converts(
+    Convert(attributeName = "json", converter = JsonStringType::class),
+    Convert(attributeName = "jsonb", converter = JsonBinaryType::class)
 )
-
 @MappedSuperclass
 class BaseEntity
 
@@ -473,7 +473,7 @@ class ReferringOrganisation(
     """
     )
     var requestCount: Int = 0,
-    @Type(type = "yes_no",value="")
+    @Convert(converter = org.hibernate.type.YesNoConverter::class)
     var archived: Boolean = false,
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
@@ -518,7 +518,7 @@ class ReferringOrganisationContact(
     var email: String = "",
     var phoneNumber: String,
     var address: String,
-    @Type(type = "yes_no")
+    @Convert(converter = org.hibernate.type.YesNoConverter::class)
     var archived: Boolean = false,
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
