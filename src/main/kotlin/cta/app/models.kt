@@ -391,6 +391,7 @@ class KitAttributes(
 
 @Entity
 @Table(name = "note")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class Note(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "note-seq-generator")
