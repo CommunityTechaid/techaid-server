@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import cta.app.ReferringOrganisationContact
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.ReferringOrganisationRepository
@@ -13,9 +12,11 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.stereotype.Controller
 
 
-@Component
+@Controller
 @Validated
 @Transactional
 
@@ -23,7 +24,8 @@ class ReferringOrganisationContactMutations(
 
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
     private val referringOrganisations: ReferringOrganisationRepository
-) : GraphQLMutationResolver {
+) {
+    @MutationMapping
     fun createReferringOrganisationContact(@Valid data: CreateReferringOrganisationContactInput): ReferringOrganisationContact {
 
         val referringOrganisation = referringOrganisations.findById(data.referringOrganisation).toNullable()
@@ -55,6 +57,7 @@ class ReferringOrganisationContactMutations(
     }
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
+    @MutationMapping
     fun updateReferringOrganisationContact(@Valid data: UpdateReferringOrganisationContactInput): ReferringOrganisationContact {
         val entity = referringOrganisationContacts.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a organisation contact with id: ${data.id}")
@@ -70,6 +73,7 @@ class ReferringOrganisationContactMutations(
     }
 
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
+    @MutationMapping
     fun deleteReferringOrganisationContact(id: Long): Boolean {
         val entity =
             referringOrganisationContacts.findById(id).toNullable()

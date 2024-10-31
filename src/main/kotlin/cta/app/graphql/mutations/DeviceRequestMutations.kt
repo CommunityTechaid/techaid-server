@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestItems
 import cta.app.DeviceRequestNeeds
@@ -13,17 +12,18 @@ import cta.app.services.FilterService
 import cta.app.services.MailService
 import cta.app.services.createEmail
 import cta.toNullable
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
-import org.springframework.validation.annotation.Validated
 import jakarta.mail.internet.InternetAddress
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.stereotype.Controller
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.validation.annotation.Validated
+import org.springframework.graphql.data.method.annotation.MutationMapping
 
 
-@Component
+@Controller
 @Validated
 @Transactional
 class DeviceRequestMutations(
@@ -33,7 +33,9 @@ class DeviceRequestMutations(
     private val filterService: FilterService,
     private val deviceRequestNotes: DeviceRequestNoteRepository,
     private val mailService: MailService
-) : GraphQLMutationResolver {
+)  {
+
+    @MutationMapping
     fun createDeviceRequest(@Valid data: CreateDeviceRequestInput): DeviceRequest {
 
         val referringOrganisationContact = referringOrganisationContacts.findById(data.referringOrganisationContact).toNullable() ?:
@@ -62,6 +64,7 @@ class DeviceRequestMutations(
         return savedRequest;
     }
 
+    @MutationMapping
     fun formatDeviceRequests(items: DeviceRequestItems) : String {
         var deviceRequest = "";
         if(items.phones ?: 0 > 0) deviceRequest += "Phones: ${items.phones}<br>\n";
@@ -75,6 +78,7 @@ class DeviceRequestMutations(
         return deviceRequest;
     }
 
+    @MutationMapping
     fun acknowledgeSubmission(request: DeviceRequest) {
         var formattedItems = formatDeviceRequests(request.deviceRequestItems);
 
@@ -157,6 +161,7 @@ val emailFooter = """
     }
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
+    @MutationMapping
     fun updateDeviceRequest(@Valid data: UpdateDeviceRequestInput): DeviceRequest {
         val entity = deviceRequests.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.id}")
@@ -187,6 +192,7 @@ val emailFooter = """
     }
 
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
+    @MutationMapping
     fun deleteDeviceRequest(id: Long): Boolean {
         val entity =
             deviceRequests.findById(id).toNullable()

@@ -1,10 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
-import jakarta.persistence.EntityNotFoundException
-import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
 import cta.app.Capacity
 import cta.app.QVolunteer
 import cta.app.Volunteer
@@ -13,12 +8,17 @@ import cta.app.VolunteerRepository
 import cta.app.services.FilterService
 import cta.app.services.LocationService
 import cta.toNullable
+import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 
-@Component
+@Controller
 @Validated
 @PreAuthorize("hasAnyAuthority('write:volunteers')")
 @Transactional
@@ -26,7 +26,8 @@ class VolunteerMutations(
     private val volunteers: VolunteerRepository,
     private val locationService: LocationService,
     private val filterService: FilterService
-) : GraphQLMutationResolver {
+) {
+    @MutationMapping
     fun updateVolunteer(@Valid data: UpdateVolunteerInput): Volunteer {
         val entity =
             volunteers.findOne(filterService.volunteerFilter().and(QVolunteer.volunteer.id.eq(data.id))).toNullable()
@@ -45,6 +46,7 @@ class VolunteerMutations(
     }
 
     @PreAuthorize("hasAnyAuthority('delete:volunteers')")
+    @MutationMapping
     fun deleteVolunteer(id: Long): Boolean {
         val volunteer =
             volunteers.findOne(filterService.volunteerFilter().and(QVolunteer.volunteer.id.eq(id))).toNullable()

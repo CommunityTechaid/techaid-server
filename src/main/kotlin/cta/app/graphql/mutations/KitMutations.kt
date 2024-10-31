@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import cta.app.DonorRepository
 import cta.app.Kit
 import cta.app.KitAttributes
@@ -29,8 +28,10 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.stereotype.Controller
 
-@Component
+@Controller
 @Validated
 @PreAuthorize("hasAnyAuthority('write:kits')")
 @Transactional
@@ -43,8 +44,9 @@ class KitMutations(
     private val filterService: FilterService,
     private val mailService: MailService,
     private val kitService: KitService
-) : GraphQLMutationResolver {
+) {
 
+    @MutationMapping
     fun createKit(@Valid data: CreateKitInput): Kit {
         val details = filterService.userDetails()
         val volunteer = if (details.email.isNotBlank()) {
@@ -74,6 +76,7 @@ class KitMutations(
         return kit
     }
 
+    @MutationMapping
     fun quickCreateKit(@Valid data: QuickCreateKitInput): Kit {
         val details = filterService.userDetails()
         val volunteer = if (details.email.isNotBlank()) {
@@ -92,6 +95,7 @@ class KitMutations(
         return kit
     }
 
+    @MutationMapping
     fun updateKit(@Valid data: UpdateKitInput): Kit {
         val self = this
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
@@ -174,6 +178,7 @@ class KitMutations(
     }
 
 
+    @MutationMapping
     fun autoCreateKit(@Valid data: AutoCreateKitInput): Kit {
 
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.serialNo.eq(data.serialNo))).toNullable()
@@ -197,6 +202,7 @@ class KitMutations(
 
     }
 
+    @MutationMapping
     fun autoUpdateKit(@Valid data: AutoUpdateKitInput): Kit {
         val self = this
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
@@ -206,6 +212,7 @@ class KitMutations(
     }
 
     @PreAuthorize("hasAnyAuthority('delete:kits')")
+    @MutationMapping
     fun deleteKit(id: Long): Boolean {
         val kit = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(id))).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a kit with id: $id")

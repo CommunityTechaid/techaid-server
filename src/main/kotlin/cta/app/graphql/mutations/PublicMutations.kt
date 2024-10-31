@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import jakarta.validation.Valid
 import cta.app.Donor
 import cta.app.DonorRepository
@@ -9,7 +8,9 @@ import cta.app.KitRepository
 import cta.app.Volunteer
 import cta.app.VolunteerRepository
 import cta.app.services.LocationService
+import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 
 fun fetchDonor(repo: DonorRepository, donor: Donor): Donor {
@@ -34,13 +35,14 @@ fun fetchDonor(repo: DonorRepository, donor: Donor): Donor {
     }
 }
 
-@Component
+@Controller
 class PublicMutations(
     private val donors: DonorRepository,
     private val kits: KitRepository,
     private val volunteers: VolunteerRepository,
     private val locationService: LocationService
-) : GraphQLMutationResolver {
+) {
+    @MutationMapping
     fun createVolunteer(@Valid data: CreateVolunteerInput): Volunteer {
         if (data.email.isNotBlank()) {
             volunteers.findByEmail(data.email)?.let {
@@ -56,6 +58,7 @@ class PublicMutations(
     }
 
     @Transactional
+    @MutationMapping
     fun donateItem(@Valid data: DonateItemInput): DonateItemPayload {
         if (data.kits.isEmpty()) throw IllegalArgumentException("kits cannot be empty")
         var donor = fetchDonor(donors, data.donor.entity).apply {

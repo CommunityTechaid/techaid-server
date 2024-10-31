@@ -1,26 +1,27 @@
 package cta.app.graphql.mutations
 
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import cta.app.ReferringOrganisationNote
 import cta.app.ReferringOrganisationNoteRepository
 import cta.app.services.FilterService
 import cta.toNullable
+import jakarta.persistence.EntityNotFoundException
+import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
-import jakarta.persistence.EntityNotFoundException
 
-@Component
+@Controller
 @Validated
 @PreAuthorize("hasAnyAuthority('write:organisations')")
 @Transactional
 class ReferringOrganisationNoteMutations(
     private val filterService: FilterService,
     private val referringOrganisationNotes: ReferringOrganisationNoteRepository
-) : GraphQLMutationResolver {
+) {
 
+    @MutationMapping
     fun deleteReferringOrganisationNote(id: Long): Boolean{
         val volunteer = filterService.userDetails().name.ifBlank {
             filterService.userDetails().email

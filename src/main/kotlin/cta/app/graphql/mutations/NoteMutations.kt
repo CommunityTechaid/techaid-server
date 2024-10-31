@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import cta.app.KitRepository
 import cta.app.Note
 import cta.app.NoteRepository
@@ -12,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.stereotype.Controller
 
-@Component
+@Controller
 @Validated
 @PreAuthorize("hasAnyAuthority('write:kits')")
 @Transactional
@@ -21,7 +22,7 @@ class NoteMutations(
     private val filterService: FilterService,
     private val notes: NoteRepository,
     private val kits: KitRepository
-) : GraphQLMutationResolver {
+) {
 
     /* The creation of the note is handled by the updateKit mutation. This method is being left here in case it is needed in future.
     * It is commented to avoid confusion while reading the code because I was confused.
@@ -56,6 +57,7 @@ class NoteMutations(
         }
     }*/
 
+    @MutationMapping
     fun deleteNote(id: Long): Boolean {
 
         val volunteer = filterService.userDetails().name.ifBlank {

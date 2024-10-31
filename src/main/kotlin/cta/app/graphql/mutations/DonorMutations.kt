@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
@@ -11,12 +10,14 @@ import cta.app.QDonor
 import cta.app.services.FilterService
 import cta.app.services.LocationService
 import cta.toNullable
+import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 
-@Component
+@Controller
 @Validated
 @PreAuthorize("hasAnyAuthority('write:donors')")
 @Transactional
@@ -24,8 +25,9 @@ class DonorMutations(
     private val donors: DonorRepository,
     private val locationService: LocationService,
     private val filterService: FilterService
-) : GraphQLMutationResolver {
+) {
 
+    @MutationMapping
     fun createDonor(@Valid data: CreateDonorInput): Donor {
         val donor = fetchDonor(donors, data.entity)
         if (donor.postCode.isNotBlank()) {
@@ -34,6 +36,7 @@ class DonorMutations(
         return donor
     }
 
+    @MutationMapping
     fun updateDonor(@Valid data: UpdateDonorInput): Donor {
         val entity = donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(data.id))).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.id}")
@@ -45,6 +48,7 @@ class DonorMutations(
     }
 
     @PreAuthorize("hasAnyAuthority('delete:donors')")
+    @MutationMapping
     fun deleteDonor(id: Long): Boolean {
         val donor = donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(id))).toNullable()
             ?: throw EntityNotFoundException("No donor with id: $id")
