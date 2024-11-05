@@ -85,7 +85,8 @@ data class CreateDonorInput(
     val referral: String = "",
     val name: String,
     val consent: Boolean,
-    val donorParentId: Long? = null
+    val donorParentId: Long? = null,
+    val isLeadContact: Boolean
 ) {
     val entity by lazy {
         Donor(
@@ -94,7 +95,8 @@ data class CreateDonorInput(
             email = email,
             referral = referral,
             name = name,
-            consent = consent
+            consent = consent,
+            isLeadContact = isLeadContact
         )
     }
 }
@@ -109,7 +111,8 @@ data class UpdateDonorInput(
     val referral: String? = null,
     val consent: Boolean? = null,
     val donorParentId: Long? = null,
-    val archived: Boolean? = null
+    val archived: Boolean? = null,
+    val isLeadContact: Boolean? = null
 ) {
     fun apply(entity: Donor): Donor {
         val self = this
@@ -121,6 +124,7 @@ data class UpdateDonorInput(
             name = self.name
             consent = if (self.consent == null) consent else self.consent 
             archived = self.archived ?: archived
+            isLeadContact = self.isLeadContact ?: isLeadContact
         }
     }
 }

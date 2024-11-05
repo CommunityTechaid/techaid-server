@@ -21,6 +21,7 @@ class DonorWhereInput(
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
     var archived: BooleanComparison? = null,
+    var isLeadContact: BooleanComparison? = null,
     var AND: MutableList<DonorWhereInput> = mutableListOf(),
     var OR: MutableList<DonorWhereInput> = mutableListOf(),
     var NOT: MutableList<DonorWhereInput> = mutableListOf()
@@ -37,6 +38,7 @@ class DonorWhereInput(
         name?.let { builder.and(it.build(entity.name)) }
         donorParent?.let { builder.and(it.build(entity.donorParent)) }
         archived?.let { builder.and(it.build(entity.archived)) }
+        isLeadContact?.let { builder.and(it.build(entity.isLeadContact)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))

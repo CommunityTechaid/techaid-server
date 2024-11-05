@@ -13,6 +13,7 @@ type Donor {
     consent: Boolean
     donorParent: DonorParent
     archived: Boolean
+    isLeadContact: Boolean
 }
 
 input CreateDonorInput {
@@ -23,6 +24,7 @@ input CreateDonorInput {
     referral: String
     consent: Boolean
     donorParentId: ID
+    isLeadContact: Boolean
 }
 
 input UpdateDonorInput {
@@ -35,6 +37,7 @@ input UpdateDonorInput {
     consent: Boolean
     donorParentId: ID
     archived: Boolean
+    isLeadContact: Boolean
 }
 
 # input DonateItemInput {
@@ -84,6 +87,7 @@ input DonorWhereInput {
     updatedAt: TimeComparison
     donorParent: DonorParentWhereInput
     archived: BooleanComparison
+    isLeadContact: BooleanComparison
     AND: [DonorWhereInput!]
     OR: [DonorWhereInput!]
     NOT: [DonorWhereInput!]
