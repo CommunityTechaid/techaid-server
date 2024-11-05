@@ -5,7 +5,6 @@ import com.coxautodev.graphql.tools.GraphQLResolver
 import java.util.Optional
 import cta.app.Donor
 import cta.app.DonorRepository
-import cta.app.Volunteer
 import cta.app.graphql.filters.DonorWhereInput
 import cta.app.services.FilterService
 import cta.graphql.KeyValuePair
@@ -41,19 +40,4 @@ class DonorQueries(
     }
 
     fun donor(where: DonorWhereInput): Optional<Donor> = donors.findOne(filterService.donorFilter().and(where.build()))
-}
-
-@Component
-class DonorResolver : GraphQLResolver<Donor> {
-    companion object {
-        val EMAIL_MASK = Regex("(?<=.)[^@](?=[^@]*[^@]@)|(?:(?<=@.)|(?!^)\\G(?=[^@]*$)).(?!$)")
-    }
-
-    fun email(entity: Volunteer): String {
-        return entity.email
-    }
-
-    fun phoneNumber(entity: Volunteer): String {
-        return entity.phoneNumber
-    }
 }

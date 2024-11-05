@@ -8,7 +8,6 @@ import cta.app.KitStatus
 import cta.app.KitStorageType
 import cta.app.KitType
 import cta.app.QKit
-import cta.app.QKitVolunteer
 import cta.graphql.BooleanComparison
 import cta.graphql.IntegerComparision
 import cta.graphql.JsonComparison
@@ -262,7 +261,6 @@ class KitWhereInput(
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
     var attributes: KitAttributesWhereInput? = null,
-    var volunteer: VolunteerWhereInput? = null,
     var deviceRequest: DeviceRequestWhereInput? = null,
     var donor: DonorWhereInput? = null,
     var make: TextComparison? = null,
@@ -291,10 +289,6 @@ class KitWhereInput(
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         attributes?.let { builder.and(it.build(entity)) }
         deviceRequest?.let { builder.and(it.build(entity.deviceRequest)) }
-        volunteer?.let {
-            builder.and(JPAExpressions.selectOne().from(entity.volunteers, QKitVolunteer.kitVolunteer)
-                .where(it.build(QKitVolunteer.kitVolunteer.volunteer)).exists())
-        }
         donor?.let { builder.and(it.build(entity.donor)) }
         make?.let { builder.and(it.build(entity.make)) }
         deviceVersion?.let { builder.and(it.build(entity.deviceVersion)) }

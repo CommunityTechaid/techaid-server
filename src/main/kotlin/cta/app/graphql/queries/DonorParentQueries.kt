@@ -5,7 +5,6 @@ import com.coxautodev.graphql.tools.GraphQLResolver
 import java.util.Optional
 import cta.app.DonorParent
 import cta.app.DonorParentRepository
-import cta.app.Volunteer
 import cta.app.graphql.filters.DonorParentWhereInput
 import cta.app.services.FilterService
 import cta.graphql.KeyValuePair

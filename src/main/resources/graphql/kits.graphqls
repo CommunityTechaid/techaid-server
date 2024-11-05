@@ -114,7 +114,6 @@ type Kit {
     age: Int
     attributes: KitAttributes!
     donor: Donor
-    volunteers: [KitVolunteer!]
     coordinates: Coordinates
     deviceRequest: DeviceRequest
     notes: [Note]!,
@@ -127,21 +126,6 @@ type Kit {
     cpuType: String,
     tpmVersion: String,
     cpuCores: Int
-}
-
-enum  KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }
-
-type KitVolunteerId {
-    kitId: ID!
-    volunteerId: ID!
-    type: KitVolunteerType!
-}
-
-type KitVolunteer {
-    id: KitVolunteerId
-    kit: Kit
-    volunteer: Volunteer
-    type: KitVolunteerType
 }
 
 type KitAttributes {
@@ -209,7 +193,6 @@ input KitWhereInput {
     updatedAt: TimeComparison
     archived: BooleanComparison
     attributes: KitAttributesWhereInput
-    volunteer: VolunteerWhereInput
     donor: DonorWhereInput
     deviceRequest: DeviceRequestWhereInput
     make: String,
@@ -304,9 +287,6 @@ input UpdateKitInput {
     archived: Boolean
     location: String
     attributes: KitAttributesInput!
-    organiserIds: [ID]
-    technicianIds: [ID]
-    logisticIds: [ID]
     donorId: ID
     deviceRequestId: ID
     note: CreateNoteInput,

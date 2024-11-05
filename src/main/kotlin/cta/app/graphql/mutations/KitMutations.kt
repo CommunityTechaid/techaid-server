@@ -8,13 +8,10 @@ import cta.app.KitRepository
 import cta.app.KitStatus
 import cta.app.KitStorageType
 import cta.app.KitType
-import cta.app.KitVolunteerType
 import cta.app.Note
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestRepository
 import cta.app.QKit
-import cta.app.Volunteer
-import cta.app.VolunteerRepository
 import cta.app.services.FilterService
 import cta.app.services.KitService
 import cta.app.services.LocationService
@@ -38,7 +35,6 @@ class KitMutations(
     private val kits: KitRepository,
     private val donors: DonorRepository,
     private val deviceRequests: DeviceRequestRepository,
-    private val volunteers: VolunteerRepository,
     private val locationService: LocationService,
     private val filterService: FilterService,
     private val mailService: MailService,
@@ -47,11 +43,6 @@ class KitMutations(
 
     fun createKit(@Valid data: CreateKitInput): Kit {
         val details = filterService.userDetails()
-        val volunteer = if (details.email.isNotBlank()) {
-            volunteers.findByEmail(details.email)
-        } else {
-            null
-        }
         val kit = kits.save(data.entity.apply {
             if (location.isNotBlank()) {
                 coordinates = locationService.findCoordinates(location)
@@ -70,17 +61,12 @@ class KitMutations(
                 user.addKit(this)
             }
         })
-        //volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
         return kit
     }
 
     fun quickCreateKit(@Valid data: QuickCreateKitInput): Kit {
         val details = filterService.userDetails()
-        val volunteer = if (details.email.isNotBlank()) {
-            volunteers.findByEmail(details.email)
-        } else {
-            null
-        }
+        
         val kit = kits.save(data.entity.apply {
             if (data.donorId != null) {
                 val user = donors.findById(data.donorId).toNullable()
@@ -88,7 +74,7 @@ class KitMutations(
                 user.addKit(this)
             }
         })
-        //volunteer?.let { kit.addVolunteer(it, KitVolunteerType.ORGANISER) }
+        
         return kit
     }
 
@@ -97,52 +83,11 @@ class KitMutations(
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a kit with id: ${data.id}")
 
-/*      val organisers = entity.volunteers.filter { it.type == KitVolunteerType.ORGANISER }.map { it.id.volunteerId }
-        val logistics = entity.volunteers.filter { it.type == KitVolunteerType.LOGISTICS }.map { it.id.volunteerId }
-        val technicians = entity.volunteers.filter { it.type == KitVolunteerType.TECHNICIAN }.map { it.id.volunteerId } */
-
         val previousStatus = entity.status
         return data.apply(entity).apply {
             if (location != null && location.isNotBlank() && (coordinates == null || coordinates?.input != location)) {
                 coordinates = locationService.findCoordinates(location)
             }
-
-/*             if (previousStatus != this.status) {
-                notifyStatus(entity.volunteers.map { it.volunteer }, this, previousStatus)
-            }
-
-            if (data.organiserIds.isNullOrEmpty()) {
-                removeVolunteer(KitVolunteerType.ORGANISER)
-            } else if (data.organiserIds != organisers) {
-                notifyAssigned(
-                    replaceVolunteers(
-                        self.volunteers.findAllById(data.organiserIds),
-                        KitVolunteerType.ORGANISER
-                    ), this, KitVolunteerType.ORGANISER
-                )
-            }
-
-            if (data.logisticIds.isNullOrEmpty()) {
-                removeVolunteer(KitVolunteerType.LOGISTICS)
-            } else if (data.logisticIds != logistics) {
-                notifyAssigned(
-                    replaceVolunteers(
-                        self.volunteers.findAllById(data.logisticIds),
-                        KitVolunteerType.LOGISTICS
-                    ), this, KitVolunteerType.LOGISTICS
-                )
-            }
-
-            if (data.technicianIds.isNullOrEmpty()) {
-                removeVolunteer(KitVolunteerType.TECHNICIAN)
-            } else if (data.technicianIds != technicians) {
-                notifyAssigned(
-                    replaceVolunteers(
-                        self.volunteers.findAllById(data.technicianIds),
-                        KitVolunteerType.TECHNICIAN
-                    ), this, KitVolunteerType.TECHNICIAN
-                )
-            } */
 
             if (data.donorId == null) {
                 donor?.removeKit(this)
@@ -256,7 +201,6 @@ data class CreateKitInput(
             type = type,
             status = status ?: KitStatus.DONATION_NEW,
             model = model,
-            //location = location,
             age = age,
             make = make,
             deviceVersion = deviceVersion,
@@ -312,9 +256,6 @@ data class UpdateKitInput(
     val location: String?,
     val age: Int,
     val attributes: KitAttributesInput,
-    val organiserIds: List<Long>? = null, //No longer used
-    val technicianIds: List<Long>? = null, //No longer used
-    val logisticIds: List<Long>? = null, //No longer used
     val donorId: Long? = null,
     val deviceRequestId: Long? = null,
     val archived: Boolean? = null,
@@ -335,7 +276,6 @@ data class UpdateKitInput(
             type = self.type
             status = self.status
             model = self.model ?: model
-            //location = self.location
             age = self.age
             attributes = self.attributes.apply(entity)
             archived = self.archived ?: archived
@@ -387,8 +327,6 @@ data class AutoCreateKitInput(
         )
         kit
     }
-
-
 }
 
 data class AutoUpdateKitInput(

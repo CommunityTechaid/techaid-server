@@ -54,70 +54,6 @@ import javax.persistence.Table
 class BaseEntity
 
 @Entity
-@Table(name = "volunteers")
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
-@AuditTable(value = "volunteers_audit_trail")
-class Volunteer(
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "volunteer-seq-generator")
-    @SequenceGenerator(name = "volunteer-seq-generator", sequenceName = "volunteer_sequence", allocationSize = 1)
-    var id: Long = 0,
-    var name: String,
-    var phoneNumber: String,
-    var email: String,
-    var expertise: String,
-    var subGroup: String,
-    var storage: String,
-    var transport: String,
-    var postCode: String,
-    var availability: String,
-    var createdAt: Instant = Instant.now(),
-    var consent: String,
-    @NotAudited
-    @Formula(
-        """
-        (SELECT COUNT(*) FROM kit_volunteers k where k.volunteer_id = id)
-    """
-    )
-    var kitCount: Int = 0,
-    @UpdateTimestamp
-    var updatedAt: Instant = Instant.now(),
-    @NotAudited
-    @Type(type = "jsonb")
-    @Column(columnDefinition = "jsonb")
-    var coordinates: Coordinates? = null,
-    @NotAudited
-    @Type(type = "jsonb")
-    @Column(columnDefinition = "jsonb")
-    var attributes: VolunteerAttributes = VolunteerAttributes(),
-    @NotAudited
-    @JsonIgnore
-    @OneToMany(mappedBy = "volunteer", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
-    var kits: MutableSet<KitVolunteer> = mutableSetOf()
-) : BaseEntity()
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class VolunteerAttributes(
-    var dropOffAvailability: String = "",
-    var hasCapacity: Boolean = false,
-    var accepts: List<String> = listOf(),
-    var capacity: Capacity = Capacity()
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-//todo DELETE
-data class Capacity(
-    val phones: Int = 0,
-    val tablets: Int = 0,
-    val laptops: Int = 0,
-    val allInOnes: Int = 0,
-    val desktops: Int = 0,
-    val other: Int = 0,
-    val chromebooks: Int? = 0,
-    val commsDevices: Int? = 0
-)
-
-@Entity
 @Table(name = "donors")
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 @AuditTable(value = "donors_audit_trail")
@@ -301,10 +237,6 @@ class Kit(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_request_id")
     var deviceRequest: DeviceRequest? = null,
-    @NotAudited
-    @JsonIgnore
-    @OneToMany(mappedBy = "kit", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
-    var volunteers: MutableSet<KitVolunteer> = mutableSetOf(),
     var make: String? = null,
     var deviceVersion: String? = null,
     var serialNo: String? = null,
@@ -316,53 +248,6 @@ class Kit(
     var tpmVersion: String? = null,
     var cpuCores: Int? = null
 ) : BaseEntity() {
-    fun addVolunteer(volunteer: Volunteer, type: KitVolunteerType) {
-        val entity = KitVolunteer(this, volunteer, KitVolunteerId(this.id, volunteer.id, type))
-        volunteers.add(entity)
-        volunteer.kits.add(entity)
-    }
-
-    fun replaceVolunteers(entities: Iterable<Volunteer>, type: KitVolunteerType): List<Volunteer> {
-        val incoming = entities.map { it.id to it }.toMap()
-        val existing = volunteers.filter { it.id.type == type }
-            .map { it.id.volunteerId to it }.toMap()
-        existing.forEach { (k, v) ->
-            if (!incoming.containsKey(k)) {
-                removeVolunteer(v.volunteer, type)
-            }
-        }
-        val added = mutableListOf<Volunteer>()
-        incoming.forEach { (k, v) ->
-            if (!existing.containsKey(k)) {
-                addVolunteer(v, type)
-                added.add(v)
-            }
-        }
-        return added
-    }
-
-    fun removeVolunteer(type: KitVolunteerType): Boolean {
-        return volunteers.removeIf { kv ->
-            if (kv.id.type == type) {
-                kv.volunteer.kits.remove(kv)
-                true
-            } else {
-                false
-            }
-        }
-    }
-
-    fun removeVolunteer(volunteer: Volunteer, type: KitVolunteerType): Boolean {
-        return volunteers.removeIf { kv ->
-            if (kv.id.type == type && kv.kit == this && kv.volunteer == volunteer) {
-                volunteer.kits.remove(kv)
-                true
-            } else {
-                false
-            }
-        }
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Kit) return false
@@ -443,84 +328,6 @@ enum class KitStatus {
 }
 
 enum class KitStorageType {HDD, SSD, HYBRID, UNKNOWN}
-
-enum class KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }
-
-@Embeddable
-class KitVolunteerId(
-    @Column(name = "course_id")
-    var kitId: Long,
-    @Column(name = "student_id")
-    var volunteerId: Long,
-    @Column(name = "type")
-    @Enumerated(EnumType.STRING)
-    var type: KitVolunteerType
-) : Serializable {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null) return false
-        if (other !is KitVolunteerId) return false
-        return type == other.type && kitId == other.kitId && volunteerId == other.volunteerId
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(kitId, volunteerId, type)
-    }
-
-    override fun toString(): String {
-        return "KitVolunteerId(type=$type, kitId=$kitId, volunteerId=$volunteerId)"
-    }
-}
-
-@Entity
-@Table(name = "kit_volunteers")
-class KitVolunteer(
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("kitId")
-    var kit: Kit,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("volunteerId")
-    var volunteer: Volunteer,
-    @EmbeddedId
-    var id: KitVolunteerId,
-    var createdAt: Instant = Instant.now()
-) {
-    val type get() = id.type
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        other ?: return false
-        if (other !is KitVolunteer) return false
-        if (id != other.id) return false
-        return kit == other.kit && volunteer == other.volunteer
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(kit, volunteer, id)
-    }
-
-    override fun toString(): String {
-        return "KitVolunteer(id=$id, enrolledAt=$createdAt)"
-    }
-}
-
-@Entity
-@Table(name = "email_templates")
-class EmailTemplate(
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "email-template-seq-generator")
-    @SequenceGenerator(
-        name = "email-template-seq-generator",
-        sequenceName = "email_template_sequence",
-        allocationSize = 1
-    )
-    var id: Long = 0,
-    var body: String,
-    var subject: String,
-    var active: Boolean = true,
-    var createdAt: Instant = Instant.now(),
-    @UpdateTimestamp
-    var updatedAt: Instant = Instant.now()
-)
 
 @Entity
 @Table(name = "referring_organisations")

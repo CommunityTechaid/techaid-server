@@ -4,10 +4,6 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
 import org.springframework.data.repository.PagingAndSortingRepository
 
-interface VolunteerRepository : PagingAndSortingRepository<Volunteer, Long>, QuerydslPredicateExecutor<Volunteer> {
-    fun findByEmail(email: String): Volunteer?
-}
-
 interface DonorRepository : PagingAndSortingRepository<Donor, Long>, QuerydslPredicateExecutor<Donor> {
     fun findByEmail(email: String): Donor?
     fun findByPhoneNumber(phone: String): Donor?
@@ -40,9 +36,6 @@ interface KitRepository : PagingAndSortingRepository<Kit, Long>, QuerydslPredica
     )
     fun typeCount(): List<KitTypeCount>
 }
-
-interface EmailTemplateRepository : PagingAndSortingRepository<EmailTemplate, Long>,
-    QuerydslPredicateExecutor<EmailTemplate>
 
 interface NoteRepository: PagingAndSortingRepository<Note, Long>,
     QuerydslPredicateExecutor<Note>
