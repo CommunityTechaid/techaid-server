@@ -95,6 +95,7 @@ class Donor(
     var kits: MutableSet<Kit> = mutableSetOf(),
     @Type(type = "yes_no")
     var archived: Boolean = false,
+    @Type(type = "yes_no")
     var isLeadContact: Boolean = false
 ) : BaseEntity() {
     fun addKit(kit: Kit) {
