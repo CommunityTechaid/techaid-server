@@ -161,6 +161,11 @@ dependencies {
 
     /* Graphql */
     implementation 'org.springframework.boot:spring-boot-starter-graphql'
+    // https://mvnrepository.com/artifact/com.graphql-java/graphql-java-extended-scalars
+    implementation 'com.graphql-java:graphql-java-extended-scalars'
+
+
+
     /*implementation "com.graphql-java-kickstart:graphql-spring-boot-starter:${graphQLVersion}"
     runtimeOnly "com.graphql-java-kickstart:graphiql-spring-boot-starter:${graphQLVersion}"
     runtimeOnly "com.graphql-java-kickstart:voyager-spring-boot-starter:${graphQLVersion}"
