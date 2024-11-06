@@ -24,6 +24,8 @@ class EmailTemplateQueries(
         if (where == null) {
             return templates.findAll(f.create())
         }
+
+        return templates.findAll(where.build(), f.create())
     }
 
     @QueryMapping("emailTemplates")

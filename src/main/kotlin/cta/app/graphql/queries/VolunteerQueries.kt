@@ -51,12 +51,10 @@ class VolunteerResolver {
         val EMAIL_MASK = Regex("(?<=.)[^@](?=[^@]*[^@]@)|(?:(?<=@.)|(?!^)\\G(?=[^@]*$)).(?!$)")
     }
 
-    @QueryMapping
     fun email(entity: Volunteer): String {
         return entity.email
     }
 
-    @QueryMapping
     fun phoneNumber(entity: Volunteer): String {
         return entity.phoneNumber
     }

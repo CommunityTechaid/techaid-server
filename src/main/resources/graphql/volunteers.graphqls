@@ -139,7 +139,6 @@ input VolunteerWhereInput {
     subGroup: TextComparison
     storage: TextComparison
     postCode: TextComparison
-    transport: TextComparison
     availability: TextComparison
     attributes: VolunteerAttributesWhereInput
     AND: [VolunteerWhereInput!]

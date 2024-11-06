@@ -204,7 +204,6 @@ input KitWhereInput {
     age: IntegerComparison
     state: TextComparison
     model: TextComparison
-    location: TextComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
     archived: BooleanComparison

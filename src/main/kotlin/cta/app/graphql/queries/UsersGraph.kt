@@ -96,7 +96,7 @@ data class PermissionInput(
 class RoleResolver(
     private val users: Auth0Service
 ) {
-    @QueryMapping
+
     fun permissions(role: Role, page: PaginationInput?): PermissionsPage {
         val filter = if (page == null) {
             PageFilter()
@@ -106,7 +106,7 @@ class RoleResolver(
         return users.mgmt.roles().listPermissions(role.id, filter).execute()
     }
 
-    @QueryMapping
+
     fun users(role: Role, page: PaginationInput?): UsersPage {
         val filter = if (page == null) {
             PageFilter()
@@ -121,7 +121,7 @@ class RoleResolver(
 class UserResolver(
     private val users: Auth0Service
 )  {
-    @QueryMapping
+
     fun roles(user: User, page: PaginationInput?): RolesPage {
         val filter = if (page == null) {
             PageFilter()

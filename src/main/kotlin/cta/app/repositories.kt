@@ -1,18 +1,16 @@
 package cta.app
 
+import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
-import org.springframework.data.repository.CrudRepository
-import org.springframework.data.repository.PagingAndSortingRepository
 
 interface VolunteerRepository :
-        PagingAndSortingRepository<Volunteer, Long>,
-        CrudRepository<Volunteer, Long>,
+        JpaRepository<Volunteer, Long>,
         QuerydslPredicateExecutor<Volunteer> {
     fun findByEmail(email: String): Volunteer?
 }
 
-interface DonorRepository : PagingAndSortingRepository<Donor, Long>, QuerydslPredicateExecutor<Donor> {
+interface DonorRepository : JpaRepository<Donor, Long>, QuerydslPredicateExecutor<Donor> {
     fun findByEmail(email: String): Donor?
     fun findByPhoneNumber(phone: String): Donor?
 }
@@ -28,8 +26,7 @@ interface KitTypeCount {
 }
 
 interface KitRepository :
-        PagingAndSortingRepository<Kit, Long>,
-        CrudRepository<Kit, Long>,
+        JpaRepository<Kit, Long>,
         QuerydslPredicateExecutor<Kit> {
     @Query(
         """
@@ -46,17 +43,17 @@ interface KitRepository :
     fun typeCount(): List<KitTypeCount>
 }
 
-interface EmailTemplateRepository : PagingAndSortingRepository<EmailTemplate, Long>,
+interface EmailTemplateRepository : JpaRepository<EmailTemplate, Long>,
     QuerydslPredicateExecutor<EmailTemplate>
 
-interface NoteRepository: PagingAndSortingRepository<Note, Long>,
+interface NoteRepository: JpaRepository<Note, Long>,
     QuerydslPredicateExecutor<Note>
 
-interface ReferringOrganisationRepository: PagingAndSortingRepository<ReferringOrganisation, Long>,
+interface ReferringOrganisationRepository: JpaRepository<ReferringOrganisation, Long>,
     QuerydslPredicateExecutor<ReferringOrganisation>
 
-interface ReferringOrganisationContactRepository: PagingAndSortingRepository<ReferringOrganisationContact, Long>,
-    QuerydslPredicateExecutor<ReferringOrganisationContact>{
+interface ReferringOrganisationContactRepository: JpaRepository<ReferringOrganisationContact, Long>
+    ,QuerydslPredicateExecutor<ReferringOrganisationContact> {
 
         fun findOneByFullNameAndEmailAndReferringOrganisation(fullName: String, email: String, referringOrganisation: ReferringOrganisation): ReferringOrganisationContact?
     }
@@ -72,8 +69,7 @@ interface RequestCount {
     val commsDevices: Long
 }
 interface DeviceRequestRepository:
-    PagingAndSortingRepository<DeviceRequest, Long>,
-    CrudRepository<DeviceRequest, Long>,
+    JpaRepository<DeviceRequest, Long>,
     QuerydslPredicateExecutor<DeviceRequest> {
     @Query(
         """
@@ -106,15 +102,13 @@ interface DeviceRequestRepository:
     fun requestCount(): RequestCount
 }
 
-interface DeviceRequestNoteRepository: PagingAndSortingRepository<DeviceRequestNote, Long>,
+interface DeviceRequestNoteRepository: JpaRepository<DeviceRequestNote, Long>,
     QuerydslPredicateExecutor<DeviceRequestNote>
 
 interface ReferringOrganisationNoteRepository:
-        PagingAndSortingRepository<ReferringOrganisationNote, Long>,
-        CrudRepository<ReferringOrganisationNote, Long>,
+        JpaRepository<ReferringOrganisationNote, Long>,
         QuerydslPredicateExecutor<ReferringOrganisationNote>
 
 interface ReferringOrganisationContactNoteRepository:
-        PagingAndSortingRepository<ReferringOrganisationContactNote, Long>,
-        CrudRepository<ReferringOrganisationContactNote, Long>,
+        JpaRepository<ReferringOrganisationContactNote, Long>,
         QuerydslPredicateExecutor<ReferringOrganisationContactNote>
