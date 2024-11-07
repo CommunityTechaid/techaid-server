@@ -8,6 +8,7 @@ import org.hibernate.envers.AuditReader
 import org.hibernate.envers.AuditReaderFactory
 import org.hibernate.envers.RevisionType
 import org.hibernate.envers.query.AuditEntity
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
@@ -24,7 +25,7 @@ class KitAuditTrailQueries(
     @QueryMapping
     //This annotation is added so that the entity manager can be obtained.
     //Entity Manager might close otherwise
-    fun kitAudits(where: Long): List<Revision> {
+    fun kitAudits(@Argument where: Long): List<Revision> {
 
         val reader: AuditReader = AuditReaderFactory.get(em)
         val finalResults: MutableList<Revision> = mutableListOf()

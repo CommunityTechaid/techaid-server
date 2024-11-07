@@ -9,6 +9,7 @@ import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
@@ -21,7 +22,7 @@ class DonorQueries(
     private val filterService: FilterService
 )  {
     @QueryMapping
-    fun donorsConnection(page: PaginationInput?, where: DonorWhereInput?): Page<Donor> {
+    fun donorsConnection(@Argument page: PaginationInput?, @Argument where: DonorWhereInput?): Page<Donor> {
         val filter = filterService.donorFilter()
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
@@ -31,7 +32,7 @@ class DonorQueries(
     }
 
     @QueryMapping
-    fun donors(where: DonorWhereInput, orderBy: MutableList<KeyValuePair>?): List<Donor> {
+    fun donors(@Argument where: DonorWhereInput, @Argument orderBy: MutableList<KeyValuePair>?): List<Donor> {
         val filter = filterService.donorFilter()
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
@@ -42,7 +43,8 @@ class DonorQueries(
     }
 
     @QueryMapping
-    fun donor(where: DonorWhereInput): Optional<Donor> = donors.findOne(filterService.donorFilter().and(where.build()))
+    fun donor(@Argument where: DonorWhereInput): Optional<Donor> =
+        donors.findOne(filterService.donorFilter().and(where.build()))
 }
 
 @Controller
@@ -55,7 +57,8 @@ class DonorResolver {
         return entity.email
     }
 
-    fun phoneNumber(entity: Volunteer): String {
+    @QueryMapping
+    fun phoneNumber(@Argument entity: Volunteer): String {
         return entity.phoneNumber
     }
 }

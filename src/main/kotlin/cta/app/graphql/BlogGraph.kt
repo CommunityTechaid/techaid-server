@@ -19,6 +19,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
@@ -36,7 +37,7 @@ class BlogQueries(
 ) {
     @PreAuthorize("hasAnyAuthority('read:content')")
     @QueryMapping
-    fun postsConnection(page: PaginationInput?, where: PostWhereInput?): Page<Post> {
+    fun postsConnection(@Argument page: PaginationInput?, @Argument where: PostWhereInput?): Page<Post> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
             return posts.findAll(f.create())
@@ -46,7 +47,7 @@ class BlogQueries(
 
     @PreAuthorize("hasAnyAuthority('read:content')")
     @QueryMapping
-    fun posts(where: PostWhereInput, orderBy: MutableList<KeyValuePair>?): List<Post> {
+    fun posts(@Argument where: PostWhereInput, @Argument orderBy: MutableList<KeyValuePair>?): List<Post> {
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
             posts.findAll(where.build(), sort).toList()
@@ -56,7 +57,7 @@ class BlogQueries(
     }
 
     @QueryMapping
-    fun post(where: PostWhereInput): Post? {
+    fun post(@Argument where: PostWhereInput): Post? {
         val post = posts.findOne(where.build()).toNullable() ?: return null
         if (post.secured) {
             SecurityContextHolder.getContext().authentication?.let { auth ->
@@ -68,7 +69,7 @@ class BlogQueries(
 
     @PreAuthorize("hasAnyAuthority('read:content')")
     @QueryMapping
-    fun faqsConnection(page: PaginationInput?, where: FaqWhereInput?): Page<Faq> {
+    fun faqsConnection(@Argument page: PaginationInput?, @Argument where: FaqWhereInput?): Page<Faq> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
             return faqs.findAll(f.create())
@@ -77,7 +78,7 @@ class BlogQueries(
     }
 
     @QueryMapping
-    fun faqs(where: FaqWhereInput, orderBy: MutableList<KeyValuePair>?): List<Faq> {
+    fun faqs(@Argument where: FaqWhereInput, @Argument orderBy: MutableList<KeyValuePair>?): List<Faq> {
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
             faqs.findAll(where.build(), sort).toList()
@@ -87,7 +88,7 @@ class BlogQueries(
     }
 
     @QueryMapping
-    fun faq(where: FaqWhereInput): Optional<Faq> = faqs.findOne(where.build())
+    fun faq(@Argument where: FaqWhereInput): Optional<Faq> = faqs.findOne(where.build())
 }
 
 @Controller

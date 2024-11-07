@@ -11,6 +11,7 @@ import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
@@ -35,7 +36,7 @@ class KitQueries(
     }
 
     @QueryMapping
-    fun kitsConnection(page: PaginationInput?, where: KitWhereInput?): Page<Kit> {
+    fun kitsConnection(@Argument page: PaginationInput?, @Argument where: KitWhereInput?): Page<Kit> {
         val f: PaginationInput = page ?: PaginationInput()
         val filter = filterService.kitFilter()
         if (where == null) {
@@ -45,7 +46,7 @@ class KitQueries(
     }
 
     @QueryMapping
-    fun kits(where: KitWhereInput, orderBy: MutableList<KeyValuePair>?): List<Kit> {
+    fun kits(@Argument where: KitWhereInput, @Argument orderBy: MutableList<KeyValuePair>?): List<Kit> {
         val filter = filterService.kitFilter()
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
@@ -56,13 +57,13 @@ class KitQueries(
     }
 
     @QueryMapping
-    fun kit(where: KitWhereInput): Optional<Kit> = kits.findOne(filterService.kitFilter().and(where.build()))
+    fun kit(@Argument where: KitWhereInput): Optional<Kit> = kits.findOne(filterService.kitFilter().and(where.build()))
 }
 
 @Controller
 class kitResolver {
     @QueryMapping
-    fun getAttributes(kit: Kit): KitAttributes {
+    fun getAttributes(@Argument kit: Kit): KitAttributes {
         val attr = kit.attributes
         attr.kit = kit
         return attr

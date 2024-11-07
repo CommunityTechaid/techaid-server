@@ -10,6 +10,7 @@ import com.auth0.json.mgmt.users.User
 import com.auth0.json.mgmt.users.UsersPage
 import cta.auth.Auth0Service
 import cta.graphql.PaginationInput
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
@@ -21,19 +22,19 @@ class UserQueries(
     private val users: Auth0Service
 )  {
     @QueryMapping
-    fun users(page: PaginationInput, filter: String = ""): UsersPage {
+    fun users(@Argument page: PaginationInput, @Argument filter: String = ""): UsersPage {
         val userFilter = page.userFilter()
         if (filter.isNotBlank()) userFilter.withQuery(filter)
         return users.findAllUsers(userFilter)
     }
 
     @QueryMapping
-    fun user(id: String): User {
+    fun user(@Argument id: String): User {
         return users.findById(id)
     }
 
     @QueryMapping
-    fun roles(page: PaginationInput, filter: String = ""): RolesPage {
+    fun roles(@Argument page: PaginationInput, @Argument filter: String = ""): RolesPage {
         val roleFilter = RolesFilter()
             .withPage(page.page, page.size)
             .withTotals(true)
@@ -42,7 +43,7 @@ class UserQueries(
     }
 
     @QueryMapping
-    fun role(id: String): Role {
+    fun role(@Argument id: String): Role {
         return users.findRoleById(id)
     }
 }
@@ -54,23 +55,23 @@ class UserMutations(
     private val users: Auth0Service
 )  {
     @QueryMapping
-    fun assignRoles(roleId: String, userIds: List<String>): Role {
+    fun assignRoles(@Argument roleId: String, @Argument userIds: List<String>): Role {
         return users.assignRoles(roleId, userIds)
     }
 
     @QueryMapping
-    fun removeRoles(userId: String, roleIds: List<String>): User {
+    fun removeRoles(@Argument userId: String, @Argument roleIds: List<String>): User {
         return users.removeRoles(userId, roleIds)
     }
 
     @QueryMapping
-    fun deleteUser(userId: String): Boolean {
+    fun deleteUser(@Argument userId: String): Boolean {
         users.deleteById(userId)
         return true
     }
 
     @QueryMapping
-    fun removePermissions(userId: String, permissions: List<PermissionInput>): User {
+    fun removePermissions(@Argument userId: String, @Argument permissions: List<PermissionInput>): User {
         users.mgmt.users().removePermissions(userId, permissions.map { it.permission }).execute()
         return users.findById(userId)
     }
@@ -132,7 +133,7 @@ class UserResolver(
     }
 
     @QueryMapping
-    fun permissions(user: User, page: PaginationInput?): PermissionsPage {
+    fun permissions(@Argument user: User, @Argument page: PaginationInput?): PermissionsPage {
         val filter = if (page == null) {
             PageFilter()
         } else {

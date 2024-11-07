@@ -7,6 +7,7 @@ import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
@@ -19,7 +20,7 @@ class ReferringOrganisationQueries(
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
-    fun referringOrganisations(where: ReferringOrganisationWhereInput, orderBy: MutableList<KeyValuePair>?): List<ReferringOrganisation> {
+    fun referringOrganisations(@Argument where: ReferringOrganisationWhereInput ,@Argument orderBy: MutableList<KeyValuePair>?): List<ReferringOrganisation> {
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
             referringOrganisations.findAll(where.build(), sort).toList()
@@ -30,7 +31,7 @@ class ReferringOrganisationQueries(
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
-    fun referringOrganisationsConnection(page: PaginationInput?, where: ReferringOrganisationWhereInput?): Page<ReferringOrganisation> {
+    fun referringOrganisationsConnection(@Argument page: PaginationInput?, @Argument where: ReferringOrganisationWhereInput?): Page<ReferringOrganisation> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
             return referringOrganisations.findAll(f.create())
@@ -39,7 +40,7 @@ class ReferringOrganisationQueries(
     }
 
     @QueryMapping
-    fun referringOrganisationsPublic(where: ReferringOrganisationWhereInput, orderBy: MutableList<KeyValuePair>?): List<ReferringOrganisationPublic> {
+    fun referringOrganisationsPublic(@Argument where: ReferringOrganisationWhereInput ,@Argument orderBy: MutableList<KeyValuePair>?): List<ReferringOrganisationPublic> {
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
             referringOrganisations.findAll(where.build(), sort).map { ReferringOrganisationPublic(it.id, it.name) }.toList()
@@ -50,7 +51,7 @@ class ReferringOrganisationQueries(
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
-    fun referringOrganisation(where: ReferringOrganisationWhereInput): Optional<ReferringOrganisation> = referringOrganisations.findOne(where.build())
+    fun referringOrganisation(@Argument where: ReferringOrganisationWhereInput): Optional<ReferringOrganisation> = referringOrganisations.findOne(where.build())
 }
 
 data class ReferringOrganisationPublic(

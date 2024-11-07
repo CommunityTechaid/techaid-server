@@ -15,6 +15,7 @@ import cta.app.services.createEmail
 import jakarta.mail.internet.MimeMessage
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
@@ -28,27 +29,27 @@ class GmailGraph(
 ) {
 
     @QueryMapping
-    fun emails(filter: EmailFilter, id: String?): EmailPage {
+    fun emails(@Argument filter: EmailFilter, @Argument id: String?): EmailPage {
         return mailService.emails(filter, id ?: mailService.address)
     }
 
     @QueryMapping
-    fun email(id: String): Message {
+    fun email(@Argument id: String): Message {
         return mailService.gmail.users().messages().get(mailService.address, id).execute()
     }
 
     @QueryMapping
-    fun thread(id: String): Thread {
+    fun thread(@Argument id: String): Thread {
         return mailService.gmail.users().threads().get(mailService.address, id).execute()
     }
 
     @QueryMapping
-    fun emailThreads(filter: EmailFilter): ListThreadsResponse {
+    fun emailThreads(@Argument filter: EmailFilter): ListThreadsResponse {
         return mailService.threads(filter)
     }
 
     @QueryMapping
-    fun emailLabels(ids: List<String>?): List<Label> {
+    fun emailLabels(@Argument ids: List<String>?): List<Label> {
         return if (ids.isNullOrEmpty()) {
             mailService.gmail.users().labels().list(mailService.address).execute().labels.map {
                 mailService.gmail.users().labels().get(mailService.address, it.id).execute()
@@ -111,7 +112,7 @@ class MessagePartBodyResolver(
     private val mailService: MailService
 ) {
     @QueryMapping
-    fun decodedData(part: MessagePartBody): String? {
+    fun decodedData(@Argument part: MessagePartBody): String? {
         return part.decodeData()?.let { it.toString(charset("UTF-8")) }
     }
 }
@@ -121,13 +122,13 @@ class MessagePartResolver(
     private val mailService: MailService
 ) {
     @QueryMapping
-    fun headers(part: MessagePart, keys: List<String>?): List<MessagePartHeader> {
+    fun headers(@Argument part: MessagePart, @Argument keys: List<String>?): List<MessagePartHeader> {
         keys ?: return part.headers
         return (part.headers ?: listOf<MessagePartHeader>()).filter { keys.contains(it.name) }
     }
 
     @QueryMapping
-    fun content(part: MessagePart, mimeType: String): MessagePart? {
+    fun content(@Argument part: MessagePart, @Argument mimeType: String): MessagePart? {
         (part.parts ?: listOf<MessagePart>()).forEach {
             mimeType(mimeType, it)?.let { p ->
                 return p
@@ -157,7 +158,7 @@ class ThreadResolver(
     private val mailService: MailService
 )  {
     @QueryMapping
-    fun messages(thread: Thread): List<Message> {
+    fun messages(@Argument thread: Thread): List<Message> {
         return if (thread.messages.isNullOrEmpty()) {
             mailService.gmail.users().Threads().get(mailService.address, thread.id).execute().messages
         } else {
