@@ -5,14 +5,14 @@ import cta.app.Note
 import cta.app.NoteRepository
 import cta.app.services.FilterService
 import cta.toNullable
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
-import org.springframework.validation.annotation.Validated
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.validation.annotation.Validated
 
 @Controller
 @Validated
@@ -58,7 +58,7 @@ class NoteMutations(
     }*/
 
     @MutationMapping
-    fun deleteNote(id: Long): Boolean {
+    fun deleteNote(@Argument id: Long): Boolean {
 
         val volunteer = filterService.userDetails().name.ifBlank {
             filterService.userDetails().email

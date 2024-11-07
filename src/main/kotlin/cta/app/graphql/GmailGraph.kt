@@ -69,40 +69,40 @@ class GmailMutations(
     private val mailService: MailService
 ) {
     @MutationMapping
-    fun sendEmail(@Valid data: EmailInput): Message {
+    fun sendEmail(@Argument @Valid data: EmailInput): Message {
         return mailService.sendMessage(data.toMessage(mailService.address))
     }
 
     @MutationMapping
-    fun replyEmail(id: String, @Valid data: EmailInput): Message {
+    fun replyEmail(@Argument id: String, @Argument @Valid data: EmailInput): Message {
         val message = mailService.replyTo(id, data.toMessage(mailService.address))
         return mailService.sendMessage(message)
     }
 
     @MutationMapping
-    fun draftEmail(@Valid data: EmailInput): Draft {
+    fun draftEmail(@Argument @Valid data: EmailInput): Draft {
         return mailService.createDraft(data.toMessage(mailService.address))
     }
 
     @MutationMapping
-    fun replyDraft(id: String, @Valid data: EmailInput): Draft {
+    fun replyDraft(@Argument id: String, @Argument @Valid data: EmailInput): Draft {
         val message = mailService.replyTo(id, data.toMessage(mailService.address))
         return mailService.createDraft(message)
     }
 
     @MutationMapping
-    fun updateDraft(id: String, @Valid data: EmailInput): Draft {
+    fun updateDraft(@Argument id: String, @Argument @Valid data: EmailInput): Draft {
         return mailService.updateDraft(id, data.toMessage(mailService.address))
     }
 
     @MutationMapping
-    fun deleteDraft(id: String): Boolean {
+    fun deleteDraft(@Argument id: String): Boolean {
         mailService.deleteDraft(id)
         return true
     }
 
     @MutationMapping
-    fun sendDraft(id: String, @Valid data: EmailInput? = null): Message {
+    fun sendDraft(@Argument id: String, @Argument @Valid data: EmailInput? = null): Message {
         return mailService.sendDraft(id, data?.toMessage(mailService.address))
     }
 }

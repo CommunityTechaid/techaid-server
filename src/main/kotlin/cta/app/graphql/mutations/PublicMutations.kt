@@ -8,6 +8,7 @@ import cta.app.KitRepository
 import cta.app.Volunteer
 import cta.app.VolunteerRepository
 import cta.app.services.LocationService
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
@@ -43,7 +44,7 @@ class PublicMutations(
     private val locationService: LocationService
 ) {
     @MutationMapping
-    fun createVolunteer(@Valid data: CreateVolunteerInput): Volunteer {
+    fun createVolunteer(@Argument @Valid data: CreateVolunteerInput): Volunteer {
         if (data.email.isNotBlank()) {
             volunteers.findByEmail(data.email)?.let {
                 throw IllegalArgumentException("A volunteer with the email address ${data.email} already exits!")
@@ -59,7 +60,7 @@ class PublicMutations(
 
     @Transactional
     @MutationMapping
-    fun donateItem(@Valid data: DonateItemInput): DonateItemPayload {
+    fun donateItem(@Argument @Valid data: DonateItemInput): DonateItemPayload {
         if (data.kits.isEmpty()) throw IllegalArgumentException("kits cannot be empty")
         var donor = fetchDonor(donors, data.donor.entity).apply {
             if (postCode.isNotBlank()) {

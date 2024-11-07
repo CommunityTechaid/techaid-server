@@ -4,16 +4,16 @@ import cta.app.ReferringOrganisationContact
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.ReferringOrganisationRepository
 import cta.toNullable
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
-import org.springframework.validation.annotation.Validated
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.validation.annotation.Validated
 
 
 @Controller
@@ -26,7 +26,7 @@ class ReferringOrganisationContactMutations(
     private val referringOrganisations: ReferringOrganisationRepository
 ) {
     @MutationMapping
-    fun createReferringOrganisationContact(@Valid data: CreateReferringOrganisationContactInput): ReferringOrganisationContact {
+    fun createReferringOrganisationContact(@Argument @Valid data: CreateReferringOrganisationContactInput): ReferringOrganisationContact {
 
         val referringOrganisation = referringOrganisations.findById(data.referringOrganisation).toNullable()
             ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
@@ -58,7 +58,7 @@ class ReferringOrganisationContactMutations(
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
-    fun updateReferringOrganisationContact(@Valid data: UpdateReferringOrganisationContactInput): ReferringOrganisationContact {
+    fun updateReferringOrganisationContact(@Argument @Valid data: UpdateReferringOrganisationContactInput): ReferringOrganisationContact {
         val entity = referringOrganisationContacts.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a organisation contact with id: ${data.id}")
 
@@ -74,7 +74,7 @@ class ReferringOrganisationContactMutations(
 
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
     @MutationMapping
-    fun deleteReferringOrganisationContact(id: Long): Boolean {
+    fun deleteReferringOrganisationContact(@Argument id: Long): Boolean {
         val entity =
             referringOrganisationContacts.findById(id).toNullable()
                 ?: throw EntityNotFoundException("No referring organisation contact with id: $id")

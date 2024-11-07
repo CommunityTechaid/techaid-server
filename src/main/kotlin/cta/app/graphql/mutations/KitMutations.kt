@@ -1,5 +1,6 @@
 package cta.app.graphql.mutations
 
+import cta.app.DeviceRequestRepository
 import cta.app.DonorRepository
 import cta.app.Kit
 import cta.app.KitAttributes
@@ -7,29 +8,24 @@ import cta.app.KitRepository
 import cta.app.KitStatus
 import cta.app.KitStorageType
 import cta.app.KitType
-import cta.app.KitVolunteerType
 import cta.app.Note
-import cta.app.DeviceRequest
-import cta.app.DeviceRequestRepository
 import cta.app.QKit
-import cta.app.Volunteer
 import cta.app.VolunteerRepository
 import cta.app.services.FilterService
 import cta.app.services.KitService
 import cta.app.services.LocationService
 import cta.app.services.MailService
-import cta.app.services.createEmail
 import cta.toNullable
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
-import org.springframework.validation.annotation.Validated
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.validation.annotation.Validated
 
 @Controller
 @Validated
@@ -47,7 +43,7 @@ class KitMutations(
 ) {
 
     @MutationMapping
-    fun createKit(@Valid data: CreateKitInput): Kit {
+    fun createKit(@Argument @Valid data: CreateKitInput): Kit {
         val details = filterService.userDetails()
         val volunteer = if (details.email.isNotBlank()) {
             volunteers.findByEmail(details.email)
@@ -77,7 +73,7 @@ class KitMutations(
     }
 
     @MutationMapping
-    fun quickCreateKit(@Valid data: QuickCreateKitInput): Kit {
+    fun quickCreateKit(@Argument @Valid data: QuickCreateKitInput): Kit {
         val details = filterService.userDetails()
         val volunteer = if (details.email.isNotBlank()) {
             volunteers.findByEmail(details.email)
@@ -96,7 +92,7 @@ class KitMutations(
     }
 
     @MutationMapping
-    fun updateKit(@Valid data: UpdateKitInput): Kit {
+    fun updateKit(@Argument @Valid data: UpdateKitInput): Kit {
         val self = this
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a kit with id: ${data.id}")
@@ -179,7 +175,7 @@ class KitMutations(
 
 
     @MutationMapping
-    fun autoCreateKit(@Valid data: AutoCreateKitInput): Kit {
+    fun autoCreateKit(@Argument @Valid data: AutoCreateKitInput): Kit {
 
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.serialNo.eq(data.serialNo))).toNullable()
 
@@ -203,7 +199,7 @@ class KitMutations(
     }
 
     @MutationMapping
-    fun autoUpdateKit(@Valid data: AutoUpdateKitInput): Kit {
+    fun autoUpdateKit(@Argument @Valid data: AutoUpdateKitInput): Kit {
         val self = this
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
             ?: throw RuntimeException("Unable to locate a kit with CTA id: ${data.id}")
@@ -213,7 +209,7 @@ class KitMutations(
 
     @PreAuthorize("hasAnyAuthority('delete:kits')")
     @MutationMapping
-    fun deleteKit(id: Long): Boolean {
+    fun deleteKit(@Argument id: Long): Boolean {
         val kit = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(id))).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a kit with id: $id")
         kits.delete(kit)

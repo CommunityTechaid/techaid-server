@@ -16,11 +16,12 @@ import jakarta.mail.internet.InternetAddress
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.Argument
+import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
-import org.springframework.graphql.data.method.annotation.MutationMapping
 
 
 @Controller
@@ -36,7 +37,7 @@ class DeviceRequestMutations(
 )  {
 
     @MutationMapping
-    fun createDeviceRequest(@Valid data: CreateDeviceRequestInput): DeviceRequest {
+    fun createDeviceRequest(@Argument @Valid data: CreateDeviceRequestInput): DeviceRequest {
 
         val referringOrganisationContact = referringOrganisationContacts.findById(data.referringOrganisationContact).toNullable() ?:
         throw EntityNotFoundException("No referring contact found with id: ${data.referringOrganisationContact}")
@@ -65,7 +66,7 @@ class DeviceRequestMutations(
     }
 
     @MutationMapping
-    fun formatDeviceRequests(items: DeviceRequestItems) : String {
+    fun formatDeviceRequests(@Argument items: DeviceRequestItems): String {
         var deviceRequest = "";
         if(items.phones ?: 0 > 0) deviceRequest += "Phones: ${items.phones}<br>\n";
         if(items.tablets ?: 0 > 0) deviceRequest += "Tablets: ${items.tablets}<br>\n";
@@ -79,7 +80,7 @@ class DeviceRequestMutations(
     }
 
     @MutationMapping
-    fun acknowledgeSubmission(request: DeviceRequest) {
+    fun acknowledgeSubmission(@Argument request: DeviceRequest) {
         var formattedItems = formatDeviceRequests(request.deviceRequestItems);
 
         val emailHeader = """
@@ -162,7 +163,7 @@ val emailFooter = """
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
-    fun updateDeviceRequest(@Valid data: UpdateDeviceRequestInput): DeviceRequest {
+    fun updateDeviceRequest(@Argument @Valid data: UpdateDeviceRequestInput): DeviceRequest {
         val entity = deviceRequests.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.id}")
 
@@ -193,7 +194,7 @@ val emailFooter = """
 
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
     @MutationMapping
-    fun deleteDeviceRequest(id: Long): Boolean {
+    fun deleteDeviceRequest(@Argument id: Long): Boolean {
         val entity =
             deviceRequests.findById(id).toNullable()
                 ?: throw EntityNotFoundException("No device request with id: $id")

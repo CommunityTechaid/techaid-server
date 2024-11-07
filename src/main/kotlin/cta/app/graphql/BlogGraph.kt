@@ -100,37 +100,37 @@ class BlogMutations(
     private val faqs: FaqRepository
 ) {
     @MutationMapping
-    fun createPost(@Valid data: CreatePostInput): Post {
+    fun createPost(@Argument @Valid data: CreatePostInput): Post {
         return posts.save(data.entity)
     }
 
     @MutationMapping
-    fun updatePost(@Valid data: UpdatePostInput): Post {
+    fun updatePost(@Argument  @Valid data: UpdatePostInput): Post {
         val entity = posts.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a post with id: ${data.id}")
         return data.apply(entity)
     }
 
     @MutationMapping
-    fun deletePost(id: Long): Boolean {
+    fun deletePost(@Argument  id: Long): Boolean {
         posts.deleteById(id)
         return true
     }
 
     @MutationMapping
-    fun createFaq(@Valid data: CreateFaqInput): Faq {
+    fun createFaq(@Argument  @Valid data: CreateFaqInput): Faq {
         return faqs.save(data.entity)
     }
 
     @MutationMapping
-    fun updateFaq(@Valid data: UpdateFaqInput): Faq {
+    fun updateFaq(@Argument  @Valid data: UpdateFaqInput): Faq {
         val entity = faqs.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a faq with id: ${data.id}")
         return data.apply(entity)
     }
 
     @MutationMapping
-    fun deleteFaq(id: Long): Boolean {
+    fun deleteFaq(@Argument  id: Long): Boolean {
         faqs.deleteById(id)
         return true
     }

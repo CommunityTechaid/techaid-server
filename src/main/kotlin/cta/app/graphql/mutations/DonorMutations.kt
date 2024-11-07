@@ -1,18 +1,18 @@
 package cta.app.graphql.mutations
 
-import jakarta.persistence.EntityNotFoundException
-import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
 import cta.app.Donor
 import cta.app.DonorRepository
 import cta.app.QDonor
 import cta.app.services.FilterService
 import cta.app.services.LocationService
 import cta.toNullable
+import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
@@ -28,7 +28,7 @@ class DonorMutations(
 ) {
 
     @MutationMapping
-    fun createDonor(@Valid data: CreateDonorInput): Donor {
+    fun createDonor(@Argument @Valid data: CreateDonorInput): Donor {
         val donor = fetchDonor(donors, data.entity)
         if (donor.postCode.isNotBlank()) {
             donor.coordinates = locationService.findCoordinates(donor.postCode)
@@ -37,7 +37,7 @@ class DonorMutations(
     }
 
     @MutationMapping
-    fun updateDonor(@Valid data: UpdateDonorInput): Donor {
+    fun updateDonor(@Argument @Valid data: UpdateDonorInput): Donor {
         val entity = donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(data.id))).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.id}")
         return data.apply(entity).apply {
@@ -49,7 +49,7 @@ class DonorMutations(
 
     @PreAuthorize("hasAnyAuthority('delete:donors')")
     @MutationMapping
-    fun deleteDonor(id: Long): Boolean {
+    fun deleteDonor(@Argument id: Long): Boolean {
         val donor = donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(id))).toNullable()
             ?: throw EntityNotFoundException("No donor with id: $id")
         donor.kits.forEach { donor.removeKit(it) }

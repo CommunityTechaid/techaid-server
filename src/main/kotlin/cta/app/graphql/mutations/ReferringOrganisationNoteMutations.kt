@@ -6,6 +6,7 @@ import cta.app.ReferringOrganisationNoteRepository
 import cta.app.services.FilterService
 import cta.toNullable
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
@@ -22,7 +23,7 @@ class ReferringOrganisationNoteMutations(
 ) {
 
     @MutationMapping
-    fun deleteReferringOrganisationNote(id: Long): Boolean{
+    fun deleteReferringOrganisationNote(@Argument id: Long): Boolean{
         val volunteer = filterService.userDetails().name.ifBlank {
             filterService.userDetails().email
         }

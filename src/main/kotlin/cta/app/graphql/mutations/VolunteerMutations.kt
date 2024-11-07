@@ -12,6 +12,7 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
@@ -28,7 +29,7 @@ class VolunteerMutations(
     private val filterService: FilterService
 ) {
     @MutationMapping
-    fun updateVolunteer(@Valid data: UpdateVolunteerInput): Volunteer {
+    fun updateVolunteer(@Argument @Valid data: UpdateVolunteerInput): Volunteer {
         val entity =
             volunteers.findOne(filterService.volunteerFilter().and(QVolunteer.volunteer.id.eq(data.id))).toNullable()
                 ?: throw EntityNotFoundException("Unable to locate a volunteer with id: ${data.id}")
@@ -47,7 +48,7 @@ class VolunteerMutations(
 
     @PreAuthorize("hasAnyAuthority('delete:volunteers')")
     @MutationMapping
-    fun deleteVolunteer(id: Long): Boolean {
+    fun deleteVolunteer(@Argument id: Long): Boolean {
         val volunteer =
             volunteers.findOne(filterService.volunteerFilter().and(QVolunteer.volunteer.id.eq(id))).toNullable()
                 ?: throw EntityNotFoundException("Unable to locate volunteer with id: $id")
