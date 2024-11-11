@@ -5,25 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType
 import com.vladmihalcea.hibernate.type.json.JsonStringType
 import cta.app.services.Coordinates
-import org.hibernate.envers.AuditTable
-import org.hibernate.envers.Audited
-import org.hibernate.envers.NotAudited
-import org.hibernate.envers.RelationTargetAuditMode
-import org.hibernate.envers.RevisionEntity
-import org.hibernate.envers.RevisionNumber
-import org.hibernate.envers.RevisionTimestamp
-import java.io.Serializable
-import java.time.Instant
-import java.util.Objects
-import jakarta.persistence.AttributeConverter
-import jakarta.persistence.Basic
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Converts
 import jakarta.persistence.Embeddable
 import jakarta.persistence.Embedded
-import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -34,14 +21,24 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.MappedSuperclass
-import jakarta.persistence.MapsId
 import jakarta.persistence.OneToMany
-import jakarta.persistence.OneToOne
 import jakarta.persistence.SequenceGenerator
 import jakarta.persistence.Table
-import org.hibernate.annotations.*
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.Formula
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.annotations.OrderBy
+import org.hibernate.annotations.UpdateTimestamp
+import org.hibernate.envers.AuditTable
+import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
+import org.hibernate.envers.RelationTargetAuditMode
+import org.hibernate.envers.RevisionEntity
+import org.hibernate.envers.RevisionNumber
+import org.hibernate.envers.RevisionTimestamp
 import org.hibernate.type.SqlTypes
 import org.hibernate.type.YesNoConverter
+import java.time.Instant
 
 
 @Converts(
@@ -91,7 +88,7 @@ class Donor(
         orphanRemoval = false
     )
     var kits: MutableSet<Kit> = mutableSetOf(),
-    @Convert(converter=YesNoConverter::class)
+    @Convert(converter = YesNoConverter::class)
     var archived: Boolean = false,
     var isLeadContact: Boolean = false
 ) : BaseEntity() {
@@ -118,7 +115,7 @@ enum class DonorParentType {
 }
 
 @Entity
-@Table(name = "donorParents")
+@Table(name = "donor_parents")
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 @AuditTable(value = "donorParents_audit_trail")
 class DonorParent(
@@ -149,7 +146,7 @@ class DonorParent(
     var donors: MutableSet<Donor> = mutableSetOf(),
     @Enumerated(EnumType.STRING)
     var type: DonorParentType? = DonorParentType.DROPPOINT,
-    @Convert(converter=YesNoConverter::class)
+    @Convert(converter = YesNoConverter::class)
     var archived: Boolean = false
 ) : BaseEntity() {
     fun addDonor(donor: Donor) {
