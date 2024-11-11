@@ -52,66 +52,9 @@ import org.hibernate.type.YesNoConverter
 class BaseEntity
 
 @Entity
-@Table(name = "volunteers")
-class Volunteer(
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "volunteer-seq-generator")
-    @SequenceGenerator(name = "volunteer-seq-generator", sequenceName = "volunteer_sequence", allocationSize = 1)
-    var id: Long = 0,
-    var name: String,
-    var phoneNumber: String,
-    var email: String,
-    var expertise: String,
-    var subGroup: String,
-    var storage: String,
-    var transport: String,
-    var postCode: String,
-    var availability: String,
-    var createdAt: Instant = Instant.now(),
-    var consent: String,
-    @Formula(
-        """
-        (SELECT COUNT(*) FROM kit_volunteers k where k.volunteer_id = id)
-    """
-    )
-    var kitCount: Int = 0,
-    @UpdateTimestamp
-    var updatedAt: Instant = Instant.now(),
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    var coordinates: Coordinates? = null,
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    var attributes: VolunteerAttributes = VolunteerAttributes(),
-    @JsonIgnore
-    @OneToMany(mappedBy = "volunteer", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
-    var kits: MutableSet<KitVolunteer> = mutableSetOf()
-) : BaseEntity()
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class VolunteerAttributes(
-    var dropOffAvailability: String = "",
-    var hasCapacity: Boolean = false,
-    var accepts: List<String> = listOf(),
-    var capacity: Capacity = Capacity()
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-//todo DELETE
-data class Capacity(
-    val phones: Int = 0,
-    val tablets: Int = 0,
-    val laptops: Int = 0,
-    val allInOnes: Int = 0,
-    val desktops: Int = 0,
-    val other: Int = 0,
-    val chromebooks: Int? = 0,
-    val commsDevices: Int? = 0
-)
-
-
-@Entity
 @Table(name = "donors")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "donors_audit_trail")
 class Donor(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "donor-seq-generator")
@@ -124,6 +67,7 @@ class Donor(
     var referral: String,
     var consent: Boolean,
     var createdAt: Instant = Instant.now(),
+    @NotAudited
     @Formula(
         """
         ( SELECT COUNT(*) FROM kits k where k.donor_id = id )
@@ -132,16 +76,24 @@ class Donor(
     var kitCount: Int = 0,
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
+    @NotAudited
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var coordinates: Coordinates? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "donor_parent_id")
+    var donorParent: DonorParent? = null,
+    @NotAudited
     @OneToMany(
         mappedBy = "donor",
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
         orphanRemoval = false
     )
-    var kits: MutableSet<Kit> = mutableSetOf()
+    var kits: MutableSet<Kit> = mutableSetOf(),
+    @Type(type = "yes_no")
+    var archived: Boolean = false,
+    var isLeadContact: Boolean = false
 ) : BaseEntity() {
     fun addKit(kit: Kit) {
         kits.add(kit)
@@ -160,6 +112,62 @@ class Donor(
     }
 }
 
+enum class DonorParentType {
+    BUSINESS,
+    DROPPOINT
+}
+
+@Entity
+@Table(name = "donorParents")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "donorParents_audit_trail")
+class DonorParent(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "donor-parent-seq-generator")
+    @SequenceGenerator(name = "donor-parent-seq-generator", sequenceName = "donor_parent_sequence", allocationSize = 1)
+    var id: Long = 0,
+    var name: String,
+    var address: String,
+    var website: String,
+    var createdAt: Instant = Instant.now(),
+    @UpdateTimestamp
+    var updatedAt: Instant = Instant.now(),
+    @NotAudited
+    @Formula(
+        """
+        ( SELECT COUNT(*) FROM donors d where d.donor_parent_id = id )
+    """
+    )
+    var donorCount: Int = 0,
+    @NotAudited
+    @OneToMany(
+        mappedBy = "donorParent",
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = false
+    )
+    var donors: MutableSet<Donor> = mutableSetOf(),
+    @Enumerated(EnumType.STRING)
+    var type: DonorParentType? = DonorParentType.DROPPOINT,
+    @Type(type = "yes_no")
+    var archived: Boolean = false
+) : BaseEntity() {
+    fun addDonor(donor: Donor) {
+        donors.add(donor)
+        donor.donorParent = this
+    }
+
+    fun removeDonor(donor: Donor) {
+        donors.removeIf {
+            if (donor == it) {
+                donor.donorParent = null
+                true
+            } else {
+                false
+            }
+        }
+    }
+}
 
 /*
 * This entity is used to hold the information of audits used by Hibernate Enver.
@@ -228,10 +236,6 @@ class Kit(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_request_id")
     var deviceRequest: DeviceRequest? = null,
-    @NotAudited
-    @JsonIgnore
-    @OneToMany(mappedBy = "kit", fetch = FetchType.LAZY, orphanRemoval = true, cascade = [CascadeType.ALL])
-    var volunteers: MutableSet<KitVolunteer> = mutableSetOf(),
     var make: String? = null,
     var deviceVersion: String? = null,
     var serialNo: String? = null,
@@ -243,53 +247,6 @@ class Kit(
     var tpmVersion: String? = null,
     var cpuCores: Int? = null
 ) : BaseEntity() {
-    fun addVolunteer(volunteer: Volunteer, type: KitVolunteerType) {
-        val entity = KitVolunteer(this, volunteer, KitVolunteerId(this.id, volunteer.id, type))
-        volunteers.add(entity)
-        volunteer.kits.add(entity)
-    }
-
-    fun replaceVolunteers(entities: Iterable<Volunteer>, type: KitVolunteerType): List<Volunteer> {
-        val incoming = entities.map { it.id to it }.toMap()
-        val existing = volunteers.filter { it.id.type == type }
-            .map { it.id.volunteerId to it }.toMap()
-        existing.forEach { (k, v) ->
-            if (!incoming.containsKey(k)) {
-                removeVolunteer(v.volunteer, type)
-            }
-        }
-        val added = mutableListOf<Volunteer>()
-        incoming.forEach { (k, v) ->
-            if (!existing.containsKey(k)) {
-                addVolunteer(v, type)
-                added.add(v)
-            }
-        }
-        return added
-    }
-
-    fun removeVolunteer(type: KitVolunteerType): Boolean {
-        return volunteers.removeIf { kv ->
-            if (kv.id.type == type) {
-                kv.volunteer.kits.remove(kv)
-                true
-            } else {
-                false
-            }
-        }
-    }
-
-    fun removeVolunteer(volunteer: Volunteer, type: KitVolunteerType): Boolean {
-        return volunteers.removeIf { kv ->
-            if (kv.id.type == type && kv.kit == this && kv.volunteer == volunteer) {
-                volunteer.kits.remove(kv)
-                true
-            } else {
-                false
-            }
-        }
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Kit) return false
@@ -315,6 +272,7 @@ class KitAttributes(
     var network: String? = null,
     var otherNetwork: String? = "UNKNOWN"
 )
+
 @Entity
 @Table(name = "note")
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
@@ -370,86 +328,10 @@ enum class KitStatus {
 
 enum class KitStorageType {HDD, SSD, HYBRID, UNKNOWN}
 
-enum class KitVolunteerType { LOGISTICS, ORGANISER, TECHNICIAN }
-
-@Embeddable
-class KitVolunteerId(
-    @Column(name = "course_id")
-    var kitId: Long,
-    @Column(name = "student_id")
-    var volunteerId: Long,
-    @Column(name = "type")
-    @Enumerated(EnumType.STRING)
-    var type: KitVolunteerType
-) : Serializable {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null) return false
-        if (other !is KitVolunteerId) return false
-        return type == other.type && kitId == other.kitId && volunteerId == other.volunteerId
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(kitId, volunteerId, type)
-    }
-
-    override fun toString(): String {
-        return "KitVolunteerId(type=$type, kitId=$kitId, volunteerId=$volunteerId)"
-    }
-}
-
-@Entity
-@Table(name = "kit_volunteers")
-class KitVolunteer(
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("kitId")
-    var kit: Kit,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("volunteerId")
-    var volunteer: Volunteer,
-    @EmbeddedId
-    var id: KitVolunteerId,
-    var createdAt: Instant = Instant.now()
-) {
-    val type get() = id.type
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        other ?: return false
-        if (other !is KitVolunteer) return false
-        if (id != other.id) return false
-        return kit == other.kit && volunteer == other.volunteer
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(kit, volunteer, id)
-    }
-
-    override fun toString(): String {
-        return "KitVolunteer(id=$id, enrolledAt=$createdAt)"
-    }
-}
-
-@Entity
-@Table(name = "email_templates")
-class EmailTemplate(
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "email-template-seq-generator")
-    @SequenceGenerator(
-        name = "email-template-seq-generator",
-        sequenceName = "email_template_sequence",
-        allocationSize = 1
-    )
-    var id: Long = 0,
-    var body: String,
-    var subject: String,
-    var active: Boolean = true,
-    var createdAt: Instant = Instant.now(),
-    @UpdateTimestamp
-    var updatedAt: Instant = Instant.now()
-)
-
 @Entity
 @Table(name = "referring_organisations")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "referring_organisations_audit_trail")
 class ReferringOrganisation(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation-seq-generator")
@@ -462,6 +344,7 @@ class ReferringOrganisation(
     var name: String,
     var website: String? = null,
     var phoneNumber: String? = null,
+    @NotAudited
     @Formula(
         """
         (SELECT COUNT(*) 
@@ -479,6 +362,7 @@ class ReferringOrganisation(
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
+    @NotAudited
     @OneToMany(
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
@@ -487,6 +371,7 @@ class ReferringOrganisation(
     )
     @OrderBy(clause = "updatedAt DESC")
     var referringOrganisationContacts: MutableSet<ReferringOrganisationContact> = mutableSetOf(),
+    @NotAudited
     @OneToMany(
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
@@ -505,6 +390,8 @@ class ReferringOrganisation(
 
 @Entity
 @Table(name = "referring_organisation_contacts")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "referring_organisation_contacts_audit_trail")
 class ReferringOrganisationContact(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation_contacts-seq-generator")
@@ -527,6 +414,7 @@ class ReferringOrganisationContact(
     @ManyToOne
     var referringOrganisation: ReferringOrganisation,
     // A better way would be to use the DeviceRequestStatus enum here but for some reason, it is not considered a constant expression.
+    @NotAudited
     @Formula(
         """
          (
@@ -536,6 +424,7 @@ class ReferringOrganisationContact(
     """
     )
     var requestCount: Int = 0,
+    @NotAudited
     @OneToMany(
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
@@ -587,6 +476,8 @@ data class DeviceRequestNeeds(
 
 @Entity
 @Table(name = "device_requests")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "device_requests_audit_trail")
 class DeviceRequest(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_requests-seq-generator")
@@ -609,6 +500,7 @@ class DeviceRequest(
     var isSales: Boolean = false,
     var clientRef: String,
     var details: String,
+    @NotAudited
     @Formula(
         """
         (SELECT COUNT(*) FROM kits k where k.device_request_id = id)
@@ -617,6 +509,7 @@ class DeviceRequest(
     var kitCount: Int = 0,
     @Embedded
     var deviceRequestNeeds: DeviceRequestNeeds,
+    @NotAudited
     @OneToMany(
         fetch = FetchType.LAZY,
         cascade = [CascadeType.ALL],
@@ -625,6 +518,7 @@ class DeviceRequest(
     )
     @OrderBy(clause = "updatedAt DESC")
     var deviceRequestNotes: MutableSet<DeviceRequestNote> = mutableSetOf(),
+    @NotAudited
     @OneToMany(
         mappedBy = "deviceRequest",
         fetch = FetchType.LAZY,
@@ -652,7 +546,6 @@ class DeviceRequest(
 
 @Entity
 @Table(name = "device_requests_notes")
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class DeviceRequestNote(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_requests_note-seq-generator")
@@ -672,7 +565,6 @@ class DeviceRequestNote(
 
 @Entity
 @Table(name = "referring_organisations_notes")
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class ReferringOrganisationNote(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisations_note-seq-generator")
@@ -692,7 +584,6 @@ class ReferringOrganisationNote(
 
 @Entity
 @Table(name = "referring_organisation_contacts_notes")
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 class ReferringOrganisationContactNote(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "referring_organisation_contacts_note-seq-generator")

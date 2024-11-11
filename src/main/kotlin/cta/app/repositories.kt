@@ -4,16 +4,12 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
 
-interface VolunteerRepository :
-        JpaRepository<Volunteer, Long>,
-        QuerydslPredicateExecutor<Volunteer> {
-    fun findByEmail(email: String): Volunteer?
-}
-
 interface DonorRepository : JpaRepository<Donor, Long>, QuerydslPredicateExecutor<Donor> {
     fun findByEmail(email: String): Donor?
     fun findByPhoneNumber(phone: String): Donor?
 }
+
+interface DonorParentRepository : JpaRepository<DonorParent, Long>, QuerydslPredicateExecutor<DonorParent>
 
 interface KitStatusCount {
     val status: KitStatus
@@ -42,9 +38,6 @@ interface KitRepository :
     , nativeQuery = true)
     fun typeCount(): List<KitTypeCount>
 }
-
-interface EmailTemplateRepository : JpaRepository<EmailTemplate, Long>,
-    QuerydslPredicateExecutor<EmailTemplate>
 
 interface NoteRepository: JpaRepository<Note, Long>,
     QuerydslPredicateExecutor<Note>

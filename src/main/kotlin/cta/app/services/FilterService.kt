@@ -4,8 +4,6 @@ import com.querydsl.core.BooleanBuilder
 import com.querydsl.jpa.JPAExpressions
 import cta.app.QDonor
 import cta.app.QKit
-import cta.app.QKitVolunteer
-import cta.app.QVolunteer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -45,34 +43,6 @@ class FilterService {
         if (hasAuthority("admin:kits")) {
             return filter
         }
-        if (hasAuthority("read:kits:assigned")) {
-            user.tokenAttributes["$tokenAttribute/email"]?.toString()?.let { email ->
-                if (!email.isNullOrBlank()) {
-                    return filter.and(
-                        JPAExpressions.selectOne().from(QKit.kit.volunteers, QKitVolunteer.kitVolunteer)
-                            .where(QKitVolunteer.kitVolunteer.volunteer.email.eq(email)).exists()
-                    )
-                }
-            }
-        }
-        return filter
-    }
-
-    fun volunteerFilter(): BooleanBuilder {
-        val filter = BooleanBuilder()
-        val user = currentUser ?: return filter
-        if (hasAuthority("admin:volunteers")) {
-            return filter
-        }
-        if (hasAuthority("read:volunteers:assigned")) {
-            user.tokenAttributes["$tokenAttribute/email"]?.toString()?.let { email ->
-                if (!email.isNullOrBlank()) {
-                    return filter.and(
-                        QVolunteer.volunteer.email.eq(email)
-                    )
-                }
-            }
-        }
         return filter
     }
 
@@ -81,19 +51,6 @@ class FilterService {
         val user = currentUser ?: return filter
         if (hasAuthority("admin:donors")) {
             return filter
-        }
-        if (hasAuthority("read:donors:assigned")) {
-            user.tokenAttributes["$tokenAttribute/email"]?.toString()?.let { email ->
-                if (!email.isNullOrBlank()) {
-                    return filter.and(
-                        JPAExpressions.selectOne().from(QDonor.donor.kits, QKit.kit)
-                            .where(
-                                JPAExpressions.selectOne().from(QKit.kit.volunteers, QKitVolunteer.kitVolunteer)
-                                    .where(QKitVolunteer.kitVolunteer.volunteer.email.eq(email)).exists()
-                            ).exists()
-                    )
-                }
-            }
         }
         return filter
     }

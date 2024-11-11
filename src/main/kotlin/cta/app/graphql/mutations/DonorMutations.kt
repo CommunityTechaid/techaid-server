@@ -2,6 +2,7 @@ package cta.app.graphql.mutations
 
 import cta.app.Donor
 import cta.app.DonorRepository
+import cta.app.DonorParentRepository
 import cta.app.QDonor
 import cta.app.services.FilterService
 import cta.app.services.LocationService
@@ -23,16 +24,30 @@ import org.springframework.validation.annotation.Validated
 @Transactional
 class DonorMutations(
     private val donors: DonorRepository,
+    private val donorParents: DonorParentRepository,
     private val locationService: LocationService,
     private val filterService: FilterService
 ) {
 
     @MutationMapping
     fun createDonor(@Argument @Valid data: CreateDonorInput): Donor {
-        val donor = fetchDonor(donors, data.entity)
+        //val donor = fetchDonor(donors, data.entity)
+        if (data.email.isNotBlank()) {
+            donors.findByEmail(data.email)?.let {
+                throw IllegalArgumentException("A donor with the email address ${data.email} already exits!")
+            }
+        }
+        val donor = donors.save(data.entity);
         if (donor.postCode.isNotBlank()) {
             donor.coordinates = locationService.findCoordinates(donor.postCode)
         }
+
+        if (data.donorParentId != null) {
+            val donorParent = donorParents.findById(data.donorParentId).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorParentId}")
+            donorParent.addDonor(donor)
+        }
+
         return donor
     }
 
@@ -44,6 +59,15 @@ class DonorMutations(
             if (postCode.isNotBlank() && (coordinates == null || coordinates?.input != postCode)) {
                 coordinates = locationService.findCoordinates(postCode)
             }
+
+            if (data.donorParentId == null) {
+                donorParent?.removeDonor(this)
+            } else if (data.donorParentId != donorParent?.id) {
+                val donorParent = donorParents.findById(data.donorParentId).toNullable()
+                    ?: throw EntityNotFoundException("Unable to locate a parent donor with id: ${data.donorParentId}")
+                donorParent.addDonor(this)
+            }
+
         }
     }
 
@@ -59,13 +83,14 @@ class DonorMutations(
 }
 
 data class CreateDonorInput(
-    @get:NotBlank
-    val postCode: String,
+    val postCode: String = "",
     val phoneNumber: String = "",
     val email: String = "",
     val referral: String = "",
     val name: String,
-    val consent: Boolean
+    val consent: Boolean,
+    val donorParentId: Long? = null,
+    val isLeadContact: Boolean
 ) {
     val entity by lazy {
         Donor(
@@ -74,7 +99,8 @@ data class CreateDonorInput(
             email = email,
             referral = referral,
             name = name,
-            consent = consent
+            consent = consent,
+            isLeadContact = isLeadContact
         )
     }
 }
@@ -82,22 +108,27 @@ data class CreateDonorInput(
 data class UpdateDonorInput(
     @get:NotNull
     val id: Long,
-    val postCode: String,
+    val postCode: String? = null,
     val phoneNumber: String,
     val email: String,
     var name: String,
-    val referral: String,
-    val consent: Boolean
+    val referral: String? = null,
+    val consent: Boolean? = null,
+    val donorParentId: Long? = null,
+    val archived: Boolean? = null,
+    val isLeadContact: Boolean? = null
 ) {
     fun apply(entity: Donor): Donor {
         val self = this
         return entity.apply {
-            postCode = self.postCode
+            postCode = if (self.postCode == null) postCode else self.postCode.toString()
             phoneNumber = if (phoneNumber != self.phoneNumber) self.phoneNumber else phoneNumber
             email = if (email != self.email) self.email else this.email
-            referral = self.referral
+            referral = if (self.referral == null) referral else self.referral.toString()
             name = self.name
-            consent = self.consent
+            consent = if (self.consent == null) consent else self.consent
+            archived = self.archived ?: archived
+            isLeadContact = self.isLeadContact ?: isLeadContact
         }
     }
 }

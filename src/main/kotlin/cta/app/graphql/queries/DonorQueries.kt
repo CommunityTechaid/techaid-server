@@ -2,7 +2,6 @@ package cta.app.graphql.queries
 
 import cta.app.Donor
 import cta.app.DonorRepository
-import cta.app.Volunteer
 import cta.app.graphql.filters.DonorWhereInput
 import cta.app.services.FilterService
 import cta.graphql.KeyValuePair
@@ -45,20 +44,4 @@ class DonorQueries(
     @QueryMapping
     fun donor(@Argument where: DonorWhereInput): Optional<Donor> =
         donors.findOne(filterService.donorFilter().and(where.build()))
-}
-
-@Controller
-class DonorResolver {
-    companion object {
-        val EMAIL_MASK = Regex("(?<=.)[^@](?=[^@]*[^@]@)|(?:(?<=@.)|(?!^)\\G(?=[^@]*$)).(?!$)")
-    }
-
-    fun email(entity: Volunteer): String {
-        return entity.email
-    }
-
-    @QueryMapping
-    fun phoneNumber(@Argument entity: Volunteer): String {
-        return entity.phoneNumber
-    }
 }

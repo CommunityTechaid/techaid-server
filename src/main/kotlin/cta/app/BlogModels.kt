@@ -31,23 +31,4 @@ class Post(
     var updatedAt: Instant = Instant.now()
 )
 
-@Entity
-@Table(name = "faqs")
-class Faq(
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "faq-seq-generator")
-    @SequenceGenerator(name = "faq-seq-generator", sequenceName = "faq_sequence", allocationSize = 1)
-    var id: Long = 0,
-    var title: String,
-    var content: String,
-    var published: Boolean,
-    @CreationTimestamp
-    var createdAt: Instant = Instant.now(),
-    @UpdateTimestamp
-    var updatedAt: Instant = Instant.now(),
-    var position: Int = 0
-)
-
 interface PostRepository : PagingAndSortingRepository<Post, Long>, QuerydslPredicateExecutor<Post>, CrudRepository<Post, Long>
-
-interface FaqRepository : PagingAndSortingRepository<Faq, Long>, QuerydslPredicateExecutor<Faq>, CrudRepository<Faq, Long>

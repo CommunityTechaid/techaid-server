@@ -1,0 +1,107 @@
+enum DonorParentType {
+    BUSINESS, DROPPOINT
+}
+
+type DonorParent {
+    id: ID!
+    name: String
+    address: String
+    website: String
+    type: DonorParentType
+    createdAt: String
+    updatedAt: String
+    donors: [Donor!]
+    donorCount: Int
+    archived: Boolean
+}
+
+
+input DonorParentTypeComparison {
+    "Matches values that are equal to"
+    _eq: DonorParentType
+    "Matches values that are greater than"
+    _gt: DonorParentType
+    "Matches values that are greater than or equal to"
+    _gte: DonorParentType
+    "Matches values contained in the collection"
+    _in: [DonorParentType]
+    "Matches values that are null/not null"
+    _is_null: Boolean
+    "Matches values that are less than"
+    _lt: DonorParentType
+    "Matches values that are less than or equal to"
+    _lte: DonorParentType
+    "Matches values that are not equal to"
+    _neq: DonorParentType
+    "Matches values that are not contained in the collection"
+    _nin: [DonorParentType]
+}
+
+input CreateDonorParentInput {
+    name: String
+    address: String
+    website: String
+    type: DonorParentType
+}
+
+input UpdateDonorParentInput {
+    id: ID!
+    name: String
+    address: String
+    website: String
+    type: DonorParentType
+    archived: Boolean
+}
+
+"A representation of a page result from a query"
+type DonorParentPage {
+    "The list of deals retrieved from the server"
+    content: [DonorParent!]
+    "The number of total pages"
+    totalPages: Int
+    "The total amount of elements in this request"
+    totalElements: Int
+    "The size of the current page"
+    size: Int
+    "Returns whether the current page is the first"
+    first: Boolean
+    "Returns whether the current page is the last"
+    last: Boolean
+    "Returns if there is a next page"
+    hasNext: Boolean
+    "Returns if there is a previous page"
+    hasPrevious: Boolean
+    "Number of elements in current slice"
+    numberOfElements: Int
+    "Returns whether the page has content at all"
+    hasContent: Boolean
+    "The number of the current page"
+    number: Int
+}
+
+input DonorParentWhereInput {
+    id: LongComparison
+    name: TextComparison
+    address: TextComparison
+    website: TextComparison
+    createdAt: TimeComparison
+    updatedAt: TimeComparison
+    type: DonorParentTypeComparison
+    archived: BooleanComparison
+    AND: [DonorParentWhereInput!]
+    OR: [DonorParentWhereInput!]
+    NOT: [DonorParentWhereInput!]
+}
+
+extend type Query {
+    donorParentsConnection(page: PaginationInput, where: DonorParentWhereInput): DonorParentPage
+    donorParents(where: DonorParentWhereInput!, orderBy: [KeyValuePair!]): [DonorParent!]!
+    donorParent(where: DonorParentWhereInput!): DonorParent
+}
+
+extend type Mutation {
+    createDonorParent(data: CreateDonorParentInput!) : DonorParent!
+    updateDonorParent(data: UpdateDonorParentInput!): DonorParent!
+    deleteDonorParent(id: ID!): Boolean
+}
+
