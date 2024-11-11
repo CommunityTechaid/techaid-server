@@ -1,13 +1,6 @@
 package cta.app.graphql
 
 import com.querydsl.core.BooleanBuilder
-import cta.app.Faq
-import cta.app.FaqRepository
-import java.time.Instant
-import java.util.Optional
-import jakarta.persistence.EntityNotFoundException
-import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
 import cta.app.Post
 import cta.app.PostRepository
 import cta.app.QPost
@@ -32,7 +25,6 @@ import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 import java.time.Instant
-import java.util.Optional
 
 @Controller
 class BlogQueries(

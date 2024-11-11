@@ -1,40 +1,44 @@
 package cta.app.graphql.mutations
 
-import com.coxautodev.graphql.tools.GraphQLMutationResolver
-import javax.persistence.EntityNotFoundException
-import javax.validation.Valid
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
+
 import cta.app.DonorParent
 import cta.app.DonorParentRepository
 import cta.app.DonorParentType
-import cta.app.QDonorParent
 import cta.toNullable
+import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
+import org.springframework.graphql.data.method.annotation.Argument
+import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 
-@Component
+@Controller
 @Validated
 @PreAuthorize("hasAnyAuthority('write:donorParents')")
 @Transactional
 class DonorParentMutations(
     private val donorParents: DonorParentRepository
-) : GraphQLMutationResolver {
+) {
 
-    fun createDonorParent(@Valid data: CreateDonorParentInput): DonorParent {
+    @MutationMapping
+    fun createDonorParent(@Argument @Valid data: CreateDonorParentInput): DonorParent {
         return donorParents.save(data.entity)
     }
 
-    fun updateDonorParent(@Valid data: UpdateDonorParentInput): DonorParent {
+    @MutationMapping
+    fun updateDonorParent(@Argument @Valid data: UpdateDonorParentInput): DonorParent {
         val entity = donorParents.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a parent donor with id: ${data.id}")
         return data.apply(entity)
     }
 
     @PreAuthorize("hasAnyAuthority('delete:donorParents')")
-    fun deleteDonorParent(id: Long): Boolean {
+    @MutationMapping
+    fun deleteDonorParent(@Argument id: Long): Boolean {
         val donorParent = donorParents.findById(id).toNullable()
             ?: throw EntityNotFoundException("No parent donor with id: $id")
         donorParent.donors.forEach { donorParent.removeDonor(it) }

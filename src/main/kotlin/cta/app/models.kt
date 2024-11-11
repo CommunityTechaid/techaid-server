@@ -91,7 +91,7 @@ class Donor(
         orphanRemoval = false
     )
     var kits: MutableSet<Kit> = mutableSetOf(),
-    @Type(type = "yes_no")
+    @Convert(converter=YesNoConverter::class)
     var archived: Boolean = false,
     var isLeadContact: Boolean = false
 ) : BaseEntity() {
@@ -149,7 +149,7 @@ class DonorParent(
     var donors: MutableSet<Donor> = mutableSetOf(),
     @Enumerated(EnumType.STRING)
     var type: DonorParentType? = DonorParentType.DROPPOINT,
-    @Type(type = "yes_no")
+    @Convert(converter=YesNoConverter::class)
     var archived: Boolean = false
 ) : BaseEntity() {
     fun addDonor(donor: Donor) {
