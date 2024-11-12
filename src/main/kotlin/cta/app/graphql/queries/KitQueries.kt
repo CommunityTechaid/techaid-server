@@ -18,7 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 
 @Component
-@PreAuthorize("hasAnyAuthority('read:kits', 'read:kits:assigned')")
+@PreAuthorize("hasAnyAuthority('read:kits')")
 class KitQueries(
     private val kits: KitRepository,
     private val filterService: FilterService

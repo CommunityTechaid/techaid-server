@@ -20,7 +20,7 @@ import javax.persistence.EntityManager
 import javax.persistence.PersistenceContext
 
 @Component
-@PreAuthorize("hasAnyAuthority('read:kits', 'read:kits:assigned')")
+@PreAuthorize("hasAnyAuthority('read:kits')")
 class KitAuditTrailQueries(
     @PersistenceContext
     private val em: EntityManager
