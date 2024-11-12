@@ -56,7 +56,6 @@ interface RequestCount {
     val allInOnes: Long
     val desktops: Long
     val other: Long
-    val chromebooks: Long
     val commsDevices: Long
 }
 interface DeviceRequestRepository: PagingAndSortingRepository<DeviceRequest, Long>,
@@ -70,7 +69,6 @@ interface DeviceRequestRepository: PagingAndSortingRepository<DeviceRequest, Lon
             coalesce(sum(src.allInOnes),0) AS allInOnes,
             coalesce(sum(src.desktops),0) AS desktops,
             coalesce(sum(src.other),0) AS other,
-            coalesce(sum(src.chromebooks),0) AS chromebooks,
             coalesce(sum(src.commsDevices),0) AS commsDevices
         FROM (
             SELECT 
@@ -81,7 +79,6 @@ interface DeviceRequestRepository: PagingAndSortingRepository<DeviceRequest, Lon
                 coalesce(all_in_ones, 0) as allInOnes,
                 coalesce(desktops, 0) as desktops,
                 coalesce(other, 0) as other,
-                coalesce(chromebooks, 0) as chromebooks,
                 coalesce(comms_devices, 0) as commsDevices 
             FROM device_requests dr
             WHERE dr.status not in ('REQUEST_COMPLETED','REQUEST_DECLINED','REQUEST_CANCELLED') 

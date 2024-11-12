@@ -70,7 +70,6 @@ class DeviceRequestMutations(
         if(items.allInOnes ?: 0 > 0) deviceRequest += "All-in-ones: ${items.allInOnes}<br>\n";
         if(items.desktops ?: 0 > 0) deviceRequest += "Desktops: ${items.desktops}<br>\n";
         if(items.other ?: 0 > 0) deviceRequest += "Other: ${items.other}<br>\n";
-        if((items.chromebooks ?: 0) > 0) deviceRequest += "Chromebooks: ${items.chromebooks}<br>\n";
         if((items.commsDevices ?: 0) > 0) deviceRequest += "SIM card (6 months, 20GB data, unlimited UK calls): ${items.commsDevices}<br>\n";
         return deviceRequest;
     }
