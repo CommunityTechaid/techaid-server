@@ -34,8 +34,6 @@ class AuthService {
                     "delete:kits",
                     "delete:donors",
                     "delete:users",
-                    "read:emails",
-                    "write:emails",
                     "read:organisations",
                     "write:organisations",
                     "delete:organisations"
