@@ -262,7 +262,7 @@ class KitAttributes(
     var pickup: String = "",
     var state: String = "",
     var consent: String = "",
-    var notes: String = "",
+    var notes: String? = "",
     var pickupAvailability: String? = null,
     var credentials: String? = null,
     var status: List<String> = listOf(),

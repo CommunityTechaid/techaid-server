@@ -3,7 +3,6 @@ package cta.app.graphql.filters
 import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.EnumPath
-import com.querydsl.jpa.JPAExpressions
 import cta.app.KitStatus
 import cta.app.KitStorageType
 import cta.app.KitType
@@ -287,7 +286,8 @@ class KitWhereInput(
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         archived?.let { builder.and(it.build(entity.archived)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
-        attributes?.let { builder.and(it.build(entity)) }
+        //setting attributes to null to bypass it. KitAttributes is unused and will be removed soon.
+        attributes?.let { null }
         deviceRequest?.let { builder.and(it.build(entity.deviceRequest)) }
         donor?.let { builder.and(it.build(entity.donor)) }
         make?.let { builder.and(it.build(entity.make)) }
