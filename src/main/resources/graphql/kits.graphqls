@@ -250,7 +250,8 @@ input CreateKitInput {
 }
 
 input QuickCreateKitInput {
-    serialNo: String!,
+    type: KitType
+    model: String
     donorId: ID
 }
 
