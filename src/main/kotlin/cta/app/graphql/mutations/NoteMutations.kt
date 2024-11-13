@@ -76,7 +76,7 @@ class NoteMutations(
 
 data class CreateNoteInput(
     val content: String = "",
-    val kitId: Long
+    val kitId: Long?
 ) {}
 
 data class UpdateNoteInput(

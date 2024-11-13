@@ -50,13 +50,13 @@ class DeviceRequestMutations(
         val deviceRequest = DeviceRequest(
             deviceRequestItems = data.deviceRequestItems.entity,
             referringOrganisationContact = referringOrganisationContact,
-            isSales = data.isSales,
+            isSales = data.isSales ?: false,
             clientRef = data.clientRef,
             details = data.details,
             deviceRequestNeeds = data.deviceRequestNeeds.entity
         )
 
-        var savedRequest = deviceRequests.save(deviceRequest)
+        val savedRequest = deviceRequests.save(deviceRequest)
 
         if(mailService.emailEnabled) {
             acknowledgeSubmission(savedRequest);
@@ -212,7 +212,7 @@ data class CreateDeviceRequestInput(
     var deviceRequestItems: DeviceRequestItemsInput,
     @get:NotNull
     var referringOrganisationContact: Long,
-    var isSales: Boolean,
+    var isSales: Boolean?,
     var clientRef: String,
     var details: String,
     var deviceRequestNeeds: DeviceRequestNeedsInput
