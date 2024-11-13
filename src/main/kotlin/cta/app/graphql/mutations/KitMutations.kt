@@ -165,16 +165,16 @@ class KitMutations(
 }
 
 data class QuickCreateKitInput(
-    val serialNo: String,
+    val type: KitType,
+    val model: String = "",
     val donorId: Long?
 ){
 
     val entity by lazy {
         val kit = Kit(
-            serialNo = serialNo,
+            type = type,
             age = 0,
-            location = "",
-            model = ""
+            model = model
         )
         kit
     }

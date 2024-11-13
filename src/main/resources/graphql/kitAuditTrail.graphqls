@@ -9,12 +9,38 @@ enum RevisionType {
     ADD, DEL, MOD
 }
 
-type Revision {
+type KitRevision {
     entity: Kit
     revision: CustomRevisionInfo,
     type: String
 }
 
+"A representation of a page result from a query"
+type KitRevisionPage {
+    "The list of deals retrieved from the server"
+    content: [KitRevision!]
+    "The number of total pages"
+    totalPages: Int
+    "The total amount of elements in this request"
+    totalElements: Int
+    "The size of the current page"
+    size: Int
+    "Returns whether the current page is the first"
+    first: Boolean
+    "Returns whether the current page is the last"
+    last: Boolean
+    "Returns if there is a next page"
+    hasNext: Boolean
+    "Returns if there is a previous page"
+    hasPrevious: Boolean
+    "Number of elements in current slice"
+    numberOfElements: Int
+    "Returns whether the page has content at all"
+    hasContent: Boolean
+    "The number of the current page"
+    number: Int
+}
+
 extend type Query {
-    kitAudits(where: Long): [Revision]
+    kitAudits(where: Long!): [KitRevision!]
 }

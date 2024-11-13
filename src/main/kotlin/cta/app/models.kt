@@ -187,7 +187,6 @@ class CustomRevisionInfo {
     var customUser: String = "user"
 }
 
-
 @Entity
 @Table(name = "kits")
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
@@ -296,7 +295,6 @@ enum class KitType {
     TABLET,
     SMARTPHONE,
     ALLINONE,
-    CHROMEBOOK,
     COMMSDEVICE
 }
 
@@ -458,7 +456,6 @@ data class DeviceRequestItems(
     val allInOnes: Int? = 0,
     val desktops: Int? = 0,
     val other: Int? = 0,
-    val chromebooks: Int? = 0,
     val commsDevices: Int? = 0
 )
 

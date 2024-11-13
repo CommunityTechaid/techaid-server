@@ -1,9 +1,18 @@
 enum KitType {
-    OTHER, LAPTOP, TABLET, SMARTPHONE, ALLINONE, CHROMEBOOK, DESKTOP, COMMSDEVICE
+    OTHER, 
+    LAPTOP, 
+    TABLET, 
+    SMARTPHONE, 
+    ALLINONE, 
+    DESKTOP, 
+    COMMSDEVICE
 }
 
 enum KitStorageType {
-    HDD, SSD, HYBRID, UNKNOWN
+    HDD, 
+    SSD, 
+    HYBRID, 
+    UNKNOWN
 }
 
 type KitStatusCount {
@@ -240,7 +249,8 @@ input CreateKitInput {
 }
 
 input QuickCreateKitInput {
-    serialNo: String!,
+    type: KitType
+    model: String
     donorId: ID
 }
 

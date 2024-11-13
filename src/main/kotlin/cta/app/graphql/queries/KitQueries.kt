@@ -18,7 +18,7 @@ import org.springframework.stereotype.Controller
 import java.util.Optional
 
 @Controller
-@PreAuthorize("hasAnyAuthority('read:kits', 'read:kits:assigned')")
+@PreAuthorize("hasAnyAuthority('read:kits')")
 class KitQueries(
     private val kits: KitRepository,
     private val filterService: FilterService
