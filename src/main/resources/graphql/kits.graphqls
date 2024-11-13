@@ -134,7 +134,8 @@ type Kit {
     ramCapacity: Int,
     cpuType: String,
     tpmVersion: String,
-    cpuCores: Int
+    cpuCores: Int,
+    batteryHealth: Int
 }
 
 type KitAttributes {
@@ -247,6 +248,7 @@ input CreateKitInput {
     cpuType: String
     tpmVersion: String
     cpuCores: Int
+    batteryHealth: Int
 }
 
 input QuickCreateKitInput {
@@ -270,6 +272,7 @@ input AutoCreateKitInput {
     cpuType: String
     tpmVersion: String
     cpuCores: Int
+    batteryHealth: Int
 }
 
 input AutoUpdateKitInput {
@@ -285,7 +288,8 @@ input AutoUpdateKitInput {
     ramCapacity: Int,
     cpuType: String,
     tpmVersion: String,
-    cpuCores: Int
+    cpuCores: Int,
+    batteryHealth: Int
 }
 
 input UpdateKitInput {
@@ -308,7 +312,8 @@ input UpdateKitInput {
     ramCapacity: Int,
     cpuType: String,
     tpmVersion: String,
-    cpuCores: Int
+    cpuCores: Int,
+    batteryHealth: Int
 }
 
 extend type Query {

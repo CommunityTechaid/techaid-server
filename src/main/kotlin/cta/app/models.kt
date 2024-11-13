@@ -246,7 +246,8 @@ class Kit(
     var ramCapacity: Int? = null,
     var cpuType: String? = null,
     var tpmVersion: String? = null,
-    var cpuCores: Int? = null
+    var cpuCores: Int? = null,
+    var batteryHealth: Int? = null
 ) : BaseEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

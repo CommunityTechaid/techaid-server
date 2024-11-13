@@ -194,7 +194,8 @@ data class CreateKitInput(
     val ramCapacity: Int? = null,
     val cpuType: String? = null,
     val tpmVersion: String? = null,
-    val cpuCores: Int? = null
+    val cpuCores: Int? = null,
+    val batteryHealth: Int? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -210,7 +211,8 @@ data class CreateKitInput(
             ramCapacity = ramCapacity,
             cpuType = cpuType,
             tpmVersion = tpmVersion,
-            cpuCores = cpuCores
+            cpuCores = cpuCores,
+            batteryHealth = batteryHealth
         )
         kit.attributes = attributes.apply(kit)
         kit
@@ -268,7 +270,8 @@ data class UpdateKitInput(
     val ramCapacity: Int? = null,
     val cpuType: String? = null,
     val tpmVersion: String? = null,
-    val cpuCores: Int? = null
+    val cpuCores: Int? = null,
+    val batteryHealth: Int? = null
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -288,6 +291,7 @@ data class UpdateKitInput(
             cpuType = self.cpuType ?: cpuType
             tpmVersion = self.tpmVersion ?: tpmVersion
             cpuCores = self.cpuCores ?: cpuCores
+            batteryHealth = self.batteryHealth ?: batteryHealth
         }
     }
 }
@@ -306,7 +310,8 @@ data class AutoCreateKitInput(
     val ramCapacity: Int? = null,
     val cpuType: String? = null,
     val tpmVersion: String? = null,
-    val cpuCores: Int? = null
+    val cpuCores: Int? = null,
+    val batteryHealth: Int? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -323,7 +328,8 @@ data class AutoCreateKitInput(
             tpmVersion = tpmVersion,
             cpuCores = cpuCores,
             age = 0,
-            location = ""
+            location = "",
+            batteryHealth = batteryHealth
         )
         kit
     }
@@ -342,7 +348,8 @@ data class AutoUpdateKitInput(
     val ramCapacity: Int?,
     val cpuType: String?,
     val tpmVersion: String?,
-    val cpuCores: Int?
+    val cpuCores: Int?,
+    val batteryHealth: Int?
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -359,6 +366,7 @@ data class AutoUpdateKitInput(
             cpuType = self.cpuType ?: cpuType
             tpmVersion = self.tpmVersion ?: tpmVersion
             cpuCores = self.cpuCores ?: cpuCores
+            batteryHealth = self.batteryHealth ?: batteryHealth
         }
     }
 }
