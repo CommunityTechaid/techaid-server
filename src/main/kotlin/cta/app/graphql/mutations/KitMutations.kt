@@ -65,14 +65,16 @@ class KitMutations(
     }
 
     fun quickCreateKit(@Valid data: QuickCreateKitInput): Kit {
-        val details = filterService.userDetails()
-        
         val kit = kits.save(data.entity.apply {
             if (data.donorId != null) {
                 val user = donors.findById(data.donorId).toNullable()
                     ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
                 user.addKit(this)
             }
+
+            //For backwards compatibility, however these will be removed imminently
+            attributes.consent = "NO"
+            attributes.pickup = "NOTSURE"
         })
         
         return kit
