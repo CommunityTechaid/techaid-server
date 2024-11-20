@@ -6,6 +6,7 @@ import cta.app.Kit
 import cta.app.KitAttributes
 import cta.app.KitRepository
 import cta.app.KitStatus
+import cta.app.KitSubStatus
 import cta.app.KitStorageType
 import cta.app.KitType
 import cta.app.Note
@@ -171,7 +172,8 @@ data class QuickCreateKitInput(
         val kit = Kit(
             type = type,
             age = 0,
-            model = model
+            model = model,
+            subStatus = KitSubStatus()
         )
         kit
     }
@@ -273,7 +275,8 @@ data class UpdateKitInput(
     val cpuType: String? = null,
     val tpmVersion: String? = null,
     val cpuCores: Int? = null,
-    val batteryHealth: Int? = null
+    val batteryHealth: Int? = null,
+    val subStatus: KitSubStatusInput
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -294,6 +297,7 @@ data class UpdateKitInput(
             tpmVersion = self.tpmVersion ?: tpmVersion
             cpuCores = self.cpuCores ?: cpuCores
             batteryHealth = self.batteryHealth ?: batteryHealth
+            subStatus = self.subStatus.apply(entity)
         }
     }
 }
@@ -373,5 +377,29 @@ data class AutoUpdateKitInput(
     }
 }
 
+data class KitSubStatusInput(
+    var installationOfOSFailed: Boolean,
+    var wipeFailed: Boolean,
+    var needsSparePart: Boolean,
+    var needsFurtherInvestigation: Boolean,
+    var network: String?,
+    var installedOSName: String?,
+    var lockedToUser: Boolean
+    ) 
+{
+    fun apply(entity: Kit): KitSubStatus {
+        val self = this
+
+        return entity.subStatus.apply {
+            installationOfOSFailed = self.installationOfOSFailed
+            wipeFailed = self.wipeFailed
+            needsSparePart = self.needsSparePart
+            needsFurtherInvestigation = self.needsFurtherInvestigation
+            network = self.network
+            installedOSName = self.installedOSName
+            lockedToUser = self.lockedToUser
+        }
+    }
+}
 
 

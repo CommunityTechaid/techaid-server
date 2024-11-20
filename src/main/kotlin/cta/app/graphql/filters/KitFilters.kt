@@ -8,6 +8,7 @@ import cta.app.KitStatus
 import cta.app.KitStorageType
 import cta.app.KitType
 import cta.app.QKit
+import cta.app.QKitSubStatus
 import cta.graphql.BooleanComparison
 import cta.graphql.IntegerComparision
 import cta.graphql.JsonComparison
@@ -250,6 +251,49 @@ class KitAttributesWhereInput(
     }
 }
 
+class KitSubStatusWhereInput(
+    var installationOfOSFailed: BooleanComparison? = null,
+    var wipeFailed: BooleanComparison? = null,
+    var needsSparePart: BooleanComparison? = null,
+    var needsFurtherInvestigation: BooleanComparison? = null,
+    var network: TextComparison? = null,
+    var installedOSName: TextComparison? = null,
+    var lockedToUser: BooleanComparison? = null,
+    var AND: MutableList<KitSubStatusWhereInput> = mutableListOf(),
+    var OR: MutableList<KitSubStatusWhereInput> = mutableListOf(),
+    var NOT: MutableList<KitSubStatusWhereInput> = mutableListOf()
+) {
+    fun build(entity: QKitSubStatus = QKitSubStatus.kitSubStatus): BooleanBuilder {
+        val builder = BooleanBuilder()
+        
+        installationOfOSFailed?.let { builder.and(it.build(entity.installationOfOSFailed)) }
+        wipeFailed?.let { builder.and(it.build(entity.wipeFailed)) }
+        needsSparePart?.let { builder.and(it.build(entity.needsSparePart)) }
+        needsFurtherInvestigation?.let { builder.and(it.build(entity.needsFurtherInvestigation)) }
+        network?.let { builder.and(it.build(entity.network)) }
+        installedOSName?.let { builder.and(it.build(entity.installedOSName)) }
+        lockedToUser?.let { builder.and(it.build(entity.lockedToUser)) }
+        if (AND.isNotEmpty()) {
+            AND.forEach {
+                builder.and(it.build(entity))
+            }
+        }
+
+        if (OR.isNotEmpty()) {
+            OR.forEach {
+                builder.or(it.build(entity))
+            }
+        }
+
+        if (NOT.isNotEmpty()) {
+            NOT.forEach {
+                builder.andNot(it.build(entity))
+            }
+        }
+        return builder
+    }
+}
+
 class KitWhereInput(
     var id: LongComparision? = null,
     var location: TextComparison? = null,
@@ -272,6 +316,7 @@ class KitWhereInput(
     var cpuType: TextComparison? = null,
     var tpmVersion: TextComparison? = null,
     var cpuCores: IntegerComparision? = null,
+    var subStatus: KitSubStatusWhereInput? = null,
     var AND: MutableList<KitWhereInput> = mutableListOf(),
     var OR: MutableList<KitWhereInput> = mutableListOf(),
     var NOT: MutableList<KitWhereInput> = mutableListOf()
@@ -299,6 +344,7 @@ class KitWhereInput(
         cpuType?.let {builder.and(it.build(entity.cpuType))}
         tpmVersion?.let {builder.and(it.build(entity.tpmVersion))}
         cpuCores?.let { builder.and(it.build(entity.cpuCores)) }
+        subStatus?.let { builder.and(it.build(entity.subStatus))}
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))

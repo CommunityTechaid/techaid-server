@@ -50,11 +50,7 @@ enum KitStatus {
     DONATION_NEW,
     PROCESSING_START,
     PROCESSING_WIPED,
-    PROCESSING_FAILED_WIPE,
     PROCESSING_OS_INSTALLED,
-    PROCESSING_FAILED_INSTALLATION,
-    PROCESSING_WITH_TECHIE,
-    PROCESSING_MISSING_PART,
     PROCESSING_STORED,
     ALLOCATION_ASSESSMENT,
     ALLOCATION_READY,
@@ -131,7 +127,8 @@ type Kit {
     cpuType: String,
     tpmVersion: String,
     cpuCores: Int,
-    batteryHealth: Int
+    batteryHealth: Int,
+    subStatus: KitSubStatus!
 }
 
 type KitAttributes {
@@ -158,6 +155,26 @@ input KitAttributesInput {
     status: [String]
     network: String
     otherNetwork: String
+}
+
+type KitSubStatus {
+    installationOfOSFailed: Boolean
+    wipeFailed: Boolean
+    needsSparePart: Boolean
+    needsFurtherInvestigation: Boolean
+    network: String
+    installedOSName: String
+    lockedToUser: Boolean
+}
+
+input KitSubStatusInput {
+    installationOfOSFailed: Boolean
+    wipeFailed: Boolean
+    needsSparePart: Boolean
+    needsFurtherInvestigation: Boolean
+    network: String
+    installedOSName: String
+    lockedToUser: Boolean
 }
 
 "A representation of a page result from a query"
@@ -201,15 +218,16 @@ input KitWhereInput {
     attributes: KitAttributesWhereInput
     donor: DonorWhereInput
     deviceRequest: DeviceRequestWhereInput
-    make: String,
-    deviceVersion: String,
-    serialNo: TextComparison,
-    storageCapacity: Int,
-    typeOfStorage: KitStorageTypeComparison,
-    ramCapacity: Int,
-    cpuType: String,
-    tpmVersion: String
-    cpuCores: Int,
+    make: TextComparison
+    deviceVersion: TextComparison
+    serialNo: TextComparison
+    storageCapacity: IntegerComparison
+    typeOfStorage: KitStorageTypeComparison
+    ramCapacity: IntegerComparison
+    cpuType: TextComparison
+    tpmVersion: TextComparison
+    cpuCores: IntegerComparison
+    subStatus: KitSubStatusWhereInput
     AND: [KitWhereInput!]
     OR: [KitWhereInput!]
     NOT: [KitWhereInput!]
@@ -225,6 +243,20 @@ input KitAttributesWhereInput {
     OR: [KitAttributesWhereInput!]
     NOT: [KitAttributesWhereInput!]
 }
+
+input KitSubStatusWhereInput {
+    installationOfOSFailed: BooleanComparison
+    wipeFailed: BooleanComparison
+    needsSparePart: BooleanComparison
+    needsFurtherInvestigation: BooleanComparison
+    network: TextComparison
+    installedOSName: TextComparison
+    lockedToUser: BooleanComparison
+    AND: [KitSubStatusWhereInput!]
+    OR: [KitSubStatusWhereInput!]
+    NOT: [KitSubStatusWhereInput!]
+}
+
 
 input CreateKitInput {
     type: KitType!
@@ -245,6 +277,7 @@ input CreateKitInput {
     tpmVersion: String
     cpuCores: Int
     batteryHealth: Int
+    subStatus: KitSubStatusInput!
 }
 
 input QuickCreateKitInput {
@@ -309,7 +342,8 @@ input UpdateKitInput {
     cpuType: String,
     tpmVersion: String,
     cpuCores: Int,
-    batteryHealth: Int
+    batteryHealth: Int,
+    subStatus: KitSubStatusInput
 }
 
 extend type Query {

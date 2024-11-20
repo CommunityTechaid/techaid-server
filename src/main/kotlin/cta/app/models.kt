@@ -247,7 +247,9 @@ class Kit(
     var cpuType: String? = null,
     var tpmVersion: String? = null,
     var cpuCores: Int? = null,
-    var batteryHealth: Int? = null
+    var batteryHealth: Int? = null,
+    @Embedded
+    var subStatus: KitSubStatus = KitSubStatus()
 ) : BaseEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -257,6 +259,18 @@ class Kit(
 
     override fun hashCode() = 13
 }
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Embeddable
+data class KitSubStatus(
+    var installationOfOSFailed: Boolean? = false,
+    var wipeFailed: Boolean? = false,
+    var needsSparePart: Boolean? = false,
+    var needsFurtherInvestigation: Boolean? = false,
+    var network: String? = null,
+    var installedOSName: String? = null,
+    var lockedToUser: Boolean? = false
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class KitAttributes(
@@ -308,11 +322,7 @@ enum class KitStatus {
     DONATION_NEW,
     PROCESSING_START,
     PROCESSING_WIPED,
-    PROCESSING_FAILED_WIPE,
     PROCESSING_OS_INSTALLED,
-    PROCESSING_FAILED_INSTALLATION,
-    PROCESSING_WITH_TECHIE,
-    PROCESSING_MISSING_PART,
     PROCESSING_STORED,
     ALLOCATION_ASSESSMENT,
     ALLOCATION_READY,
