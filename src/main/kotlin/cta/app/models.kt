@@ -207,7 +207,7 @@ class Kit(
     var status: KitStatus = KitStatus.DONATION_NEW,
     var model: String,
     var location: String = "",
-    var age: Int,
+    var age: Int? = null,
     @Type(type = "yes_no")
     var archived: Boolean = false,
     var createdAt: Instant = Instant.now(),
@@ -278,9 +278,9 @@ class KitAttributes(
     @NotAudited
     var kit: Kit? = null,
     var otherType: String? = null,
-    var pickup: String = "",
-    var state: String = "",
-    var consent: String = "",
+    var pickup: String? = null,
+    var state: String? = null,
+    var consent: String? = null,
     var notes: String = "",
     var pickupAvailability: String? = null,
     var credentials: String? = null,

@@ -225,9 +225,9 @@ data class CreateKitInput(
 
 data class KitAttributesInput(
     val otherType: String? = null,
-    val state: String,
-    val consent: String,
-    val pickup: String,
+    val state: String? = null,
+    val consent: String? = null,
+    val pickup: String? = null,
     val notes: String? = null,
     val pickupAvailability: String? = null,
     val credentials: String? = null,
@@ -260,8 +260,8 @@ data class UpdateKitInput(
     @get:NotBlank
     val model: String = "",
     val location: String?,
-    val age: Int,
-    val attributes: KitAttributesInput,
+    val age: Int? = null,
+    val attributes: KitAttributesInput = KitAttributesInput(),
     val donorId: Long? = null,
     val deviceRequestId: Long? = null,
     val archived: Boolean? = null,
@@ -276,7 +276,7 @@ data class UpdateKitInput(
     val tpmVersion: String? = null,
     val cpuCores: Int? = null,
     val batteryHealth: Int? = null,
-    val subStatus: KitSubStatusInput
+    val subStatus: KitSubStatusInput = KitSubStatusInput()
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -284,8 +284,8 @@ data class UpdateKitInput(
             type = self.type
             status = self.status
             model = self.model ?: model
-            age = self.age
-            attributes = self.attributes.apply(entity)
+            age = self.age ?: age
+            attributes = self.attributes?.let { self.attributes.apply(entity) }
             archived = self.archived ?: archived
             make = self.make ?: make
             deviceVersion = self.deviceVersion ?: deviceVersion
@@ -378,17 +378,20 @@ data class AutoUpdateKitInput(
 }
 
 data class KitSubStatusInput(
-    var installationOfOSFailed: Boolean,
-    var wipeFailed: Boolean,
-    var needsSparePart: Boolean,
-    var needsFurtherInvestigation: Boolean,
-    var network: String?,
-    var installedOSName: String?,
-    var lockedToUser: Boolean
+    var installationOfOSFailed: Boolean = false,
+    var wipeFailed: Boolean = false,
+    var needsSparePart: Boolean = false,
+    var needsFurtherInvestigation: Boolean = false,
+    var network: String? = null,
+    var installedOSName: String? = null,
+    var lockedToUser: Boolean = false
     ) 
 {
     fun apply(entity: Kit): KitSubStatus {
         val self = this
+        if(entity.subStatus == null) {
+            entity.subStatus = KitSubStatus()
+        }
 
         return entity.subStatus.apply {
             installationOfOSFailed = self.installationOfOSFailed

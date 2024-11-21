@@ -263,8 +263,8 @@ input CreateKitInput {
     status: KitStatus
     model: String!
     location: String
-    age: Int!
-    attributes: KitAttributesInput!
+    age: Int
+    attributes: KitAttributesInput
     donorId: ID
     note: CreateNoteInput
     make: String
@@ -277,7 +277,7 @@ input CreateKitInput {
     tpmVersion: String
     cpuCores: Int
     batteryHealth: Int
-    subStatus: KitSubStatusInput!
+    subStatus: KitSubStatusInput
 }
 
 input QuickCreateKitInput {
@@ -326,10 +326,10 @@ input UpdateKitInput {
     type: KitType!
     status: KitStatus!
     model: String!
-    age: Int!
+    age: Int
     archived: Boolean
     location: String
-    attributes: KitAttributesInput!
+    attributes: KitAttributesInput
     donorId: ID
     deviceRequestId: ID
     note: CreateNoteInput,
