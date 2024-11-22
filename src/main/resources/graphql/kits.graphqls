@@ -128,7 +128,7 @@ type Kit {
     tpmVersion: String,
     cpuCores: Int,
     batteryHealth: Int,
-    subStatus: KitSubStatus!
+    subStatus: KitSubStatus
 }
 
 type KitAttributes {
