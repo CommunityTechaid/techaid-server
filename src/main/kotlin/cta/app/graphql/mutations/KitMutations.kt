@@ -6,8 +6,8 @@ import cta.app.Kit
 import cta.app.KitAttributes
 import cta.app.KitRepository
 import cta.app.KitStatus
-import cta.app.KitSubStatus
 import cta.app.KitStorageType
+import cta.app.KitSubStatus
 import cta.app.KitType
 import cta.app.Note
 import cta.app.QKit
@@ -223,7 +223,7 @@ data class CreateKitInput(
             cpuCores = cpuCores,
             batteryHealth = batteryHealth
         )
-        kit.attributes = attributes.apply(kit)
+        //kit.attributes = attributes.apply(kit)
         kit
     }
 }
@@ -290,7 +290,7 @@ data class UpdateKitInput(
             status = self.status
             model = self.model ?: model
             age = self.age ?: age
-            attributes = self.attributes?.let { self.attributes.apply(entity) }
+            attributes = attributes
             archived = self.archived ?: archived
             make = self.make ?: make
             deviceVersion = self.deviceVersion ?: deviceVersion
