@@ -1,11 +1,11 @@
 # NOTE: This is the production and uat version. Please use Dockerfile.dev for local development testing
-FROM gradle:7-jdk11  as builder
+FROM gradle:8.6-jdk17 as builder
 USER root
 COPY ./src /app/src
 COPY ./build.gradle settings.gradle /app/
 RUN gradle -p /app clean build -x test
 
-FROM adoptopenjdk/openjdk11:alpine-jre
+FROM openjdk:17-alpine
 COPY --from=builder /app/build/libs/*.jar /app/app.jar
 RUN apk add --no-cache --update \
     openssl \
