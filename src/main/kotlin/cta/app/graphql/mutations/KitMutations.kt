@@ -6,6 +6,7 @@ import cta.app.Kit
 import cta.app.KitAttributes
 import cta.app.KitRepository
 import cta.app.KitStatus
+import cta.app.KitSubStatus
 import cta.app.KitStorageType
 import cta.app.KitType
 import cta.app.Note
@@ -66,14 +67,16 @@ class KitMutations(
 
     @MutationMapping
     fun quickCreateKit(@Argument @Valid data: QuickCreateKitInput): Kit {
-        val details = filterService.userDetails()
-
         val kit = kits.save(data.entity.apply {
             if (data.donorId != null) {
                 val user = donors.findById(data.donorId).toNullable()
                     ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
                 user.addKit(this)
             }
+
+            //For backwards compatibility, however these will be removed imminently
+            attributes.consent = "NO"
+            attributes.pickup = "NOTSURE"
         })
 
         return kit
@@ -174,7 +177,8 @@ data class QuickCreateKitInput(
         val kit = Kit(
             type = type,
             age = 0,
-            model = model
+            model = model,
+            subStatus = KitSubStatus()
         )
         kit
     }
@@ -199,7 +203,8 @@ data class CreateKitInput(
     val ramCapacity: Int? = null,
     val cpuType: String? = null,
     val tpmVersion: String? = null,
-    val cpuCores: Int? = null
+    val cpuCores: Int? = null,
+    val batteryHealth: Int? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -215,7 +220,8 @@ data class CreateKitInput(
             ramCapacity = ramCapacity,
             cpuType = cpuType,
             tpmVersion = tpmVersion,
-            cpuCores = cpuCores
+            cpuCores = cpuCores,
+            batteryHealth = batteryHealth
         )
         kit.attributes = attributes.apply(kit)
         kit
@@ -224,9 +230,9 @@ data class CreateKitInput(
 
 data class KitAttributesInput(
     val otherType: String? = null,
-    val state: String,
-    val consent: String,
-    val pickup: String,
+    val state: String? = null,
+    val consent: String? = null,
+    val pickup: String? = null,
     val notes: String? = null,
     val pickupAvailability: String? = null,
     val credentials: String? = null,
@@ -259,8 +265,8 @@ data class UpdateKitInput(
     @get:NotBlank
     val model: String = "",
     val location: String?,
-    val age: Int,
-    val attributes: KitAttributesInput,
+    val age: Int? = null,
+    val attributes: KitAttributesInput = KitAttributesInput(),
     val donorId: Long? = null,
     val deviceRequestId: Long? = null,
     val archived: Boolean? = null,
@@ -273,7 +279,9 @@ data class UpdateKitInput(
     val ramCapacity: Int? = null,
     val cpuType: String? = null,
     val tpmVersion: String? = null,
-    val cpuCores: Int? = null
+    val cpuCores: Int? = null,
+    val batteryHealth: Int? = null,
+    val subStatus: KitSubStatusInput = KitSubStatusInput()
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -281,8 +289,8 @@ data class UpdateKitInput(
             type = self.type
             status = self.status
             model = self.model ?: model
-            age = self.age
-            attributes = self.attributes.apply(entity)
+            age = self.age ?: age
+            attributes = self.attributes?.let { self.attributes.apply(entity) }
             archived = self.archived ?: archived
             make = self.make ?: make
             deviceVersion = self.deviceVersion ?: deviceVersion
@@ -293,6 +301,8 @@ data class UpdateKitInput(
             cpuType = self.cpuType ?: cpuType
             tpmVersion = self.tpmVersion ?: tpmVersion
             cpuCores = self.cpuCores ?: cpuCores
+            batteryHealth = self.batteryHealth ?: batteryHealth
+            subStatus = self.subStatus.apply(entity)
         }
     }
 }
@@ -311,7 +321,8 @@ data class AutoCreateKitInput(
     val ramCapacity: Int? = null,
     val cpuType: String? = null,
     val tpmVersion: String? = null,
-    val cpuCores: Int? = null
+    val cpuCores: Int? = null,
+    val batteryHealth: Int? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -328,7 +339,8 @@ data class AutoCreateKitInput(
             tpmVersion = tpmVersion,
             cpuCores = cpuCores,
             age = 0,
-            location = ""
+            location = "",
+            batteryHealth = batteryHealth
         )
         kit
     }
@@ -347,7 +359,8 @@ data class AutoUpdateKitInput(
     val ramCapacity: Int?,
     val cpuType: String?,
     val tpmVersion: String?,
-    val cpuCores: Int?
+    val cpuCores: Int?,
+    val batteryHealth: Int?
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -364,9 +377,37 @@ data class AutoUpdateKitInput(
             cpuType = self.cpuType ?: cpuType
             tpmVersion = self.tpmVersion ?: tpmVersion
             cpuCores = self.cpuCores ?: cpuCores
+            batteryHealth = self.batteryHealth ?: batteryHealth
         }
     }
 }
 
+data class KitSubStatusInput(
+    var installationOfOSFailed: Boolean = false,
+    var wipeFailed: Boolean = false,
+    var needsSparePart: Boolean = false,
+    var needsFurtherInvestigation: Boolean = false,
+    var network: String? = null,
+    var installedOSName: String? = null,
+    var lockedToUser: Boolean = false
+    )
+{
+    fun apply(entity: Kit): KitSubStatus {
+        val self = this
+        if(entity.subStatus == null) {
+            entity.subStatus = KitSubStatus()
+        }
+
+        return entity.subStatus.apply {
+            installationOfOSFailed = self.installationOfOSFailed
+            wipeFailed = self.wipeFailed
+            needsSparePart = self.needsSparePart
+            needsFurtherInvestigation = self.needsFurtherInvestigation
+            network = self.network
+            installedOSName = self.installedOSName
+            lockedToUser = self.lockedToUser
+        }
+    }
+}
 
 

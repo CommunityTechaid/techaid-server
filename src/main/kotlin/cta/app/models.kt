@@ -202,7 +202,7 @@ class Kit(
     var status: KitStatus = KitStatus.DONATION_NEW,
     var model: String,
     var location: String = "",
-    var age: Int,
+    var age: Int? = null,
     @Convert(converter=YesNoConverter::class)
     var archived: Boolean = false,
     var createdAt: Instant = Instant.now(),
@@ -241,7 +241,10 @@ class Kit(
     var ramCapacity: Int? = null,
     var cpuType: String? = null,
     var tpmVersion: String? = null,
-    var cpuCores: Int? = null
+    var cpuCores: Int? = null,
+    var batteryHealth: Int? = null,
+    @Embedded
+    var subStatus: KitSubStatus = KitSubStatus()
 ) : BaseEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -253,14 +256,26 @@ class Kit(
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Embeddable
+data class KitSubStatus(
+    var installationOfOSFailed: Boolean? = false,
+    var wipeFailed: Boolean? = false,
+    var needsSparePart: Boolean? = false,
+    var needsFurtherInvestigation: Boolean? = false,
+    var network: String? = null,
+    var installedOSName: String? = null,
+    var lockedToUser: Boolean? = false
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 class KitAttributes(
     @JsonIgnore
     @NotAudited
     var kit: Kit? = null,
     var otherType: String? = null,
-    var pickup: String = "",
-    var state: String = "",
-    var consent: String = "",
+    var pickup: String? = null,
+    var state: String? = null,
+    var consent: String? = null,
     var notes: String? = "",
     var pickupAvailability: String? = null,
     var credentials: String? = null,
@@ -300,17 +315,9 @@ enum class KitType {
 
 enum class KitStatus {
     DONATION_NEW,
-    DONATION_DECLINED,
-    DONATION_ACCEPTED,
-    DONATION_NO_RESPONSE,
-    DONATION_ARRANGED,
     PROCESSING_START,
     PROCESSING_WIPED,
-    PROCESSING_FAILED_WIPE,
     PROCESSING_OS_INSTALLED,
-    PROCESSING_FAILED_INSTALLATION,
-    PROCESSING_WITH_TECHIE,
-    PROCESSING_MISSING_PART,
     PROCESSING_STORED,
     ALLOCATION_ASSESSMENT,
     ALLOCATION_READY,
