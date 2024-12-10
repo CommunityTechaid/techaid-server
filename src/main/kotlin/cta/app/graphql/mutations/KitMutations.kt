@@ -164,6 +164,7 @@ class KitMutations(
 
 data class QuickCreateKitInput(
     val type: KitType,
+    @get:NotBlank
     val model: String = "",
     val donorId: Long?
 ){
