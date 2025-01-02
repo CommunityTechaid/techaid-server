@@ -11,7 +11,7 @@ class CustomRevisionEntityListener(
 
     override fun newRevision(revisionEntity: Any?) {
         val customRevisionInfo: CustomRevisionInfo = revisionEntity as CustomRevisionInfo
-        customRevisionInfo.customUser = filterService.userDetails().email
+        customRevisionInfo.customUser = String.format("%S|%S", filterService.userDetails().email, filterService.userDetails().name)
     }
 
 }
