@@ -169,6 +169,7 @@ class KitMutations(
 
 data class QuickCreateKitInput(
     val type: KitType,
+    @get:NotBlank
     val model: String = "",
     val donorId: Long?
 ){
@@ -360,7 +361,8 @@ data class AutoUpdateKitInput(
     val cpuType: String?,
     val tpmVersion: String?,
     val cpuCores: Int?,
-    val batteryHealth: Int?
+    val batteryHealth: Int?,
+    val subStatus: KitSubStatusInput = KitSubStatusInput()
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
@@ -378,6 +380,7 @@ data class AutoUpdateKitInput(
             tpmVersion = self.tpmVersion ?: tpmVersion
             cpuCores = self.cpuCores ?: cpuCores
             batteryHealth = self.batteryHealth ?: batteryHealth
+            subStatus = self.subStatus.apply(entity)
         }
     }
 }

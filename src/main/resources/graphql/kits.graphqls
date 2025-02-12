@@ -317,7 +317,8 @@ input AutoUpdateKitInput {
     cpuType: String,
     tpmVersion: String,
     cpuCores: Int,
-    batteryHealth: Int
+    batteryHealth: Int,
+    subStatus: KitSubStatusInput
 }
 
 input UpdateKitInput {
