@@ -488,6 +488,7 @@ class DeviceRequest(
         allocationSize = 1
     )
     var id: Long = 0,
+    var correlationId: Long? = null,
     @Embedded
     var deviceRequestItems: DeviceRequestItems,
     @Enumerated(EnumType.STRING)
@@ -527,6 +528,7 @@ class DeviceRequest(
         orphanRemoval = false
     )
     var kits: MutableSet<Kit> = mutableSetOf()
+    
 ){
     fun addKit(kit: Kit) {
         kits.add(kit)

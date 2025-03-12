@@ -1,5 +1,6 @@
 type DeviceRequest {
     id: ID
+    correlationId: Long,
     deviceRequestItems: DeviceRequestItems
     status: DeviceRequestStatus
     createdAt: String

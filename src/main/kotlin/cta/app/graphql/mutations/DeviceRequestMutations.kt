@@ -29,7 +29,9 @@ import org.springframework.validation.annotation.Validated
 @Transactional
 class DeviceRequestMutations(
 
-    private val deviceRequests: DeviceRequestRepository,
+
+
+private val deviceRequests: DeviceRequestRepository,
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
     private val filterService: FilterService,
     private val deviceRequestNotes: DeviceRequestNoteRepository,
@@ -53,7 +55,8 @@ class DeviceRequestMutations(
             isSales = data.isSales ?: false,
             clientRef = data.clientRef,
             details = data.details,
-            deviceRequestNeeds = data.deviceRequestNeeds.entity
+            deviceRequestNeeds = data.deviceRequestNeeds.entity,
+            correlationId = generateCorrelationId()
         )
 
         val savedRequest = deviceRequests.save(deviceRequest)
@@ -64,6 +67,12 @@ class DeviceRequestMutations(
 
         return savedRequest;
     }
+
+    private fun generateCorrelationId(): Long {
+        return kotlin.random.Random.nextLong()
+    }
+
+
 
     @MutationMapping
     fun formatDeviceRequests(@Argument items: DeviceRequestItems): String {
