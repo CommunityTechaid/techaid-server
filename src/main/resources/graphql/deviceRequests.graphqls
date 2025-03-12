@@ -176,4 +176,5 @@ extend type Mutation {
     createDeviceRequest(data: CreateDeviceRequestInput!) : DeviceRequest!
     updateDeviceRequest(data: UpdateDeviceRequestInput!): DeviceRequest!
     deleteDeviceRequest(id: ID!): Boolean
+    deleteCorrelationId(id: ID!): Boolean
 }

@@ -68,6 +68,13 @@ private val deviceRequests: DeviceRequestRepository,
         return savedRequest;
     }
 
+    fun deleteCorrelationId(id: Long): Boolean{
+        val entity = deviceRequests.findById(id).toNullable() ?: throw EntityNotFoundException("No device request with id: $id")
+        entity.correlationId = null
+        deviceRequests.save(entity)
+        return true;
+    }
+
     private fun generateCorrelationId(): Long {
         return kotlin.random.Random.nextLong()
     }

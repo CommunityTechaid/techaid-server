@@ -488,6 +488,7 @@ class DeviceRequest(
         allocationSize = 1
     )
     var id: Long = 0,
+    @NotAudited
     var correlationId: Long? = null,
     @Embedded
     var deviceRequestItems: DeviceRequestItems,
