@@ -76,7 +76,7 @@ private val deviceRequests: DeviceRequestRepository,
     }
 
     private fun generateCorrelationId(): Long {
-        return kotlin.random.Random.nextLong()
+        return kotlin.random.Random.nextLong(1, Long.MAX_VALUE)
     }
 
 
