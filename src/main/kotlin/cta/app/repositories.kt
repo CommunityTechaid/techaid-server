@@ -3,6 +3,7 @@ package cta.app
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
+import java.util.Optional
 
 interface DonorRepository : JpaRepository<Donor, Long>, QuerydslPredicateExecutor<Donor> {
     fun findByEmail(email: String): Donor?
@@ -90,6 +91,8 @@ interface DeviceRequestRepository:
         nativeQuery = true
     )
     fun requestCount(): RequestCount
+
+    fun findByCorrelationId(correlationId: Long): Optional<DeviceRequest>
 }
 
 interface DeviceRequestNoteRepository: JpaRepository<DeviceRequestNote, Long>,
