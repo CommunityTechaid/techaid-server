@@ -153,3 +153,7 @@ graphql:
     # if you want to @ExceptionHandler annotation for custom GraphQLErrors
     exception-handlers-enabled: true
 
+typeform:
+  #hmac key
+  key: ${TYPEFORM_KEY:}
+

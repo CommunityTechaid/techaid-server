@@ -1,13 +1,14 @@
 package cta.app.services
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import cta.models.TypeFormPayload
-import jdk.internal.joptsimple.internal.Messages.message
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 
@@ -17,12 +18,14 @@ private val logger = KotlinLogging.logger {}
 @Service
 class TypeformService(
     private val deviceRequestService: DeviceRequestService,
+    private val objectMapper: ObjectMapper
 ) {
-    @Value("\${auth0.token-attribute}")
+    @Value("\${typeform.key}")
     private lateinit var typeformSecret: String;
 
-    fun handleTypeformSubmission(typeFormPayload: TypeFormPayload) {
+    fun handleTypeformSubmission(payload: String) {
 
+        val typeFormPayload = objectMapper.readValue<TypeFormPayload>(payload);
         if (typeFormPayload.formResponse.hidden.containsKey("corr_id")) {
             val correlationId = typeFormPayload.formResponse.hidden["corr_id"];
 
@@ -42,12 +45,16 @@ class TypeformService(
         logger.debug("Typeform Webhook: Correlation key was not found");
     }
 
-    fun validateHMACSignature(receivedSignature: String, payload: TypeFormPayload): String {
+    fun validateHMACSignature(receivedSignature: String, payload: String): Boolean {
+        val cleanReceivedSignature = receivedSignature.removePrefix("sha256=")
         val hmacSHA256 = Mac.getInstance("HmacSHA256")
-        val secretKeySpec = SecretKeySpec(payload.getBytes(), "HmacSHA256")
+        val secretKeySpec = SecretKeySpec("9n6FRhVOAEuDaPfq5ocVyDP34MM9LZD4".toByteArray(Charsets.UTF_8), "HmacSHA256")
         hmacSHA256.init(secretKeySpec)
-        val signatureBytes = hmacSHA256.doFinal(message.getBytes())
-        return Base64.Default.encode(signatureBytes)
+
+
+        val signatureBytes = hmacSHA256.doFinal(payload.toByteArray(Charsets.UTF_8))
+
+        return Base64.getEncoder().encodeToString(signatureBytes) == cleanReceivedSignature
     }
 
 }
