@@ -173,6 +173,7 @@ data class QuickCreateKitInput(
         val kit = Kit(
             type = type,
             age = 0,
+            make = make,
             model = model,
             subStatus = KitSubStatus()
         )

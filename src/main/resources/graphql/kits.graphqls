@@ -282,6 +282,7 @@ input CreateKitInput {
 
 input QuickCreateKitInput {
     type: KitType
+    make: String
     model: String
     donorId: ID
 }
