@@ -1,15 +1,17 @@
 package cta
 
-import java.util.UUID
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.scheduling.annotation.EnableAsync
+import org.springframework.scheduling.annotation.EnableScheduling
+import java.util.UUID
 
 /**
  * The main entrypoint into the app application
  */
 @SpringBootApplication
 @EnableAsync
+@EnableScheduling
 class Application
 
 /**

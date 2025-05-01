@@ -93,6 +93,8 @@ interface DeviceRequestRepository:
     fun requestCount(): RequestCount
 
     fun findByCorrelationId(correlationId: Long): Optional<DeviceRequest>
+
+    fun findAllByCorrelationIdIsNotNull(): List<DeviceRequest>
 }
 
 interface DeviceRequestNoteRepository: JpaRepository<DeviceRequestNote, Long>,
