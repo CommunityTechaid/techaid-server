@@ -502,6 +502,7 @@ class DeviceRequest(
     var referringOrganisationContact: ReferringOrganisationContact,
     var isSales: Boolean = false,
     var clientRef: String,
+    var borough: String?,
     var details: String,
     @NotAudited
     @Formula(

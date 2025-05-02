@@ -8,6 +8,7 @@ type DeviceRequest {
     referringOrganisationContact: ReferringOrganisationContact
     isSales: Boolean
     clientRef: String
+    borough: String
     details: String
     kitCount: Int
     kits: [Kit!]
@@ -92,6 +93,7 @@ input CreateDeviceRequestInput {
     referringOrganisationContact: ID!
     isSales: Boolean,
     clientRef: String,
+    borough: String,
     details: String
     deviceRequestNeeds: DeviceRequestNeedsInput
 
@@ -104,6 +106,7 @@ input UpdateDeviceRequestInput {
     referringOrganisationContactId: ID
     isSales: Boolean,
     clientRef: String,
+    borough: String,
     details: String
     deviceRequestNote: DeviceRequestNoteInput
     deviceRequestNeeds: DeviceRequestNeedsInput
@@ -117,6 +120,7 @@ input DeviceRequestWhereInput {
     referringOrganisationContact: ReferringOrganisationContactWhereInput
     isSales: BooleanComparison
     clientRef: TextComparison
+    borough: TextComparison
     details: TextComparison
     AND: [DeviceRequestWhereInput!]
     OR: [DeviceRequestWhereInput!]

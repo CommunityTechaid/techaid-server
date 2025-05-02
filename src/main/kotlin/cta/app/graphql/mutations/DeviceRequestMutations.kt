@@ -54,6 +54,7 @@ private val deviceRequests: DeviceRequestRepository,
             referringOrganisationContact = referringOrganisationContact,
             isSales = data.isSales ?: false,
             clientRef = data.clientRef,
+            borough = data.borough ?: "",
             details = data.details,
             deviceRequestNeeds = data.deviceRequestNeeds.entity,
             correlationId = generateCorrelationId()
@@ -222,6 +223,7 @@ data class CreateDeviceRequestInput(
     var referringOrganisationContact: Long,
     var isSales: Boolean?,
     var clientRef: String,
+    var borough: String?,
     var details: String,
     var deviceRequestNeeds: DeviceRequestNeedsInput
 ){
@@ -274,6 +276,7 @@ data class UpdateDeviceRequestInput(
     val status: DeviceRequestStatus = DeviceRequestStatus.NEW,
     val isSales: Boolean?,
     val clientRef: String,
+    val borough: String?,
     val details: String,
     val deviceRequestNote: DeviceRequestNoteInput? = null,
     val deviceRequestNeeds: DeviceRequestNeedsInput
@@ -285,6 +288,7 @@ data class UpdateDeviceRequestInput(
             status = self.status
             isSales = self.isSales ?: false
             clientRef = self.clientRef
+            borough = self.borough ?: entity.borough
             details = self.details
             deviceRequestNeeds = self.deviceRequestNeeds.entity
         }

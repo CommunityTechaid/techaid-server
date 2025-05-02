@@ -20,6 +20,7 @@ class DeviceRequestWhereInput(
     var deviceRequestItems: DeviceRequestItemsWhereInput? = null,
     var isSales: BooleanComparison? = null,
     var clientRef: TextComparison? = null,
+    var borough: TextComparison? = null,
     var status: DeviceRequestStatusComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
@@ -35,6 +36,7 @@ class DeviceRequestWhereInput(
         status?.let { builder.and(it.build(entity.status)) }
         isSales?.let {builder.and(it.build(entity.isSales))}
         clientRef?.let {builder.and(it.build(entity.clientRef))}
+        borough?.let {builder.and(it.build(entity.borough))}
         referringOrganisationContact?.let { builder.and(it.build(entity.referringOrganisationContact)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
