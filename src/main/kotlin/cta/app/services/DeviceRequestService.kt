@@ -18,11 +18,11 @@ class DeviceRequestService(
         }
     }
 
-    fun cancelIncompleteDeviceRequests(): Int {
+    fun declineIncompleteDeviceRequests(): Int {
         var incompleteRequests = deviceRequests.findAllByCorrelationIdIsNotNull()
 
         incompleteRequests.forEach { request ->
-            request.status = DeviceRequestStatus.REQUEST_CANCELLED;
+            request.status = DeviceRequestStatus.REQUEST_DECLINED;
         }
 
         return deviceRequests.saveAll(incompleteRequests).count();
