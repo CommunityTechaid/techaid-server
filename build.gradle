@@ -138,7 +138,7 @@ dependencies {
     implementation 'com.google.api-client:google-api-client-gson:2.3.0'
     implementation 'com.google.api-client:google-api-client:1.35.0'
     implementation 'com.google.apis:google-api-services-gmail:v1-rev20211108-1.32.1'
-    implementation 'jakarta.mail:jakarta.mail-api:2.1.0'
+    implementation 'com.sun.mail:jakarta.mail:2.0.1'
 
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
