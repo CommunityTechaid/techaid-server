@@ -31,8 +31,13 @@ class TypeformService(
 
             if (correlationId != null) {
                 try {
-                    deviceRequestService.deleteCorrelationId(correlationId.toLong())
-                    logger.info("Deleted correlation ID");
+                    val savedRequest = deviceRequestService.deleteCorrelationId(correlationId.toLong())
+                    if (savedRequest != null) {
+                        logger.info("Deleted correlation ID");
+
+                        //Send email confirmation
+                        deviceRequestService.acknowledgeSubmission(savedRequest);
+                    }
                     return
                 } catch (e: NumberFormatException) {
                     logger.error("Typeform Webhook: Invalid correlation ID received :$correlationId");
