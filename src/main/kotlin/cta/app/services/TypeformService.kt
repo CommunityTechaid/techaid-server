@@ -53,7 +53,7 @@ class TypeformService(
     fun validateHMACSignature(receivedSignature: String, payload: String): Boolean {
         val cleanReceivedSignature = receivedSignature.removePrefix("sha256=")
         val hmacSHA256 = Mac.getInstance("HmacSHA256")
-        val secretKeySpec = SecretKeySpec("9n6FRhVOAEuDaPfq5ocVyDP34MM9LZD4".toByteArray(Charsets.UTF_8), "HmacSHA256")
+        val secretKeySpec = SecretKeySpec(typeformSecret.toByteArray(Charsets.UTF_8), "HmacSHA256")
         hmacSHA256.init(secretKeySpec)
 
 
