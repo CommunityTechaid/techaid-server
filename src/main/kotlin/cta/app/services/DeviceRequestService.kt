@@ -26,10 +26,11 @@ class DeviceRequestService(
     }
 
     fun declineIncompleteDeviceRequests(): Int {
-        var incompleteRequests = deviceRequests.findAllByCorrelationIdIsNotNull()
+        val incompleteRequests = deviceRequests.findAllByCorrelationIdIsNotNull()
 
         incompleteRequests.forEach { request ->
             request.status = DeviceRequestStatus.REQUEST_DECLINED;
+            request.correlationId = null;
             notifyDeclinedRequest(request)
         }
 
