@@ -8,6 +8,9 @@ import cta.toNullable
 import jakarta.mail.internet.InternetAddress
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.stereotype.Service
+import java.time.Instant
+import java.time.Period
+import java.time.temporal.ChronoUnit
 
 @Service
 class DeviceRequestService(
@@ -29,9 +32,11 @@ class DeviceRequestService(
         val incompleteRequests = deviceRequests.findAllByCorrelationIdIsNotNull()
 
         incompleteRequests.forEach { request ->
-            request.status = DeviceRequestStatus.REQUEST_DECLINED;
-            request.correlationId = null;
-            notifyDeclinedRequest(request)
+            if (Instant.now().minus(20, ChronoUnit.MINUTES).isAfter(request.createdAt)){
+                request.status = DeviceRequestStatus.REQUEST_DECLINED;
+                request.correlationId = null;
+                notifyDeclinedRequest(request)
+            }
         }
 
         return deviceRequests.saveAll(incompleteRequests).count();
