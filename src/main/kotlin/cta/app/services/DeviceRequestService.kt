@@ -9,7 +9,6 @@ import jakarta.mail.internet.InternetAddress
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.stereotype.Service
 import java.time.Instant
-import java.time.Period
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -18,9 +17,10 @@ class DeviceRequestService(
     private val mailService: MailService
 ) {
 
-    fun deleteCorrelationId(id: Long): DeviceRequest? {
+    fun markRequestStepsCompleted(id: Long): DeviceRequest? {
         val entity = deviceRequests.findByCorrelationId(id).toNullable()
         if (entity != null) {
+            entity.status = DeviceRequestStatus.PROCESSING_EQUALITIES_DATA_COMPLETE;
             entity.correlationId = null;
             return deviceRequests.save(entity)
         }
@@ -150,6 +150,8 @@ Best wishes <br>
             return
         }
 
+        var formattedItems = formatDeviceRequests(request.deviceRequestItems);
+
         val emailHeader = """
 <html>
 <head>
@@ -164,12 +166,16 @@ Best wishes <br>
         val emailBody = """
 Dear ${request.referringOrganisationContact.fullName} of ${request.referringOrganisationContact.referringOrganisation.name}<br>
 <br>
-<b>Your Community TechAid request # ${request.id}. Your client reference: ${request.clientRef}.
+<b>Your Community TechAid request # ${request.id}. Your client reference: ${request.clientRef}. Your device request(s): <br>
+<br>
+${formattedItems} <br>
 </b> <br>
 
-Your request was declined because it was not complete. If you think this is a mistake, please contact us with the request #: ${request.id} <br>
+Unfortunately, your request was declined because the form was not fully completed. If you
+believe this was in error, please contact us quoting the request number ${request.id} by emailing: <br>
+<u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u>
 <br>
-We take requests from charities, schools and other community organisations. The request should be for <b>1 individual</b> and they must be a resident of Lambeth or Southwark. Due to the demand on our service, you can only request 1 device per client and <b>only make 3 requests </b>at a time.<br>
+Please remember, we take requests from charities, schools and other community organisations. The request should be for <b>1 individual</b> and they must be a resident of Lambeth or Southwark. Due to the demand on our service, you can only request 1 device per client and <b>only make 3 requests </b>at a time.<br>
 <br>
 If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7724. <br>
 <br>

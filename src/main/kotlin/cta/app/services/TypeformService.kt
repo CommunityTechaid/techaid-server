@@ -31,7 +31,7 @@ class TypeformService(
 
             if (correlationId != null) {
                 try {
-                    val savedRequest = deviceRequestService.deleteCorrelationId(correlationId.toLong())
+                    val savedRequest = deviceRequestService.markRequestStepsCompleted(correlationId.toLong())
                     if (savedRequest != null) {
                         logger.info("Deleted correlation ID");
 
