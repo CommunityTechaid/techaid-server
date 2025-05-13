@@ -1,6 +1,7 @@
 type DeviceRequest {
     id: ID
-    correlationId: Long,
+    "We use string instead of long because JS truncates Long value"
+    correlationId: String,
     deviceRequestItems: DeviceRequestItems
     status: DeviceRequestStatus
     createdAt: String

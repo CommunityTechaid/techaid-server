@@ -26,6 +26,7 @@ services:
       SHOW_SQL: "${SHOW_SQL:-true}"
       TOKEN_ATTRIBUTE: ${TOKEN_ATTRIBUTE}
       DEV_APP: "https://app-testing.communitytechaid.org.uk/"
+      TYPEFORM_KEY: ${TYPEFORM_KEY}
     command: []
     volumes:
       - ./src/main/resources/application-local.yml:/app/config/application-local.yml:ro
