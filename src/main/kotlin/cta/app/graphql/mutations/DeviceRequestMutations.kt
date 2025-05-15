@@ -164,8 +164,6 @@ data class DeviceRequestNeedsInput(
     }
 }
 
-
-
 data class UpdateDeviceRequestInput(
     @get:NotNull
     val id: Long,
@@ -177,7 +175,7 @@ data class UpdateDeviceRequestInput(
     val borough: String?,
     val details: String,
     val deviceRequestNote: DeviceRequestNoteInput? = null,
-    val deviceRequestNeeds: DeviceRequestNeedsInput
+    val deviceRequestNeeds: DeviceRequestNeedsInput? = null
 ){
     fun apply(entity: DeviceRequest): DeviceRequest {
         val self = this
