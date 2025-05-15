@@ -186,7 +186,7 @@ data class UpdateDeviceRequestInput(
             clientRef = self.clientRef
             borough = self.borough ?: entity.borough
             details = self.details
-            deviceRequestNeeds = self.deviceRequestNeeds ?: entity.deviceRequestNeeds
+            deviceRequestNeeds = self.deviceRequestNeeds.entity ?: entity.deviceRequestNeeds
         }
     }
 }
