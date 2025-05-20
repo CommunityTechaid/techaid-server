@@ -55,7 +55,7 @@ private val deviceRequests: DeviceRequestRepository,
             clientRef = data.clientRef,
             borough = data.borough ?: "",
             details = data.details,
-            deviceRequestNeeds = data.deviceRequestNeeds.entity,
+            deviceRequestNeeds = data.deviceRequestNeeds?.entity,
             correlationId = generateCorrelationId()
         )
 
