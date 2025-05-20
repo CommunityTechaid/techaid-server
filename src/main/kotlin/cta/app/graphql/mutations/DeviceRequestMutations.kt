@@ -123,7 +123,7 @@ data class CreateDeviceRequestInput(
     var clientRef: String,
     var borough: String?,
     var details: String,
-    var deviceRequestNeeds: DeviceRequestNeedsInput
+    var deviceRequestNeeds: DeviceRequestNeedsInput? = null
 ){
 }
 
