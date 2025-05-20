@@ -512,7 +512,7 @@ class DeviceRequest(
     )
     var kitCount: Int = 0,
     @Embedded
-    var deviceRequestNeeds: DeviceRequestNeeds,
+    var deviceRequestNeeds: DeviceRequestNeeds?,
     @NotAudited
     @OneToMany(
         fetch = FetchType.LAZY,
