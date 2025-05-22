@@ -42,8 +42,7 @@ class DeviceRequestMutations(
 
         //Throw an exception if DEVICE_REQUEST_LIMIT is reached
         if (referringOrganisationContact.requestCount >= DEVICE_REQUEST_LIMIT) {
-            throw org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.BAD_REQUEST,
+            throw org.springframework.graphql.execution.ErrorType.BAD_REQUEST.toException(
                 "Could not create new requests. This user already has ${DEVICE_REQUEST_LIMIT} requests open"
             )
         }
