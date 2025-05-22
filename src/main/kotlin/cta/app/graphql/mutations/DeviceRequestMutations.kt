@@ -11,15 +11,43 @@ import cta.app.ReferringOrganisationContactRepository
 import cta.app.services.FilterService
 import cta.app.services.MailService
 import cta.toNullable
+import graphql.GraphQLError
+import graphql.GraphqlErrorBuilder
+import graphql.schema.DataFetchingEnvironment
+import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLType
+import graphql.schema.GraphQLTypeUtil
+
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 import org.springframework.graphql.data.method.annotation.Argument
+
+import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
 import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.graphql.execution.ErrorType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
+
+public class ExceededDeviceRequestLimitException : RuntimeException {
+    
+    public constructor() : super("Exceeded device request limit") {
+    }
+
+    public constructor(message: String) : super(message) {
+    }
+}
+
+@GraphQlExceptionHandler // example for MyException
+fun handleMyError(ex: ExceededDeviceRequestLimitException, env: DataFetchingEnvironment): GraphQLError {
+  return GraphqlErrorBuilder.newError(env)
+         .errorType(ErrorType.BAD_REQUEST) 
+         .message(ex.message)
+         .build()
+}
 
 
 @Controller
@@ -45,7 +73,7 @@ private val deviceRequests: DeviceRequestRepository,
 
         //Throw an exception if DEVICE_REQUEST_LIMIT is reached
         if (referringOrganisationContact.requestCount >= DEVICE_REQUEST_LIMIT) {
-            throw RuntimeException("Could not create new requests. This user already has ${DEVICE_REQUEST_LIMIT} requests open")
+            throw ExceededDeviceRequestLimitException("Could not create new requests. This user already has ${DEVICE_REQUEST_LIMIT} requests open")
         }
 
         val deviceRequest = DeviceRequest(
