@@ -26,7 +26,10 @@ import org.springframework.validation.annotation.Validated
 @Validated
 @Transactional
 class DeviceRequestMutations(
-    private val deviceRequests: DeviceRequestRepository,
+
+
+
+private val deviceRequests: DeviceRequestRepository,
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
     private val filterService: FilterService,
     private val deviceRequestNotes: DeviceRequestNoteRepository,
@@ -42,10 +45,7 @@ class DeviceRequestMutations(
 
         //Throw an exception if DEVICE_REQUEST_LIMIT is reached
         if (referringOrganisationContact.requestCount >= DEVICE_REQUEST_LIMIT) {
-            throw org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.BAD_REQUEST,
-                "Could not create new requests. This user already has ${DEVICE_REQUEST_LIMIT} requests open"
-            )
+            throw RuntimeException("Could not create new requests. This user already has ${DEVICE_REQUEST_LIMIT} requests open")
         }
 
         val deviceRequest = DeviceRequest(
