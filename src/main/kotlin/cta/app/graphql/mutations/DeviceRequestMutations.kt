@@ -29,6 +29,7 @@ import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.graphql.execution.ErrorType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
+import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 
@@ -41,23 +42,32 @@ public class ExceededDeviceRequestLimitException : RuntimeException {
     }
 }
 
-@GraphQlExceptionHandler // example for MyException
-fun handleMyError(ex: ExceededDeviceRequestLimitException, env: DataFetchingEnvironment): GraphQLError {
-  return GraphqlErrorBuilder.newError(env)
-         .errorType(ErrorType.BAD_REQUEST) 
-         .message(ex.message)
-         .build()
+@ControllerAdvice
+class ControllerExceptionHandler {
+
+    @GraphQlExceptionHandler // example for MyException
+    fun handleMyError(ex: ExceededDeviceRequestLimitException): GraphQLError {
+    return GraphqlErrorBuilder.newError()
+            .errorType(ErrorType.BAD_REQUEST) 
+            .message(ex.message)
+            .build()
+    }
 }
+
+//     @GraphQlExceptionHandler
+// public GraphQLError handle(IllegalArgumentException ex) {
+// return GraphQLError.newError().errorType(ErrorType.BAD_REQUEST).message("Handled an
+// IllegalArgumentException!").build();
+// }
+// }
+
 
 
 @Controller
 @Validated
 @Transactional
 class DeviceRequestMutations(
-
-
-
-private val deviceRequests: DeviceRequestRepository,
+    private val deviceRequests: DeviceRequestRepository,
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
     private val filterService: FilterService,
     private val deviceRequestNotes: DeviceRequestNoteRepository,
