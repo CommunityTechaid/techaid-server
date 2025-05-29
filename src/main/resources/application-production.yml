@@ -1,5 +1,5 @@
-spring:
-  profiles.include: []
+#spring:
+#  profiles.include: []
 
 auth:
   cors:
