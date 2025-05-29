@@ -176,8 +176,9 @@ class DonorParent(
 class CustomRevisionInfo {
 
     @Id
-    @GeneratedValue
     @RevisionNumber
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "custom_rev_info-seq-generator")
+    @SequenceGenerator(name = "custom_rev_info-seq-generator", sequenceName = "custom_rev_info_seq", allocationSize = 1)
     val id: Long? = null
 
     @RevisionTimestamp
