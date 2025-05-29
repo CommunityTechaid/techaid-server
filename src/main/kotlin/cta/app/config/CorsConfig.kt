@@ -15,7 +15,7 @@ class CorsConfig {
         return object : WebMvcConfigurer {
             override fun addCorsMappings(registry: CorsRegistry) {
                 registry.addMapping("/graphql")
-                    .allowedOrigins("https://app-testing.communitytechaid.org.uk")
+                    .allowedOrigins("https://app-testing.communitytechaid.org.uk","https://app.communitytechaid.org.uk")
                     .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                     .allowedHeaders("*")
                     .allowCredentials(true)
