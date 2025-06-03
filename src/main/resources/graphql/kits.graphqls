@@ -133,7 +133,6 @@ type Kit {
 
 type KitAttributes {
     state: String
-    consent: String
     pickup: String
     otherType: String
     notes: String
@@ -146,7 +145,6 @@ type KitAttributes {
 
 input KitAttributesInput {
     state: String
-    consent: String
     pickup: String
     otherType: String
     pickupAvailability: String
@@ -236,7 +234,6 @@ input KitAttributesWhereInput {
     otherType: TextComparison
     pickup: TextComparison
     state: TextComparison
-    consent: TextComparison
     filters: [JsonComparison!]
     AND: [KitAttributesWhereInput!]
     OR: [KitAttributesWhereInput!]

@@ -88,7 +88,6 @@ data class CreateDonorInput(
     val email: String = "",
     val referral: String = "",
     val name: String,
-    val consent: Boolean,
     val donorParentId: Long? = null,
     val isLeadContact: Boolean
 ) {
@@ -99,7 +98,6 @@ data class CreateDonorInput(
             email = email,
             referral = referral,
             name = name,
-            consent = consent,
             isLeadContact = isLeadContact
         )
     }
@@ -113,7 +111,6 @@ data class UpdateDonorInput(
     val email: String,
     var name: String,
     val referral: String? = null,
-    val consent: Boolean? = null,
     val donorParentId: Long? = null,
     val archived: Boolean? = null,
     val isLeadContact: Boolean? = null
@@ -126,7 +123,6 @@ data class UpdateDonorInput(
             email = if (email != self.email) self.email else this.email
             referral = if (self.referral == null) referral else self.referral.toString()
             name = self.name
-            consent = if (self.consent == null) consent else self.consent
             archived = self.archived ?: archived
             isLeadContact = self.isLeadContact ?: isLeadContact
         }

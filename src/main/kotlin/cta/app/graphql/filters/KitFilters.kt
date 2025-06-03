@@ -206,7 +206,6 @@ class KitAttributesWhereInput(
     var otherType: TextComparison? = null,
     var pickup: TextComparison? = null,
     var state: TextComparison? = null,
-    var consent: TextComparison? = null,
     var notes: TextComparison? = null,
     var status: TextComparison? = null,
     var pickupAvailability: TextComparison? = null,
@@ -222,7 +221,6 @@ class KitAttributesWhereInput(
         otherType?.let { builder.and(it.build(json.get("otherType").asText())) }
         pickup?.let { builder.and(it.build(json.get("pickup").asText())) }
         state?.let { builder.and(it.build(json.get("state").asText())) }
-        consent?.let { builder.and(it.build(json.get("consent").asText())) }
         notes?.let { builder.and(it.build(json.get("notes").asText())) }
         pickupAvailability?.let { builder.and(it.build(json.get("pickupAvailability").asText())) }
         status?.let { builder.and(it.build(json.get("status").asText())) }

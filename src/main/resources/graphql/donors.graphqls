@@ -10,7 +10,6 @@ type Donor {
     kitCount: Int
     kits: [Kit!]
     coordinates: Coordinates
-    consent: Boolean
     donorParent: DonorParent
     archived: Boolean
     isLeadContact: Boolean
@@ -22,7 +21,6 @@ input CreateDonorInput {
     phoneNumber: String
     email: String
     referral: String
-    consent: Boolean
     donorParentId: ID
     isLeadContact: Boolean
 }
@@ -34,7 +32,6 @@ input UpdateDonorInput {
     phoneNumber: String
     email: String
     referral: String
-    consent: Boolean
     donorParentId: ID
     archived: Boolean
     isLeadContact: Boolean
