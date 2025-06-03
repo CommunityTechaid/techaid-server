@@ -10,10 +10,10 @@ import org.springframework.data.domain.Sort
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Controller
 import java.util.Optional
 
-@Component
+@Controller
 @PreAuthorize("hasAnyAuthority('app:admin', 'read:donorParents')")
 class DonorParentQueries(
     private val donorParents: DonorParentRepository
