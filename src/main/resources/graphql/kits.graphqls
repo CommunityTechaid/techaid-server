@@ -133,10 +133,8 @@ type Kit {
 
 type KitAttributes {
     state: String
-    pickup: String
     otherType: String
     notes: String
-    pickupAvailability: String
     credentials: String
     status: [String]
     network: String
@@ -145,9 +143,7 @@ type KitAttributes {
 
 input KitAttributesInput {
     state: String
-    pickup: String
     otherType: String
-    pickupAvailability: String
     credentials: String
     notes: String
     status: [String]
@@ -232,7 +228,6 @@ input KitWhereInput {
 
 input KitAttributesWhereInput {
     otherType: TextComparison
-    pickup: TextComparison
     state: TextComparison
     filters: [JsonComparison!]
     AND: [KitAttributesWhereInput!]

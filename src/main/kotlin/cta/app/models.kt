@@ -273,10 +273,8 @@ class KitAttributes(
     @NotAudited
     var kit: Kit? = null,
     var otherType: String? = null,
-    var pickup: String? = null,
     var state: String? = null,
     var notes: String? = "",
-    var pickupAvailability: String? = null,
     var credentials: String? = null,
     var status: List<String> = listOf(),
     var network: String? = null,

@@ -73,10 +73,6 @@ class KitMutations(
                     ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
                 user.addKit(this)
             }
-
-            //For backwards compatibility, however these will be removed imminently
-            attributes.consent = "NO"
-            attributes.pickup = "NOTSURE"
         })
 
         return kit
@@ -234,10 +230,7 @@ data class CreateKitInput(
 data class KitAttributesInput(
     val otherType: String? = null,
     val state: String? = null,
-    val consent: String? = null,
-    val pickup: String? = null,
     val notes: String? = null,
-    val pickupAvailability: String? = null,
     val credentials: String? = null,
     val status: List<String>? = null,
     val network: String? = null,
@@ -249,9 +242,6 @@ data class KitAttributesInput(
         return entity.attributes.apply {
             otherType = self.otherType
             state = self.state
-            consent = self.consent
-            pickup = self.pickup
-            pickupAvailability = self.pickupAvailability
             status = self.status ?: status
             credentials = self.credentials
             notes = self.notes ?: notes
