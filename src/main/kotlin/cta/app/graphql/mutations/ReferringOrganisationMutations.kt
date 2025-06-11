@@ -20,6 +20,8 @@ import org.springframework.validation.annotation.Validated
 class ReferringOrganisationMutations(
     private val referringOrganisations: ReferringOrganisationRepository
 ) {
+    
+    @MutationMapping
     fun createReferringOrganisation(@Argument @Valid data: CreateReferringOrganisationInput): ReferringOrganisation {
         return referringOrganisations.save(data.entity)
     }
