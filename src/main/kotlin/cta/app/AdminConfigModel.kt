@@ -12,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.querydsl.QuerydslPredicateExecutor
 
 @Entity
 @Table(name = "admin_config")
@@ -27,27 +28,36 @@ class AdminConfig(
 
     var canPublicRequestBroadbandHub: Boolean = true,
 
+    var canPublicRequestTablet: Boolean = true,
+
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now()
 )
 
-interface AdminConfigRepository : JpaRepository<AdminConfig, Long> {
-    @Query("SELECT c FROM Admin_Config c WHERE c.id = 1")
-    fun findAdminConfig(): AdminConfig
+interface AdminConfigRepository : JpaRepository<AdminConfig, Long>, QuerydslPredicateExecutor<AdminConfig> {
+    /**
+     * Finds the admin configuration. This is a singleton entity, so it always returns the same instance.
+     */
+    @Query("SELECT * FROM Admin_Config c WHERE c.id = 1", 
+    nativeQuery = true)
+    fun getAdminConfig(): AdminConfig
 
     @Modifying
     @Query("UPDATE Admin_Config c " + 
            "SET c.canPublicRequestSIMCard = :canPublicRequestSIMCard, " +
            "c.canPublicRequestLaptop = :canPublicRequestLaptop, " +
            "c.canPublicRequestPhone = :canPublicRequestPhone, " +
-           "c.canPublicRequestBroadbandHub = :canPublicRequestBroadbandHub " + 
-           "WHERE c.id = 1")
+           "c.canPublicRequestBroadbandHub = :canPublicRequestBroadbandHub, " + 
+           "c.canPublicRequestTablet = :canPublicRequestTablet " + 
+           "WHERE c.id = 1",
+           nativeQuery = true)
     fun updateAdminConfig(
         canPublicRequestSIMCard: Boolean,
         canPublicRequestLaptop: Boolean,
         canPublicRequestPhone: Boolean,
-        canPublicRequestBroadbandHub: Boolean
+        canPublicRequestBroadbandHub: Boolean,
+        canPublicRequestTablet: Boolean
     ): Int
 }
