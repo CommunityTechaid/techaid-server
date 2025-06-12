@@ -1,8 +1,10 @@
 type AdminConfig {
+    id: ID!
     canPublicRequestSIMCard: Boolean
     canPublicRequestLaptop: Boolean
     canPublicRequestPhone: Boolean
     canPublicRequestBroadbandHub: Boolean
+    canPublicRequestTablet: Boolean
     createdAt: String
     updatedAt: String
 }
@@ -12,13 +14,14 @@ input UpdateAdminConfigInput {
     canPublicRequestLaptop: Boolean
     canPublicRequestPhone: Boolean
     canPublicRequestBroadbandHub: Boolean
+    canPublicRequestTablet: Boolean
 }
 
 extend type Query {
-    adminConfig(): AdminConfig
+    adminConfig: AdminConfig
 }
 
 extend type Mutation {
-    updateAdminConfig(data: UpdateAdminConfigInput!): AdminConfig!
+    updateAdminConfig(data: UpdateAdminConfigInput): AdminConfig
 }
 

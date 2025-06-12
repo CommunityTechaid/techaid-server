@@ -18,8 +18,9 @@ class AdminConfigQueries(
 )  {
 
     @PreAuthorize("hasAnyAuthority('app:admin')")
+    @QueryMapping
     fun adminConfig(): AdminConfig {
-        return adminConfig.findAdminConfig()
+        return adminConfig.getAdminConfig()
     }
 
 }

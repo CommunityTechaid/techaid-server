@@ -23,8 +23,7 @@ class AdminConfigMutations(
     @PreAuthorize("hasAnyAuthority('app:admin')")
     @MutationMapping
     fun updateAdminConfig(@Argument @Valid data: UpdateAdminConfigInput): AdminConfig {
-        val entity = adminConfig.findAdminConfig()
-            ?: throw EntityNotFoundException("Unable to locate a organisation with id: ${data.id}")
+        val entity = adminConfig.getAdminConfig()
         return data.apply(entity)
     }
 }
@@ -33,7 +32,8 @@ data class UpdateAdminConfigInput(
     var canPublicRequestSIMCard: Boolean,
     var canPublicRequestLaptop: Boolean,
     var canPublicRequestPhone: Boolean,
-    var canPublicRequestBroadbandHub: Boolean
+    var canPublicRequestBroadbandHub: Boolean,
+    var canPublicRequestTablet: Boolean
 
 ) {
     fun apply(entity: AdminConfig): AdminConfig {
@@ -43,6 +43,7 @@ data class UpdateAdminConfigInput(
             canPublicRequestLaptop = self.canPublicRequestLaptop
             canPublicRequestPhone = self.canPublicRequestPhone
             canPublicRequestBroadbandHub = self.canPublicRequestBroadbandHub
+            canPublicRequestTablet = self.canPublicRequestTablet
         }
     }
 }
