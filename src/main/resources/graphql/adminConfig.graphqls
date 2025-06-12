@@ -1,0 +1,24 @@
+type AdminConfig {
+    canPublicRequestSIMCard: Boolean
+    canPublicRequestLaptop: Boolean
+    canPublicRequestPhone: Boolean
+    canPublicRequestBroadbandHub: Boolean
+    createdAt: String
+    updatedAt: String
+}
+
+input UpdateAdminConfigInput {
+    canPublicRequestSIMCard: Boolean
+    canPublicRequestLaptop: Boolean
+    canPublicRequestPhone: Boolean
+    canPublicRequestBroadbandHub: Boolean
+}
+
+extend type Query {
+    adminConfig(): AdminConfig
+}
+
+extend type Mutation {
+    updateAdminConfig(data: UpdateAdminConfigInput!): AdminConfig!
+}
+
