@@ -14,8 +14,8 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.Modifying
 
 @Entity
-@Table(name = "config")
-class Config(
+@Table(name = "admin_config")
+class AdminConfig(
     @Id
     val id: Long = 1L, //singleton
     
@@ -33,16 +33,18 @@ class Config(
     var updatedAt: Instant = Instant.now()
 )
 
-interface ConfigRepository : JpaRepository<Config, Long> {
-    @Query("SELECT c FROM Config c WHERE c.id = 1")
-    fun findConfig(): Config?
+interface AdminConfigRepository : JpaRepository<AdminConfig, Long> {
+    @Query("SELECT c FROM Admin_Config c WHERE c.id = 1")
+    fun findAdminConfig(): AdminConfig
 
     @Modifying
-    @Query("UPDATE Config c SET c.canPublicRequestSIMCard = :canPublicRequestSIMCard, " +
+    @Query("UPDATE Admin_Config c " + 
+           "SET c.canPublicRequestSIMCard = :canPublicRequestSIMCard, " +
            "c.canPublicRequestLaptop = :canPublicRequestLaptop, " +
            "c.canPublicRequestPhone = :canPublicRequestPhone, " +
-           "c.canPublicRequestBroadbandHub = :canPublicRequestBroadbandHub WHERE c.id = 1")
-    fun updateConfig(
+           "c.canPublicRequestBroadbandHub = :canPublicRequestBroadbandHub " + 
+           "WHERE c.id = 1")
+    fun updateAdminConfig(
         canPublicRequestSIMCard: Boolean,
         canPublicRequestLaptop: Boolean,
         canPublicRequestPhone: Boolean,
