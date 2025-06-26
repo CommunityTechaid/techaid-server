@@ -17,7 +17,7 @@ class AdminConfigQueries(
     private val adminConfig: AdminConfigRepository
 )  {
 
-    @PreAuthorize("hasAnyAuthority('app:admin')")
+    //@PreAuthorize("hasAnyAuthority('app:admin')")
     @QueryMapping
     fun adminConfig(): AdminConfig {
         return adminConfig.getAdminConfig()
