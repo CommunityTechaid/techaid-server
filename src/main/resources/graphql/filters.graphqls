@@ -1,3 +1,5 @@
+scalar Instant
+
 "Orderby clause for pages"
 enum PageOrderBy {
     "in the ascending order, nulls last"
@@ -141,23 +143,23 @@ input TextComparison {
 "Integer comparison filter"
 input TimeComparison {
     "Matches values that are equal to"
-    _eq: String
+    _eq: Instant
     "Matches values that are greater than"
-    _gt: String
+    _gt: Instant
     "Matches values that are greater than or equal to"
-    _gte: String
+    _gte: Instant
     "Matches values contained in the collection"
-    _in: [String]
+    _in: [Instant]
     "Matches values that are null/not null"
     _is_null: Boolean
     "Matches values that are less than"
-    _lt: String
+    _lt: Instant
     "Matches values that are less than or equal to"
-    _lte: String
+    _lte: Instant
     "Matches values that are not equal to"
-    _neq: String
+    _neq: Instant
     "Matches values that are not contained in the collection"
-    _nin: [String]
+    _nin: [Instant]
 }
 
 "Integer comparison filter"
