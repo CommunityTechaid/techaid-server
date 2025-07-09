@@ -30,6 +30,8 @@ class AdminConfig(
 
     var canPublicRequestTablet: Boolean = true,
 
+    var canPublicRequestDesktop: Boolean = true,
+
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
@@ -50,7 +52,8 @@ interface AdminConfigRepository : JpaRepository<AdminConfig, Long>, QuerydslPred
            "c.canPublicRequestLaptop = :canPublicRequestLaptop, " +
            "c.canPublicRequestPhone = :canPublicRequestPhone, " +
            "c.canPublicRequestBroadbandHub = :canPublicRequestBroadbandHub, " + 
-           "c.canPublicRequestTablet = :canPublicRequestTablet " + 
+           "c.canPublicRequestTablet = :canPublicRequestTablet, " + 
+           "c.canPublicRequestDesktop = :canPublicRequestDesktop " + 
            "WHERE c.id = 1",
            nativeQuery = true)
     fun updateAdminConfig(
@@ -58,6 +61,7 @@ interface AdminConfigRepository : JpaRepository<AdminConfig, Long>, QuerydslPred
         canPublicRequestLaptop: Boolean,
         canPublicRequestPhone: Boolean,
         canPublicRequestBroadbandHub: Boolean,
-        canPublicRequestTablet: Boolean
+        canPublicRequestTablet: Boolean,
+        canPublicRequestDesktop: Boolean
     ): Int
 }

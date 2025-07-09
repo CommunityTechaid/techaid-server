@@ -5,6 +5,7 @@ type AdminConfig {
     canPublicRequestPhone: Boolean
     canPublicRequestBroadbandHub: Boolean
     canPublicRequestTablet: Boolean
+    canPublicRequestDesktop: Boolean
     createdAt: String
     updatedAt: String
 }
@@ -15,6 +16,7 @@ input UpdateAdminConfigInput {
     canPublicRequestPhone: Boolean
     canPublicRequestBroadbandHub: Boolean
     canPublicRequestTablet: Boolean
+    canPublicRequestDesktop: Boolean
 }
 
 extend type Query {

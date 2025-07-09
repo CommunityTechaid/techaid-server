@@ -33,7 +33,8 @@ data class UpdateAdminConfigInput(
     var canPublicRequestLaptop: Boolean,
     var canPublicRequestPhone: Boolean,
     var canPublicRequestBroadbandHub: Boolean,
-    var canPublicRequestTablet: Boolean
+    var canPublicRequestTablet: Boolean,
+    var canPublicRequestDesktop: Boolean
 
 ) {
     fun apply(entity: AdminConfig): AdminConfig {
@@ -44,6 +45,7 @@ data class UpdateAdminConfigInput(
             canPublicRequestPhone = self.canPublicRequestPhone
             canPublicRequestBroadbandHub = self.canPublicRequestBroadbandHub
             canPublicRequestTablet = self.canPublicRequestTablet
+            canPublicRequestDesktop = self.canPublicRequestDesktop
         }
     }
 }
