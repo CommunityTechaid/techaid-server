@@ -101,8 +101,11 @@ class IntegerComparision(
     _lt: Int? = null,
     _lte: Int? = null,
     _neq: Int? = null,
-    _nin: MutableList<Int>? = null
-) : NumberComparison<Int>(_eq, _gt, _gte, _in, _is_null, _lt, _lte, _neq, _nin)
+    _nin: MutableList<Int>? = null,
+    _like: String? = null,
+    _contains: String? = null,
+    _string: TextComparison? = null
+) : NumberComparison<Int>(_eq, _gt, _gte, _in, _is_null, _lt, _lte, _neq, _nin, _like, _contains, _string)
 
 /**
  * Comparison class for Long
@@ -116,8 +119,11 @@ class LongComparision(
     _lt: Long? = null,
     _lte: Long? = null,
     _neq: Long? = null,
-    _nin: MutableList<Long>? = null
-) : NumberComparison<Long>(_eq, _gt, _gte, _in, _is_null, _lt, _lte, _neq, _nin)
+    _nin: MutableList<Long>? = null,
+    _like: String? = null,
+    _contains: String? = null,
+    _string: TextComparison? = null
+) : NumberComparison<Long>(_eq, _gt, _gte, _in, _is_null, _lt, _lte, _neq, _nin, _like, _contains, _string)
 
 /**
  * Comparison class for BigDecimal
@@ -131,8 +137,11 @@ class BigDecimalComparision(
     _lt: BigDecimal? = null,
     _lte: BigDecimal? = null,
     _neq: BigDecimal? = null,
-    _nin: MutableList<BigDecimal>? = null
-) : NumberComparison<BigDecimal>(_eq, _gt, _gte, _in, _is_null, _lt, _lte, _neq, _nin)
+    _nin: MutableList<BigDecimal>? = null,
+    _like: String? = null,
+    _contains: String? = null,
+    _string: TextComparison? = null
+) : NumberComparison<BigDecimal>(_eq, _gt, _gte, _in, _is_null, _lt, _lte, _neq, _nin, _like, _contains, _string)
 
 /**
  * A string comparison object
