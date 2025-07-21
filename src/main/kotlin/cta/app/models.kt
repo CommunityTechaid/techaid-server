@@ -189,8 +189,8 @@ class CustomRevisionInfo {
 
 @Entity
 @Table(name = "kits")
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
-@AuditTable(value = "kit_audit_trail")
+//@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+//@AuditTable(value = "kit_audit_trail")
 class Kit(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kit-seq-generator")
