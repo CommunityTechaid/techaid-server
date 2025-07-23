@@ -175,9 +175,8 @@ class DonorParent(
 class CustomRevisionInfo {
 
     @Id
+    @GeneratedValue
     @RevisionNumber
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "custom_rev_info-seq-generator")
-    @SequenceGenerator(name = "custom_rev_info-seq-generator", sequenceName = "custom_rev_info_seq", allocationSize = 1)
     val id: Long? = null
 
     @RevisionTimestamp
@@ -189,8 +188,8 @@ class CustomRevisionInfo {
 
 @Entity
 @Table(name = "kits")
-//@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
-//@AuditTable(value = "kit_audit_trail")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@AuditTable(value = "kit_audit_trail")
 class Kit(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kit-seq-generator")
