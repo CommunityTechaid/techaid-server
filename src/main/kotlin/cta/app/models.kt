@@ -227,9 +227,11 @@ class Kit(
     var coordinates: Coordinates? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "donor_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     var donor: Donor? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_request_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     var deviceRequest: DeviceRequest? = null,
     var make: String? = null,
     var deviceVersion: String? = null,
