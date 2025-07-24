@@ -91,7 +91,7 @@ class CustomErrorModel {
             model.status = status
             model.application = application
             model.error = errorAttributes["error"] as String
-            model.message = errorAttributes["message"] as String
+            model.message = errorAttributes["message"] as? String ?: ""
             model.timeStamp = errorAttributes["timestamp"].toString()
             model.trace = errorAttributes["trace"] as String?
             return model
