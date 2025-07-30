@@ -59,7 +59,7 @@ class KitMutations(
             if (data.donorId != null) {
                 val user = donors.findById(data.donorId).toNullable()
                     ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
-                user.addKit(this)
+                data.entity.donor = user;
             }
         })
         return kit
