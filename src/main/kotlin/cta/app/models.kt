@@ -91,11 +91,13 @@ class Donor(
     var archived: Boolean = false,
     var isLeadContact: Boolean = false
 ) : BaseEntity() {
+    @NotAudited
     fun addKit(kit: Kit) {
         kits.add(kit)
         kit.donor = this
     }
 
+    @NotAudited
     fun removeKit(kit: Kit) {
         kits.removeIf {
             if (kit == it) {
