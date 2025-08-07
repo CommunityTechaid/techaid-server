@@ -20,6 +20,7 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import org.hibernate.query.results.Builders.entity
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
@@ -71,7 +72,7 @@ class KitMutations(
             if (data.donorId != null) {
                 val user = donors.findById(data.donorId).toNullable()
                     ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
-                user.addKit(this)
+                data.entity.donor = user;
             }
         })
 
@@ -95,7 +96,7 @@ class KitMutations(
             } else if (data.donorId != donor?.id) {
                 val user = donors.findById(data.donorId).toNullable()
                     ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorId}")
-                user.addKit(this)
+                entity.donor = user
             }
 
             if (data.deviceRequestId == null) {
@@ -103,7 +104,7 @@ class KitMutations(
             } else if (data.deviceRequestId != deviceRequest?.id) {
                 val devRequest = deviceRequests.findById(data.deviceRequestId).toNullable()
                     ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.deviceRequestId}")
-                devRequest.addKit(this)
+                entity.deviceRequest = devRequest
             }
 
             if (data.note != null) {
