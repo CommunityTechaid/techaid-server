@@ -62,14 +62,14 @@ type RolePage {
 
 extend type Query {
     users(page: PaginationInput!, filter: String): UserPage
-    user(id: ID!): User
+    user(id: String!): User
     roles(page: PaginationInput!, filter: String): RolePage
-    role(id: ID!): Role
+    role(id: String!): Role
 }
 
 extend type Mutation {
-    assignRoles(roleId: ID!, userIds: [ID!]!): Role
-    removeRoles(userId: ID!, roleIds: [ID!]!): User
-    removePermissions(userId: ID!, permissions: [PermissionInput!]!): User
-    deleteUser(userId: ID!): Boolean
+    assignRoles(roleId: String!, userIds: [String!]!): Role
+    removeRoles(userId: String!, roleIds: [String!]!): User
+    removePermissions(userId: String!, permissions: [PermissionInput!]!): User
+    deleteUser(userId: String!): Boolean
 }
