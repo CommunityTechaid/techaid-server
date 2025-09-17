@@ -89,7 +89,7 @@ Your request will take between 4-6 weeks to fulfil.<br>
 <br>
 We take requests from charities, schools and other community organisations. The request should be for <b>1 individual</b> and they must be a resident of Lambeth or Southwark. Due to the demand on our service, you can only request 1 device per client and <b>only make 3 requests </b>at a time.<br>
 <br>
-If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7724. <br>
+If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7742. <br>
 <br>
 Best wishes <br>
 <br>
@@ -177,7 +177,7 @@ believe this was in error, please contact us quoting the request number ${reques
 <br>
 Please remember, we take requests from charities, schools and other community organisations. The request should be for <b>1 individual</b> and they must be a resident of Lambeth or Southwark. Due to the demand on our service, you can only request 1 device per client and <b>only make 3 requests </b>at a time.<br>
 <br>
-If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7724. <br>
+If you have any questions, please email <u><a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></u> or call 020 3488 7742. <br>
 <br>
 Best wishes <br>
 <br>
