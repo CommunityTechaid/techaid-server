@@ -51,6 +51,7 @@ type DeviceRequestItems {
     desktops: Int
     commsDevices: Int
     other: Int
+    broadbandHubs: Int
 }
 
 input DeviceRequestItemsInput {
@@ -61,6 +62,7 @@ input DeviceRequestItemsInput {
     desktops: Int
     commsDevices: Int
     other: Int
+    broadbandHubs: Int
 }
 
 
@@ -83,6 +85,7 @@ input DeviceRequestItemsWhereInput {
    allInOnes: IntegerComparison
    desktops: IntegerComparison
    commsDevices: IntegerComparison
+   broadbandHubs: IntegerComparison
    filters: [JsonComparison!]
    AND: [DeviceRequestItemsWhereInput]
    OR: [DeviceRequestItemsWhereInput]
@@ -167,6 +170,7 @@ type RequestCount {
     desktops: Int
     commsDevices: Int
     other: Int
+    broadbandHubs: Int
 }
 
 extend type Query {

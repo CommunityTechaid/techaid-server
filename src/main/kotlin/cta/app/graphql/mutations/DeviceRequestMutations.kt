@@ -173,7 +173,8 @@ data class DeviceRequestItemsInput(
     val allInOnes: Int? = 0,
     val desktops: Int? = 0,
     val commsDevices: Int? = 0,
-    val other: Int? = 0
+    val other: Int? = 0,
+    val broadbandHubs: Int? = 0
 ) {
     val entity by lazy {
         DeviceRequestItems(
@@ -183,7 +184,8 @@ data class DeviceRequestItemsInput(
             allInOnes = allInOnes ?: 0,
             desktops = desktops ?: 0,
             commsDevices = commsDevices ?: 0,
-            other = other ?: 0
+            other = other ?: 0,
+            broadbandHubs = broadbandHubs ?: 0
         )
     }
 }

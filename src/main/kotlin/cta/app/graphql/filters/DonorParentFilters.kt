@@ -6,7 +6,7 @@ import java.time.Instant
 import cta.app.DonorParentType
 import cta.app.QDonorParent
 import cta.graphql.BooleanComparison
-import cta.graphql.LongComparision
+import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
 
@@ -73,7 +73,7 @@ class DonorParentTypeComparison(
 }
 
 class DonorParentWhereInput(
-    var id: LongComparision? = null,
+    var id: LongComparison? = null,
     var name: TextComparison? = null,
     var address: TextComparison? = null,
     var website: TextComparison? = null,

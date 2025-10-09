@@ -3,14 +3,14 @@ package cta.app.graphql.filters
 import com.querydsl.core.BooleanBuilder
 import cta.app.QReferringOrganisationContact
 import cta.graphql.BooleanComparison
-import cta.graphql.LongComparision
+import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
 import java.time.Instant
 
 
 class ReferringOrganisationContactWhereInput(
-    var id: LongComparision? = null,
+    var id: LongComparison? = null,
     var fullName: TextComparison? = null,
     var address: TextComparison? = null,
     var email: TextComparison? = null,

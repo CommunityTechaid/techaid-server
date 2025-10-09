@@ -6,7 +6,7 @@ import cta.app.PostRepository
 import cta.app.QPost
 import cta.graphql.BooleanComparison
 import cta.graphql.KeyValuePair
-import cta.graphql.LongComparision
+import cta.graphql.LongComparison
 import cta.graphql.PaginationInput
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
@@ -132,7 +132,7 @@ data class UpdatePostInput(
 }
 
 class PostWhereInput(
-    var id: LongComparision? = null,
+    var id: LongComparison? = null,
     var content: TextComparison? = null,
     var slug: TextComparison? = null,
     var title: TextComparison? = null,

@@ -3,13 +3,13 @@ package cta.app.graphql.filters
 import com.querydsl.core.BooleanBuilder
 import cta.app.QReferringOrganisation
 import cta.graphql.BooleanComparison
-import cta.graphql.LongComparision
+import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
 import java.time.Instant
 
 class ReferringOrganisationWhereInput(
-    var id: LongComparision? = null,
+    var id: LongComparison? = null,
     var name: TextComparison? = null,
     var website: TextComparison? = null,
     var archived: BooleanComparison? = null,

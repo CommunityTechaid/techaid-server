@@ -310,7 +310,8 @@ enum class KitType {
     TABLET,
     SMARTPHONE,
     ALLINONE,
-    COMMSDEVICE
+    COMMSDEVICE,
+    BROADBANDHUB
 }
 
 enum class KitStatus {
@@ -463,7 +464,8 @@ data class DeviceRequestItems(
     val allInOnes: Int? = 0,
     val desktops: Int? = 0,
     val other: Int? = 0,
-    val commsDevices: Int? = 0
+    val commsDevices: Int? = 0,
+    val broadbandHubs: Int? = 0
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

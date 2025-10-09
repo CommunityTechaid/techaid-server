@@ -9,9 +9,9 @@ import cta.app.KitType
 import cta.app.QKit
 import cta.app.QKitSubStatus
 import cta.graphql.BooleanComparison
-import cta.graphql.IntegerComparision
+import cta.graphql.IntegerComparison
 import cta.graphql.JsonComparison
-import cta.graphql.LongComparision
+import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
 import java.time.Instant
@@ -288,11 +288,11 @@ class KitSubStatusWhereInput(
 }
 
 class KitWhereInput(
-    var id: LongComparision? = null,
+    var id: LongComparison? = null,
     var location: TextComparison? = null,
     var status: KitStatusComparison? = null,
     var type: KitTypeComparison? = null,
-    var age: IntegerComparision? = null,
+    var age: IntegerComparison? = null,
     var model: TextComparison? = null,
     var archived: BooleanComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
@@ -303,12 +303,12 @@ class KitWhereInput(
     var make: TextComparison? = null,
     var deviceVersion: TextComparison? = null,
     var serialNo: TextComparison? = null,
-    var storageCapacity: IntegerComparision? = null,
+    var storageCapacity: IntegerComparison? = null,
     var typeOfStorage: KitStorageTypeComparison? = null,
-    var ramCapacity: IntegerComparision? = null,
+    var ramCapacity: IntegerComparison? = null,
     var cpuType: TextComparison? = null,
     var tpmVersion: TextComparison? = null,
-    var cpuCores: IntegerComparision? = null,
+    var cpuCores: IntegerComparison? = null,
     var subStatus: KitSubStatusWhereInput? = null,
     var AND: MutableList<KitWhereInput> = mutableListOf(),
     var OR: MutableList<KitWhereInput> = mutableListOf(),

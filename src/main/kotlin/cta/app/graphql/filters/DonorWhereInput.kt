@@ -4,14 +4,14 @@ import com.querydsl.core.BooleanBuilder
 import java.time.Instant
 import cta.app.QDonor
 import cta.graphql.BooleanComparison
-import cta.graphql.LongComparision
+import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
 
 
 
 class DonorWhereInput(
-    var id: LongComparision? = null,
+    var id: LongComparison? = null,
     var postCode: TextComparison? = null,
     var phoneNumber: TextComparison? = null,
     var name: TextComparison? = null,

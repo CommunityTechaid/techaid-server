@@ -8,15 +8,15 @@ import cta.app.KitStatus
 import cta.app.QDeviceRequest
 import cta.app.QDeviceRequestItems
 import cta.graphql.BooleanComparison
-import cta.graphql.LongComparision
+import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
-import cta.graphql.IntegerComparision
+import cta.graphql.IntegerComparison
 import cta.graphql.JsonComparison
 import java.time.Instant
 
 class DeviceRequestWhereInput(
-    var id: LongComparision? = null,
+    var id: LongComparison? = null,
     var deviceRequestItems: DeviceRequestItemsWhereInput? = null,
     var isSales: BooleanComparison? = null,
     var clientRef: TextComparison? = null,
@@ -124,12 +124,13 @@ class DeviceRequestStatusComparison(
 }
 
 class DeviceRequestItemsWhereInput(
-    var phones: IntegerComparision? = null,
-    var tablets: IntegerComparision? = null,
-    var laptops: IntegerComparision? = null,
-    var allInOnes: IntegerComparision? = null,
-    var desktops: IntegerComparision? = null,
-    var commsDevices: IntegerComparision? = null,
+    var phones: IntegerComparison? = null,
+    var tablets: IntegerComparison? = null,
+    var laptops: IntegerComparison? = null,
+    var allInOnes: IntegerComparison? = null,
+    var desktops: IntegerComparison? = null,
+    var commsDevices: IntegerComparison? = null,
+    var broadbandHubs: IntegerComparison? = null,
     var AND: MutableList<DeviceRequestItemsWhereInput> = mutableListOf(),
     var OR: MutableList<DeviceRequestItemsWhereInput> = mutableListOf(),
     var NOT: MutableList<DeviceRequestItemsWhereInput> = mutableListOf()
@@ -143,6 +144,7 @@ class DeviceRequestItemsWhereInput(
         allInOnes?.let { builder.and(it.build(entity.allInOnes)) }
         desktops?.let { builder.and(it.build(entity.desktops)) }
         commsDevices?.let { builder.and(it.build(entity.commsDevices)) }
+        broadbandHubs?.let { builder.and(it.build(entity.broadbandHubs)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))

@@ -50,7 +50,7 @@ open class NumberComparison<T>(
      */
     var _nin: MutableList<T>? = null,
     /**
-     * Matches value by text comparision
+     * Matches value by text comparison
      */
     var _like: String? = null,
     /**
@@ -92,7 +92,7 @@ open class NumberComparison<T>(
 /**
  * Comparison class for integers
  */
-class IntegerComparision(
+class IntegerComparison(
     _eq: Int? = null,
     _gt: Int? = null,
     _gte: Int? = null,
@@ -110,7 +110,7 @@ class IntegerComparision(
 /**
  * Comparison class for Long
  */
-class LongComparision(
+class LongComparison(
     _eq: Long? = null,
     _gt: Long? = null,
     _gte: Long? = null,
@@ -128,7 +128,7 @@ class LongComparision(
 /**
  * Comparison class for BigDecimal
  */
-class BigDecimalComparision(
+class BigDecimalComparison(
     _eq: BigDecimal? = null,
     _gt: BigDecimal? = null,
     _gte: BigDecimal? = null,
@@ -218,7 +218,7 @@ class TextComparison(
     /**
      * Matches by converting the value to long and comparing
      */
-    var _number: LongComparision? = null
+    var _number: LongComparison? = null
 ) {
     /**
      * Returns a filter for the specified [path]
@@ -430,11 +430,11 @@ class BooleanComparison(
 
 class JsonComparison(
     var key: String,
-    var _int: IntegerComparision? = null,
-    var _long: LongComparision? = null,
+    var _int: IntegerComparison? = null,
+    var _long: LongComparison? = null,
     var _text: TextComparison? = null,
     var _bool: BooleanComparison? = null,
-    var _length: IntegerComparision? = null,
+    var _length: IntegerComparison? = null,
     var _in: MutableList<Any>? = null,
     var _nin: MutableList<Any>? = null
 ) {

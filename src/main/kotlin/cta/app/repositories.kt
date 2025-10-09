@@ -60,6 +60,7 @@ interface RequestCount {
     val desktops: Long
     val other: Long
     val commsDevices: Long
+    val broadbandHubs: Long
 }
 interface DeviceRequestRepository:
     JpaRepository<DeviceRequest, Long>,
@@ -73,7 +74,8 @@ interface DeviceRequestRepository:
             coalesce(sum(src.allInOnes),0) AS allInOnes,
             coalesce(sum(src.desktops),0) AS desktops,
             coalesce(sum(src.other),0) AS other,
-            coalesce(sum(src.commsDevices),0) AS commsDevices
+            coalesce(sum(src.commsDevices),0) AS commsDevices,
+            coalesce(sum(src.broadbandHubs),0) AS broadbandHubs
         FROM (
             SELECT 
                 id,
@@ -83,7 +85,8 @@ interface DeviceRequestRepository:
                 coalesce(all_in_ones, 0) as allInOnes,
                 coalesce(desktops, 0) as desktops,
                 coalesce(other, 0) as other,
-                coalesce(comms_devices, 0) as commsDevices 
+                coalesce(comms_devices, 0) as commsDevices,
+                coalesce(broadband_hubs, 0) as broadbandHubs 
             FROM device_requests dr
             WHERE dr.status not in ('REQUEST_COMPLETED','REQUEST_DECLINED','REQUEST_CANCELLED') 
         ) AS src

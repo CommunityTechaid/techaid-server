@@ -73,7 +73,7 @@ input LongComparison {
 }
 
 "BigDecimal comparison filter"
-input BigDecimalComparision {
+input BigDecimalComparison {
     "Matches values that are equal to"
     _eq: BigDecimal
     "Matches values that are greater than"
