@@ -86,6 +86,7 @@ input DeviceRequestItemsWhereInput {
    desktops: IntegerComparison
    commsDevices: IntegerComparison
    broadbandHubs: IntegerComparison
+   other: IntegerComparison
    filters: [JsonComparison!]
    AND: [DeviceRequestItemsWhereInput]
    OR: [DeviceRequestItemsWhereInput]
