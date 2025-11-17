@@ -246,6 +246,7 @@ class Kit(
     var tpmVersion: String? = null,
     var cpuCores: Int? = null,
     var batteryHealth: Int? = null,
+    var lotId: String? = null,
     @Embedded
     var subStatus: KitSubStatus = KitSubStatus()
 ) : BaseEntity() {

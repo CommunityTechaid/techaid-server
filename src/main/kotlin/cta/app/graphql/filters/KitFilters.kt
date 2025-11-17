@@ -309,6 +309,7 @@ class KitWhereInput(
     var cpuType: TextComparison? = null,
     var tpmVersion: TextComparison? = null,
     var cpuCores: IntegerComparison? = null,
+    var lotId: TextComparison? = null,
     var subStatus: KitSubStatusWhereInput? = null,
     var AND: MutableList<KitWhereInput> = mutableListOf(),
     var OR: MutableList<KitWhereInput> = mutableListOf(),
@@ -338,6 +339,7 @@ class KitWhereInput(
         cpuType?.let {builder.and(it.build(entity.cpuType))}
         tpmVersion?.let {builder.and(it.build(entity.tpmVersion))}
         cpuCores?.let { builder.and(it.build(entity.cpuCores)) }
+        lotId?.let { builder.and(it.build(entity.lotId)) }
         subStatus?.let { builder.and(it.build(entity.subStatus))}
         if (AND.isNotEmpty()) {
             AND.forEach {

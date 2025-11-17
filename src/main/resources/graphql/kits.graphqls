@@ -129,6 +129,7 @@ type Kit {
     tpmVersion: String,
     cpuCores: Int,
     batteryHealth: Int,
+    lotId: String,
     subStatus: KitSubStatus
 }
 
@@ -221,6 +222,7 @@ input KitWhereInput {
     cpuType: TextComparison
     tpmVersion: TextComparison
     cpuCores: IntegerComparison
+    lotId: TextComparison
     subStatus: KitSubStatusWhereInput
     AND: [KitWhereInput!]
     OR: [KitWhereInput!]
@@ -269,6 +271,7 @@ input CreateKitInput {
     tpmVersion: String
     cpuCores: Int
     batteryHealth: Int
+    lotId: String
     subStatus: KitSubStatusInput
 }
 
@@ -277,6 +280,7 @@ input QuickCreateKitInput {
     make: String
     model: String
     donorId: ID
+    lotId: String
 }
 
 
@@ -295,6 +299,7 @@ input AutoCreateKitInput {
     tpmVersion: String
     cpuCores: Int
     batteryHealth: Int
+    lotId: String
 }
 
 input AutoUpdateKitInput {
@@ -312,6 +317,7 @@ input AutoUpdateKitInput {
     tpmVersion: String,
     cpuCores: Int,
     batteryHealth: Int,
+    lotId: String,
     subStatus: KitSubStatusInput
 }
 
@@ -337,6 +343,7 @@ input UpdateKitInput {
     tpmVersion: String,
     cpuCores: Int,
     batteryHealth: Int,
+    lotId: String,
     subStatus: KitSubStatusInput
 }
 

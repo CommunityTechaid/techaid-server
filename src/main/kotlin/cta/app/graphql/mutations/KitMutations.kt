@@ -169,7 +169,8 @@ data class QuickCreateKitInput(
     val make: String = "",
     @get:NotBlank
     val model: String = "",
-    val donorId: Long?
+    val donorId: Long?,
+    val lotId: String? = null
 ){
 
     val entity by lazy {
@@ -178,6 +179,7 @@ data class QuickCreateKitInput(
             age = 0,
             make = make,
             model = model,
+            lotId = lotId,
             subStatus = KitSubStatus()
         )
         kit
@@ -204,7 +206,8 @@ data class CreateKitInput(
     val cpuType: String? = null,
     val tpmVersion: String? = null,
     val cpuCores: Int? = null,
-    val batteryHealth: Int? = null
+    val batteryHealth: Int? = null,
+    val lotId: String? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -221,7 +224,8 @@ data class CreateKitInput(
             cpuType = cpuType,
             tpmVersion = tpmVersion,
             cpuCores = cpuCores,
-            batteryHealth = batteryHealth
+            batteryHealth = batteryHealth,
+            lotId = lotId
         )
         //kit.attributes = attributes.apply(kit)
         kit
@@ -275,6 +279,7 @@ data class UpdateKitInput(
     val tpmVersion: String? = null,
     val cpuCores: Int? = null,
     val batteryHealth: Int? = null,
+    val lotId: String? = null,
     val subStatus: KitSubStatusInput = KitSubStatusInput()
 ) {
     fun apply(entity: Kit): Kit {
@@ -296,6 +301,7 @@ data class UpdateKitInput(
             tpmVersion = self.tpmVersion ?: tpmVersion
             cpuCores = self.cpuCores ?: cpuCores
             batteryHealth = self.batteryHealth ?: batteryHealth
+            lotId = self.lotId ?: lotId
             subStatus = self.subStatus.apply(entity)
         }
     }
@@ -316,7 +322,8 @@ data class AutoCreateKitInput(
     val cpuType: String? = null,
     val tpmVersion: String? = null,
     val cpuCores: Int? = null,
-    val batteryHealth: Int? = null
+    val batteryHealth: Int? = null,
+    val lotId: String? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -334,7 +341,8 @@ data class AutoCreateKitInput(
             cpuCores = cpuCores,
             age = 0,
             location = "",
-            batteryHealth = batteryHealth
+            batteryHealth = batteryHealth,
+            lotId = lotId
         )
         kit
     }
@@ -355,6 +363,7 @@ data class AutoUpdateKitInput(
     val tpmVersion: String?,
     val cpuCores: Int?,
     val batteryHealth: Int?,
+    val lotId: String?,
     val subStatus: KitSubStatusInput = KitSubStatusInput()
 ) {
     fun apply(entity: Kit): Kit {
@@ -373,6 +382,7 @@ data class AutoUpdateKitInput(
             tpmVersion = self.tpmVersion ?: tpmVersion
             cpuCores = self.cpuCores ?: cpuCores
             batteryHealth = self.batteryHealth ?: batteryHealth
+            lotId = self.lotId ?: lotId
             subStatus = self.subStatus.apply(entity)
         }
     }
