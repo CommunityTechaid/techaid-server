@@ -1,7 +1,7 @@
 package cta.app.services
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate

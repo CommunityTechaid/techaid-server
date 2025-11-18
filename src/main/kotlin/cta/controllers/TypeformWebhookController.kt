@@ -1,7 +1,7 @@
 package cta.controllers
 
 import cta.app.services.TypeformService
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.ok
 import org.springframework.stereotype.Controller

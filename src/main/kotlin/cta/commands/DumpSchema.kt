@@ -3,7 +3,7 @@ package cta.commands
 import jakarta.activation.DataSource
 import java.util.EnumSet
 import java.util.concurrent.Callable
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.hibernate.boot.MetadataSources
 import org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder

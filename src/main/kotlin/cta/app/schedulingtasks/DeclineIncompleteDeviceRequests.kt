@@ -1,7 +1,7 @@
 package cta.app.schedulingtasks
 
 import cta.app.services.DeviceRequestService
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 

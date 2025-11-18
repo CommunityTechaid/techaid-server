@@ -2,7 +2,7 @@ package cta.commands
 
 import jakarta.annotation.PostConstruct
 import kotlin.system.exitProcess
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.ExitCodeGenerator
 import org.springframework.boot.SpringApplication

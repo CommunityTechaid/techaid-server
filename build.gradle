@@ -6,9 +6,9 @@ buildscript {
          * More likely to be limited by the version of the all-open plugin @
          * https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-maven-allopen
          */
-        kotlinVersion = '1.9.22' //Latest as of Feb. 2024 
+        kotlinVersion = '2.2.21' //Latest as of Nov. 2025
         // Versions @ https://github.com/spring-projects/spring-boot/releases
-        springBootVersion = '3.2.2' //Latest as of Feb. 2024
+        springBootVersion = '3.5.7' //Latest as of Nov. 2025
 
         graphQLVersion = '5.7.3'
     }
@@ -21,16 +21,16 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-noarg:${kotlinVersion}")
-        classpath("org.postgresql:postgresql:42.2.10")
+        classpath("org.postgresql:postgresql:42.7.5")
     }
 }
 
 plugins {
-    id 'org.springframework.boot' version '3.2.3'
-    id 'io.spring.dependency-management' version '1.1.4'
-    id 'com.netflix.dgs.codegen' version '6.0.3'
-    id 'org.jetbrains.kotlin.jvm' version '1.9.22'
-    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.22'
+    id 'org.springframework.boot' version '3.5.7'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.netflix.dgs.codegen' version '6.3.1'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.21'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.2.21'
 }
 
 
@@ -135,29 +135,22 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 
     /* Gmail */
-    implementation 'com.google.api-client:google-api-client-gson:2.3.0'
-    implementation 'com.google.api-client:google-api-client:1.35.0'
-    implementation 'com.google.apis:google-api-services-gmail:v1-rev20211108-1.32.1'
+    implementation 'com.google.api-client:google-api-client-gson:2.8.0'
+    implementation 'com.google.api-client:google-api-client:2.8.1'
+    implementation 'com.google.apis:google-api-services-gmail:v1-rev20241029-2.0.0'
     implementation 'com.sun.mail:jakarta.mail:2.0.1'
 
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
     implementation 'org.springframework.security:spring-security-config'
-    implementation 'com.auth0:auth0:1.15.0'
-    implementation 'com.auth0:mvc-auth-commons:1.+'
-    implementation 'com.auth0:java-jwt:3.10.3'
-
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5:3.0.4.RELEASE'
-
-    implementation 'org.webjars:bootstrap:4.2.1'
-    implementation 'org.webjars:font-awesome:4.7.0'
+    implementation 'com.auth0:auth0:2.26.0'
+    implementation 'com.auth0:java-jwt:4.5.0'
 
     /* Kotlin Dependencies */
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
     //implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk17'
-    implementation "io.github.microutils:kotlin-logging:1.6.26"
+    implementation "io.github.oshai:kotlin-logging-jvm:7.0.3"
 
     /* Graphql */
     implementation 'org.springframework.boot:spring-boot-starter-graphql'
@@ -175,11 +168,11 @@ dependencies {
 /*    implementation "com.graphql-java-kickstart:graphql-java-servlet:15.1.0"*/
 
     /* Utility Dependencies */
-    implementation "info.picocli:picocli-spring-boot-starter:4.0.2"
+    implementation "info.picocli:picocli-spring-boot-starter:4.7.6"
 
     /* Logging / Monitoring Dependencies */
-    implementation 'net.logstash.logback:logstash-logback-encoder:6.3'
-    implementation 'ch.qos.logback:logback-classic:1.4.14'
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
+    implementation 'ch.qos.logback:logback-classic:1.5.17'
     // implementation 'com.datadoghq:dd-trace-api:0.44.0'
     // implementation 'io.micrometer:micrometer-registry-datadog'
 
@@ -192,16 +185,17 @@ dependencies {
 
     /* Hibernate / DB specific dependencies */
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.flywaydb:flyway-core:9.22.3'
-    implementation 'com.vladmihalcea:hibernate-types-52:2.9.8'
+    implementation 'org.flywaydb:flyway-core:11.17.0'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.17.0'
+    implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
     implementation 'com.github.alexliesenfeld:querydsl-jpa-postgres-json:0.0.7'
-    implementation "com.querydsl:querydsl-jpa:5.0.0:jakarta"
-    kapt "com.querydsl:querydsl-apt:5.0.0:jakarta"
+    implementation "com.querydsl:querydsl-jpa:5.1.0:jakarta"
+    kapt "com.querydsl:querydsl-apt:5.1.0:jakarta"
     runtimeOnly 'org.postgresql:postgresql'
     /* Making use of embedded postgres db when running unit tests */
-    testImplementation 'io.zonky.test:embedded-database-spring-test:1.5.3'
+    testImplementation 'io.zonky.test:embedded-database-spring-test:2.6.1'
     /* Providing In-Memory H2 database as the default spring data-source */
-    testImplementation 'com.h2database:h2:1.4.200'
+    testImplementation 'com.h2database:h2:2.3.232'
     implementation "org.hibernate:hibernate-envers:${hibernate_version}"
 
     implementation("org.hibernate.tool:hibernate-tools-orm:${hibernate_version}")

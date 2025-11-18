@@ -4,7 +4,7 @@ import cta.auth.AuthService
 //import cta.auth.CorsFilter
 import cta.auth.SecretAuthenticationFilter
 import cta.auth.TokenAuthenticationFilter
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -75,19 +75,24 @@ class SecurityConfig(
     public fun filterChain(
         http: HttpSecurity,
         authenticationConfiguration: AuthenticationConfiguration): SecurityFilterChain {
-        http.csrf().disable()
-        http.headers().httpStrictTransportSecurity().disable()
+        http.csrf { it.disable() }
+        http.headers { headers ->
+            headers.httpStrictTransportSecurity { hsts ->
+                hsts.includeSubDomains(true)
+                    .maxAgeInSeconds(31536000) // 1 year
+            }
+        }
         //http.addFilterBefore(corsFilter, SessionManagementFilter::class.java)
         http.addFilterBefore(TokenAuthenticationFilter(authService), BasicAuthenticationFilter::class.java)
         http.addFilterBefore(secretAuthenticationFilter(authenticationConfiguration), UsernamePasswordAuthenticationFilter::class.java)
-        http.oauth2ResourceServer().jwt().jwtAuthenticationConverter(Auth0TokenConverter())
-        http.authorizeRequests()
-            .anyRequest().permitAll()
-            .and()
-            .formLogin()
-            .loginPage("/login")
-            .defaultSuccessUrl("/login", true)
-            .failureUrl("/login?error")
+        http.oauth2ResourceServer { oauth2 ->
+            oauth2.jwt { jwt ->
+                jwt.jwtAuthenticationConverter(Auth0TokenConverter())
+            }
+        }
+        http.authorizeHttpRequests { authorize ->
+            authorize.anyRequest().permitAll()
+        }
         return http.build()
     }
 }
