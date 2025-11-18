@@ -1,0 +1,27 @@
+query KitsConnection($page: PaginationInput, $where: KitWhereInput) {
+    kitsConnection(page: $page, where: $where) {
+        content {
+            id
+            model
+            type
+            status
+            location
+            age
+            createdAt
+            updatedAt
+            donor {
+                id
+                name
+                email
+            }
+        }
+        totalElements
+        totalPages
+        size
+        number
+        first
+        last
+        hasNext
+        hasPrevious
+    }
+}

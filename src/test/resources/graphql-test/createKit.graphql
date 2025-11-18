@@ -1,0 +1,15 @@
+mutation CreateKit($data: CreateKitInput!) {
+    createKit(data: $data) {
+        id
+        model
+        type
+        status
+        location
+        age
+        createdAt
+        donor {
+            id
+            name
+        }
+    }
+}
