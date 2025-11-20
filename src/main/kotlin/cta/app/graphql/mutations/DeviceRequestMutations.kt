@@ -20,6 +20,7 @@ import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
 
 import jakarta.persistence.EntityNotFoundException
+import java.time.Instant
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 import org.springframework.graphql.data.method.annotation.Argument
@@ -94,7 +95,8 @@ class DeviceRequestMutations(
             borough = data.borough ?: "",
             details = data.details,
             deviceRequestNeeds = data.deviceRequestNeeds?.entity,
-            correlationId = generateCorrelationId()
+            correlationId = generateCorrelationId(),
+            collectionDate = data.collectionDate?.let { Instant.parse(it) }
         )
 
         return deviceRequests.save(deviceRequest);
@@ -161,7 +163,8 @@ data class CreateDeviceRequestInput(
     var clientRef: String,
     var borough: String?,
     var details: String,
-    var deviceRequestNeeds: DeviceRequestNeedsInput? = null
+    var deviceRequestNeeds: DeviceRequestNeedsInput? = null,
+    var collectionDate: String? = null
 ){
 }
 
@@ -215,7 +218,8 @@ data class UpdateDeviceRequestInput(
     val borough: String?,
     val details: String,
     val deviceRequestNote: DeviceRequestNoteInput? = null,
-    val deviceRequestNeeds: DeviceRequestNeedsInput? = null
+    val deviceRequestNeeds: DeviceRequestNeedsInput? = null,
+    val collectionDate: String? = null
 ){
     fun apply(entity: DeviceRequest): DeviceRequest {
         val self = this
@@ -227,6 +231,7 @@ data class UpdateDeviceRequestInput(
             borough = self.borough ?: entity.borough
             details = self.details
             deviceRequestNeeds = self.deviceRequestNeeds?.entity ?: entity.deviceRequestNeeds
+            collectionDate = self.collectionDate?.let { Instant.parse(it) } ?: entity.collectionDate
         }
     }
 }

@@ -531,8 +531,9 @@ class DeviceRequest(
         cascade = [CascadeType.ALL],
         orphanRemoval = false
     )
-    var kits: MutableSet<Kit> = mutableSetOf()
-    
+    var kits: MutableSet<Kit> = mutableSetOf(),
+    var collectionDate: Instant? = null
+
 ){
     fun addKit(kit: Kit) {
         kits.add(kit)
