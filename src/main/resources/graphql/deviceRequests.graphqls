@@ -130,6 +130,7 @@ input DeviceRequestWhereInput {
     clientRef: TextComparison
     borough: TextComparison
     details: TextComparison
+    collectionDate: TimeComparison
     AND: [DeviceRequestWhereInput!]
     OR: [DeviceRequestWhereInput!]
     NOT: [DeviceRequestWhereInput!]
