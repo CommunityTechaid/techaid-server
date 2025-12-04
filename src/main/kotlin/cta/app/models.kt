@@ -209,6 +209,7 @@ class Kit(
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
+    var statusUpdatedAt: Instant = Instant.now(),
 
     @OneToMany(
         fetch = FetchType.LAZY,
@@ -247,6 +248,7 @@ class Kit(
     var cpuCores: Int? = null,
     var batteryHealth: Int? = null,
     var lotId: String? = null,
+    var locationCode: String? = null,
     @Embedded
     var subStatus: KitSubStatus = KitSubStatus()
 ) : BaseEntity() {

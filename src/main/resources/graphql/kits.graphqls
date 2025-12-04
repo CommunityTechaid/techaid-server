@@ -112,6 +112,7 @@ type Kit {
     location: String
     createdAt: String
     updatedAt: String
+    statusUpdatedAt: String
     archived: Boolean
     age: Int
     attributes: KitAttributes!
@@ -130,6 +131,7 @@ type Kit {
     cpuCores: Int,
     batteryHealth: Int,
     lotId: String,
+    locationCode: String,
     subStatus: KitSubStatus
 }
 
@@ -209,6 +211,7 @@ input KitWhereInput {
     model: TextComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
+    statusUpdatedAt: TimeComparison
     archived: BooleanComparison
     attributes: KitAttributesWhereInput
     donor: DonorWhereInput
@@ -223,6 +226,7 @@ input KitWhereInput {
     tpmVersion: TextComparison
     cpuCores: IntegerComparison
     lotId: TextComparison
+    locationCode: TextComparison
     subStatus: KitSubStatusWhereInput
     AND: [KitWhereInput!]
     OR: [KitWhereInput!]
@@ -272,6 +276,7 @@ input CreateKitInput {
     cpuCores: Int
     batteryHealth: Int
     lotId: String
+    locationCode: String
     subStatus: KitSubStatusInput
 }
 
@@ -281,6 +286,7 @@ input QuickCreateKitInput {
     model: String
     donorId: ID
     lotId: String
+    locationCode: String
 }
 
 
@@ -300,6 +306,7 @@ input AutoCreateKitInput {
     cpuCores: Int
     batteryHealth: Int
     lotId: String
+    locationCode: String
 }
 
 input AutoUpdateKitInput {
@@ -318,6 +325,7 @@ input AutoUpdateKitInput {
     cpuCores: Int,
     batteryHealth: Int,
     lotId: String,
+    locationCode: String,
     subStatus: KitSubStatusInput
 }
 
@@ -344,6 +352,7 @@ input UpdateKitInput {
     cpuCores: Int,
     batteryHealth: Int,
     lotId: String,
+    locationCode: String,
     subStatus: KitSubStatusInput
 }
 

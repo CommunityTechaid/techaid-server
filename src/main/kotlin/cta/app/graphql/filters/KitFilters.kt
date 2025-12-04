@@ -297,6 +297,7 @@ class KitWhereInput(
     var archived: BooleanComparison? = null,
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
+    var statusUpdatedAt: TimeComparison<Instant>? = null,
     var attributes: KitAttributesWhereInput? = null,
     var deviceRequest: DeviceRequestWhereInput? = null,
     var donor: DonorWhereInput? = null,
@@ -310,6 +311,7 @@ class KitWhereInput(
     var tpmVersion: TextComparison? = null,
     var cpuCores: IntegerComparison? = null,
     var lotId: TextComparison? = null,
+    var locationCode: TextComparison? = null,
     var subStatus: KitSubStatusWhereInput? = null,
     var AND: MutableList<KitWhereInput> = mutableListOf(),
     var OR: MutableList<KitWhereInput> = mutableListOf(),
@@ -326,6 +328,7 @@ class KitWhereInput(
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         archived?.let { builder.and(it.build(entity.archived)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
+        statusUpdatedAt?.let { builder.and(it.build(entity.statusUpdatedAt)) }
         //setting attributes to null to bypass it. KitAttributes is unused and will be removed soon.
         attributes?.let { null }
         deviceRequest?.let { builder.and(it.build(entity.deviceRequest)) }
@@ -340,6 +343,7 @@ class KitWhereInput(
         tpmVersion?.let {builder.and(it.build(entity.tpmVersion))}
         cpuCores?.let { builder.and(it.build(entity.cpuCores)) }
         lotId?.let { builder.and(it.build(entity.lotId)) }
+        locationCode?.let { builder.and(it.build(entity.locationCode)) }
         subStatus?.let { builder.and(it.build(entity.subStatus))}
         if (AND.isNotEmpty()) {
             AND.forEach {

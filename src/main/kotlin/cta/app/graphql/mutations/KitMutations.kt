@@ -87,6 +87,11 @@ class KitMutations(
 
         val previousStatus = entity.status
         return data.apply(entity).apply {
+            // Update statusUpdatedAt if status has changed
+            if (previousStatus != status) {
+                statusUpdatedAt = Instant.now()
+            }
+
             if (location != null && location.isNotBlank() && (coordinates == null || coordinates?.input != location)) {
                 coordinates = locationService.findCoordinates(location)
             }
@@ -170,7 +175,8 @@ data class QuickCreateKitInput(
     @get:NotBlank
     val model: String = "",
     val donorId: Long?,
-    val lotId: String? = null
+    val lotId: String? = null,
+    val locationCode: String? = null
 ){
 
     val entity by lazy {
@@ -180,6 +186,7 @@ data class QuickCreateKitInput(
             make = make,
             model = model,
             lotId = lotId,
+            locationCode = locationCode,
             subStatus = KitSubStatus()
         )
         kit
@@ -207,7 +214,8 @@ data class CreateKitInput(
     val tpmVersion: String? = null,
     val cpuCores: Int? = null,
     val batteryHealth: Int? = null,
-    val lotId: String? = null
+    val lotId: String? = null,
+    val locationCode: String? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -225,7 +233,8 @@ data class CreateKitInput(
             tpmVersion = tpmVersion,
             cpuCores = cpuCores,
             batteryHealth = batteryHealth,
-            lotId = lotId
+            lotId = lotId,
+            locationCode = locationCode
         )
         //kit.attributes = attributes.apply(kit)
         kit
@@ -280,6 +289,7 @@ data class UpdateKitInput(
     val cpuCores: Int? = null,
     val batteryHealth: Int? = null,
     val lotId: String? = null,
+    val locationCode: String? = null,
     val subStatus: KitSubStatusInput = KitSubStatusInput()
 ) {
     fun apply(entity: Kit): Kit {
@@ -302,6 +312,7 @@ data class UpdateKitInput(
             cpuCores = self.cpuCores ?: cpuCores
             batteryHealth = self.batteryHealth ?: batteryHealth
             lotId = self.lotId ?: lotId
+            locationCode = self.locationCode ?: locationCode
             subStatus = self.subStatus.apply(entity)
         }
     }
@@ -323,7 +334,8 @@ data class AutoCreateKitInput(
     val tpmVersion: String? = null,
     val cpuCores: Int? = null,
     val batteryHealth: Int? = null,
-    val lotId: String? = null
+    val lotId: String? = null,
+    val locationCode: String? = null
 ) {
     val entity by lazy {
         val kit = Kit(
@@ -342,7 +354,8 @@ data class AutoCreateKitInput(
             age = 0,
             location = "",
             batteryHealth = batteryHealth,
-            lotId = lotId
+            lotId = lotId,
+            locationCode = locationCode
         )
         kit
     }
@@ -364,14 +377,20 @@ data class AutoUpdateKitInput(
     val cpuCores: Int?,
     val batteryHealth: Int?,
     val lotId: String?,
+    val locationCode: String?,
     val subStatus: KitSubStatusInput = KitSubStatusInput()
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
         return entity.apply {
+            val previousStatus = status
             type = self.type ?: type ?: (type ?: KitType.OTHER)
             model = self.model ?: model
             status = self.status ?: status ?: (status ?: KitStatus.DONATION_NEW)
+            // Update statusUpdatedAt if status has changed
+            if (previousStatus != status) {
+                statusUpdatedAt = Instant.now()
+            }
             make = self.make  ?: make
             deviceVersion = self.deviceVersion ?: deviceVersion
             serialNo = self.serialNo ?: serialNo
@@ -383,6 +402,7 @@ data class AutoUpdateKitInput(
             cpuCores = self.cpuCores ?: cpuCores
             batteryHealth = self.batteryHealth ?: batteryHealth
             lotId = self.lotId ?: lotId
+            locationCode = self.locationCode ?: locationCode
             subStatus = self.subStatus.apply(entity)
         }
     }
