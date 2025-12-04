@@ -20,6 +20,11 @@ import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
 
 import jakarta.persistence.EntityNotFoundException
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 import org.springframework.graphql.data.method.annotation.Argument
@@ -34,11 +39,28 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 
 public class ExceededDeviceRequestLimitException : RuntimeException {
-    
+
     public constructor() : super("Exceeded device request limit") {
     }
 
     public constructor(message: String) : super(message) {
+    }
+}
+
+private fun parseCollectionDate(dateString: String?): Instant? {
+    if (dateString == null) return null
+
+    return try {
+        // Try parsing as full ISO 8601 instant (e.g., "2025-12-05T19:16:00Z")
+        Instant.parse(dateString)
+    } catch (e: DateTimeParseException) {
+        try {
+            // Try parsing as LocalDateTime and convert to UTC instant (e.g., "2025-12-05T19:16")
+            LocalDateTime.parse(dateString).toInstant(ZoneOffset.UTC)
+        } catch (e2: DateTimeParseException) {
+            // If both fail, throw the original error
+            throw IllegalArgumentException("Invalid date format: $dateString. Expected ISO 8601 format (e.g., '2025-12-05T19:16:00Z' or '2025-12-05T19:16')")
+        }
     }
 }
 
@@ -94,7 +116,8 @@ class DeviceRequestMutations(
             borough = data.borough ?: "",
             details = data.details,
             deviceRequestNeeds = data.deviceRequestNeeds?.entity,
-            correlationId = generateCorrelationId()
+            correlationId = generateCorrelationId(),
+            collectionDate = parseCollectionDate(data.collectionDate)
         )
 
         return deviceRequests.save(deviceRequest);
@@ -161,7 +184,8 @@ data class CreateDeviceRequestInput(
     var clientRef: String,
     var borough: String?,
     var details: String,
-    var deviceRequestNeeds: DeviceRequestNeedsInput? = null
+    var deviceRequestNeeds: DeviceRequestNeedsInput? = null,
+    var collectionDate: String? = null
 ){
 }
 
@@ -215,7 +239,8 @@ data class UpdateDeviceRequestInput(
     val borough: String?,
     val details: String,
     val deviceRequestNote: DeviceRequestNoteInput? = null,
-    val deviceRequestNeeds: DeviceRequestNeedsInput? = null
+    val deviceRequestNeeds: DeviceRequestNeedsInput? = null,
+    val collectionDate: String? = null
 ){
     fun apply(entity: DeviceRequest): DeviceRequest {
         val self = this
@@ -227,6 +252,7 @@ data class UpdateDeviceRequestInput(
             borough = self.borough ?: entity.borough
             details = self.details
             deviceRequestNeeds = self.deviceRequestNeeds?.entity ?: entity.deviceRequestNeeds
+            collectionDate = parseCollectionDate(self.collectionDate) ?: entity.collectionDate
         }
     }
 }

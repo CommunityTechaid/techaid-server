@@ -15,6 +15,7 @@ type DeviceRequest {
     kits: [Kit!]
     deviceRequestNeeds: DeviceRequestNeeds
     deviceRequestNotes: [DeviceRequestNote]
+    collectionDate: String
 }
 
 "A representation of a page result from a query"
@@ -101,6 +102,7 @@ input CreateDeviceRequestInput {
     borough: String,
     details: String
     deviceRequestNeeds: DeviceRequestNeedsInput
+    collectionDate: String
 
 }
 
@@ -115,6 +117,7 @@ input UpdateDeviceRequestInput {
     details: String
     deviceRequestNote: DeviceRequestNoteInput
     deviceRequestNeeds: DeviceRequestNeedsInput
+    collectionDate: String
 }
 
 
@@ -127,6 +130,7 @@ input DeviceRequestWhereInput {
     clientRef: TextComparison
     borough: TextComparison
     details: TextComparison
+    collectionDate: TimeComparison
     AND: [DeviceRequestWhereInput!]
     OR: [DeviceRequestWhereInput!]
     NOT: [DeviceRequestWhereInput!]

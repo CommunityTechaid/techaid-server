@@ -5,7 +5,7 @@ COPY ./src /app/src
 COPY ./build.gradle settings.gradle /app/
 RUN gradle -p /app clean build -x test
 
-FROM openjdk:17-alpine
+FROM eclipse-temurin:17-jre-alpine
 COPY --from=builder /app/build/libs/*.jar /app/app.jar
 RUN apk add --no-cache --update \
     openssl \
