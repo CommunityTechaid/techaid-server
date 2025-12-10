@@ -17,6 +17,7 @@ type DeviceRequest {
     deviceRequestNotes: [DeviceRequestNote]
     collectionDate: String
     collectionMethod: CollectionMethod
+    collectionContactName: String
 }
 
 "A representation of a page result from a query"
@@ -105,6 +106,7 @@ input CreateDeviceRequestInput {
     deviceRequestNeeds: DeviceRequestNeedsInput
     collectionDate: String
     collectionMethod: CollectionMethod
+    collectionContactName: String
 
 }
 
@@ -121,6 +123,7 @@ input UpdateDeviceRequestInput {
     deviceRequestNeeds: DeviceRequestNeedsInput
     collectionDate: String
     collectionMethod: CollectionMethod
+    collectionContactName: String
 }
 
 

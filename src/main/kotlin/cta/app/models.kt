@@ -540,7 +540,8 @@ class DeviceRequest(
     var kits: MutableSet<Kit> = mutableSetOf(),
     var collectionDate: Instant? = null,
     @Enumerated(EnumType.STRING)
-    var collectionMethod: CollectionMethod = CollectionMethod.UNKNOWN
+    var collectionMethod: CollectionMethod = CollectionMethod.UNKNOWN,
+    var collectionContactName: String? = null
 
 ){
     fun addKit(kit: Kit) {
