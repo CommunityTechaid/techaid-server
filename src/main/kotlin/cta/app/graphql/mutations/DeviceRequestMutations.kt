@@ -1,5 +1,6 @@
 package cta.app.graphql.mutations
 
+import cta.app.CollectionMethod
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestItems
 import cta.app.DeviceRequestNeeds
@@ -117,7 +118,9 @@ class DeviceRequestMutations(
             details = data.details,
             deviceRequestNeeds = data.deviceRequestNeeds?.entity,
             correlationId = generateCorrelationId(),
-            collectionDate = parseCollectionDate(data.collectionDate)
+            collectionDate = parseCollectionDate(data.collectionDate),
+            collectionMethod = data.collectionMethod ?: CollectionMethod.UNKNOWN,
+            collectionContactName = data.collectionContactName
         )
 
         return deviceRequests.save(deviceRequest);
@@ -185,7 +188,9 @@ data class CreateDeviceRequestInput(
     var borough: String?,
     var details: String,
     var deviceRequestNeeds: DeviceRequestNeedsInput? = null,
-    var collectionDate: String? = null
+    var collectionDate: String? = null,
+    var collectionMethod: CollectionMethod? = null,
+    var collectionContactName: String? = null
 ){
 }
 
@@ -240,7 +245,9 @@ data class UpdateDeviceRequestInput(
     val details: String,
     val deviceRequestNote: DeviceRequestNoteInput? = null,
     val deviceRequestNeeds: DeviceRequestNeedsInput? = null,
-    val collectionDate: String? = null
+    val collectionDate: String? = null,
+    val collectionMethod: CollectionMethod? = null,
+    val collectionContactName: String? = null
 ){
     fun apply(entity: DeviceRequest): DeviceRequest {
         val self = this
@@ -253,6 +260,8 @@ data class UpdateDeviceRequestInput(
             details = self.details
             deviceRequestNeeds = self.deviceRequestNeeds?.entity ?: entity.deviceRequestNeeds
             collectionDate = parseCollectionDate(self.collectionDate) ?: entity.collectionDate
+            collectionMethod = self.collectionMethod ?: entity.collectionMethod
+            collectionContactName = self.collectionContactName ?: entity.collectionContactName
         }
     }
 }

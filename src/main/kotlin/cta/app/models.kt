@@ -457,6 +457,12 @@ enum class DeviceRequestStatus {
     REQUEST_CANCELLED
 }
 
+enum class CollectionMethod {
+    COLLECTION,
+    DELIVERY,
+    UNKNOWN
+}
+
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Embeddable
@@ -535,7 +541,10 @@ class DeviceRequest(
         orphanRemoval = false
     )
     var kits: MutableSet<Kit> = mutableSetOf(),
-    var collectionDate: Instant? = null
+    var collectionDate: Instant? = null,
+    @Enumerated(EnumType.STRING)
+    var collectionMethod: CollectionMethod = CollectionMethod.UNKNOWN,
+    var collectionContactName: String? = null
 
 ){
     fun addKit(kit: Kit) {
