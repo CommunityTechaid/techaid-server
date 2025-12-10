@@ -16,6 +16,7 @@ type DeviceRequest {
     deviceRequestNeeds: DeviceRequestNeeds
     deviceRequestNotes: [DeviceRequestNote]
     collectionDate: String
+    collectionMethod: CollectionMethod
 }
 
 "A representation of a page result from a query"
@@ -103,6 +104,7 @@ input CreateDeviceRequestInput {
     details: String
     deviceRequestNeeds: DeviceRequestNeedsInput
     collectionDate: String
+    collectionMethod: CollectionMethod
 
 }
 
@@ -118,6 +120,7 @@ input UpdateDeviceRequestInput {
     deviceRequestNote: DeviceRequestNoteInput
     deviceRequestNeeds: DeviceRequestNeedsInput
     collectionDate: String
+    collectionMethod: CollectionMethod
 }
 
 
@@ -165,6 +168,12 @@ enum DeviceRequestStatus{
     REQUEST_COMPLETED,
     REQUEST_DECLINED,
     REQUEST_CANCELLED
+}
+
+enum CollectionMethod{
+    COLLECTION,
+    DELIVERY,
+    UNKNOWN
 }
 
 type RequestCount {
