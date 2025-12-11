@@ -1,0 +1,23 @@
+type DeviceRequestRevision {
+    entity: DeviceRequest
+    revision: CustomRevisionInfo,
+    type: String
+}
+
+type DeviceRequestRevisionPage {
+    content: [DeviceRequestRevision!]
+    totalPages: Int
+    totalElements: Int
+    size: Int
+    first: Boolean
+    last: Boolean
+    hasNext: Boolean
+    hasPrevious: Boolean
+    numberOfElements: Int
+    hasContent: Boolean
+    number: Int
+}
+
+extend type Query {
+    deviceRequestAudits(where: Long!): [DeviceRequestRevision!]
+}
