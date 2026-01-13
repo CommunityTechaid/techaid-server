@@ -544,8 +544,8 @@ class DeviceRequest(
     var collectionDate: Instant? = null,
     @Enumerated(EnumType.STRING)
     var collectionMethod: CollectionMethod? = null,
-    var collectionContactName: String? = null
-
+    var collectionContactName: String? = null,
+    var isPrepped: Boolean = false
 ){
     fun addKit(kit: Kit) {
         kits.add(kit)

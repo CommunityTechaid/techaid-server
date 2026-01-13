@@ -120,7 +120,8 @@ class DeviceRequestMutations(
             correlationId = generateCorrelationId(),
             collectionDate = parseCollectionDate(data.collectionDate),
             collectionMethod = data.collectionMethod ?: CollectionMethod.UNKNOWN,
-            collectionContactName = data.collectionContactName
+            collectionContactName = data.collectionContactName,
+            isPrepped = data.isPrepped ?: false
         )
 
         return deviceRequests.save(deviceRequest);
@@ -190,7 +191,8 @@ data class CreateDeviceRequestInput(
     var deviceRequestNeeds: DeviceRequestNeedsInput? = null,
     var collectionDate: String? = null,
     var collectionMethod: CollectionMethod? = null,
-    var collectionContactName: String? = null
+    var collectionContactName: String? = null,
+    var isPrepped: Boolean? = null
 ){
 }
 
@@ -247,7 +249,8 @@ data class UpdateDeviceRequestInput(
     val deviceRequestNeeds: DeviceRequestNeedsInput? = null,
     val collectionDate: String? = null,
     val collectionMethod: CollectionMethod? = null,
-    val collectionContactName: String? = null
+    val collectionContactName: String? = null,
+    val isPrepped: Boolean? = null
 ){
     fun apply(entity: DeviceRequest): DeviceRequest {
         val self = this
@@ -262,6 +265,7 @@ data class UpdateDeviceRequestInput(
             collectionDate = parseCollectionDate(self.collectionDate) ?: entity.collectionDate
             collectionMethod = self.collectionMethod ?: entity.collectionMethod
             collectionContactName = self.collectionContactName ?: entity.collectionContactName
+            isPrepped = self.isPrepped ?: entity.isPrepped
         }
     }
 }

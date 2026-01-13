@@ -18,6 +18,7 @@ type DeviceRequest {
     collectionDate: String
     collectionMethod: CollectionMethod
     collectionContactName: String
+    isPrepped: Boolean
 }
 
 "A representation of a page result from a query"
@@ -107,6 +108,7 @@ input CreateDeviceRequestInput {
     collectionDate: String
     collectionMethod: CollectionMethod
     collectionContactName: String
+    isPrepped: Boolean
 
 }
 
@@ -124,6 +126,7 @@ input UpdateDeviceRequestInput {
     collectionDate: String
     collectionMethod: CollectionMethod
     collectionContactName: String
+    isPrepped: Boolean
 }
 
 
