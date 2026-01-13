@@ -8,6 +8,7 @@ import cta.app.DeviceRequestNote
 import cta.app.DeviceRequestNoteRepository
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
+import cta.app.KitStatus
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.services.FilterService
 import cta.app.services.MailService
@@ -139,6 +140,8 @@ class DeviceRequestMutations(
         val entity = deviceRequests.findById(data.id).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.id}")
 
+        val previousStatus = entity.status
+
         return data.apply(entity).apply {
 
             if (data.referringOrganisationContactId != null) {
@@ -158,6 +161,18 @@ class DeviceRequestMutations(
                     deviceRequestNotes.add(deviceRequestNote)
                 }
 
+            }
+
+            // When status changes to REQUEST_COMPLETED, mark all non-completed kits as DISTRIBUTION_DELIVERED
+            if (data.status == DeviceRequestStatus.REQUEST_COMPLETED && previousStatus != DeviceRequestStatus.REQUEST_COMPLETED) {
+                val completedStatuses = setOf(
+                    KitStatus.DISTRIBUTION_DELIVERED,
+                    KitStatus.DISTRIBUTION_RECYCLED,
+                    KitStatus.DISTRIBUTION_REPAIR_RETURN
+                )
+                kits.filter { it.status !in completedStatuses }.forEach { kit ->
+                    kit.status = KitStatus.DISTRIBUTION_DELIVERED
+                }
             }
         }
 
