@@ -25,6 +25,7 @@ class DeviceRequestWhereInput(
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
     var referringOrganisationContact: ReferringOrganisationContactWhereInput? = null,
+    var isPrepped: BooleanComparison? = null,
     var AND: MutableList<DeviceRequestWhereInput> = mutableListOf(),
     var OR: MutableList<DeviceRequestWhereInput> = mutableListOf(),
     var NOT: MutableList<DeviceRequestWhereInput> = mutableListOf()
@@ -40,6 +41,7 @@ class DeviceRequestWhereInput(
         referringOrganisationContact?.let { builder.and(it.build(entity.referringOrganisationContact)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
+        isPrepped?.let { builder.and(it.build(entity.isPrepped)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))
