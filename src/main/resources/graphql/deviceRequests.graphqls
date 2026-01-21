@@ -133,6 +133,7 @@ input SynchronizeCollectionDataForDeviceRequestInput {
     id: ID!
     collectionContactName: String
     collectionDate: String
+    status: DeviceRequestStatus
 }
 
 

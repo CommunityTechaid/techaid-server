@@ -297,13 +297,15 @@ data class SynchronizeCollectionDataForDeviceRequestInput(
     @get:NotNull
     val id: Long,
     val collectionContactName: String?,
-    val collectionDate: String?
+    val collectionDate: String?,
+    val status: DeviceRequestStatus?
 ) {
     fun apply(entity: DeviceRequest): DeviceRequest {
         val self = this
         return entity.apply {
             collectionContactName = self.collectionContactName ?: collectionContactName
             collectionDate = parseCollectionDate(self.collectionDate) ?: collectionDate
+            status = self.status ?: status
         }
     }
 }
