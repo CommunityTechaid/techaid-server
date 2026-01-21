@@ -179,6 +179,14 @@ class DeviceRequestMutations(
 
     }
 
+    @MutationMapping
+    fun synchronizeCollectionDataForDeviceRequest(@Argument @Valid data: SynchronizeCollectionDataForDeviceRequestInput): DeviceRequest {
+        val entity = deviceRequests.findById(data.id).toNullable()
+            ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.id}")
+
+        return data.apply(entity)
+    }
+
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
     @MutationMapping
     fun deleteDeviceRequest(@Argument id: Long): Boolean {
@@ -281,6 +289,21 @@ data class UpdateDeviceRequestInput(
             collectionMethod = self.collectionMethod ?: entity.collectionMethod
             collectionContactName = self.collectionContactName ?: entity.collectionContactName
             isPrepped = self.isPrepped ?: entity.isPrepped
+        }
+    }
+}
+
+data class SynchronizeCollectionDataForDeviceRequestInput(
+    @get:NotNull
+    val id: Long,
+    val collectionContactName: String?,
+    val collectionDate: String?
+) {
+    fun apply(entity: DeviceRequest): DeviceRequest {
+        val self = this
+        return entity.apply {
+            collectionContactName = self.collectionContactName ?: collectionContactName
+            collectionDate = parseCollectionDate(self.collectionDate) ?: collectionDate
         }
     }
 }

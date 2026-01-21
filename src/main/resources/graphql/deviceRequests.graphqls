@@ -129,6 +129,12 @@ input UpdateDeviceRequestInput {
     isPrepped: Boolean
 }
 
+input SynchronizeCollectionDataForDeviceRequestInput {
+    id: ID!
+    collectionContactName: String
+    collectionDate: String
+}
+
 
 input DeviceRequestWhereInput {
     id: LongComparison
@@ -207,4 +213,5 @@ extend type Mutation {
     createDeviceRequest(data: CreateDeviceRequestInput!) : DeviceRequest!
     updateDeviceRequest(data: UpdateDeviceRequestInput!): DeviceRequest!
     deleteDeviceRequest(id: ID!): Boolean
+    synchronizeCollectionDataForDeviceRequest(data: SynchronizeCollectionDataForDeviceRequestInput!): DeviceRequest!
 }
