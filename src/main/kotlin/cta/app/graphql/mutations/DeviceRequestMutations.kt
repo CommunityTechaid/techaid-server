@@ -298,7 +298,8 @@ data class SynchronizeCollectionDataForDeviceRequestInput(
     val id: Long,
     val collectionContactName: String?,
     val collectionDate: String?,
-    val status: DeviceRequestStatus?
+    val status: DeviceRequestStatus?,
+    val collectionMethod: CollectionMethod?
 ) {
     fun apply(entity: DeviceRequest): DeviceRequest {
         val self = this
@@ -306,6 +307,7 @@ data class SynchronizeCollectionDataForDeviceRequestInput(
             collectionContactName = self.collectionContactName ?: collectionContactName
             collectionDate = parseCollectionDate(self.collectionDate) ?: collectionDate
             status = self.status ?: status
+            collectionMethod = self.collectionMethod ?: collectionMethod
         }
     }
 }

@@ -134,6 +134,7 @@ input SynchronizeCollectionDataForDeviceRequestInput {
     collectionContactName: String
     collectionDate: String
     status: DeviceRequestStatus
+    collectionMethod: CollectionMethod
 }
 
 
