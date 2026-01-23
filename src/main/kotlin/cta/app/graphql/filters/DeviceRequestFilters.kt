@@ -3,6 +3,7 @@ package cta.app.graphql.filters
 import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.EnumPath
+import cta.app.CollectionMethod
 import cta.app.DeviceRequestStatus
 import cta.app.KitStatus
 import cta.app.QDeviceRequest
@@ -25,6 +26,7 @@ class DeviceRequestWhereInput(
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
     var collectionDate: TimeComparison<Instant>? = null,
+    var collectionMethod: CollectionMethodComparison? = null,
     var referringOrganisationContact: ReferringOrganisationContactWhereInput? = null,
     var isPrepped: BooleanComparison? = null,
     var AND: MutableList<DeviceRequestWhereInput> = mutableListOf(),
@@ -43,6 +45,7 @@ class DeviceRequestWhereInput(
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         collectionDate?.let { builder.and(it.build(entity.collectionDate)) }
+        collectionMethod?.let { builder.and(it.build(entity.collectionMethod)) }
         isPrepped?.let { builder.and(it.build(entity.isPrepped)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
@@ -121,6 +124,48 @@ class DeviceRequestStatusComparison(
         }
         _lt?.let { builder.and(path.lt(it)) }
         _lte?.let { builder.and(path.loe(it)) }
+        _neq?.let { builder.and(path.ne(it)) }
+        _nin?.let { builder.and(path.notIn(it)) }
+        return builder
+    }
+}
+
+class CollectionMethodComparison(
+    /**
+     * Matches values equal to
+     */
+    var _eq: CollectionMethod? = null,
+    /**
+     * Matches values contained in the collection
+     */
+    var _in: MutableList<CollectionMethod>? = null,
+    /**
+     * Matches values that are null
+     */
+    var _is_null: Boolean? = null,
+    /**
+     * Matches values not equal to
+     */
+    var _neq: CollectionMethod? = null,
+    /**
+     * Matches values not in the collection
+     */
+    var _nin: MutableList<CollectionMethod>? = null
+) {
+    /**
+     * Returns a filter for the specified [path]
+     */
+    fun build(path: EnumPath<CollectionMethod>): BooleanBuilder {
+        val builder = BooleanBuilder()
+        _eq?.let { builder.and(path.eq(it)) }
+        _in?.let { builder.and(path.`in`(it)) }
+        _is_null?.let {
+            if (it) {
+                builder.and(path.isNull)
+            } else {
+                builder.and(path.isNotNull)
+            }
+        }
         _neq?.let { builder.and(path.ne(it)) }
         _nin?.let { builder.and(path.notIn(it)) }
         return builder
