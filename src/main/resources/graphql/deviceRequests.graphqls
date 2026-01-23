@@ -148,6 +148,7 @@ input DeviceRequestWhereInput {
     borough: TextComparison
     details: TextComparison
     collectionDate: TimeComparison
+    collectionMethod: CollectionMethodComparison
     isPrepped: BooleanComparison
     AND: [DeviceRequestWhereInput!]
     OR: [DeviceRequestWhereInput!]
@@ -173,6 +174,19 @@ input DeviceRequestStatusComparison{
     _neq: DeviceRequestStatus
     "Matches values that are not contained in the collection"
     _nin: [DeviceRequestStatus]
+}
+
+input CollectionMethodComparison{
+    "Matches values that are equal to"
+    _eq: CollectionMethod
+    "Matches values contained in the collection"
+    _in: [CollectionMethod]
+    "Matches values that are null/not null"
+    _is_null: Boolean
+    "Matches values that are not equal to"
+    _neq: CollectionMethod
+    "Matches values that are not contained in the collection"
+    _nin: [CollectionMethod]
 }
 
 enum DeviceRequestStatus{
