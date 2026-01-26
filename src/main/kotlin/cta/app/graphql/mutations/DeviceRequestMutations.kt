@@ -163,7 +163,7 @@ class DeviceRequestMutations(
 
             }
 
-            // When status changes to REQUEST_COMPLETED, mark all non-completed kits as DISTRIBUTION_DELIVERED
+            // When status changes to REQUEST_COMPLETED, mark all non-completed kits as DISTRIBUTION_DELIVERED and archived
             if (data.status == DeviceRequestStatus.REQUEST_COMPLETED && previousStatus != DeviceRequestStatus.REQUEST_COMPLETED) {
                 val completedStatuses = setOf(
                     KitStatus.DISTRIBUTION_DELIVERED,
@@ -172,6 +172,7 @@ class DeviceRequestMutations(
                 )
                 kits.filter { it.status !in completedStatuses }.forEach { kit ->
                     kit.status = KitStatus.DISTRIBUTION_DELIVERED
+                    kit.archived = true
                 }
             }
         }
