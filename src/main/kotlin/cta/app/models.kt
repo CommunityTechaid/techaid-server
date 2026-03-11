@@ -234,7 +234,7 @@ class Kit(
     var donor: Donor? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_request_id")
-    @NotAudited
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     var deviceRequest: DeviceRequest? = null,
     var make: String? = null,
     var deviceVersion: String? = null,
