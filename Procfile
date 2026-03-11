@@ -1,1 +1,1 @@
-web: java -jar /app/app.jar
+web: java -javaagent:/app/applicationinsights-agent.jar -jar /app/app.jar
