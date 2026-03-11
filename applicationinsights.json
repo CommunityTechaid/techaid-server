@@ -1,0 +1,19 @@
+{
+  "role": {
+    "name": "techaid-api"
+  },
+  "sampling": {
+    "percentage": 100
+  },
+  "instrumentation": {
+    "logging": {
+      "level": "WARN"
+    },
+    "micrometer": {
+      "enabled": true
+    }
+  },
+  "preview": {
+    "captureHttpServer4xxAsError": false
+  }
+}
