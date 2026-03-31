@@ -24,6 +24,7 @@ import graphql.schema.GraphQLTypeUtil
 import jakarta.persistence.EntityNotFoundException
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -57,11 +58,15 @@ private fun parseCollectionDate(dateString: String?): Instant? {
         Instant.parse(dateString)
     } catch (e: DateTimeParseException) {
         try {
-            // Try parsing as LocalDateTime and convert to UTC instant (e.g., "2025-12-05T19:16")
-            LocalDateTime.parse(dateString).toInstant(ZoneOffset.UTC)
+            // Try parsing as ISO 8601 with timezone offset (e.g., "2026-03-31T13:00:00+01:00" from Google Calendar)
+            OffsetDateTime.parse(dateString).toInstant()
         } catch (e2: DateTimeParseException) {
-            // If both fail, throw the original error
-            throw IllegalArgumentException("Invalid date format: $dateString. Expected ISO 8601 format (e.g., '2025-12-05T19:16:00Z' or '2025-12-05T19:16')")
+            try {
+                // Try parsing as LocalDateTime and convert to UTC instant (e.g., "2025-12-05T19:16")
+                LocalDateTime.parse(dateString).toInstant(ZoneOffset.UTC)
+            } catch (e3: DateTimeParseException) {
+                throw IllegalArgumentException("Invalid date format: $dateString. Expected ISO 8601 format (e.g., '2025-12-05T19:16:00Z', '2025-12-05T19:16:00+01:00', or '2025-12-05T19:16')")
+            }
         }
     }
 }
