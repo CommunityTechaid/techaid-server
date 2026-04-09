@@ -85,9 +85,23 @@ type Coordinates {
     input: String
 }
 
+"Build and version metadata for the running API instance"
+type BuildInfo {
+    "Application version from build.gradle"
+    version: String
+    "Artifact name"
+    name: String
+    "Timestamp when the artifact was built (ISO-8601)"
+    time: String
+    "Git commit hash the build was produced from"
+    commit: String
+}
+
 "Core type that holds all the queries for the api"
 type Query {
     location(address: String) : Coordinates
+    "Returns build and version information for the running API"
+    buildInfo: BuildInfo
 }
 
 type Mutation {

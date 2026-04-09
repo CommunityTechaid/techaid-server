@@ -3,8 +3,6 @@ name: CI/CD
 on:
   push:
     branches: [dev]
-  pull_request:
-    branches: [dev]
   # Manual promotion trigger — select an environment from the dropdown in the
   # GitHub Actions UI to deploy the current branch to that environment.
   workflow_dispatch:
@@ -42,48 +40,46 @@ jobs:
           name: test-reports
           path: build/reports/tests/
 
-  deploy:
+  build:
     needs: test
     runs-on: ubuntu-latest
-    # Auto-deploy on dev pushes; also runs when manually dispatched
+    permissions:
+      contents: read
+      packages: write
+    # Auto-build on dev pushes; also runs when manually dispatched
     if: (github.ref == 'refs/heads/dev' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
-    # Uses Development environment on auto-deploy, or the selected environment
-    # on manual dispatch. Secrets (DOKKU_SSH_PRIVATE_KEY, DOKKU_HOST) are
-    # scoped per-environment under Settings → Environments.
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'Development' }}
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Full history needed for the git push to Dokku
-          fetch-depth: 0
 
-      # Build the Docker image in CI to catch compilation failures before deploying.
-      # Dokku rebuilds from the Dockerfile on the server, but this step validates
-      # the build succeeds first.
+      - name: Lowercase image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      # Build the Docker image on GitHub Actions so the dev server doesn't
+      # need to compile the Gradle project or run Docker builds.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The image is pushed to GHCR with a :latest tag.  The Dokku server
+      # polls for new images on a 1-minute cron and deploys automatically
+      # when it detects a change — no SSH push required.
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: false
-          tags: techaid-api:${{ github.sha }}
-          # Cache Docker layers across runs to speed up the Gradle + JDK compilation step
+          push: true
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      # DOKKU_SSH_PRIVATE_KEY and DOKKU_HOST must be set as secrets on each
-      # GitHub environment (Development / Production) separately, so that each
-      # environment points at its own Dokku server.
-      - name: Deploy to Dokku
-        env:
-          DOKKU_SSH_PRIVATE_KEY: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
-          DOKKU_HOST: ${{ secrets.DOKKU_HOST }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$DOKKU_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$DOKKU_HOST" >> ~/.ssh/known_hosts
-          git push "dokku@${DOKKU_HOST}:api" HEAD:refs/heads/master

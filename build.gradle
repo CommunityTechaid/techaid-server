@@ -48,6 +48,18 @@ apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
+springBoot {
+    buildInfo {
+        properties {
+            additional = [
+                'git.commit': providers.provider {
+                    project.findProperty('gitCommit') ?: 'unknown'
+                }
+            ]
+        }
+    }
+}
+
 group = 'cta'
 version = '0.0.2-SNAPSHOT'
 sourceCompatibility = '17'
@@ -200,7 +212,7 @@ dependencies {
     kapt "com.querydsl:querydsl-apt:5.0.0:jakarta"
     runtimeOnly 'org.postgresql:postgresql'
     /* Making use of embedded postgres db when running unit tests */
-    testImplementation 'io.zonky.test:embedded-database-spring-test:1.5.3'
+    testImplementation 'io.zonky.test:embedded-database-spring-test:2.5.1'
     /* Providing In-Memory H2 database as the default spring data-source */
     testImplementation 'com.h2database:h2:1.4.200'
     implementation "org.hibernate:hibernate-envers:${hibernate_version}"
