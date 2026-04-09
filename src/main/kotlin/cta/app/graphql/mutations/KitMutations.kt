@@ -82,7 +82,6 @@ class KitMutations(
 
     @MutationMapping
     fun updateKit(@Argument @Valid data: UpdateKitInput): Kit {
-        val self = this
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
             ?: throw EntityNotFoundException("Unable to locate a kit with id: ${data.id}")
 
@@ -93,7 +92,7 @@ class KitMutations(
                 statusUpdatedAt = Instant.now()
             }
 
-            if (location != null && location.isNotBlank() && (coordinates == null || coordinates?.input != location)) {
+            if (location.isNotBlank() && (coordinates == null || coordinates?.input != location)) {
                 coordinates = locationService.findCoordinates(location)
             }
 
@@ -153,7 +152,6 @@ class KitMutations(
 
     @MutationMapping
     fun autoUpdateKit(@Argument @Valid data: AutoUpdateKitInput): Kit {
-        val self = this
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
             ?: throw RuntimeException("Unable to locate a kit with CTA id: ${data.id}")
 
@@ -298,7 +296,7 @@ data class UpdateKitInput(
         return entity.apply {
             type = self.type
             status = self.status
-            model = self.model ?: model
+            model = self.model
             age = self.age ?: age
             attributes = attributes
             archived = self.archived ?: archived
@@ -306,7 +304,7 @@ data class UpdateKitInput(
             deviceVersion = self.deviceVersion ?: deviceVersion
             serialNo = self.serialNo ?: serialNo
             storageCapacity = self.storageCapacity ?: storageCapacity
-            typeOfStorage = self.typeOfStorage ?: (typeOfStorage ?: KitStorageType.UNKNOWN)
+            typeOfStorage = self.typeOfStorage
             ramCapacity = self.ramCapacity ?: ramCapacity
             cpuType = self.cpuType ?: cpuType
             tpmVersion = self.tpmVersion ?: tpmVersion
@@ -385,9 +383,9 @@ data class AutoUpdateKitInput(
         val self = this
         return entity.apply {
             val previousStatus = status
-            type = self.type ?: type ?: (type ?: KitType.OTHER)
+            type = self.type ?: type
             model = self.model ?: model
-            status = self.status ?: status ?: (status ?: KitStatus.DONATION_NEW)
+            status = self.status ?: status
             // Update statusUpdatedAt if status has changed
             if (previousStatus != status) {
                 statusUpdatedAt = Instant.now()
@@ -396,7 +394,7 @@ data class AutoUpdateKitInput(
             deviceVersion = self.deviceVersion ?: deviceVersion
             serialNo = self.serialNo ?: serialNo
             storageCapacity = self.storageCapacity ?: storageCapacity
-            typeOfStorage = self.typeOfStorage ?: (typeOfStorage ?: KitStorageType.UNKNOWN)
+            typeOfStorage = self.typeOfStorage ?: typeOfStorage
             ramCapacity = self.ramCapacity ?: ramCapacity
             cpuType = self.cpuType ?: cpuType
             tpmVersion = self.tpmVersion ?: tpmVersion
@@ -421,10 +419,6 @@ data class KitSubStatusInput(
 {
     fun apply(entity: Kit): KitSubStatus {
         val self = this
-        if(entity.subStatus == null) {
-            entity.subStatus = KitSubStatus()
-        }
-
         return entity.subStatus.apply {
             installationOfOSFailed = self.installationOfOSFailed
             wipeFailed = self.wipeFailed

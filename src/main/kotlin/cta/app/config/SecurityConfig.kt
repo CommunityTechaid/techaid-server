@@ -75,19 +75,18 @@ class SecurityConfig(
     public fun filterChain(
         http: HttpSecurity,
         authenticationConfiguration: AuthenticationConfiguration): SecurityFilterChain {
-        http.csrf().disable()
-        http.headers().httpStrictTransportSecurity().disable()
+        http.csrf { it.disable() }
+        http.headers { headers -> headers.httpStrictTransportSecurity { it.disable() } }
         //http.addFilterBefore(corsFilter, SessionManagementFilter::class.java)
         http.addFilterBefore(TokenAuthenticationFilter(authService), BasicAuthenticationFilter::class.java)
         http.addFilterBefore(secretAuthenticationFilter(authenticationConfiguration), UsernamePasswordAuthenticationFilter::class.java)
-        http.oauth2ResourceServer().jwt().jwtAuthenticationConverter(Auth0TokenConverter())
-        http.authorizeRequests()
-            .anyRequest().permitAll()
-            .and()
-            .formLogin()
-            .loginPage("/login")
-            .defaultSuccessUrl("/login", true)
-            .failureUrl("/login?error")
+        http.oauth2ResourceServer { it.jwt { jwt -> jwt.jwtAuthenticationConverter(Auth0TokenConverter()) } }
+        http.authorizeHttpRequests { it.anyRequest().permitAll() }
+        http.formLogin { form ->
+            form.loginPage("/login")
+                .defaultSuccessUrl("/login", true)
+                .failureUrl("/login?error")
+        }
         return http.build()
     }
 }
