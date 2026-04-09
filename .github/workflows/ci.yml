@@ -1,0 +1,77 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    # Only deploy on pushes to master, not on pull requests
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history needed for the git push to Dokku
+          fetch-depth: 0
+
+      # Build the Docker image in CI to catch compilation failures before deploying.
+      # Dokku will rebuild from the Dockerfile on the server, but this step validates
+      # the build succeeds first.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: techaid-api:${{ github.sha }}
+          # Cache Docker layers across runs to speed up the Gradle + JDK compilation step
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Required secrets:
+      #   DOKKU_SSH_PRIVATE_KEY  - Private SSH key whose public key is registered with Dokku
+      #   DOKKU_HOST             - Hostname or IP of the Dokku server
+      - name: Deploy to Dokku
+        env:
+          DOKKU_SSH_PRIVATE_KEY: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
+          DOKKU_HOST: ${{ secrets.DOKKU_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DOKKU_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$DOKKU_HOST" >> ~/.ssh/known_hosts
+          git remote add dokku "ssh://dokku@${DOKKU_HOST}/api"
+          git push dokku HEAD:refs/heads/master

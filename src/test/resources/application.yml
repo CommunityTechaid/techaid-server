@@ -1,0 +1,9 @@
+auth0:
+  token-attribute: https://test.example.com
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://test.example.com/
