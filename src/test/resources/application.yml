@@ -1,5 +1,12 @@
 auth0:
   token-attribute: https://test.example.com
+  audience: ''
+  domain: ''
+  client-id: ''
+  client-secret: ''
+
+auth:
+  admin-secret: password
 
 spring:
   security:
@@ -7,3 +14,14 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: https://test.example.com/
+
+gmail:
+  client-id: ''
+  client-secret: ''
+  refresh-token: ''
+  address: test@example.com
+  enabled: false
+  bcc-address: test@example.com
+
+typeform:
+  key: ''
