@@ -14,11 +14,19 @@ RUN apk add --no-cache --update \
     tini \
     wget \
     tzdata
+
+# Download Application Insights Java agent
+# Agent version: https://github.com/microsoft/ApplicationInsights-Java/releases
+ARG AI_AGENT_VERSION=3.5.4
+RUN wget -q "https://github.com/microsoft/ApplicationInsights-Java/releases/download/${AI_AGENT_VERSION}/applicationinsights-agent-${AI_AGENT_VERSION}.jar" \
+    -O /app/applicationinsights-agent.jar
+
 ENV TZ=UTC
 RUN cp /usr/share/zoneinfo/UTC /etc/localtime
 WORKDIR /app
 #COPY ./CHECKS /app
 COPY ./Procfile /app
+COPY ./applicationinsights.json /app/
 # COPY ./DOKKU_SCALE /app
 ENTRYPOINT [ "/sbin/tini", "--"]
-CMD ["java", "-jar", "/app/app.jar"]
+CMD ["java", "-javaagent:/app/applicationinsights-agent.jar", "-jar", "/app/app.jar"]

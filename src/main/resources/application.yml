@@ -128,6 +128,7 @@ logging.level:
   com.alphasights: INFO
   org.apache.tomcat: WARN
   org.apache.catalina: WARN
+  org.apache.coyote: ERROR
   cta: DEBUG
   org.springframework.security: WARN
   org.hibernate.type: TRACE

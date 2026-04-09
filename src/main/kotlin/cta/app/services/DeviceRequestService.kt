@@ -75,7 +75,6 @@ class DeviceRequestService(
 </head>
 <body class="c5 doc-content">
 """;
-        val typeFormURL = "https://ghjngk6ao4g.typeform.com/to/TzlNC6kN";
         val emailBody = """
 Dear ${request.referringOrganisationContact.fullName} of ${request.referringOrganisationContact.referringOrganisation.name}<br>
 <br>
@@ -161,7 +160,6 @@ Best wishes <br>
 </head>
 <body class="c5 doc-content">
 """;
-        val typeFormURL = "https://ghjngk6ao4g.typeform.com/to/TzlNC6kN";
         val emailBody = """
 Dear ${request.referringOrganisationContact.fullName} of ${request.referringOrganisationContact.referringOrganisation.name}<br>
 <br>

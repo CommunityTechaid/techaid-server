@@ -24,6 +24,7 @@ import graphql.schema.GraphQLTypeUtil
 import jakarta.persistence.EntityNotFoundException
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -57,11 +58,15 @@ private fun parseCollectionDate(dateString: String?): Instant? {
         Instant.parse(dateString)
     } catch (e: DateTimeParseException) {
         try {
-            // Try parsing as LocalDateTime and convert to UTC instant (e.g., "2025-12-05T19:16")
-            LocalDateTime.parse(dateString).toInstant(ZoneOffset.UTC)
+            // Try parsing as ISO 8601 with timezone offset (e.g., "2026-03-31T13:00:00+01:00" from Google Calendar)
+            OffsetDateTime.parse(dateString).toInstant()
         } catch (e2: DateTimeParseException) {
-            // If both fail, throw the original error
-            throw IllegalArgumentException("Invalid date format: $dateString. Expected ISO 8601 format (e.g., '2025-12-05T19:16:00Z' or '2025-12-05T19:16')")
+            try {
+                // Try parsing as LocalDateTime and convert to UTC instant (e.g., "2025-12-05T19:16")
+                LocalDateTime.parse(dateString).toInstant(ZoneOffset.UTC)
+            } catch (e3: DateTimeParseException) {
+                throw IllegalArgumentException("Invalid date format: $dateString. Expected ISO 8601 format (e.g., '2025-12-05T19:16:00Z', '2025-12-05T19:16:00+01:00', or '2025-12-05T19:16')")
+            }
         }
     }
 }
@@ -163,7 +168,7 @@ class DeviceRequestMutations(
 
             }
 
-            // When status changes to REQUEST_COMPLETED, mark all non-completed kits as DISTRIBUTION_DELIVERED
+            // When status changes to REQUEST_COMPLETED, mark all non-completed kits as DISTRIBUTION_DELIVERED and archived
             if (data.status == DeviceRequestStatus.REQUEST_COMPLETED && previousStatus != DeviceRequestStatus.REQUEST_COMPLETED) {
                 val completedStatuses = setOf(
                     KitStatus.DISTRIBUTION_DELIVERED,
@@ -172,6 +177,7 @@ class DeviceRequestMutations(
                 )
                 kits.filter { it.status !in completedStatuses }.forEach { kit ->
                     kit.status = KitStatus.DISTRIBUTION_DELIVERED
+                    kit.archived = true
                 }
             }
         }
@@ -298,7 +304,8 @@ data class SynchronizeCollectionDataForDeviceRequestInput(
     val id: Long,
     val collectionContactName: String?,
     val collectionDate: String?,
-    val status: DeviceRequestStatus?
+    val status: DeviceRequestStatus?,
+    val collectionMethod: CollectionMethod?
 ) {
     fun apply(entity: DeviceRequest): DeviceRequest {
         val self = this
@@ -306,6 +313,7 @@ data class SynchronizeCollectionDataForDeviceRequestInput(
             collectionContactName = self.collectionContactName ?: collectionContactName
             collectionDate = parseCollectionDate(self.collectionDate) ?: collectionDate
             status = self.status ?: status
+            collectionMethod = self.collectionMethod ?: collectionMethod
         }
     }
 }

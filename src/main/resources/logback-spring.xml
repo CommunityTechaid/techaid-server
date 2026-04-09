@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Preserve existing Spring Boot console logging for all app logs -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!--
+        Dedicated JSON appender for HTTP access logs.
+        Each request produces one JSON line on stdout containing all standard
+        access log fields (timestamp, method, path, status, IPs, sizes, duration).
+        Docker captures stdout, so Azure Monitor Agent / Log Analytics can ingest these
+        by collecting container logs from the Azure VM.
+        Identify access log lines in Log Analytics via: where logger_s == "cta.access"
+    -->
+    <appender name="ACCESS_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeCallerData>false</includeCallerData>
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <message>message</message>
+                <logger>logger</logger>
+                <level>level</level>
+                <thread>[ignore]</thread>
+                <version>[ignore]</version>
+            </fieldNames>
+        </encoder>
+    </appender>
+
+    <!-- Access logger: JSON only, not forwarded to root (avoids duplicate lines) -->
+    <logger name="cta.access" level="INFO" additivity="false">
+        <appender-ref ref="ACCESS_JSON"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

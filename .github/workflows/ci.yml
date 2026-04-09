@@ -1,0 +1,89 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+  # Manual promotion trigger — select an environment from the dropdown in the
+  # GitHub Actions UI to deploy the current branch to that environment.
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'Production'
+        type: environment
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    # Auto-deploy on dev pushes; also runs when manually dispatched
+    if: (github.ref == 'refs/heads/dev' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
+    # Uses Development environment on auto-deploy, or the selected environment
+    # on manual dispatch. Secrets (DOKKU_SSH_PRIVATE_KEY, DOKKU_HOST) are
+    # scoped per-environment under Settings → Environments.
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'Development' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history needed for the git push to Dokku
+          fetch-depth: 0
+
+      # Build the Docker image in CI to catch compilation failures before deploying.
+      # Dokku rebuilds from the Dockerfile on the server, but this step validates
+      # the build succeeds first.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: techaid-api:${{ github.sha }}
+          # Cache Docker layers across runs to speed up the Gradle + JDK compilation step
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # DOKKU_SSH_PRIVATE_KEY and DOKKU_HOST must be set as secrets on each
+      # GitHub environment (Development / Production) separately, so that each
+      # environment points at its own Dokku server.
+      - name: Deploy to Dokku
+        env:
+          DOKKU_SSH_PRIVATE_KEY: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
+          DOKKU_HOST: ${{ secrets.DOKKU_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DOKKU_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$DOKKU_HOST" >> ~/.ssh/known_hosts
+          git push "dokku@${DOKKU_HOST}:api" HEAD:refs/heads/master

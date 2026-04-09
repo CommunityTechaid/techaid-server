@@ -27,7 +27,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.annotations.OrderBy
+import org.hibernate.annotations.SQLOrder
 import org.hibernate.annotations.UpdateTimestamp
 import org.hibernate.envers.AuditTable
 import org.hibernate.envers.Audited
@@ -217,7 +217,7 @@ class Kit(
         orphanRemoval = true,
         mappedBy = "kit"
     )
-    @OrderBy(clause = "updatedAt DESC")
+    @SQLOrder("updatedAt DESC")
     var notes: MutableSet<Note> = mutableSetOf(),
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -234,7 +234,7 @@ class Kit(
     var donor: Donor? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_request_id")
-    @NotAudited
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     var deviceRequest: DeviceRequest? = null,
     var make: String? = null,
     var deviceVersion: String? = null,
@@ -375,7 +375,7 @@ class ReferringOrganisation(
         orphanRemoval = true,
         mappedBy = "referringOrganisation"
     )
-    @OrderBy(clause = "updatedAt DESC")
+    @SQLOrder("updatedAt DESC")
     var referringOrganisationContacts: MutableSet<ReferringOrganisationContact> = mutableSetOf(),
     @NotAudited
     @OneToMany(
@@ -384,7 +384,7 @@ class ReferringOrganisation(
         orphanRemoval = true,
         mappedBy = "referringOrganisation"
     )
-    @OrderBy(clause = "updatedAt DESC")
+    @SQLOrder("updatedAt DESC")
     var referringOrganisationNotes: MutableSet<ReferringOrganisationNote> = mutableSetOf()
 ) {
     fun addContact(contact: ReferringOrganisationContact) {
@@ -437,7 +437,7 @@ class ReferringOrganisationContact(
         orphanRemoval = true,
         mappedBy = "referringOrganisationContact"
     )
-    @OrderBy(clause = "updatedAt DESC")
+    @SQLOrder("updatedAt DESC")
     var referringOrganisationContactNotes: MutableSet<ReferringOrganisationContactNote> = mutableSetOf()
 
 
@@ -532,7 +532,7 @@ class DeviceRequest(
         orphanRemoval = true,
         mappedBy = "deviceRequest"
     )
-    @OrderBy(clause = "updatedAt DESC")
+    @SQLOrder("updatedAt DESC")
     var deviceRequestNotes: MutableSet<DeviceRequestNote> = mutableSetOf(),
     @NotAudited
     @OneToMany(

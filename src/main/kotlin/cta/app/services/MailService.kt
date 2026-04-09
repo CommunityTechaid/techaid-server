@@ -1,12 +1,13 @@
 package cta.app.services
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
-import com.google.api.client.util.Base64
 import com.google.api.services.gmail.Gmail
 import com.google.api.services.gmail.model.Message
+import com.google.auth.http.HttpCredentialsAdapter
+import com.google.auth.oauth2.UserCredentials
 import java.io.ByteArrayOutputStream
+import java.util.Base64
 import java.util.Properties
 import jakarta.mail.Session
 import jakarta.mail.internet.InternetAddress
@@ -35,15 +36,13 @@ class MailService {
     val gmail: Gmail by lazy {
         val jsonFactory = GsonFactory.getDefaultInstance()
         val transport = GoogleNetHttpTransport.newTrustedTransport()
-        val credential = GoogleCredential.Builder()
-            .setJsonFactory(jsonFactory)
-            .setTransport(transport)
-            .setClientSecrets(clientId, clientSecret)
-            .build()
+        val credentials = UserCredentials.newBuilder()
+            .setClientId(clientId)
+            .setClientSecret(clientSecret)
             .setRefreshToken(refreshToken)
+            .build()
         logger.info("MailService startup. Enabled: $emailEnabled FromAddress: $address")
-        credential.refreshToken()
-        Gmail.Builder(transport, jsonFactory, credential).setApplicationName("Community Techaid").build()
+        Gmail.Builder(transport, jsonFactory, HttpCredentialsAdapter(credentials)).setApplicationName("Community Techaid").build()
     }
 
     fun sendMessage(message: MimeMessage): Message = sendMessage(createMessageWithEmail(message))    
@@ -76,7 +75,7 @@ fun createMessageWithEmail(emailContent: MimeMessage): Message {
     val buffer = ByteArrayOutputStream()
     emailContent.writeTo(buffer)
     val bytes = buffer.toByteArray()
-    val encodedEmail = Base64.encodeBase64URLSafeString(bytes)
+    val encodedEmail = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     val message = Message()
     message.raw = encodedEmail
     return message
