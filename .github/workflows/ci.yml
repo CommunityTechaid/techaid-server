@@ -43,6 +43,9 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     # Auto-deploy on dev pushes; also runs when manually dispatched
     if: (github.ref == 'refs/heads/dev' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     # Uses Development environment on auto-deploy, or the selected environment
