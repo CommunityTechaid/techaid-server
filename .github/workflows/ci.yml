@@ -40,18 +40,14 @@ jobs:
           name: test-reports
           path: build/reports/tests/
 
-  deploy:
+  build:
     needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    # Auto-deploy on dev pushes; also runs when manually dispatched
+    # Auto-build on dev pushes; also runs when manually dispatched
     if: (github.ref == 'refs/heads/dev' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
-    # Uses Development environment on auto-deploy, or the selected environment
-    # on manual dispatch. Secrets (DOKKU_SSH_PRIVATE_KEY, DOKKU_HOST) are
-    # scoped per-environment under Settings → Environments.
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'Development' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -72,6 +68,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # The image is pushed to GHCR with a :latest tag.  The Dokku server
+      # polls for new images on a 1-minute cron and deploys automatically
+      # when it detects a change — no SSH push required.
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -80,48 +79,5 @@ jobs:
           tags: |
             ${{ steps.image.outputs.name }}:${{ github.sha }}
             ${{ steps.image.outputs.name }}:latest
-          # Cache Docker layers across runs to speed up the Gradle + JDK compilation step
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      # Deploy the pre-built image to Dokku via SSH.  This uses Dokku's
-      # `git:from-image` command so the server pulls the image instead of
-      # building from source, keeping load off the lightweight dev VM.
-      #
-      # Required secrets per GitHub environment (Development / Production):
-      #   DOKKU_SSH_PRIVATE_KEY – private key whose public half is in
-      #                           `dokku ssh-keys:list` on the server
-      #   DOKKU_HOST            – hostname or IP of the Dokku server
-      #
-      # Required one-time Dokku server setup:
-      #   dokku docker-options:add api deploy "--pull=always"
-      - name: Deploy to Dokku
-        env:
-          DOKKU_SSH_PRIVATE_KEY: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
-          DOKKU_HOST: ${{ secrets.DOKKU_HOST }}
-        run: |
-          # Fail loudly if secrets are missing
-          if [ -z "$DOKKU_SSH_PRIVATE_KEY" ]; then
-            echo "::error::DOKKU_SSH_PRIVATE_KEY is not set. Configure it in the GitHub environment secrets."
-            exit 1
-          fi
-          if [ -z "$DOKKU_HOST" ]; then
-            echo "::error::DOKKU_HOST is not set. Configure it in the GitHub environment secrets."
-            exit 1
-          fi
-
-          mkdir -p ~/.ssh
-          printf '%s\n' "$DOKKU_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-          echo "::group::ssh-keyscan"
-          ssh-keyscan -H "$DOKKU_HOST" >> ~/.ssh/known_hosts
-          echo "::endgroup::"
-
-          # Verify SSH connectivity before attempting deploy
-          echo "Testing SSH connection..."
-          ssh -v -o ConnectTimeout=10 "dokku@${DOKKU_HOST}" version
-
-          IMAGE="${{ steps.image.outputs.name }}:${{ github.sha }}"
-          echo "Deploying image: $IMAGE"
-          ssh "dokku@${DOKKU_HOST}" git:from-image api "$IMAGE"
