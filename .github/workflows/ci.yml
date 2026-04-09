@@ -111,9 +111,16 @@ jobs:
           fi
 
           mkdir -p ~/.ssh
-          echo "$DOKKU_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          printf '%s\n' "$DOKKU_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$DOKKU_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          echo "::group::ssh-keyscan"
+          ssh-keyscan -H "$DOKKU_HOST" >> ~/.ssh/known_hosts
+          echo "::endgroup::"
+
+          # Verify SSH connectivity before attempting deploy
+          echo "Testing SSH connection..."
+          ssh -v -o ConnectTimeout=10 "dokku@${DOKKU_HOST}" version
 
           IMAGE="${{ steps.image.outputs.name }}:${{ github.sha }}"
           echo "Deploying image: $IMAGE"
