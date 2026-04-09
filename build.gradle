@@ -48,6 +48,18 @@ apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
+springBoot {
+    buildInfo {
+        properties {
+            additional = [
+                'git.commit': providers.exec {
+                    commandLine 'git', 'rev-parse', '--short', 'HEAD'
+                }.standardOutput.asText.map { it.trim() }
+            ]
+        }
+    }
+}
+
 group = 'cta'
 version = '0.0.2-SNAPSHOT'
 sourceCompatibility = '17'
