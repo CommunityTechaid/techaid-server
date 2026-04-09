@@ -2,9 +2,18 @@ name: CI/CD
 
 on:
   push:
-    branches: [master]
+    branches: [dev]
   pull_request:
-    branches: [master]
+    branches: [dev]
+  # Manual promotion trigger — select an environment from the dropdown in the
+  # GitHub Actions UI to deploy the current branch to that environment.
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'Production'
+        type: environment
 
 jobs:
   test:
@@ -33,11 +42,15 @@ jobs:
           name: test-reports
           path: build/reports/tests/
 
-  build-and-deploy:
+  deploy:
     needs: test
     runs-on: ubuntu-latest
-    # Only deploy on pushes to master, not on pull requests
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    # Auto-deploy on dev pushes; also runs when manually dispatched
+    if: (github.ref == 'refs/heads/dev' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
+    # Uses Development environment on auto-deploy, or the selected environment
+    # on manual dispatch. Secrets (DOKKU_SSH_PRIVATE_KEY, DOKKU_HOST) are
+    # scoped per-environment under Settings → Environments.
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'Development' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +59,7 @@ jobs:
           fetch-depth: 0
 
       # Build the Docker image in CI to catch compilation failures before deploying.
-      # Dokku will rebuild from the Dockerfile on the server, but this step validates
+      # Dokku rebuilds from the Dockerfile on the server, but this step validates
       # the build succeeds first.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -61,9 +74,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Required secrets:
-      #   DOKKU_SSH_PRIVATE_KEY  - Private SSH key whose public key is registered with Dokku
-      #   DOKKU_HOST             - Hostname or IP of the Dokku server
+      # DOKKU_SSH_PRIVATE_KEY and DOKKU_HOST must be set as secrets on each
+      # GitHub environment (Development / Production) separately, so that each
+      # environment points at its own Dokku server.
       - name: Deploy to Dokku
         env:
           DOKKU_SSH_PRIVATE_KEY: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
@@ -73,5 +86,4 @@ jobs:
           echo "$DOKKU_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$DOKKU_HOST" >> ~/.ssh/known_hosts
-          git remote add dokku "ssh://dokku@${DOKKU_HOST}/api"
-          git push dokku HEAD:refs/heads/master
+          git push "dokku@${DOKKU_HOST}:api" HEAD:refs/heads/master
