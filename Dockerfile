@@ -1,9 +1,10 @@
 # NOTE: This is the production and uat version. Please use Dockerfile.dev for local development testing
-FROM gradle:8.6-jdk17 as builder
+FROM gradle:8.6-jdk17 AS builder
 USER root
+ARG GIT_COMMIT=unknown
 COPY ./src /app/src
 COPY ./build.gradle settings.gradle /app/
-RUN gradle -p /app clean build -x test
+RUN gradle -p /app clean build -x test -PgitCommit=${GIT_COMMIT}
 
 FROM eclipse-temurin:17-jre-alpine
 COPY --from=builder /app/build/libs/*.jar /app/app.jar

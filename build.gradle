@@ -52,9 +52,9 @@ springBoot {
     buildInfo {
         properties {
             additional = [
-                'git.commit': providers.exec {
-                    commandLine 'git', 'rev-parse', '--short', 'HEAD'
-                }.standardOutput.asText.map { it.trim() }
+                'git.commit': providers.provider {
+                    project.findProperty('gitCommit') ?: 'unknown'
+                }
             ]
         }
     }
