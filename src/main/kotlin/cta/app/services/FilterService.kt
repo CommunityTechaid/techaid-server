@@ -39,7 +39,7 @@ class FilterService {
 
     fun kitFilter(): BooleanBuilder {
         val filter = BooleanBuilder()
-        val user = currentUser ?: return filter
+        currentUser ?: return filter
         if (hasAuthority("admin:kits")) {
             return filter
         }
@@ -48,7 +48,7 @@ class FilterService {
 
     fun donorFilter(): BooleanBuilder {
         val filter = BooleanBuilder()
-        val user = currentUser ?: return filter
+        currentUser ?: return filter
         if (hasAuthority("admin:donors")) {
             return filter
         }

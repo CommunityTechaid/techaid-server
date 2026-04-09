@@ -45,7 +45,7 @@ class DumpSchema(
     override fun call(): Int {
         val registry = StandardServiceRegistryBuilder()
             .applySettings(jpaProperties.properties as Map<String, Any>?)
-            .applySetting(AvailableSettings.DATASOURCE, dataSource)
+            .applySetting(AvailableSettings.JAKARTA_NON_JTA_DATASOURCE, dataSource)
             .applySetting(AvailableSettings.PHYSICAL_NAMING_STRATEGY, CamelCaseToUnderscoresNamingStrategy::class.java)
             .applySetting(AvailableSettings.IMPLICIT_NAMING_STRATEGY, SpringImplicitNamingStrategy::class.java)
             .applySetting(AvailableSettings.DIALECT, PostgreSQLDialect::class.java)
