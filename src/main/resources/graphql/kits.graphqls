@@ -364,10 +364,19 @@ extend type Query {
     typeCount: [KitTypeCount!]
 }
 
+input BulkKitUpdateInput {
+    ids: [ID!]!
+    status: KitStatus
+    archived: Boolean
+    locationCode: String
+    lotId: String
+}
+
 extend type Mutation {
     createKit(data: CreateKitInput!) : Kit!
     quickCreateKit(data: QuickCreateKitInput!): Kit!
     updateKit(data: UpdateKitInput!): Kit!
+    updateKits(data: BulkKitUpdateInput!): [Kit!]!
     autoCreateKit(data:AutoCreateKitInput!): Kit!
     autoUpdateKit(data:AutoUpdateKitInput!): Kit!
     deleteKit(id: ID!): Boolean
