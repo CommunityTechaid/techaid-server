@@ -35,10 +35,10 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 
 ### Group C — Auth0
 
-- [ ] `com.auth0:auth0:1.15.0` → current (`2.x`)
-- [ ] `com.auth0:java-jwt:3.10.3` → current (`4.x`)
-- [ ] `com.auth0:mvc-auth-commons:1.+` → pin to explicit current version (remove dynamic `1.+`)
-- [ ] `thymeleaf-extras-springsecurity5:3.0.4.RELEASE` → `thymeleaf-extras-springsecurity6:3.1.x`
+- [x] `com.auth0:auth0:1.15.0` → `2.27.0`
+- [x] `com.auth0:java-jwt:3.10.3` → `4.5.1`
+- [x] `com.auth0:mvc-auth-commons:1.+` → `1.11.1` (pinned explicit version)
+- [x] `thymeleaf-extras-springsecurity5:3.0.4.RELEASE` → `thymeleaf-extras-springsecurity6:3.1.3.RELEASE`
   - Spring Boot 3.x uses Spring Security 6; the `-springsecurity5` artifact is wrong
 
 **Verify:** Login flow works end-to-end; JWT validation still passes
@@ -174,6 +174,13 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
   1. `logback-classic:1.4.14` explicit pin removed — BOM now manages 1.5.x; `logstash-logback-encoder` updated to `7.4` to match.
   2. `spring.graphql.schema.inspection.enabled: false` added to `src/test/resources/application.yml`. Spring Boot 3.3+ `SchemaMappingInspector` crashes on startup with `Method must not be null` after the Kotlin 2.x upgrade — likely a Kotlin K2 compiler reflection change affecting how Spring resolves a handler method for one of the GraphQL field mappings. **TODO:** re-enable inspection and find which mapping is null (run app with inspection=true locally, check startup logs for the offending field).
   - The test resource `application.yml` completely overrides the main one during test runs — a non-obvious footgun worth documenting.
+
+**2026-04-15 — Group C complete (Auth0 2.x migration)**
+
+- Auth0 Java SDK 1.x → 2.x requires two code changes beyond the version bump:
+  1. `execute()` now returns `Response<T>` instead of `T` directly — append `.body` on every call whose return value is used. Void calls (delete, signUp, etc.) are unchanged.
+  2. Package renames: `com.auth0.json.mgmt.{Role,RolesPage}` → `com.auth0.json.mgmt.roles.*`; `com.auth0.json.mgmt.PermissionsPage` → `com.auth0.json.mgmt.permissions.*`. Both `Auth0Service.kt` and `UsersGraph.kt` needed updating.
+- `thymeleaf-extras-springsecurity5` → `thymeleaf-extras-springsecurity6` is a drop-in rename (same API for Spring Security 6).
 
 **2026-04-15 — GitHub Actions Node.js deprecation**
 

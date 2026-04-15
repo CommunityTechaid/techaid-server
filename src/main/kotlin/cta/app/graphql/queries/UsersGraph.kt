@@ -3,9 +3,10 @@ package cta.app.graphql.queries
 import com.auth0.client.mgmt.filter.PageFilter
 import com.auth0.client.mgmt.filter.RolesFilter
 import com.auth0.client.mgmt.filter.UserFilter
-import com.auth0.json.mgmt.PermissionsPage
-import com.auth0.json.mgmt.Role
-import com.auth0.json.mgmt.RolesPage
+import com.auth0.json.mgmt.permissions.Permission
+import com.auth0.json.mgmt.permissions.PermissionsPage
+import com.auth0.json.mgmt.roles.Role
+import com.auth0.json.mgmt.roles.RolesPage
 import com.auth0.json.mgmt.users.User
 import com.auth0.json.mgmt.users.UsersPage
 import cta.auth.Auth0Service
@@ -84,7 +85,7 @@ data class PermissionInput(
     val resourceServerName: String
 ) {
     val permission by lazy {
-        val permission = com.auth0.json.mgmt.Permission()
+        val permission = Permission()
         permission.name = name
         permission.description = description
         permission.resourceServerId = resourceServerId
@@ -104,7 +105,7 @@ class RoleResolver(
         } else {
             PageFilter().withPage(page.page, page.size).withTotals(true)
         }
-        return users.mgmt.roles().listPermissions(role.id, filter).execute()
+        return users.mgmt.roles().listPermissions(role.id, filter).execute().body
     }
 
 
@@ -114,7 +115,7 @@ class RoleResolver(
         } else {
             PageFilter().withPage(page.page, page.size).withTotals(true)
         }
-        return users.mgmt.roles().listUsers(role.id, filter).execute()
+        return users.mgmt.roles().listUsers(role.id, filter).execute().body
     }
 }
 
@@ -129,7 +130,7 @@ class UserResolver(
         } else {
             PageFilter().withPage(page.page, page.size).withTotals(true)
         }
-        return users.mgmt.users().listRoles(user.id, filter).execute()
+        return users.mgmt.users().listRoles(user.id, filter).execute().body
     }
 
     @QueryMapping
@@ -139,7 +140,7 @@ class UserResolver(
         } else {
             PageFilter().withPage(page.page, page.size).withTotals(true)
         }
-        return users.mgmt.users().listPermissions(user.id, filter).execute()
+        return users.mgmt.users().listPermissions(user.id, filter).execute().body
     }
 }
 

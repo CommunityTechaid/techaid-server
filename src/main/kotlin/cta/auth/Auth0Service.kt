@@ -4,8 +4,8 @@ import com.auth0.client.auth.AuthAPI
 import com.auth0.client.mgmt.ManagementAPI
 import com.auth0.client.mgmt.filter.RolesFilter
 import com.auth0.client.mgmt.filter.UserFilter
-import com.auth0.json.mgmt.Role
-import com.auth0.json.mgmt.RolesPage
+import com.auth0.json.mgmt.roles.Role
+import com.auth0.json.mgmt.roles.RolesPage
 import com.auth0.json.mgmt.users.User
 import com.auth0.json.mgmt.users.UsersPage
 import java.time.Instant
@@ -37,14 +37,14 @@ class Auth0Service {
                 return _mgmt!!
             }
             val request = auth.requestToken("https://$domain/api/v2/")
-            val holder = request.execute()
+            val holder = request.execute().body
             mgmtApiExpires = Instant.now().epochSecond + holder.expiresIn
             _mgmt = ManagementAPI(domain, holder.accessToken)
             return _mgmt!!
         }
 
     fun findAllUsers(filter: UserFilter = UserFilter()): UsersPage {
-        return mgmt.users().list(filter).execute()
+        return mgmt.users().list(filter).execute().body
     }
 
     fun resetPassword(email: String) {
@@ -56,7 +56,7 @@ class Auth0Service {
     }
 
     fun findById(id: String, filter: UserFilter = UserFilter()): User {
-        return mgmt.users().get(id, filter).execute()
+        return mgmt.users().get(id, filter).execute().body
     }
 
     fun signUp(email: String, username: String, password: String, fields: Map<String, String> = mapOf()) {
@@ -66,19 +66,19 @@ class Auth0Service {
     }
 
     fun create(user: User): User {
-        return mgmt.users().create(user).execute()
+        return mgmt.users().create(user).execute().body
     }
 
     fun update(id: String, user: User): User {
-        return mgmt.users().update(id, user).execute()
+        return mgmt.users().update(id, user).execute().body
     }
 
     fun findRoles(filter: RolesFilter = RolesFilter()): RolesPage {
-        return mgmt.roles().list(filter).execute()
+        return mgmt.roles().list(filter).execute().body
     }
 
     fun findRoleById(roleId: String): Role {
-        return mgmt.roles().get(roleId).execute()
+        return mgmt.roles().get(roleId).execute().body
     }
 
     fun assignRoles(roleId: String, userIds: List<String>): Role {
