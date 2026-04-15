@@ -56,6 +56,13 @@ auth0:
   #custom attribute added for parsing JTWToken
   token-attribute: ${TOKEN_ATTRIBUTE}
 spring:
+  graphql:
+    schema:
+      inspection:
+        # Disabled: Spring Boot 3.3+ SchemaMappingInspector fails at startup due to a
+        # Kotlin 2.x reflection issue where some GraphQL field mappings return a null method.
+        # TODO: investigate which mapping triggers this and fix the underlying handler method.
+        enabled: false
   security:
     oauth2:
       resourceserver:
