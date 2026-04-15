@@ -47,9 +47,9 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 
 ### Group D — Google APIs
 
-- [ ] `google-api-client:1.35.0` → `2.x`
-- [ ] `google-api-services-gmail:v1-rev20211108-1.32.1` → latest revision
-- [ ] `google-auth-library-oauth2-http:1.23.0` → latest `1.x`
+- [x] `google-api-client:1.35.0` → `2.9.0` (also aligned `google-api-client-gson` 2.3.0 → 2.9.0)
+- [x] `google-api-services-gmail:v1-rev20211108-1.32.1` → `v1-rev20260112-2.0.0`
+- [x] `google-auth-library-oauth2-http:1.23.0` → `1.43.0`
 
 **Verify:** Gmail sending still works (test with a real email send in staging)
 
@@ -57,10 +57,10 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 
 ### Group E — Logging & Utilities
 
-- [ ] `kotlin-logging:1.6.26` → `3.x` (major version — API changes, check import paths)
+- [x] `kotlin-logging:1.6.26` → `3.0.5` (`io.github.microutils:kotlin-logging-jvm`; 3.x keeps `mu` package — no import changes needed; 5.x+ would require `io.github.oshai` group + `io.github.oshai.kotlinlogging` package across 11 files — deferred)
 - [x] `logstash-logback-encoder:6.3` → `7.4` (required for logback 1.5.x compatibility with Spring Boot 3.4+)
 - [x] `logback-classic:1.4.14` explicit pin removed — now BOM-managed (fix for JaninoEventEvaluatorBase startup crash)
-- [ ] `picocli-spring-boot-starter:4.0.2` → `4.7.x`
+- [x] `picocli-spring-boot-starter:4.0.2` → `4.7.7`
 
 **Verify:** `./gradlew bootRun` starts; logs appear in expected JSON format
 
