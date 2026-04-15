@@ -68,9 +68,9 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 
 ### Group F — Frontend WebJars
 
-- [ ] Bootstrap WebJar: `4.2.1` (EOL 2018) → `5.x`
-- [ ] Font Awesome WebJar: `4.7.0` (EOL 2016) → `6.x`
-- [ ] Check any Thymeleaf templates for Bootstrap 4 → 5 class name changes
+- [x] Bootstrap WebJar: `4.2.1` → `5.3.8`
+- [x] Font Awesome WebJar: `4.7.0` → `6.4.2`
+- [x] No Thymeleaf templates exist in the codebase — WebJars are declared but unused; no class-name changes to verify
 
 **Verify:** Admin UI renders correctly in browser
 
