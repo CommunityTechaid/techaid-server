@@ -83,12 +83,6 @@ class ControllerExceptionHandler {
     }
 }
 
-//     @GraphQlExceptionHandler
-// public GraphQLError handle(IllegalArgumentException ex) {
-// return GraphQLError.newError().errorType(ErrorType.BAD_REQUEST).message("Handled an
-// IllegalArgumentException!").build();
-// }
-// }
 
 
 

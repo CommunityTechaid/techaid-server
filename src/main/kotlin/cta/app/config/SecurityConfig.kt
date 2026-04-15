@@ -1,7 +1,6 @@
 package cta.app.config
 
 import cta.auth.AuthService
-//import cta.auth.CorsFilter
 import cta.auth.SecretAuthenticationFilter
 import cta.auth.TokenAuthenticationFilter
 import mu.KotlinLogging
@@ -32,7 +31,6 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
-import org.springframework.security.web.session.SessionManagementFilter
 
 private val logger = KotlinLogging.logger {}
 
@@ -40,7 +38,6 @@ private val logger = KotlinLogging.logger {}
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 class SecurityConfig(
-    //private val corsFilter: CorsFilter,
     private val authService: AuthService
 ) {
     @Value("\${auth0.audience}")
@@ -76,7 +73,6 @@ class SecurityConfig(
         http: HttpSecurity,
         authenticationConfiguration: AuthenticationConfiguration): SecurityFilterChain {
         http.csrf { it.disable() }
-        //http.addFilterBefore(corsFilter, SessionManagementFilter::class.java)
         http.addFilterBefore(TokenAuthenticationFilter(authService), BasicAuthenticationFilter::class.java)
         http.addFilterBefore(secretAuthenticationFilter(authenticationConfiguration), UsernamePasswordAuthenticationFilter::class.java)
         http.oauth2ResourceServer { it.jwt { jwt -> jwt.jwtAuthenticationConverter(Auth0TokenConverter()) } }

@@ -124,8 +124,8 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 ## Tier 3 — Tech Debt / Code Quality
 
 ### T1 — Replace printStackTrace() with logging
-- [ ] **File:** `src/main/kotlin/cta/app/services/DeviceRequestService.kt` ~lines 141, 228
-- [ ] Replace `.printStackTrace()` with `logger.error("...", e)` (KotlinLogging already imported)
+- [x] **File:** `src/main/kotlin/cta/app/services/DeviceRequestService.kt`
+- [x] Both `e.printStackTrace()` calls replaced with `logger.error("Failed to send email", e)`; added `KotlinLogging` import and logger instance
 
 ### T2 — Externalise inline HTML email templates
 - [ ] **File:** `src/main/kotlin/cta/app/services/DeviceRequestService.kt` ~lines 68-120, 153-207
@@ -141,9 +141,9 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 - [ ] Split into per-entity or per-domain files
 
 ### T5 — Remove commented-out dead code
-- [ ] `build.gradle`: ktlint plugin (~lines 39, 94), kapt config (~lines 287-295), Datadog (~lines 196-197)
-- [ ] `SecurityConfig.kt`: commented CorsFilter injection
-- [ ] `DeviceRequestMutations.kt`: commented exception handler examples
+- [x] `build.gradle`: removed ktlint plugin refs, Datadog deps, kapt config block
+- [x] `SecurityConfig.kt`: removed commented CorsFilter import, injection, and usage; removed unused `SessionManagementFilter` import
+- [x] `DeviceRequestMutations.kt`: removed commented example exception handler block
 
 ### T6 — Re-enable ktlint
 - [ ] `build.gradle` has ktlint commented out

@@ -6,10 +6,13 @@ import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
 import cta.toNullable
 import jakarta.mail.internet.InternetAddress
+import mu.KotlinLogging
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+
+private val logger = KotlinLogging.logger {}
 
 @Service
 class DeviceRequestService(
@@ -138,7 +141,7 @@ Best wishes <br>
         try {
             mailService.sendMessage(msg)
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.error("Failed to send email", e)
         }
     }
 
@@ -225,7 +228,7 @@ Best wishes <br>
         try {
             mailService.sendMessage(msg)
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.error("Failed to send email", e)
         }
     }
 }

@@ -36,7 +36,6 @@ plugins {
 
 plugins {
     id 'jacoco'
-//    id "org.jlleitschuh.gradle.ktlint" version "9.2.1"
 }
 
 apply plugin: 'kotlin'
@@ -91,7 +90,6 @@ compileTestKotlin {
 }
 
 test {
-//    dependsOn ktlintCheck
     useJUnitPlatform()
     testLogging {
         events "PASSED", "FAILED", "SKIPPED"
@@ -193,8 +191,6 @@ dependencies {
     /* Logging / Monitoring Dependencies */
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
     // logback-classic version managed by Spring Boot BOM (1.5.x with Spring Boot 3.4+)
-    // implementation 'com.datadoghq:dd-trace-api:0.44.0'
-    // implementation 'io.micrometer:micrometer-registry-datadog'
 
     /* Making use of JUnit 5 */
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
@@ -282,16 +278,5 @@ task getDeps(type: Copy) {
         ant.delete(dir: 'runtime')
     }
 }
-
-/* Tony - Tried testing this out to resolve annotation errors
-kapt {
-    javacOptions {
-        option("querydsl.entityAccessors", true)
-    }
-    arguments {
-        arg("plugin", "com.querydsl.apt.jpa.JPAAnnotationProcessor")
-    }
-}
-*/
 
 kapt { correctErrorTypes = true }
