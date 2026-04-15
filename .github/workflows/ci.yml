@@ -2,7 +2,7 @@ name: CI/CD
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, 'maintenance/**']
   # Manual promotion trigger — select an environment from the dropdown in the
   # GitHub Actions UI to deploy the current branch to that environment.
   workflow_dispatch:

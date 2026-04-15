@@ -6,9 +6,9 @@ buildscript {
          * More likely to be limited by the version of the all-open plugin @
          * https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-maven-allopen
          */
-        kotlinVersion = '1.9.22' //Latest as of Feb. 2024 
+        kotlinVersion = '2.1.20' //Updated Apr. 2026 (was 1.9.22)
         // Versions @ https://github.com/spring-projects/spring-boot/releases
-        springBootVersion = '3.2.2' //Latest as of Feb. 2024
+        springBootVersion = '3.4.4' //Updated Apr. 2026 (was 3.2.2)
 
         graphQLVersion = '5.7.3'
     }
@@ -21,16 +21,16 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-noarg:${kotlinVersion}")
-        classpath("org.postgresql:postgresql:42.2.10")
+        classpath("org.postgresql:postgresql:42.7.10")
     }
 }
 
 plugins {
-    id 'org.springframework.boot' version '3.2.3'
-    id 'io.spring.dependency-management' version '1.1.4'
+    id 'org.springframework.boot' version '3.4.4'
+    id 'io.spring.dependency-management' version '1.1.7'
     id 'com.netflix.dgs.codegen' version '6.0.3'
-    id 'org.jetbrains.kotlin.jvm' version '1.9.22'
-    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.22'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.20'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.1.20'
 }
 
 
@@ -214,7 +214,7 @@ dependencies {
     /* Making use of embedded postgres db when running unit tests */
     testImplementation 'io.zonky.test:embedded-database-spring-test:2.5.1'
     /* Providing In-Memory H2 database as the default spring data-source */
-    testImplementation 'com.h2database:h2:1.4.200'
+    testImplementation 'com.h2database:h2:2.2.224'
     implementation "org.hibernate:hibernate-envers:${hibernate_version}"
 
     implementation("org.hibernate.tool:hibernate-tools-orm:${hibernate_version}")
