@@ -2,8 +2,8 @@ package cta.app
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType
-import com.vladmihalcea.hibernate.type.json.JsonStringType
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
+import io.hypersistence.utils.hibernate.type.json.JsonStringType
 import cta.app.services.Coordinates
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column

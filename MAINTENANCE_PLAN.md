@@ -25,8 +25,8 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 ### Group B — Database (Critical)
 
 - [x] **CRITICAL** PostgreSQL JDBC driver: `42.2.10` → `42.7.10` (buildscript classpath in build.gradle)
-- [ ] Flyway: `9.22.3` → `10.x` (breaking major version — review [migration guide](https://documentation.red-gate.com/fd/flyway-10-0-release-notes); 9.22.3 appears to be the latest 9.x, so this requires jumping to 10.x+)
-- [ ] `hibernate-types-52:2.9.8` → check if `hypersistence-utils` (renamed library) is required for Hibernate 6
+- [x] Flyway: `9.22.3` → `10.22.0`; added `flyway-database-postgresql:10.22.0` (required separate module in Flyway 10+)
+- [x] `hibernate-types-52:2.9.8` → `io.hypersistence:hypersistence-utils-hibernate-63:3.15.2`; updated imports in `models.kt` (`com.vladmihalcea.hibernate.type.json.*` → `io.hypersistence.utils.hibernate.type.json.*`)
 - [x] H2: `1.4.200` → `2.2.224` for tests
 
 **Verify:** `./gradlew clean test`; Flyway migrations run cleanly on a fresh DB

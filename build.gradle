@@ -201,8 +201,9 @@ dependencies {
 
     /* Hibernate / DB specific dependencies */
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.flywaydb:flyway-core:9.22.3'
-    implementation 'com.vladmihalcea:hibernate-types-52:2.9.8'
+    implementation 'org.flywaydb:flyway-core:10.22.0'
+    implementation 'org.flywaydb:flyway-database-postgresql:10.22.0'
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.15.2'
     implementation 'com.github.alexliesenfeld:querydsl-jpa-postgres-json:0.0.7'
     implementation "com.querydsl:querydsl-jpa:5.0.0:jakarta"
     kapt "com.querydsl:querydsl-apt:5.0.0:jakarta"
