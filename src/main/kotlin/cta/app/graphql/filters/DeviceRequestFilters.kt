@@ -1,19 +1,16 @@
 package cta.app.graphql.filters
 
-import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.EnumPath
 import cta.app.CollectionMethod
 import cta.app.DeviceRequestStatus
-import cta.app.KitStatus
 import cta.app.QDeviceRequest
 import cta.app.QDeviceRequestItems
 import cta.graphql.BooleanComparison
+import cta.graphql.IntegerComparison
 import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
-import cta.graphql.IntegerComparison
-import cta.graphql.JsonComparison
 import java.time.Instant
 
 class DeviceRequestWhereInput(
@@ -31,16 +28,16 @@ class DeviceRequestWhereInput(
     var isPrepped: BooleanComparison? = null,
     var AND: MutableList<DeviceRequestWhereInput> = mutableListOf(),
     var OR: MutableList<DeviceRequestWhereInput> = mutableListOf(),
-    var NOT: MutableList<DeviceRequestWhereInput> = mutableListOf()
+    var NOT: MutableList<DeviceRequestWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QDeviceRequest = QDeviceRequest.deviceRequest): BooleanBuilder {
         val builder = BooleanBuilder()
         id?.let { builder.and(it.build(entity.id)) }
         deviceRequestItems?.let { builder.and(it.build(entity.deviceRequestItems)) }
         status?.let { builder.and(it.build(entity.status)) }
-        isSales?.let {builder.and(it.build(entity.isSales))}
-        clientRef?.let {builder.and(it.build(entity.clientRef))}
-        borough?.let {builder.and(it.build(entity.borough))}
+        isSales?.let { builder.and(it.build(entity.isSales)) }
+        clientRef?.let { builder.and(it.build(entity.clientRef)) }
+        borough?.let { builder.and(it.build(entity.borough)) }
         referringOrganisationContact?.let { builder.and(it.build(entity.referringOrganisationContact)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
@@ -104,7 +101,7 @@ class DeviceRequestStatusComparison(
     /**
      * Matches values not in the collection
      */
-    var _nin: MutableList<DeviceRequestStatus>? = null
+    var _nin: MutableList<DeviceRequestStatus>? = null,
 ) {
     /**
      * Returns a filter for the specified [path]
@@ -150,7 +147,7 @@ class CollectionMethodComparison(
     /**
      * Matches values not in the collection
      */
-    var _nin: MutableList<CollectionMethod>? = null
+    var _nin: MutableList<CollectionMethod>? = null,
 ) {
     /**
      * Returns a filter for the specified [path]
@@ -182,11 +179,11 @@ class DeviceRequestItemsWhereInput(
     var broadbandHubs: IntegerComparison? = null,
     var AND: MutableList<DeviceRequestItemsWhereInput> = mutableListOf(),
     var OR: MutableList<DeviceRequestItemsWhereInput> = mutableListOf(),
-    var NOT: MutableList<DeviceRequestItemsWhereInput> = mutableListOf()
+    var NOT: MutableList<DeviceRequestItemsWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QDeviceRequestItems = QDeviceRequestItems.deviceRequestItems): BooleanBuilder {
         val builder = BooleanBuilder()
-        
+
         phones?.let { builder.and(it.build(entity.phones)) }
         tablets?.let { builder.and(it.build(entity.tablets)) }
         laptops?.let { builder.and(it.build(entity.laptops)) }
@@ -214,4 +211,3 @@ class DeviceRequestItemsWhereInput(
         return builder
     }
 }
-

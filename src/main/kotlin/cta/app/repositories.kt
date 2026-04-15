@@ -5,12 +5,17 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
 import java.util.Optional
 
-interface DonorRepository : JpaRepository<Donor, Long>, QuerydslPredicateExecutor<Donor> {
+interface DonorRepository :
+    JpaRepository<Donor, Long>,
+    QuerydslPredicateExecutor<Donor> {
     fun findByEmail(email: String): Donor?
+
     fun findByPhoneNumber(phone: String): Donor?
 }
 
-interface DonorParentRepository : JpaRepository<DonorParent, Long>, QuerydslPredicateExecutor<DonorParent>
+interface DonorParentRepository :
+    JpaRepository<DonorParent, Long>,
+    QuerydslPredicateExecutor<DonorParent>
 
 interface KitStatusCount {
     val status: KitStatus
@@ -23,34 +28,42 @@ interface KitTypeCount {
 }
 
 interface KitRepository :
-        JpaRepository<Kit, Long>,
-        QuerydslPredicateExecutor<Kit> {
+    JpaRepository<Kit, Long>,
+    QuerydslPredicateExecutor<Kit> {
     @Query(
         """
         SELECT k.status AS status, count(*) AS count from kits k where k.archived != 'Y' group by k.status 
-    """
-    , nativeQuery = true)
+    """,
+        nativeQuery = true,
+    )
     fun statusCount(): List<KitStatusCount>
 
     @Query(
         """
         SELECT k.type AS type, count(*) AS count from kits k where k.archived != 'Y' group by k.type
-    """
-    , nativeQuery = true)
+    """,
+        nativeQuery = true,
+    )
     fun typeCount(): List<KitTypeCount>
 }
 
-interface NoteRepository: JpaRepository<Note, Long>,
+interface NoteRepository :
+    JpaRepository<Note, Long>,
     QuerydslPredicateExecutor<Note>
 
-interface ReferringOrganisationRepository: JpaRepository<ReferringOrganisation, Long>,
+interface ReferringOrganisationRepository :
+    JpaRepository<ReferringOrganisation, Long>,
     QuerydslPredicateExecutor<ReferringOrganisation>
 
-interface ReferringOrganisationContactRepository: JpaRepository<ReferringOrganisationContact, Long>
-    ,QuerydslPredicateExecutor<ReferringOrganisationContact> {
-
-        fun findOneByFullNameAndEmailAndReferringOrganisation(fullName: String, email: String, referringOrganisation: ReferringOrganisation): ReferringOrganisationContact?
-    }
+interface ReferringOrganisationContactRepository :
+    JpaRepository<ReferringOrganisationContact, Long>,
+    QuerydslPredicateExecutor<ReferringOrganisationContact> {
+    fun findOneByFullNameAndEmailAndReferringOrganisation(
+        fullName: String,
+        email: String,
+        referringOrganisation: ReferringOrganisation,
+    ): ReferringOrganisationContact?
+}
 
 interface RequestCount {
     val phones: Long
@@ -62,7 +75,8 @@ interface RequestCount {
     val commsDevices: Long
     val broadbandHubs: Long
 }
-interface DeviceRequestRepository:
+
+interface DeviceRequestRepository :
     JpaRepository<DeviceRequest, Long>,
     QuerydslPredicateExecutor<DeviceRequest> {
     @Query(
@@ -91,7 +105,7 @@ interface DeviceRequestRepository:
             WHERE dr.status not in ('REQUEST_COMPLETED','REQUEST_DECLINED','REQUEST_CANCELLED','REQUEST_COLLECTION_DELIVERY_FAILED') 
         ) AS src
     """,
-        nativeQuery = true
+        nativeQuery = true,
     )
     fun requestCount(): RequestCount
 
@@ -100,13 +114,14 @@ interface DeviceRequestRepository:
     fun findAllByCorrelationIdIsNotNull(): List<DeviceRequest>
 }
 
-interface DeviceRequestNoteRepository: JpaRepository<DeviceRequestNote, Long>,
+interface DeviceRequestNoteRepository :
+    JpaRepository<DeviceRequestNote, Long>,
     QuerydslPredicateExecutor<DeviceRequestNote>
 
-interface ReferringOrganisationNoteRepository:
-        JpaRepository<ReferringOrganisationNote, Long>,
-        QuerydslPredicateExecutor<ReferringOrganisationNote>
+interface ReferringOrganisationNoteRepository :
+    JpaRepository<ReferringOrganisationNote, Long>,
+    QuerydslPredicateExecutor<ReferringOrganisationNote>
 
-interface ReferringOrganisationContactNoteRepository:
-        JpaRepository<ReferringOrganisationContactNote, Long>,
-        QuerydslPredicateExecutor<ReferringOrganisationContactNote>
+interface ReferringOrganisationContactNoteRepository :
+    JpaRepository<ReferringOrganisationContactNote, Long>,
+    QuerydslPredicateExecutor<ReferringOrganisationContactNote>

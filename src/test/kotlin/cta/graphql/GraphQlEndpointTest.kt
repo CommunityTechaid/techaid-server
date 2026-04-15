@@ -17,7 +17,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @AutoConfigureMockMvc
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class GraphQlEndpointTest {
-
     @MockBean
     lateinit var jwtDecoder: JwtDecoder
 
@@ -26,12 +25,12 @@ class GraphQlEndpointTest {
 
     @Test
     fun `graphql endpoint is accessible and schema is loaded`() {
-        mockMvc.perform(
-            post("/graphql")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"query":"{ __typename }"}""")
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                post("/graphql")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"query":"{ __typename }"}"""),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$.data.__typename").value("Query"))
     }
 }

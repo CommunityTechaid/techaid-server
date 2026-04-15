@@ -6,15 +6,15 @@ import com.google.api.services.gmail.Gmail
 import com.google.api.services.gmail.model.Message
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.UserCredentials
-import java.io.ByteArrayOutputStream
-import java.util.Base64
-import java.util.Properties
 import jakarta.mail.Session
 import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.io.ByteArrayOutputStream
+import java.util.Base64
+import java.util.Properties
 
 private val logger = KotlinLogging.logger {}
 
@@ -22,32 +22,44 @@ private val logger = KotlinLogging.logger {}
 class MailService {
     @Value("\${gmail.client-id}")
     lateinit var clientId: String
+
     @Value("\${gmail.client-secret}")
     lateinit var clientSecret: String
+
     @Value("\${gmail.refresh-token}")
     lateinit var refreshToken: String
+
     @Value("\${gmail.address}")
     lateinit var address: String
+
     @Value("\${gmail.enabled}")
     var emailEnabled: Boolean = false
+
     @Value("\${gmail.bcc-address}")
-    lateinit var bcc_address: String
+    lateinit var bccAddress: String
 
     val gmail: Gmail by lazy {
         val jsonFactory = GsonFactory.getDefaultInstance()
         val transport = GoogleNetHttpTransport.newTrustedTransport()
-        val credentials = UserCredentials.newBuilder()
-            .setClientId(clientId)
-            .setClientSecret(clientSecret)
-            .setRefreshToken(refreshToken)
-            .build()
+        val credentials =
+            UserCredentials
+                .newBuilder()
+                .setClientId(clientId)
+                .setClientSecret(clientSecret)
+                .setRefreshToken(refreshToken)
+                .build()
         logger.info("MailService startup. Enabled: $emailEnabled FromAddress: $address")
         Gmail.Builder(transport, jsonFactory, HttpCredentialsAdapter(credentials)).setApplicationName("Community Techaid").build()
     }
 
-    fun sendMessage(message: MimeMessage): Message = sendMessage(createMessageWithEmail(message))    
+    fun sendMessage(message: MimeMessage): Message = sendMessage(createMessageWithEmail(message))
 
-    fun sendMessage(message: Message): Message = gmail.users().messages().send(address, message).execute()
+    fun sendMessage(message: Message): Message =
+        gmail
+            .users()
+            .messages()
+            .send(address, message)
+            .execute()
 }
 
 fun createEmail(
@@ -56,7 +68,7 @@ fun createEmail(
     subject: String,
     bodyText: String,
     mimeType: String = "plain",
-    charset: String? = null
+    charset: String? = null,
 ): MimeMessage {
     val props = Properties()
     val session = Session.getDefaultInstance(props, null)
@@ -64,7 +76,7 @@ fun createEmail(
     email.setFrom(InternetAddress(from))
     email.addRecipient(
         jakarta.mail.Message.RecipientType.TO,
-        InternetAddress(to)
+        InternetAddress(to),
     )
     email.subject = subject
     email.setText(bodyText, charset, mimeType)

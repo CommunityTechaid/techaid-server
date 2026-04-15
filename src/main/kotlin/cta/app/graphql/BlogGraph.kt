@@ -28,11 +28,14 @@ import java.time.Instant
 
 @Controller
 class BlogQueries(
-    private val posts: PostRepository
+    private val posts: PostRepository,
 ) {
     @PreAuthorize("hasAnyAuthority('read:content')")
     @QueryMapping
-    fun postsConnection(@Argument page: PaginationInput?, @Argument where: PostWhereInput?): Page<Post> {
+    fun postsConnection(
+        @Argument page: PaginationInput?,
+        @Argument where: PostWhereInput?,
+    ): Page<Post> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
             return posts.findAll(f.create())
@@ -42,17 +45,21 @@ class BlogQueries(
 
     @PreAuthorize("hasAnyAuthority('read:content')")
     @QueryMapping
-    fun posts(@Argument where: PostWhereInput, @Argument orderBy: MutableList<KeyValuePair>?): List<Post> {
-        return if (orderBy != null) {
+    fun posts(
+        @Argument where: PostWhereInput,
+        @Argument orderBy: MutableList<KeyValuePair>?,
+    ): List<Post> =
+        if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
             posts.findAll(where.build(), sort).toList()
         } else {
             posts.findAll(where.build()).toList()
         }
-    }
 
     @QueryMapping
-    fun post(@Argument where: PostWhereInput): Post? {
+    fun post(
+        @Argument where: PostWhereInput,
+    ): Post? {
         val post = posts.findOne(where.build()).toNullable() ?: return null
         if (post.secured) {
             SecurityContextHolder.getContext().authentication?.let { auth ->
@@ -68,22 +75,27 @@ class BlogQueries(
 @Validated
 @PreAuthorize("hasAnyAuthority('write:content')")
 class BlogMutations(
-    private val posts: PostRepository
+    private val posts: PostRepository,
 ) {
     @MutationMapping
-    fun createPost(@Argument @Valid data: CreatePostInput): Post {
-        return posts.save(data.entity)
-    }
+    fun createPost(
+        @Argument @Valid data: CreatePostInput,
+    ): Post = posts.save(data.entity)
 
     @MutationMapping
-    fun updatePost(@Argument  @Valid data: UpdatePostInput): Post {
-        val entity = posts.findById(data.id).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a post with id: ${data.id}")
+    fun updatePost(
+        @Argument @Valid data: UpdatePostInput,
+    ): Post {
+        val entity =
+            posts.findById(data.id).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a post with id: ${data.id}")
         return data.apply(entity)
     }
 
     @MutationMapping
-    fun deletePost(@Argument  id: Long): Boolean {
+    fun deletePost(
+        @Argument id: Long,
+    ): Boolean {
         posts.deleteById(id)
         return true
     }
@@ -96,7 +108,7 @@ data class CreatePostInput(
     val slug: String,
     val content: String,
     val secured: Boolean = false,
-    val published: Boolean = true
+    val published: Boolean = true,
 ) {
     val entity by lazy {
         Post(
@@ -104,7 +116,7 @@ data class CreatePostInput(
             content = content,
             published = published,
             secured = secured,
-            title = title
+            title = title,
         )
     }
 }
@@ -117,7 +129,7 @@ data class UpdatePostInput(
     val title: String,
     val content: String,
     val secured: Boolean = false,
-    val published: Boolean = true
+    val published: Boolean = true,
 ) {
     fun apply(entity: Post): Post {
         val self = this
@@ -141,7 +153,7 @@ class PostWhereInput(
     var updatedAt: TimeComparison<Instant>? = null,
     var AND: MutableList<PostWhereInput> = mutableListOf(),
     var OR: MutableList<PostWhereInput> = mutableListOf(),
-    var NOT: MutableList<PostWhereInput> = mutableListOf()
+    var NOT: MutableList<PostWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QPost = QPost.post): BooleanBuilder {
         val builder = BooleanBuilder()

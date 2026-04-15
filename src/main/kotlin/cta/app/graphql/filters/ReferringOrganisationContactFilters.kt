@@ -8,7 +8,6 @@ import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
 import java.time.Instant
 
-
 class ReferringOrganisationContactWhereInput(
     var id: LongComparison? = null,
     var fullName: TextComparison? = null,
@@ -21,7 +20,7 @@ class ReferringOrganisationContactWhereInput(
     var referringOrganisation: ReferringOrganisationWhereInput? = null,
     var AND: MutableList<ReferringOrganisationContactWhereInput> = mutableListOf(),
     var OR: MutableList<ReferringOrganisationContactWhereInput> = mutableListOf(),
-    var NOT: MutableList<ReferringOrganisationContactWhereInput> = mutableListOf()
+    var NOT: MutableList<ReferringOrganisationContactWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QReferringOrganisationContact = QReferringOrganisationContact.referringOrganisationContact): BooleanBuilder {
         val builder = BooleanBuilder()
@@ -61,7 +60,7 @@ data class ReferringOrganisationContactPublicWhereInput(
     var archived: BooleanComparison? = null,
     var AND: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
     var OR: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
-    var NOT: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf()
+    var NOT: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QReferringOrganisationContact = QReferringOrganisationContact.referringOrganisationContact): BooleanBuilder {
         val builder = BooleanBuilder()

@@ -21,11 +21,10 @@ import org.springframework.validation.annotation.Validated
 class NoteMutations(
     private val filterService: FilterService,
     private val notes: NoteRepository,
-    private val kits: KitRepository
+    private val kits: KitRepository,
 ) {
-
     /* The creation of the note is handled by the updateKit mutation. This method is being left here in case it is needed in future.
-    * It is commented to avoid confusion while reading the code because I was confused.
+     * It is commented to avoid confusion while reading the code because I was confused.
     fun createNote(@Valid data: CreateNoteInput): Note {
 
         val userEmail = filterService.userDetails().email
@@ -58,14 +57,17 @@ class NoteMutations(
     }*/
 
     @MutationMapping
-    fun deleteNote(@Argument id: Long): Boolean {
-
-        val volunteer = filterService.userDetails().name.ifBlank {
-            filterService.userDetails().email
-        }
-        val note: Note = notes.findById(id).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a note with id: $id")
-        if (volunteer == note.volunteer){
+    fun deleteNote(
+        @Argument id: Long,
+    ): Boolean {
+        val volunteer =
+            filterService.userDetails().name.ifBlank {
+                filterService.userDetails().email
+            }
+        val note: Note =
+            notes.findById(id).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a note with id: $id")
+        if (volunteer == note.volunteer) {
             notes.delete(note)
         } else {
             throw IllegalArgumentException("You cannot delete other user's notes")
@@ -76,20 +78,18 @@ class NoteMutations(
 
 data class CreateNoteInput(
     val content: String = "",
-    val kitId: Long?
-) {}
+    val kitId: Long?,
+)
 
 data class UpdateNoteInput(
     @get:NotNull
     val id: Long,
-    val content: String = ""
-){
-
+    val content: String = "",
+) {
     fun apply(entity: Note): Note {
         val self = this
         return entity.apply {
             content = self.content
         }
     }
-
 }

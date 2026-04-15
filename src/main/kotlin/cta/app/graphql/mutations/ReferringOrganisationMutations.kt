@@ -18,25 +18,29 @@ import org.springframework.validation.annotation.Validated
 @Validated
 @Transactional
 class ReferringOrganisationMutations(
-    private val referringOrganisations: ReferringOrganisationRepository
+    private val referringOrganisations: ReferringOrganisationRepository,
 ) {
-    
     @MutationMapping
-    fun createReferringOrganisation(@Argument @Valid data: CreateReferringOrganisationInput): ReferringOrganisation {
-        return referringOrganisations.save(data.entity)
-    }
+    fun createReferringOrganisation(
+        @Argument @Valid data: CreateReferringOrganisationInput,
+    ): ReferringOrganisation = referringOrganisations.save(data.entity)
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
-    fun updateReferringOrganisation(@Argument @Valid data: UpdateReferringOrganisationInput): ReferringOrganisation {
-        val entity = referringOrganisations.findById(data.id).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a organisation with id: ${data.id}")
+    fun updateReferringOrganisation(
+        @Argument @Valid data: UpdateReferringOrganisationInput,
+    ): ReferringOrganisation {
+        val entity =
+            referringOrganisations.findById(data.id).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a organisation with id: ${data.id}")
         return data.apply(entity)
     }
 
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
     @MutationMapping
-    fun deleteReferringOrganisation(@Argument id: Long): Boolean {
+    fun deleteReferringOrganisation(
+        @Argument id: Long,
+    ): Boolean {
         val entity =
             referringOrganisations.findById(id).toNullable()
                 ?: throw EntityNotFoundException("No referring organisation with id: $id")
@@ -49,14 +53,15 @@ data class CreateReferringOrganisationInput(
     @get:NotBlank
     var name: String,
     var website: String?,
-    var phoneNumber: String?
+    var phoneNumber: String?,
 ) {
     val entity by lazy {
-        val org = ReferringOrganisation(
-            name = name,
-            website = website ?: "",
-            phoneNumber = phoneNumber?: ""
-        )
+        val org =
+            ReferringOrganisation(
+                name = name,
+                website = website ?: "",
+                phoneNumber = phoneNumber ?: "",
+            )
         org
     }
 }
@@ -68,7 +73,7 @@ data class UpdateReferringOrganisationInput(
     var name: String,
     var website: String? = null,
     var phoneNumber: String? = null,
-    val archived: Boolean? = null
+    val archived: Boolean? = null,
 ) {
     fun apply(entity: ReferringOrganisation): ReferringOrganisation {
         val self = this

@@ -18,27 +18,28 @@ import org.springframework.validation.annotation.Validated
 @Transactional
 class DeviceRequestNoteMutations(
     private val filterService: FilterService,
-    private val deviceRequestNotes: DeviceRequestNoteRepository
+    private val deviceRequestNotes: DeviceRequestNoteRepository,
 ) {
-
     @MutationMapping
-    fun deleteDeviceRequestNote(@Argument id: Long): Boolean {
-        val volunteer = filterService.userDetails().name.ifBlank {
-            filterService.userDetails().email
-        }
-        val deviceRequestNote: DeviceRequestNote = deviceRequestNotes.findById(id).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a note with id: $id")
-        if (volunteer == deviceRequestNote.volunteer){
+    fun deleteDeviceRequestNote(
+        @Argument id: Long,
+    ): Boolean {
+        val volunteer =
+            filterService.userDetails().name.ifBlank {
+                filterService.userDetails().email
+            }
+        val deviceRequestNote: DeviceRequestNote =
+            deviceRequestNotes.findById(id).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a note with id: $id")
+        if (volunteer == deviceRequestNote.volunteer) {
             deviceRequestNotes.delete(deviceRequestNote)
         } else {
             throw IllegalArgumentException("You cannot delete other user's notes")
         }
         return true
     }
-
 }
 
 data class DeviceRequestNoteInput(
-    val content: String
-) {
-}
+    val content: String,
+)

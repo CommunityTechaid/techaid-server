@@ -1,15 +1,14 @@
 package cta.app.graphql.mutations
 
 import cta.app.Donor
-import cta.app.DonorRepository
 import cta.app.DonorParentRepository
+import cta.app.DonorRepository
 import cta.app.QDonor
 import cta.app.services.FilterService
 import cta.app.services.LocationService
 import cta.toNullable
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -26,25 +25,27 @@ class DonorMutations(
     private val donors: DonorRepository,
     private val donorParents: DonorParentRepository,
     private val locationService: LocationService,
-    private val filterService: FilterService
+    private val filterService: FilterService,
 ) {
-
     @MutationMapping
-    fun createDonor(@Argument @Valid data: CreateDonorInput): Donor {
-        //val donor = fetchDonor(donors, data.entity)
+    fun createDonor(
+        @Argument @Valid data: CreateDonorInput,
+    ): Donor {
+        // val donor = fetchDonor(donors, data.entity)
         if (data.email.isNotBlank()) {
             donors.findByEmail(data.email)?.let {
                 throw IllegalArgumentException("A donor with the email address ${data.email} already exits!")
             }
         }
-        val donor = donors.save(data.entity);
+        val donor = donors.save(data.entity)
         if (donor.postCode.isNotBlank()) {
             donor.coordinates = locationService.findCoordinates(donor.postCode)
         }
 
         if (data.donorParentId != null) {
-            val donorParent = donorParents.findById(data.donorParentId).toNullable()
-                ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorParentId}")
+            val donorParent =
+                donorParents.findById(data.donorParentId).toNullable()
+                    ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.donorParentId}")
             donorParent.addDonor(donor)
         }
 
@@ -52,9 +53,12 @@ class DonorMutations(
     }
 
     @MutationMapping
-    fun updateDonor(@Argument @Valid data: UpdateDonorInput): Donor {
-        val entity = donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(data.id))).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.id}")
+    fun updateDonor(
+        @Argument @Valid data: UpdateDonorInput,
+    ): Donor {
+        val entity =
+            donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(data.id))).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.id}")
         return data.apply(entity).apply {
             if (postCode.isNotBlank() && (coordinates == null || coordinates?.input != postCode)) {
                 coordinates = locationService.findCoordinates(postCode)
@@ -63,19 +67,22 @@ class DonorMutations(
             if (data.donorParentId == null) {
                 donorParent?.removeDonor(this)
             } else if (data.donorParentId != donorParent?.id) {
-                val donorParent = donorParents.findById(data.donorParentId).toNullable()
-                    ?: throw EntityNotFoundException("Unable to locate a parent donor with id: ${data.donorParentId}")
+                val donorParent =
+                    donorParents.findById(data.donorParentId).toNullable()
+                        ?: throw EntityNotFoundException("Unable to locate a parent donor with id: ${data.donorParentId}")
                 donorParent.addDonor(this)
             }
-
         }
     }
 
     @PreAuthorize("hasAnyAuthority('delete:donors')")
     @MutationMapping
-    fun deleteDonor(@Argument id: Long): Boolean {
-        val donor = donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(id))).toNullable()
-            ?: throw EntityNotFoundException("No donor with id: $id")
+    fun deleteDonor(
+        @Argument id: Long,
+    ): Boolean {
+        val donor =
+            donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(id))).toNullable()
+                ?: throw EntityNotFoundException("No donor with id: $id")
         donor.kits.forEach { donor.removeKit(it) }
         donors.delete(donor)
         return true
@@ -89,7 +96,7 @@ data class CreateDonorInput(
     val referral: String = "",
     val name: String,
     val donorParentId: Long? = null,
-    val isLeadContact: Boolean
+    val isLeadContact: Boolean,
 ) {
     val entity by lazy {
         Donor(
@@ -98,7 +105,7 @@ data class CreateDonorInput(
             email = email,
             referral = referral,
             name = name,
-            isLeadContact = isLeadContact
+            isLeadContact = isLeadContact,
         )
     }
 }
@@ -113,7 +120,7 @@ data class UpdateDonorInput(
     val referral: String? = null,
     val donorParentId: Long? = null,
     val archived: Boolean? = null,
-    val isLeadContact: Boolean? = null
+    val isLeadContact: Boolean? = null,
 ) {
     fun apply(entity: Donor): Donor {
         val self = this

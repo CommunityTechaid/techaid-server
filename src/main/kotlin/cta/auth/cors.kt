@@ -20,34 +20,39 @@ private val log = KotlinLogging.logger {}
 */
 /**
  * Properties for the CORS configuration
- *//*
+ */
+/*
 
 class CorsModelProperties {
-    */
+ */
 /**
-     * The origin of the request. You can use `*` to match all origins
-     *//*
+ * The origin of the request. You can use `*` to match all origins
+ */
+/*
 
     var origin: String = ""
-    */
+ */
 /**
-     * The requested path to match. You can use `*` to match all paths
-     *//*
+ * The requested path to match. You can use `*` to match all paths
+ */
+/*
 
     var path: String = ""
-    */
+ */
 /**
-     * A map of all headers to be added to the request
-     *//*
+ * A map of all headers to be added to the request
+ */
+/*
 
     var headers: Map<String, String> = mutableMapOf()
 
     private val matcher = AntPathMatcher()
 
-    */
+ */
 /**
-     * Returns a list of all allowed headers
-     *//*
+ * Returns a list of all allowed headers
+ */
+/*
 
     val allowedHeaders by lazy {
         headers.asSequence().firstOrNull { (k, _) ->
@@ -58,10 +63,11 @@ class CorsModelProperties {
         }?.value?.toUpperCase() ?: ""
     }
 
-    */
+ */
 /**
-     * Looks for the Access-Control-Allow-Methods header
-     *//*
+ * Looks for the Access-Control-Allow-Methods header
+ */
+/*
 
     val allowedMethods by lazy {
         headers.asSequence().firstOrNull { (k, _) ->
@@ -93,33 +99,37 @@ class CorsModelProperties {
  * This is the CORS authentication filter. It checks if the currently requested
  * route requires CORS and applies the necessary headers.
  *
- *//*
+ */
+/*
 
 @Component
 @ConfigurationProperties(prefix = "auth.cors")
 @ConditionalOnProperty(value = ["auth.cors.enabled"], matchIfMissing = false)
 class CorsFilter : OncePerRequestFilter() {
-    */
+ */
 /**
-     * List of routes with CORS configuration properties
-     *//*
+ * List of routes with CORS configuration properties
+ */
+/*
 
     lateinit var routes: List<CorsModelProperties>
 
-    */
+ */
 /**
-     * Filter is only applied if the origin header is present
-     *//*
+ * Filter is only applied if the origin header is present
+ */
+/*
 
     @Throws(ServletException::class)
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         return request.getHeader("Origin").isNullOrBlank()
     }
 
-    */
+ */
 /**
-     * Applies CORS to matching routes
-     *//*
+ * Applies CORS to matching routes
+ */
+/*
 
     @Throws(ServletException::class, IOException::class)
     override fun doFilterInternal(

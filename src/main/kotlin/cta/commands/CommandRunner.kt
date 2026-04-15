@@ -1,7 +1,6 @@
 package cta.commands
 
 import jakarta.annotation.PostConstruct
-import kotlin.system.exitProcess
 import mu.KotlinLogging
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.ExitCodeGenerator
@@ -10,6 +9,7 @@ import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import picocli.CommandLine
+import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger {}
 
@@ -17,8 +17,9 @@ private val logger = KotlinLogging.logger {}
 @Component
 class CommandRunner(
     private val root: RootCommandLine,
-    private val context: ConfigurableApplicationContext
-) : CommandLineRunner, ExitCodeGenerator {
+    private val context: ConfigurableApplicationContext,
+) : CommandLineRunner,
+    ExitCodeGenerator {
     private var exitCode: Int = 0
 
     override fun getExitCode() = exitCode
@@ -35,18 +36,18 @@ class CommandRunner(
                 }
             }
         }
-        /* http://patorjk.com/software/taag/#p=testall&f=Wet+Letter&t=a-sights */
+        // http://patorjk.com/software/taag/#p=testall&f=Wet+Letter&t=a-sights
         println(
             """
-     (`-')  _           (`-').->  _                (`-').->(`-')      (`-').-> 
-     (OO ).-/           ( OO)_   (_)        .->    (OO )__ ( OO).->   ( OO)_   
-     / ,---.   (`-')   (_)--\_)  ,-(`-') ,---(`-'),--. ,'-'/    '._  (_)--\_)  
-     | \ /`.\  ( OO).->/    _ /  | ( OO)'  .-(OO )|  | |  ||'--...__)/    _ /  
-     '-'|_.' |(,------.\_..`--.  |  |  )|  | .-, \|  `-'  |`--.  .--'\_..`--.  
-    (|  .-.  | `------'.-._)   \(|  |_/ |  | '.(_/|  .-.  |   |  |   .-._)   \ 
-     |  | |  |         \       / |  |'->|  '-'  | |  | |  |   |  |   \       / 
-     `--' `--'          `-----'  `--'    `-----'  `--' `--'   `--'    `-----'
-            """.trimIndent()
+             (`-')  _           (`-').->  _                (`-').->(`-')      (`-').-> 
+             (OO ).-/           ( OO)_   (_)        .->    (OO )__ ( OO).->   ( OO)_   
+             / ,---.   (`-')   (_)--\_)  ,-(`-') ,---(`-'),--. ,'-'/    '._  (_)--\_)  
+             | \ /`.\  ( OO).->/    _ /  | ( OO)'  .-(OO )|  | |  ||'--...__)/    _ /  
+             '-'|_.' |(,------.\_..`--.  |  |  )|  | .-, \|  `-'  |`--.  .--'\_..`--.  
+            (|  .-.  | `------'.-._)   \(|  |_/ |  | '.(_/|  .-.  |   |  |   .-._)   \ 
+             |  | |  |         \       / |  |'->|  '-'  | |  | |  |   |  |   \       / 
+             `--' `--'          `-----'  `--'    `-----'  `--' `--'   `--'    `-----'
+            """.trimIndent(),
         )
         if (arguments.isEmpty() && !located) {
             arguments.add("--help")
@@ -79,7 +80,7 @@ class ExecuteCommand : Runnable {
 @Component
 class RootCommandLine(
     private val factory: CommandLine.IFactory,
-    private val commands: List<ConsoleCommand>
+    private val commands: List<ConsoleCommand>,
 ) {
     val commandLine = CommandLine(ExecuteCommand(), factory)
 

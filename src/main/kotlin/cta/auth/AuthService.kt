@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 class AuthService {
     @Value("\${auth.admin-header:X-Auth-Admin-Secret}")
     lateinit var adminHeader: String
+
     @Value("\${auth.admin-secret}")
     private lateinit var secret: String
 
@@ -18,27 +19,29 @@ class AuthService {
 
         if (token == secret) {
             return AppUser(
-                user = User(
-                    name = "Admin Token",
-                    username = "root"
-                ),
+                user =
+                    User(
+                        name = "Admin Token",
+                        username = "root",
+                    ),
                 password = token,
                 app = "*",
-                authorities = listOf(
-                    "read:kits",
-                    "read:donors",
-                    "read:users",
-                    "write:kits",
-                    "write:donors",
-                    "write:users",
-                    "delete:kits",
-                    "delete:donors",
-                    "delete:users",
-                    "read:organisations",
-                    "write:organisations",
-                    "delete:organisations"
-                ).map { SimpleGrantedAuthority("$it") }
-                    .toMutableList()
+                authorities =
+                    listOf(
+                        "read:kits",
+                        "read:donors",
+                        "read:users",
+                        "write:kits",
+                        "write:donors",
+                        "write:users",
+                        "delete:kits",
+                        "delete:donors",
+                        "delete:users",
+                        "read:organisations",
+                        "write:organisations",
+                        "delete:organisations",
+                    ).map { SimpleGrantedAuthority("$it") }
+                        .toMutableList(),
             )
         }
 

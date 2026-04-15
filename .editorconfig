@@ -1,0 +1,39 @@
+# EditorConfig: https://editorconfig.org
+# ktlint rules: https://pinterest.github.io/ktlint/latest/
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+max_line_length = 140
+
+# ---- ktlint baseline suppressions ----
+# These rules flag intentional project conventions or patterns in pre-existing code.
+# Re-evaluate each rule before removing suppressions.
+
+# Project uses lowercase filenames for files with multiple top-level declarations
+# (models.kt, repositories.kt, listeners.kt, cors.kt, etc.)
+ktlint_standard_filename = disabled
+
+# cors.kt and CustomGraphQLContextBuilder.kt use alternating KDoc/block comments
+# for each commented-out interface method — a deliberate documentation pattern.
+ktlint_standard_no-consecutive-comments = disabled
+
+# cors.kt and CustomGraphQLContextBuilder.kt use wildcard imports intentionally
+# (generated/copied code). Address per-file when refactoring those files.
+ktlint_standard_no-wildcard-imports = disabled
+
+# cors.kt is not empty — ktlint incorrectly flags it (possibly due to all-comment content)
+ktlint_standard_no-empty-file = disabled
+
+[src/main/kotlin/cta/controllers/CustomErrorController.kt]
+# CustomErrorController embeds base64 image data URIs and long inline CSS strings
+# that cannot be wrapped without changing their content.
+ktlint_standard_max-line-length = disabled

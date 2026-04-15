@@ -9,7 +9,12 @@ import org.springframework.web.util.UriComponentsBuilder
 
 private val logger = KotlinLogging.logger {}
 
-data class Coordinates(val lat: String, val lng: String, val address: String, val input: String = "")
+data class Coordinates(
+    val lat: String,
+    val lng: String,
+    val address: String,
+    val input: String = "",
+)
 
 @Service
 class LocationService {
@@ -19,12 +24,13 @@ class LocationService {
 
     fun findLocation(address: String): LocationResponse? {
         try {
-            val uri = UriComponentsBuilder
-                .fromHttpUrl("https://maps.google.com/maps/api/geocode/json")
-                .queryParam("key", key)
-                .queryParam("address", address)
-                .build(true)
-                .toUri()
+            val uri =
+                UriComponentsBuilder
+                    .fromHttpUrl("https://maps.google.com/maps/api/geocode/json")
+                    .queryParam("key", key)
+                    .queryParam("address", address)
+                    .build(true)
+                    .toUri()
             return restTemplate.getForEntity(uri, LocationResponse::class.java).body!!
         } catch (e: Exception) {
             logger.error("Geocoding request failed for address: {}", address, e)
@@ -39,7 +45,7 @@ class LocationService {
                 lat = location.geometry.location.lat,
                 lng = location.geometry.location.lng,
                 address = location.formattedAddress,
-                input = address
+                input = address,
             )
         }
         return null
@@ -48,20 +54,20 @@ class LocationService {
 
 data class LocationResponse(
     val status: String,
-    val results: List<Result>
+    val results: List<Result>,
 ) {
     data class Result(
         @JsonProperty("formatted_address")
         val formattedAddress: String,
-        val geometry: Geometry
+        val geometry: Geometry,
     )
 
     data class Geometry(
-        val location: Location
+        val location: Location,
     )
 
     data class Location(
         val lat: String,
-        val lng: String
+        val lng: String,
     )
 }

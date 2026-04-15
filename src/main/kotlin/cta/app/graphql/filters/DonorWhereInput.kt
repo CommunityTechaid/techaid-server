@@ -1,14 +1,12 @@
 package cta.app.graphql.filters
 
 import com.querydsl.core.BooleanBuilder
-import java.time.Instant
 import cta.app.QDonor
 import cta.graphql.BooleanComparison
 import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
-
-
+import java.time.Instant
 
 class DonorWhereInput(
     var id: LongComparison? = null,
@@ -24,7 +22,7 @@ class DonorWhereInput(
     var isLeadContact: BooleanComparison? = null,
     var AND: MutableList<DonorWhereInput> = mutableListOf(),
     var OR: MutableList<DonorWhereInput> = mutableListOf(),
-    var NOT: MutableList<DonorWhereInput> = mutableListOf()
+    var NOT: MutableList<DonorWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QDonor = QDonor.donor): BooleanBuilder {
         val builder = BooleanBuilder()

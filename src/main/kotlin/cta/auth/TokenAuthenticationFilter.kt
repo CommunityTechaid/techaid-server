@@ -1,8 +1,6 @@
 package cta.auth
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import java.io.IOException
-import java.util.LinkedHashMap
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletException
 import jakarta.servlet.ServletRequest
@@ -12,16 +10,24 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.GenericFilterBean
+import java.io.IOException
+import java.util.LinkedHashMap
 
 /**
  * Filter to intercept JWT Tokens from the header and create a user session
  */
-class TokenAuthenticationFilter(private val authService: AuthService) : GenericFilterBean() {
+class TokenAuthenticationFilter(
+    private val authService: AuthService,
+) : GenericFilterBean() {
     /**
      * Verifies JWT token from the http-request header
      */
     @Throws(IOException::class, ServletException::class)
-    override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
+    override fun doFilter(
+        request: ServletRequest,
+        response: ServletResponse,
+        chain: FilterChain,
+    ) {
         val httpRequest = request as HttpServletRequest
         val httpResponse = response as HttpServletResponse
         var accessToken = request.getHeader(authService.adminHeader) ?: ""
@@ -30,17 +36,19 @@ class TokenAuthenticationFilter(private val authService: AuthService) : GenericF
             var admin = authService.adminForToken(accessToken)
             if (admin == null) {
                 haltRequest(
-                    httpResponse, httpRequest,
+                    httpResponse,
+                    httpRequest,
                     "Invalid superuser token specified in ${authService.adminHeader}",
-                    "INVALID_ADMIN_TOKEN"
+                    "INVALID_ADMIN_TOKEN",
                 )
                 return
             }
-            val authentication = UsernamePasswordAuthenticationToken(
-                admin,
-                accessToken,
-                admin.authorities
-            )
+            val authentication =
+                UsernamePasswordAuthenticationToken(
+                    admin,
+                    accessToken,
+                    admin.authorities,
+                )
             SecurityContextHolder.getContext().authentication = authentication
             chain.doFilter(request, response)
             return
@@ -57,7 +65,7 @@ class TokenAuthenticationFilter(private val authService: AuthService) : GenericF
         httpResponse: HttpServletResponse,
         httpRequest: HttpServletRequest,
         message: String?,
-        type: String
+        type: String,
     ) {
         val responseBody = LinkedHashMap<String, Any?>()
         httpResponse.status = HttpServletResponse.SC_UNAUTHORIZED

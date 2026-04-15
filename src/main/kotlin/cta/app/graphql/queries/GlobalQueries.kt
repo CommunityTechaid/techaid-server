@@ -11,26 +11,25 @@ data class BuildInfo(
     val version: String?,
     val name: String?,
     val time: String?,
-    val commit: String?
+    val commit: String?,
 )
 
 @Controller
 class GlobalQueries(
     private val locationService: LocationService,
-    private val buildProperties: BuildProperties?
+    private val buildProperties: BuildProperties?,
 ) {
     @QueryMapping
-    fun location(@Argument address: String): Coordinates? {
-        return locationService.findCoordinates(address)
-    }
+    fun location(
+        @Argument address: String,
+    ): Coordinates? = locationService.findCoordinates(address)
 
     @QueryMapping
-    fun buildInfo(): BuildInfo {
-        return BuildInfo(
+    fun buildInfo(): BuildInfo =
+        BuildInfo(
             version = buildProperties?.version,
             name = buildProperties?.name,
             time = buildProperties?.time?.toString(),
-            commit = buildProperties?.get("git.commit")
+            commit = buildProperties?.get("git.commit"),
         )
-    }
 }

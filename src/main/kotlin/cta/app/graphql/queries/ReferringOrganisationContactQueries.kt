@@ -16,26 +16,27 @@ import java.util.Optional
 
 @Controller
 class ReferringOrganisationContactQueries(
-    private val referringOrganisationContacts: ReferringOrganisationContactRepository
-)  {
-
+    private val referringOrganisationContacts: ReferringOrganisationContactRepository,
+) {
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
     fun referringOrganisationContacts(
         @Argument where: ReferringOrganisationContactWhereInput,
-        @Argument orderBy: MutableList<KeyValuePair>?
-    ): List<ReferringOrganisationContact> {
-        return if (orderBy != null) {
+        @Argument orderBy: MutableList<KeyValuePair>?,
+    ): List<ReferringOrganisationContact> =
+        if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
             referringOrganisationContacts.findAll(where.build(), sort).toList()
         } else {
             referringOrganisationContacts.findAll(where.build()).toList()
         }
-    }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
-    fun referringOrganisationContactsConnection(@Argument page: PaginationInput?, @Argument where: ReferringOrganisationContactWhereInput?): Page<ReferringOrganisationContact> {
+    fun referringOrganisationContactsConnection(
+        @Argument page: PaginationInput?,
+        @Argument where: ReferringOrganisationContactWhereInput?,
+    ): Page<ReferringOrganisationContact> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
             return referringOrganisationContacts.findAll(f.create())
@@ -46,23 +47,28 @@ class ReferringOrganisationContactQueries(
     @QueryMapping
     fun referringOrganisationContactsPublic(
         @Argument where: ReferringOrganisationContactPublicWhereInput,
-        @Argument orderBy: MutableList<KeyValuePair>?
-    ): List<ReferringOrganisationContactPublic> {
-        return if (orderBy != null) {
+        @Argument orderBy: MutableList<KeyValuePair>?,
+    ): List<ReferringOrganisationContactPublic> =
+        if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
-            referringOrganisationContacts.findAll(where.build(), sort).map { ReferringOrganisationContactPublic(it.id, it.fullName) }.toList()
+            referringOrganisationContacts
+                .findAll(
+                    where.build(),
+                    sort,
+                ).map { ReferringOrganisationContactPublic(it.id, it.fullName) }
+                .toList()
         } else {
             referringOrganisationContacts.findAll(where.build()).map { ReferringOrganisationContactPublic(it.id, it.fullName) }.toList()
         }
-    }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
-    fun referringOrganisationContact(@Argument where: ReferringOrganisationContactWhereInput): Optional<ReferringOrganisationContact> =
-        referringOrganisationContacts.findOne(where.build())
+    fun referringOrganisationContact(
+        @Argument where: ReferringOrganisationContactWhereInput,
+    ): Optional<ReferringOrganisationContact> = referringOrganisationContacts.findOne(where.build())
 }
 
 data class ReferringOrganisationContactPublic(
     val id: Long,
-    val fullName: String? = null
-){}
+    val fullName: String? = null,
+)

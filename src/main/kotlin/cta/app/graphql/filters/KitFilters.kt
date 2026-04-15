@@ -52,7 +52,7 @@ class KitStatusComparison(
     /**
      * Matches values not in the collection
      */
-    var _nin: MutableList<KitStatus>? = null
+    var _nin: MutableList<KitStatus>? = null,
 ) {
     /**
      * Returns a filter for the specified [path]
@@ -114,7 +114,7 @@ class KitTypeComparison(
     /**
      * Matches values not in the collection
      */
-    var _nin: MutableList<KitType>? = null
+    var _nin: MutableList<KitType>? = null,
 ) {
     /**
      * Returns a filter for the specified [path]
@@ -176,30 +176,30 @@ class KitStorageTypeComparison(
     /**
      * Matches values not in the collection
      */
-    var _nin: MutableList<KitStorageType>? = null
-    ) {
-        /**
-         * Returns a filter for the specified [path]
-         */
-        fun build(path: EnumPath<KitStorageType>): BooleanBuilder {
-            val builder = BooleanBuilder()
-            _eq?.let { builder.and(path.eq(it)) }
-            _gt?.let { builder.and(path.gt(it)) }
-            _gte?.let { builder.and(path.goe(it)) }
-            _in?.let { builder.and(path.`in`(it)) }
-            _is_null?.let {
-                if (it) {
-                    builder.and(path.isNull)
-                } else {
-                    builder.and(path.isNotNull)
-                }
+    var _nin: MutableList<KitStorageType>? = null,
+) {
+    /**
+     * Returns a filter for the specified [path]
+     */
+    fun build(path: EnumPath<KitStorageType>): BooleanBuilder {
+        val builder = BooleanBuilder()
+        _eq?.let { builder.and(path.eq(it)) }
+        _gt?.let { builder.and(path.gt(it)) }
+        _gte?.let { builder.and(path.goe(it)) }
+        _in?.let { builder.and(path.`in`(it)) }
+        _is_null?.let {
+            if (it) {
+                builder.and(path.isNull)
+            } else {
+                builder.and(path.isNotNull)
             }
-            _lt?.let { builder.and(path.lt(it)) }
-            _lte?.let { builder.and(path.loe(it)) }
-            _neq?.let { builder.and(path.ne(it)) }
-            _nin?.let { builder.and(path.notIn(it)) }
-            return builder
         }
+        _lt?.let { builder.and(path.lt(it)) }
+        _lte?.let { builder.and(path.loe(it)) }
+        _neq?.let { builder.and(path.ne(it)) }
+        _nin?.let { builder.and(path.notIn(it)) }
+        return builder
+    }
 }
 
 class KitAttributesWhereInput(
@@ -210,7 +210,7 @@ class KitAttributesWhereInput(
     var filters: List<JsonComparison>? = null,
     var AND: MutableList<KitAttributesWhereInput> = mutableListOf(),
     var OR: MutableList<KitAttributesWhereInput> = mutableListOf(),
-    var NOT: MutableList<KitAttributesWhereInput> = mutableListOf()
+    var NOT: MutableList<KitAttributesWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QKit = QKit.kit): BooleanBuilder {
         val builder = BooleanBuilder()
@@ -254,11 +254,11 @@ class KitSubStatusWhereInput(
     var lockedToUser: BooleanComparison? = null,
     var AND: MutableList<KitSubStatusWhereInput> = mutableListOf(),
     var OR: MutableList<KitSubStatusWhereInput> = mutableListOf(),
-    var NOT: MutableList<KitSubStatusWhereInput> = mutableListOf()
+    var NOT: MutableList<KitSubStatusWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QKitSubStatus = QKitSubStatus.kitSubStatus): BooleanBuilder {
         val builder = BooleanBuilder()
-        
+
         installationOfOSFailed?.let { builder.and(it.build(entity.installationOfOSFailed)) }
         wipeFailed?.let { builder.and(it.build(entity.wipeFailed)) }
         needsSparePart?.let { builder.and(it.build(entity.needsSparePart)) }
@@ -315,7 +315,7 @@ class KitWhereInput(
     var subStatus: KitSubStatusWhereInput? = null,
     var AND: MutableList<KitWhereInput> = mutableListOf(),
     var OR: MutableList<KitWhereInput> = mutableListOf(),
-    var NOT: MutableList<KitWhereInput> = mutableListOf()
+    var NOT: MutableList<KitWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QKit = QKit.kit): BooleanBuilder {
         val builder = BooleanBuilder()
@@ -329,22 +329,22 @@ class KitWhereInput(
         archived?.let { builder.and(it.build(entity.archived)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         statusUpdatedAt?.let { builder.and(it.build(entity.statusUpdatedAt)) }
-        //setting attributes to null to bypass it. KitAttributes is unused and will be removed soon.
+        // setting attributes to null to bypass it. KitAttributes is unused and will be removed soon.
         attributes?.let { null }
         deviceRequest?.let { builder.and(it.build(entity.deviceRequest)) }
         donor?.let { builder.and(it.build(entity.donor)) }
         make?.let { builder.and(it.build(entity.make)) }
         deviceVersion?.let { builder.and(it.build(entity.deviceVersion)) }
         serialNo?.let { builder.and(it.build(entity.serialNo)) }
-        storageCapacity?.let {builder.and(it.build(entity.storageCapacity))}
-        typeOfStorage?.let {builder.and(it.build(entity.typeOfStorage))}
-        ramCapacity?.let {builder.and(it.build(entity.ramCapacity))}
-        cpuType?.let {builder.and(it.build(entity.cpuType))}
-        tpmVersion?.let {builder.and(it.build(entity.tpmVersion))}
+        storageCapacity?.let { builder.and(it.build(entity.storageCapacity)) }
+        typeOfStorage?.let { builder.and(it.build(entity.typeOfStorage)) }
+        ramCapacity?.let { builder.and(it.build(entity.ramCapacity)) }
+        cpuType?.let { builder.and(it.build(entity.cpuType)) }
+        tpmVersion?.let { builder.and(it.build(entity.tpmVersion)) }
         cpuCores?.let { builder.and(it.build(entity.cpuCores)) }
         lotId?.let { builder.and(it.build(entity.lotId)) }
         locationCode?.let { builder.and(it.build(entity.locationCode)) }
-        subStatus?.let { builder.and(it.build(entity.subStatus))}
+        subStatus?.let { builder.and(it.build(entity.subStatus)) }
         if (AND.isNotEmpty()) {
             AND.forEach {
                 builder.and(it.build(entity))

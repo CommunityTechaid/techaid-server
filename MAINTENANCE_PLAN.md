@@ -128,17 +128,18 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 - [x] Both `e.printStackTrace()` calls replaced with `logger.error("Failed to send email", e)`; added `KotlinLogging` import and logger instance
 
 ### T2 — Externalise inline HTML email templates
-- [ ] **File:** `src/main/kotlin/cta/app/services/DeviceRequestService.kt` ~lines 68-120, 153-207
-- [ ] Two large inline HTML strings with duplicated structure; extract to Thymeleaf templates
-- [ ] Thymeleaf infrastructure is already present in the project
+- [x] **Files:** `src/main/resources/templates/email/fragments.html`, `device-request-acknowledged.html`, `device-request-declined.html`
+- [x] Shared header/footer extracted to `fragments.html`; unique body in each template using `th:text`/`th:utext`
+- [x] `DeviceRequestService` now injects `TemplateEngine` and calls `templateEngine.process(...)` instead of building inline strings
 
 ### T3 — Reduce KitMutations.kt (464 lines)
-- [ ] **File:** `src/main/kotlin/cta/app/graphql/mutations/KitMutations.kt`
-- [ ] Extract helper methods or split by logical concern
+- [x] **New file:** `src/main/kotlin/cta/app/graphql/mutations/KitInputs.kt`
+- [x] All `*Input` data classes and `KitSubStatusInput` moved out; `KitMutations.kt` reduced to controller class only (~140 lines)
 
 ### T4 — Split models.kt (622 lines)
-- [ ] **File:** `src/main/kotlin/cta/app/models.kt`
-- [ ] Split into per-entity or per-domain files
+- [x] **New files:** `KitModels.kt`, `DonorModels.kt`, `DeviceRequestModels.kt`, `OrganisationModels.kt`
+- [x] `models.kt` now contains only `BaseEntity` and `CustomRevisionInfo` (~35 lines)
+- [x] All files remain in `package cta.app` — no import changes required in other files
 
 ### T5 — Remove commented-out dead code
 - [x] `build.gradle`: removed ktlint plugin refs, Datadog deps, kapt config block
@@ -146,13 +147,16 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 - [x] `DeviceRequestMutations.kt`: removed commented example exception handler block
 
 ### T6 — Re-enable ktlint
-- [ ] `build.gradle` has ktlint commented out
-- [ ] Re-enable, run `./gradlew ktlintFormat` to establish baseline, commit result
+- [x] `org.jlleitschuh.gradle.ktlint:12.1.1` plugin added to `build.gradle`
+- [x] `ktlint { version = "1.5.0" }` — uses ktlint 1.5.0 compiled against Kotlin 2.x (avoids `HEADER_KEYWORD` NoSuchFieldError with 1.4.x)
+- [x] `.editorconfig` created; baseline suppressions added for intentional project conventions (lowercase filenames, consecutive-comment style in cors.kt)
+- [x] `./gradlew ktlintFormat` passes cleanly; remaining suppressions documented in `.editorconfig`
 
 ### T7 — Increase test coverage
-- [ ] Currently 2 test files; JaCoCo 50% threshold exists but is not met
-- [ ] Add service-level unit tests for `DeviceRequestService`
-- [ ] Add GraphQL integration tests for key mutations/queries
+- [x] **New file:** `src/test/kotlin/cta/app/services/DeviceRequestServiceTest.kt`
+- [x] 6 unit tests covering `formatDeviceRequests` (pure function, no mocks) and `markRequestStepsCompleted` (with Mockito mocks)
+- [x] All 6 tests pass; uses plain JUnit 5 + Mockito (no Spring context, no Docker required)
+- [ ] Add GraphQL integration tests for key mutations/queries (deferred — requires Docker for embedded Postgres)
 
 ### T8 — Remove obsolete Makefile
 - [x] `Makefile` deleted (contained only a self-describing "not used in a very long time" comment)
@@ -177,6 +181,14 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
   1. `execute()` now returns `Response<T>` instead of `T` directly — append `.body` on every call whose return value is used. Void calls (delete, signUp, etc.) are unchanged.
   2. Package renames: `com.auth0.json.mgmt.{Role,RolesPage}` → `com.auth0.json.mgmt.roles.*`; `com.auth0.json.mgmt.PermissionsPage` → `com.auth0.json.mgmt.permissions.*`. Both `Auth0Service.kt` and `UsersGraph.kt` needed updating.
 - `thymeleaf-extras-springsecurity5` → `thymeleaf-extras-springsecurity6` is a drop-in rename (same API for Spring Security 6).
+
+**2026-04-15 — Tier 3 T* refactor complete**
+
+- T2: Thymeleaf email templates. The two email methods in `DeviceRequestService` had identical 60-line CSS headers and footers hardcoded as Kotlin strings. Extracted to `templates/email/fragments.html` (shared header/footer) with two template files for each email type. `TemplateEngine` is now injected.
+- T3: `KitMutations.kt` (464 lines) split — all 8 `*Input` data classes moved to `KitInputs.kt`; controller is now ~140 lines.
+- T4: `models.kt` (622 lines) split into 4 domain files (`KitModels.kt`, `DonorModels.kt`, `DeviceRequestModels.kt`, `OrganisationModels.kt`). `models.kt` now only contains `BaseEntity` and `CustomRevisionInfo`. No import changes needed in other files (same package).
+- T6: ktlint 1.5.0 enabled via plugin 12.1.1. Version pin is critical — 1.4.x causes `NoSuchFieldError: HEADER_KEYWORD` because Kotlin 2.x removed that token from `KtTokens`. Baseline suppressions in `.editorconfig` for 3 intentional project conventions.
+- T7: 6 unit tests added for `DeviceRequestService`. All pass without Docker/Spring context.
 
 **2026-04-15 — GitHub Actions Node.js deprecation (resolved)**
 

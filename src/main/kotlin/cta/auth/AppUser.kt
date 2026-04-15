@@ -14,20 +14,22 @@ class AppUser(
     @JsonIgnore
     private var password: String = "",
     var app: String = "",
-    private val authorities: MutableList<SimpleGrantedAuthority> = mutableListOf()
+    private val authorities: MutableList<SimpleGrantedAuthority> = mutableListOf(),
 ) : UserDetails {
     companion object {
         /**
          * A reference to the anonymous user object
          */
-        val anonymous = AppUser(
-            user = User(
-                name = "anonymous",
-                username = "anonymous"
-            ),
-            app = "anonymous",
-            authorities = mutableListOf(SimpleGrantedAuthority("ANONYMOUS"))
-        )
+        val anonymous =
+            AppUser(
+                user =
+                    User(
+                        name = "anonymous",
+                        username = "anonymous",
+                    ),
+                app = "anonymous",
+                authorities = mutableListOf(SimpleGrantedAuthority("ANONYMOUS")),
+            )
     }
 
     /**
@@ -74,13 +76,9 @@ class AppUser(
     /**
      * Returns true of the user is anonymous
      */
-    fun isAnonymous(): Boolean {
-        return username == "anonymous" && hasAuthority("ANONYMOUS")
-    }
+    fun isAnonymous(): Boolean = username == "anonymous" && hasAuthority("ANONYMOUS")
 
-    fun hasAuthority(authority: String): Boolean {
-        return authorities.firstOrNull { it.authority == authority } != null
-    }
+    fun hasAuthority(authority: String): Boolean = authorities.firstOrNull { it.authority == authority } != null
 }
 
 class User(
@@ -88,5 +86,5 @@ class User(
     var username: String,
     var email: String = "",
     var locked: Boolean = false,
-    var expired: Boolean = false
+    var expired: Boolean = false,
 )

@@ -11,7 +11,6 @@ import org.springframework.core.convert.converter.Converter
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -38,7 +37,7 @@ private val logger = KotlinLogging.logger {}
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 class SecurityConfig(
-    private val authService: AuthService
+    private val authService: AuthService,
 ) {
     @Value("\${auth0.audience}")
     private var audience: String = ""
@@ -57,9 +56,8 @@ class SecurityConfig(
     }
 
     @Bean
-    public fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager {
-        return authenticationConfiguration.getAuthenticationManager()
-    }
+    public fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager =
+        authenticationConfiguration.getAuthenticationManager()
 
     fun secretAuthenticationFilter(authenticationConfiguration: AuthenticationConfiguration): SecretAuthenticationFilter {
         val filter = SecretAuthenticationFilter()
@@ -71,14 +69,16 @@ class SecurityConfig(
     @Bean
     public fun filterChain(
         http: HttpSecurity,
-        authenticationConfiguration: AuthenticationConfiguration): SecurityFilterChain {
+        authenticationConfiguration: AuthenticationConfiguration,
+    ): SecurityFilterChain {
         http.csrf { it.disable() }
         http.addFilterBefore(TokenAuthenticationFilter(authService), BasicAuthenticationFilter::class.java)
         http.addFilterBefore(secretAuthenticationFilter(authenticationConfiguration), UsernamePasswordAuthenticationFilter::class.java)
         http.oauth2ResourceServer { it.jwt { jwt -> jwt.jwtAuthenticationConverter(Auth0TokenConverter()) } }
         http.authorizeHttpRequests { it.anyRequest().permitAll() }
         http.formLogin { form ->
-            form.loginPage("/login")
+            form
+                .loginPage("/login")
                 .defaultSuccessUrl("/login", true)
                 .failureUrl("/login?error")
         }
@@ -86,17 +86,22 @@ class SecurityConfig(
     }
 }
 
-class AudienceValidator(private val audience: String) : OAuth2TokenValidator<Jwt> {
+class AudienceValidator(
+    private val audience: String,
+) : OAuth2TokenValidator<Jwt> {
     override fun validate(jwt: Jwt): OAuth2TokenValidatorResult {
         val error = OAuth2Error("invalid_token", "The required audience is missing", null)
         return if (jwt.audience.contains(audience)) {
             OAuth2TokenValidatorResult.success()
-        } else OAuth2TokenValidatorResult.failure(error)
+        } else {
+            OAuth2TokenValidatorResult.failure(error)
+        }
     }
 }
 
 class Auth0TokenConverter : Converter<Jwt, AbstractAuthenticationToken> {
     private val converter = JwtGrantedAuthoritiesConverter()
+
     override fun convert(jwt: Jwt): AbstractAuthenticationToken {
         val authorities = converter.convert(jwt)!!
         val permissions = jwt.claims["permissions"]

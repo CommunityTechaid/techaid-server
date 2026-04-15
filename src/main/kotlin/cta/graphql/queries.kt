@@ -11,26 +11,31 @@ enum class PageOrderBy {
      * in the ascending order, nulls last
      */
     ASC,
+
     /**
      * in the ascending order, nulls first
      */
     ASC_NULLS_FIRST,
+
     /**
      * in the ascending order, nulls last
      */
     ASC_NULLS_LAST,
+
     /**
      * in the descending order, nulls first
      */
     DESC,
+
     /**
      * in the descending order, nulls first
      */
     DESC_NULLS_FIRST,
+
     /**
      * in the descending order, nulls last
      */
-    DESC_NULLS_LAST
+    DESC_NULLS_LAST,
 }
 
 /**
@@ -49,27 +54,28 @@ class PaginationInput(
      * How to sort the returned data. The key is the name of the column
      * with the value being the sort order ASC|DESC
      */
-    var sort: List<KeyValuePair>? = null
+    var sort: List<KeyValuePair>? = null,
 ) {
     companion object {
-        fun sortBy(sorted: List<KeyValuePair>): Sort {
-            return Sort.by(sorted.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
-        }
+        fun sortBy(sorted: List<KeyValuePair>): Sort = Sort.by(sorted.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
 
-        fun <T : Comparable<*>> createOrder(order: PageOrderBy, target: Expression<T>): OrderSpecifier<T> {
-            return when (order) {
+        fun <T : Comparable<*>> createOrder(
+            order: PageOrderBy,
+            target: Expression<T>,
+        ): OrderSpecifier<T> =
+            when (order) {
                 PageOrderBy.ASC -> OrderSpecifier(Order.ASC, target)
                 PageOrderBy.ASC_NULLS_FIRST -> OrderSpecifier(Order.ASC, target, OrderSpecifier.NullHandling.NullsFirst)
                 PageOrderBy.ASC_NULLS_LAST -> OrderSpecifier(Order.ASC, target, OrderSpecifier.NullHandling.NullsLast)
                 PageOrderBy.DESC -> OrderSpecifier(Order.DESC, target)
-                PageOrderBy.DESC_NULLS_FIRST -> OrderSpecifier(
-                    Order.DESC,
-                    target,
-                    OrderSpecifier.NullHandling.NullsFirst
-                )
+                PageOrderBy.DESC_NULLS_FIRST ->
+                    OrderSpecifier(
+                        Order.DESC,
+                        target,
+                        OrderSpecifier.NullHandling.NullsFirst,
+                    )
                 PageOrderBy.DESC_NULLS_LAST -> OrderSpecifier(Order.DESC, target, OrderSpecifier.NullHandling.NullsLast)
             }
-        }
     }
 
     /**
@@ -81,9 +87,7 @@ class PaginationInput(
         return PageRequest.of(page, size, sort)
     }
 
-    fun create(sort: Sort): PageRequest {
-        return PageRequest.of(page, size, sort)
-    }
+    fun create(sort: Sort): PageRequest = PageRequest.of(page, size, sort)
 }
 
 /**
@@ -97,7 +101,7 @@ class KeyValuePair(
     /**
      * The value for the key
      */
-    var value: String
+    var value: String,
 )
 
 /**
@@ -115,22 +119,27 @@ data class AppError(
     /**
      * The extra details about the exception
      */
-    var context: MutableList<KeyValuePair> = mutableListOf()
+    var context: MutableList<KeyValuePair> = mutableListOf(),
 ) {
     companion object {
-        fun fromException(exception: Exception, message: String? = null): AppError {
-            return AppError(
+        fun fromException(
+            exception: Exception,
+            message: String? = null,
+        ): AppError =
+            AppError(
                 message = message ?: exception.message ?: "",
-                type = exception.javaClass.simpleName
+                type = exception.javaClass.simpleName,
             )
-        }
 
-        fun create(message: String, type: String = "Exception", context: Map<String, String> = mapOf()): AppError {
-            return AppError(
+        fun create(
+            message: String,
+            type: String = "Exception",
+            context: Map<String, String> = mapOf(),
+        ): AppError =
+            AppError(
                 message = message,
                 type = type,
-                context = context.map { KeyValuePair(it.key, it.value) }.toMutableList()
+                context = context.map { KeyValuePair(it.key, it.value) }.toMutableList(),
             )
-        }
     }
 }

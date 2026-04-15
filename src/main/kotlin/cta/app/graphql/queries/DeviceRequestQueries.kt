@@ -18,9 +18,8 @@ import java.util.Optional
 @Controller
 class DeviceRequestQueries(
     private val deviceRequests: DeviceRequestRepository,
-    private val filterService: FilterService
-)  {
-
+    private val filterService: FilterService,
+) {
     @QueryMapping
     fun requestCount(): RequestCount? {
         if (filterService.authenticated()) {
@@ -33,21 +32,20 @@ class DeviceRequestQueries(
     @QueryMapping
     fun deviceRequests(
         @Argument where: DeviceRequestWhereInput,
-        @Argument orderBy: MutableList<KeyValuePair>?
-    ): List<DeviceRequest> {
-        return if (orderBy != null) {
+        @Argument orderBy: MutableList<KeyValuePair>?,
+    ): List<DeviceRequest> =
+        if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
             deviceRequests.findAll(where.build(), sort).toList()
         } else {
             deviceRequests.findAll(where.build()).toList()
         }
-    }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
     fun deviceRequestConnection(
         @Argument page: PaginationInput?,
-        @Argument where: DeviceRequestWhereInput?
+        @Argument where: DeviceRequestWhereInput?,
     ): Page<DeviceRequest> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
@@ -58,6 +56,7 @@ class DeviceRequestQueries(
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
-    fun deviceRequest(@Argument where: DeviceRequestWhereInput): Optional<DeviceRequest> =
-        deviceRequests.findOne(where.build())
+    fun deviceRequest(
+        @Argument where: DeviceRequestWhereInput,
+    ): Optional<DeviceRequest> = deviceRequests.findOne(where.build())
 }

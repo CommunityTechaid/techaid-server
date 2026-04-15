@@ -31,6 +31,7 @@ plugins {
     id 'com.netflix.dgs.codegen' version '6.0.3'
     id 'org.jetbrains.kotlin.jvm' version '2.1.20'
     id 'org.jetbrains.kotlin.plugin.spring' version '2.1.20'
+    id 'org.jlleitschuh.gradle.ktlint' version '12.1.1'
 }
 
 
@@ -225,6 +226,12 @@ dependencies {
 
 
 
+// ktlint 1.4.x was compiled against Kotlin 1.9.x; KtTokens.HEADER_KEYWORD was removed in
+// Kotlin 2.x, causing NoSuchFieldError at runtime. ktlint 1.5.0+ is compiled against Kotlin 2.x.
+ktlint {
+    version = "1.5.0"
+}
+
 idea {
     module {
         def kaptMain = file('build/generated/source/kapt/main')
@@ -232,6 +239,7 @@ idea {
         generatedSourceDirs += kaptMain
     }
 }
+
 
 task updateAppName {
     doLast {

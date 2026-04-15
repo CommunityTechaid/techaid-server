@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-
 import cta.app.ReferringOrganisationNote
 import cta.app.ReferringOrganisationNoteRepository
 import cta.app.services.FilterService
@@ -19,27 +18,28 @@ import org.springframework.validation.annotation.Validated
 @Transactional
 class ReferringOrganisationNoteMutations(
     private val filterService: FilterService,
-    private val referringOrganisationNotes: ReferringOrganisationNoteRepository
+    private val referringOrganisationNotes: ReferringOrganisationNoteRepository,
 ) {
-
     @MutationMapping
-    fun deleteReferringOrganisationNote(@Argument id: Long): Boolean{
-        val volunteer = filterService.userDetails().name.ifBlank {
-            filterService.userDetails().email
-        }
-        val referringOrganisationNote: ReferringOrganisationNote = referringOrganisationNotes.findById(id).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a note with id: $id")
-        if (volunteer == referringOrganisationNote.volunteer){
+    fun deleteReferringOrganisationNote(
+        @Argument id: Long,
+    ): Boolean {
+        val volunteer =
+            filterService.userDetails().name.ifBlank {
+                filterService.userDetails().email
+            }
+        val referringOrganisationNote: ReferringOrganisationNote =
+            referringOrganisationNotes.findById(id).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a note with id: $id")
+        if (volunteer == referringOrganisationNote.volunteer) {
             referringOrganisationNotes.delete(referringOrganisationNote)
         } else {
             throw IllegalArgumentException("You cannot delete other user's notes")
         }
         return true
     }
-
 }
 
 data class ReferringOrganisationNoteInput(
-    val content: String
-) {
-}
+    val content: String,
+)
