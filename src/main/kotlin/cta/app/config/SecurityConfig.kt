@@ -76,7 +76,6 @@ class SecurityConfig(
         http: HttpSecurity,
         authenticationConfiguration: AuthenticationConfiguration): SecurityFilterChain {
         http.csrf { it.disable() }
-        http.headers { headers -> headers.httpStrictTransportSecurity { it.disable() } }
         //http.addFilterBefore(corsFilter, SessionManagementFilter::class.java)
         http.addFilterBefore(TokenAuthenticationFilter(authService), BasicAuthenticationFilter::class.java)
         http.addFilterBefore(secretAuthenticationFilter(authenticationConfiguration), UsernamePasswordAuthenticationFilter::class.java)

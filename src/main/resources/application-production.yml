@@ -5,7 +5,12 @@ auth:
   cors:
     enabled: true
     routes:
-      - origin: '*'
+      - origin: 'https://app.communitytechaid.org.uk'
+        path: '*'
+        headers:
+          Access-Control-Allow-Methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+          Access-Control-Allow-Headers: '*'
+      - origin: 'https://app-testing.communitytechaid.org.uk'
         path: '*'
         headers:
           Access-Control-Allow-Methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS'

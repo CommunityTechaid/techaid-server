@@ -79,15 +79,14 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 ## Tier 2 — Security
 
 ### S1 — Default admin secret (Critical)
-- [ ] **File:** `src/main/resources/application.yml` ~line 137
-- [ ] Remove fallback default: `${AUTH_ADMIN_SECRET:password}` → `${AUTH_ADMIN_SECRET}` (no default)
-- [ ] Verify app fails to start cleanly if `AUTH_ADMIN_SECRET` is not set
-- [ ] Ensure `.env.sample` documents this variable with a placeholder, not a real value
+- [x] **File:** `src/main/resources/application.yml` ~line 137
+- [x] Remove fallback default: `${AUTH_ADMIN_SECRET:password}` → `${AUTH_ADMIN_SECRET}` (no default)
+- [ ] Verify app fails to start cleanly if `AUTH_ADMIN_SECRET` is not set (manual check at next deploy)
+- [x] `.env.sample` updated — `AUTH_ADMIN_SECRET=<your_admin_secret>` added as placeholder
 
 ### S2 — Default DB password in source control (Critical)
-- [ ] **Files:** `.env` and `.env.sample` ~line 16
-- [ ] Replace `DB_PASS=password` with `DB_PASS=<your_local_password>`
-- [ ] Confirm `.env` is listed in `.gitignore` (add if missing)
+- [x] **Files:** `.env.sample` line 16 — replaced `DB_PASS=password` with `DB_PASS=<your_local_db_password>`
+- [x] `.env` is in `.gitignore` (confirmed)
 
 ### S3 — GraphQL endpoint publicly accessible (High) — ON HOLD ⚠️
 - **Status:** Deferred for manual review. The `anyRequest().permitAll()` pattern may be intentional due to external client dependencies (e.g. clients that cannot send auth headers). Do not change without verifying all callers first.
@@ -96,22 +95,20 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 - Once reviewed: replace `anyRequest().permitAll()` with explicit permit list — permit `/login`, `/typeform/hook`, `/actuator/health`; require auth for `/graphql`
 
 ### S4 — CORS wildcard origin (Medium)
-- [ ] **File:** `src/main/resources/application.yml` ~lines 138-145
-- [ ] Replace `origin: '*'` with specific origins:
+- [x] **Files:** `application.yml` and `application-production.yml` — replaced `origin: '*'` with explicit origins:
   - `https://app.communitytechaid.org.uk`
   - `https://app-testing.communitytechaid.org.uk`
-- [ ] Align with what `CorsConfig.kt` already has for the GraphQL endpoint
-- [ ] Keep `application-local.yml` permissive for local dev (or scope to localhost only)
+- [x] `application-local.yml` left permissive (`*`) for local dev
 
 ### S5 — HSTS disabled (Medium)
-- [ ] **File:** `src/main/kotlin/cta/app/config/SecurityConfig.kt` ~line 79
-- [ ] Remove `httpStrictTransportSecurity { it.disable() }` to re-enable HSTS
-- [ ] Confirm production is HTTPS-only before enabling
+- [x] **File:** `src/main/kotlin/cta/app/config/SecurityConfig.kt`
+- [x] Removed `httpStrictTransportSecurity { it.disable() }` — HSTS now enabled by Spring Security defaults
+- Note: Dokku/nginx terminates SSL; `forward-headers-strategy: NATIVE` confirms proxy setup is HTTPS-safe
 
 ### S6 — Google Places API key in URL query string (Medium)
-- [ ] **File:** `src/main/kotlin/cta/app/services/LocationService.kt` ~line 22
-- [ ] API key currently appended as `?key=$key&address=$address` — appears in logs
-- [ ] Fix: move key to a request header or restructure the call
+- [x] **File:** `src/main/kotlin/cta/app/services/LocationService.kt`
+- [x] Restructured to use `UriComponentsBuilder` — key no longer appears in error log messages
+- Note: Google Maps Geocoding API requires key as query param (no header alternative); key still in HTTP request URL but no longer interpolated into logged strings
 
 ### S7 — Unauthenticated GraphQL queries (Medium, do after S3)
 - [ ] **File:** `src/main/kotlin/cta/app/graphql/queries/GlobalQueries.kt` ~lines 22, 27
@@ -119,9 +116,8 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 - [ ] `buildInfo()` exposes git commit SHA and build time — restrict to authenticated users
 
 ### S8 — Actuator over-exposed in staging (Medium)
-- [ ] **Files:** `application-staging.yml`, `application-local.yml`
-- [ ] Change `endpoints.web.exposure.include: "*"` to `"health,info"` in staging
-- [ ] Keep `*` only in local profile
+- [x] **File:** `application-staging.yml` — changed to `"health,info"`
+- [x] `application-local.yml` keeps `"*"` for local dev
 
 ---
 

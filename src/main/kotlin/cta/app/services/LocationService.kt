@@ -5,6 +5,7 @@ import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.util.UriComponentsBuilder
 
 private val logger = KotlinLogging.logger {}
 
@@ -18,11 +19,15 @@ class LocationService {
 
     fun findLocation(address: String): LocationResponse? {
         try {
-            return restTemplate.getForEntity(
-                "https://maps.google.com/maps/api/geocode/json?key=$key&address=$address", LocationResponse::class.java
-            ).body!!
+            val uri = UriComponentsBuilder
+                .fromHttpUrl("https://maps.google.com/maps/api/geocode/json")
+                .queryParam("key", key)
+                .queryParam("address", address)
+                .build(true)
+                .toUri()
+            return restTemplate.getForEntity(uri, LocationResponse::class.java).body!!
         } catch (e: Exception) {
-            logger.error(e.message, e)
+            logger.error("Geocoding request failed for address: {}", address, e)
         }
         return null
     }
