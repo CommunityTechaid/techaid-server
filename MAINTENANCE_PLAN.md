@@ -178,7 +178,6 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
   2. Package renames: `com.auth0.json.mgmt.{Role,RolesPage}` → `com.auth0.json.mgmt.roles.*`; `com.auth0.json.mgmt.PermissionsPage` → `com.auth0.json.mgmt.permissions.*`. Both `Auth0Service.kt` and `UsersGraph.kt` needed updating.
 - `thymeleaf-extras-springsecurity5` → `thymeleaf-extras-springsecurity6` is a drop-in rename (same API for Spring Security 6).
 
-**2026-04-15 — GitHub Actions Node.js deprecation**
+**2026-04-15 — GitHub Actions Node.js deprecation (resolved)**
 
-- CI shows deprecation warnings for `actions/checkout@v4`, `actions/setup-java@v4`, `actions/upload-artifact@v4` (Node.js 20 → 24 migration). Enforcement deadline: **2026-06-02**. Add a task to update these before June.
-  - Update `.github/workflows/ci.yml`: `actions/checkout@v4` → `@v5` (or latest), `actions/setup-java@v4` → `@v5`, `actions/upload-artifact@v4` → `@v5` (check available major versions).
+- Updated `actions/checkout@v4` → `@v5`, `actions/setup-java@v4` → `@v5`, `actions/upload-artifact@v4` → `@v5` to address Node.js 20 → 24 migration before 2026-06-02 enforcement deadline.
