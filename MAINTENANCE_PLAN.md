@@ -155,10 +155,10 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 - [ ] Add GraphQL integration tests for key mutations/queries
 
 ### T8 — Remove obsolete Makefile
-- [ ] `Makefile` is self-described as unused "very long time" — delete it
+- [x] `Makefile` deleted (contained only a self-describing "not used in a very long time" comment)
 
 ### T9 — Pin dynamic Auth0 dependency version
-- [ ] `com.auth0:mvc-auth-commons:1.+` → explicit pinned version (done as part of Group C above)
+- [x] `com.auth0:mvc-auth-commons:1.+` → `1.11.1` (done in Group C)
 
 ---
 
