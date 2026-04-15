@@ -191,8 +191,8 @@ dependencies {
     implementation "info.picocli:picocli-spring-boot-starter:4.0.2"
 
     /* Logging / Monitoring Dependencies */
-    implementation 'net.logstash.logback:logstash-logback-encoder:6.3'
-    implementation 'ch.qos.logback:logback-classic:1.4.14'
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+    // logback-classic version managed by Spring Boot BOM (1.5.x with Spring Boot 3.4+)
     // implementation 'com.datadoghq:dd-trace-api:0.44.0'
     // implementation 'io.micrometer:micrometer-registry-datadog'
 
