@@ -158,6 +158,15 @@ class KitMutations(
         return data.apply(entity);
     }
 
+    @MutationMapping
+    fun updateKits(@Argument @Valid data: BulkKitUpdateInput): List<Kit> {
+        val predicate = filterService.kitFilter()
+            .and(QKit.kit.id.`in`(data.ids))
+        val entities = kits.findAll(predicate)
+        entities.forEach { data.apply(it) }
+        return kits.saveAll(entities)
+    }
+
     @PreAuthorize("hasAnyAuthority('delete:kits')")
     @MutationMapping
     fun deleteKit(@Argument id: Long): Boolean {
@@ -403,6 +412,27 @@ data class AutoUpdateKitInput(
             lotId = self.lotId ?: lotId
             locationCode = self.locationCode ?: locationCode
             subStatus = self.subStatus.apply(entity)
+        }
+    }
+}
+
+data class BulkKitUpdateInput(
+    val ids: List<Long>,
+    val status: KitStatus? = null,
+    val archived: Boolean? = null,
+    val locationCode: String? = null,
+    val lotId: String? = null
+) {
+    fun apply(entity: Kit): Kit {
+        val self = this
+        return entity.apply {
+            if (self.status != null && self.status != status) {
+                status = self.status
+                statusUpdatedAt = Instant.now()
+            }
+            archived = self.archived ?: archived
+            locationCode = self.locationCode ?: locationCode
+            lotId = self.lotId ?: lotId
         }
     }
 }
