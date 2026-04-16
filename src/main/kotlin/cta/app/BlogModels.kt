@@ -1,5 +1,6 @@
 package cta.app
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -24,6 +25,7 @@ class Post(
     var slug: String,
     var published: Boolean,
     var secured: Boolean,
+    @Column(columnDefinition = "TEXT")
     var content: String,
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
