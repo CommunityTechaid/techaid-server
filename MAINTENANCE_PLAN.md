@@ -174,6 +174,7 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
   1. `logback-classic:1.4.14` explicit pin removed — BOM now manages 1.5.x; `logstash-logback-encoder` updated to `7.4` to match.
   2. `spring.graphql.schema.inspection.enabled: false` added to `src/test/resources/application.yml`. Spring Boot 3.3+ `SchemaMappingInspector` crashes on startup with `Method must not be null` after the Kotlin 2.x upgrade — likely a Kotlin K2 compiler reflection change affecting how Spring resolves a handler method for one of the GraphQL field mappings. **TODO:** re-enable inspection and find which mapping is null (run app with inspection=true locally, check startup logs for the offending field).
   - The test resource `application.yml` completely overrides the main one during test runs — a non-obvious footgun worth documenting.
+  - **2026-04-16 follow-up:** `spring.graphql.schema.inspection.enabled: false` was only set in `src/test/resources/application.yml`; staging/production crashed with `Method must not be null` from `SchemaMappingInspector`. Added the same flag to `src/main/resources/application.yml`.
 
 **2026-04-15 — Group C complete (Auth0 2.x migration)**
 

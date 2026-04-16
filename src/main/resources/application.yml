@@ -115,6 +115,10 @@ spring:
     out-of-order: true
     locations:
       - classpath:db/migration
+  graphql:
+    schema:
+      inspection:
+        enabled: false
   resources:
     static-locations:
       - classpath:/META-INF/resources/
