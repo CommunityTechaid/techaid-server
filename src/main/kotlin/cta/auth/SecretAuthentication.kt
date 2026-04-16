@@ -14,8 +14,9 @@ import org.springframework.stereotype.Component
 private val logger = KotlinLogging.logger {}
 
 @Component
-class SecretAuthenticationProvider(private val authService: AuthService) : AuthenticationProvider {
-
+class SecretAuthenticationProvider(
+    private val authService: AuthService,
+) : AuthenticationProvider {
     override fun authenticate(authentication: Authentication): Authentication? {
         var auth: SecretAuthenticationToken? = null
         logger.debug("Verifying: $authentication")
@@ -29,11 +30,10 @@ class SecretAuthenticationProvider(private val authService: AuthService) : Authe
         return auth
     }
 
-    override fun supports(authentication: Class<*>): Boolean {
-        return with(authentication) {
+    override fun supports(authentication: Class<*>): Boolean =
+        with(authentication) {
             equals(SecretAuthenticationToken::class.java)
         }
-    }
 }
 
 class SecretAuthenticationToken : AbstractAuthenticationToken {
@@ -49,26 +49,22 @@ class SecretAuthenticationToken : AbstractAuthenticationToken {
     constructor(
         principal: Any?,
         secret: String,
-        authorities: Collection<GrantedAuthority>
+        authorities: Collection<GrantedAuthority>,
     ) : super(authorities) {
         this.principal = principal
         this.secret = secret
         super.setAuthenticated(true)
     }
 
-    override fun getCredentials(): Any? {
-        return this.secret
-    }
+    override fun getCredentials(): Any? = this.secret
 
-    override fun getPrincipal(): Any? {
-        return this.principal
-    }
+    override fun getPrincipal(): Any? = this.principal
 
     @Throws(IllegalArgumentException::class)
     override fun setAuthenticated(isAuthenticated: Boolean) {
         if (isAuthenticated) {
             throw IllegalArgumentException(
-                "Cannot set this token to trusted - use constructor which takes a GrantedAuthority list instead"
+                "Cannot set this token to trusted - use constructor which takes a GrantedAuthority list instead",
             )
         }
 
@@ -82,7 +78,10 @@ class SecretAuthenticationToken : AbstractAuthenticationToken {
 }
 
 class SecretAuthenticationFilter : AbstractAuthenticationProcessingFilter(AntPathRequestMatcher("/login", "POST")) {
-    override fun attemptAuthentication(request: HttpServletRequest, response: HttpServletResponse): Authentication? {
+    override fun attemptAuthentication(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ): Authentication? {
         val token = request.getParameter("x-admin-token")
         logger.debug("Attempting authentication with token, length: ${token?.length}")
         if (token.isNullOrBlank()) {

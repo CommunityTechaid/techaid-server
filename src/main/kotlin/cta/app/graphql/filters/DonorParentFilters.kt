@@ -2,13 +2,13 @@ package cta.app.graphql.filters
 
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.EnumPath
-import java.time.Instant
 import cta.app.DonorParentType
 import cta.app.QDonorParent
 import cta.graphql.BooleanComparison
 import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
+import java.time.Instant
 
 class DonorParentTypeComparison(
     /**
@@ -46,7 +46,7 @@ class DonorParentTypeComparison(
     /**
      * Matches values not in the collection
      */
-    var _nin: MutableList<DonorParentType>? = null
+    var _nin: MutableList<DonorParentType>? = null,
 ) {
     /**
      * Returns a filter for the specified [path]
@@ -83,7 +83,7 @@ class DonorParentWhereInput(
     var archived: BooleanComparison? = null,
     var AND: MutableList<DonorParentWhereInput> = mutableListOf(),
     var OR: MutableList<DonorParentWhereInput> = mutableListOf(),
-    var NOT: MutableList<DonorParentWhereInput> = mutableListOf()
+    var NOT: MutableList<DonorParentWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QDonorParent = QDonorParent.donorParent): BooleanBuilder {
         val builder = BooleanBuilder()

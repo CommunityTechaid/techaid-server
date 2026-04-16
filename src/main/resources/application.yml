@@ -134,11 +134,16 @@ logging.level:
   org.hibernate.type: TRACE
 
 auth:
-  admin-secret: ${AUTH_ADMIN_SECRET:password}
+  admin-secret: ${AUTH_ADMIN_SECRET}
   cors:
     enabled: true
     routes:
-      - origin: '*'
+      - origin: 'https://app.communitytechaid.org.uk'
+        path: '*'
+        headers:
+          Access-Control-Allow-Methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+          Access-Control-Allow-Headers: '*'
+      - origin: 'https://app-testing.communitytechaid.org.uk'
         path: '*'
         headers:
           Access-Control-Allow-Methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS'

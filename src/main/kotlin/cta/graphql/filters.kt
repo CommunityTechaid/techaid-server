@@ -60,7 +60,7 @@ open class NumberComparison<T>(
     /**
      * Filter by string comparison
      */
-    var _string: TextComparison? = null
+    var _string: TextComparison? = null,
 ) where T : Number, T : Comparable<T> {
     /**
      * Returns a filter for the specified [path]
@@ -104,7 +104,7 @@ class IntegerComparison(
     _nin: MutableList<Int>? = null,
     _like: String? = null,
     _contains: String? = null,
-    _string: TextComparison? = null
+    _string: TextComparison? = null,
 ) : NumberComparison<Int>(_eq, _gt, _gte, _in, _is_null, _lt, _lte, _neq, _nin, _like, _contains, _string)
 
 /**
@@ -122,7 +122,7 @@ class LongComparison(
     _nin: MutableList<Long>? = null,
     _like: String? = null,
     _contains: String? = null,
-    _string: TextComparison? = null
+    _string: TextComparison? = null,
 ) : NumberComparison<Long>(_eq, _gt, _gte, _in, _is_null, _lt, _lte, _neq, _nin, _like, _contains, _string)
 
 /**
@@ -140,7 +140,7 @@ class BigDecimalComparison(
     _nin: MutableList<BigDecimal>? = null,
     _like: String? = null,
     _contains: String? = null,
-    _string: TextComparison? = null
+    _string: TextComparison? = null,
 ) : NumberComparison<BigDecimal>(_eq, _gt, _gte, _in, _is_null, _lt, _lte, _neq, _nin, _like, _contains, _string)
 
 /**
@@ -218,7 +218,7 @@ class TextComparison(
     /**
      * Matches by converting the value to long and comparing
      */
-    var _number: LongComparison? = null
+    var _number: LongComparison? = null,
 ) {
     /**
      * Returns a filter for the specified [path]
@@ -292,7 +292,7 @@ open class EnumComparison<T>(
     /**
      * Matches values not in the collection
      */
-    var _nin: MutableList<T>? = null
+    var _nin: MutableList<T>? = null,
 ) where T : Enum<T> {
     /**
      * Returns a filter for the specified [path]
@@ -357,7 +357,7 @@ class TimeComparison<T : Comparable<*>>(
     /**
      * Matches values not in the collection
      */
-    var _nin: MutableList<T>? = null
+    var _nin: MutableList<T>? = null,
 ) {
     /**
      * Returns a filter for the specified [path]
@@ -406,7 +406,7 @@ class BooleanComparison(
     /**
      * Matches values not in the collection
      */
-    var _nin: MutableList<Boolean>? = null
+    var _nin: MutableList<Boolean>? = null,
 ) {
     /**
      * Returns a filter for the specified [path]
@@ -436,7 +436,7 @@ class JsonComparison(
     var _bool: BooleanComparison? = null,
     var _length: IntegerComparison? = null,
     var _in: MutableList<Any>? = null,
-    var _nin: MutableList<Any>? = null
+    var _nin: MutableList<Any>? = null,
 ) {
     /**
      * Returns a filter for the specified [path]

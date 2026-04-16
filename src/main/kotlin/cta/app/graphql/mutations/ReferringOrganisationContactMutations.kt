@@ -15,66 +15,77 @@ import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 
-
 @Controller
 @Validated
 @Transactional
-
 class ReferringOrganisationContactMutations(
-
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
-    private val referringOrganisations: ReferringOrganisationRepository
+    private val referringOrganisations: ReferringOrganisationRepository,
 ) {
     @MutationMapping
-    fun createReferringOrganisationContact(@Argument @Valid data: CreateReferringOrganisationContactInput): ReferringOrganisationContact {
-
-        val referringOrganisation = referringOrganisations.findById(data.referringOrganisation).toNullable()
-            ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
+    fun createReferringOrganisationContact(
+        @Argument @Valid data: CreateReferringOrganisationContactInput,
+    ): ReferringOrganisationContact {
+        val referringOrganisation =
+            referringOrganisations.findById(data.referringOrganisation).toNullable()
+                ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
 
         /**
          * We add another level of check here to verify that a user with the same full name and email does not already exist.
          * We do this to ensure that no duplicate users have the same full name and email ID due to errors in the frontend
          */
-        var referringOrganisationContact: ReferringOrganisationContact?;
+        var referringOrganisationContact: ReferringOrganisationContact?
         try {
-            referringOrganisationContact = referringOrganisationContacts.findOneByFullNameAndEmailAndReferringOrganisation(data.fullName, data.email, referringOrganisation)
-            if (referringOrganisationContact != null){
+            referringOrganisationContact =
+                referringOrganisationContacts.findOneByFullNameAndEmailAndReferringOrganisation(
+                    data.fullName,
+                    data.email,
+                    referringOrganisation,
+                )
+            if (referringOrganisationContact != null) {
                 return referringOrganisationContact
             }
-        }catch (exception: Exception){
+        } catch (exception: Exception) {
             throw RuntimeException("There was an error when saving the details of user " + data.fullName + ". Please contact CTA.")
         }
 
-        referringOrganisationContact = ReferringOrganisationContact (
-            fullName = data.fullName,
-            address = data.address ?: "",
-            email = data.email,
-            phoneNumber = data.phoneNumber,
-            referringOrganisation = referringOrganisation
-        )
+        referringOrganisationContact =
+            ReferringOrganisationContact(
+                fullName = data.fullName,
+                address = data.address ?: "",
+                email = data.email,
+                phoneNumber = data.phoneNumber,
+                referringOrganisation = referringOrganisation,
+            )
 
         return referringOrganisationContacts.save(referringOrganisationContact)
     }
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
-    fun updateReferringOrganisationContact(@Argument @Valid data: UpdateReferringOrganisationContactInput): ReferringOrganisationContact {
-        val entity = referringOrganisationContacts.findById(data.id).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a organisation contact with id: ${data.id}")
+    fun updateReferringOrganisationContact(
+        @Argument @Valid data: UpdateReferringOrganisationContactInput,
+    ): ReferringOrganisationContact {
+        val entity =
+            referringOrganisationContacts.findById(data.id).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a organisation contact with id: ${data.id}")
 
         return data.apply(entity).apply {
-            if (entity.referringOrganisation.id != data.referringOrganisationId){
-                val referringOrganisation = referringOrganisations.findById(data.referringOrganisationId).toNullable()
-                    ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
-    
-                referringOrganisation.addContact(this);
+            if (entity.referringOrganisation.id != data.referringOrganisationId) {
+                val referringOrganisation =
+                    referringOrganisations.findById(data.referringOrganisationId).toNullable()
+                        ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
+
+                referringOrganisation.addContact(this)
             }
         }
     }
 
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
     @MutationMapping
-    fun deleteReferringOrganisationContact(@Argument id: Long): Boolean {
+    fun deleteReferringOrganisationContact(
+        @Argument id: Long,
+    ): Boolean {
         val entity =
             referringOrganisationContacts.findById(id).toNullable()
                 ?: throw EntityNotFoundException("No referring organisation contact with id: $id")
@@ -91,10 +102,8 @@ data class CreateReferringOrganisationContactInput(
     var email: String = "",
     var phoneNumber: String,
     @get:NotNull
-    var referringOrganisation: Long
-
+    var referringOrganisation: Long,
 )
-
 
 data class UpdateReferringOrganisationContactInput(
     @get:NotNull
@@ -107,13 +116,13 @@ data class UpdateReferringOrganisationContactInput(
     var phoneNumber: String,
     @get:NotNull
     var referringOrganisationId: Long,
-    val archived: Boolean? = null
+    val archived: Boolean? = null,
 ) {
     fun apply(entity: ReferringOrganisationContact): ReferringOrganisationContact {
         val self = this
         return entity.apply {
             fullName = self.fullName
-            address  = self.address ?: ""
+            address = self.address ?: ""
             email = self.email
             phoneNumber = self.phoneNumber
             archived = self.archived ?: archived

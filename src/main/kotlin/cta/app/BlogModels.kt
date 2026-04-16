@@ -1,6 +1,5 @@
 package cta.app
 
-import java.time.Instant
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -12,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
+import java.time.Instant
 
 @Entity
 @Table(name = "posts")
@@ -28,7 +28,10 @@ class Post(
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
-    var updatedAt: Instant = Instant.now()
+    var updatedAt: Instant = Instant.now(),
 )
 
-interface PostRepository : PagingAndSortingRepository<Post, Long>, QuerydslPredicateExecutor<Post>, CrudRepository<Post, Long>
+interface PostRepository :
+    PagingAndSortingRepository<Post, Long>,
+    QuerydslPredicateExecutor<Post>,
+    CrudRepository<Post, Long>

@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-
 import cta.app.DonorParent
 import cta.app.DonorParentRepository
 import cta.app.DonorParentType
@@ -21,26 +20,31 @@ import org.springframework.validation.annotation.Validated
 @PreAuthorize("hasAnyAuthority('write:donorParents')")
 @Transactional
 class DonorParentMutations(
-    private val donorParents: DonorParentRepository
+    private val donorParents: DonorParentRepository,
 ) {
+    @MutationMapping
+    fun createDonorParent(
+        @Argument @Valid data: CreateDonorParentInput,
+    ): DonorParent = donorParents.save(data.entity)
 
     @MutationMapping
-    fun createDonorParent(@Argument @Valid data: CreateDonorParentInput): DonorParent {
-        return donorParents.save(data.entity)
-    }
-
-    @MutationMapping
-    fun updateDonorParent(@Argument @Valid data: UpdateDonorParentInput): DonorParent {
-        val entity = donorParents.findById(data.id).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a parent donor with id: ${data.id}")
+    fun updateDonorParent(
+        @Argument @Valid data: UpdateDonorParentInput,
+    ): DonorParent {
+        val entity =
+            donorParents.findById(data.id).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a parent donor with id: ${data.id}")
         return data.apply(entity)
     }
 
     @PreAuthorize("hasAnyAuthority('delete:donorParents')")
     @MutationMapping
-    fun deleteDonorParent(@Argument id: Long): Boolean {
-        val donorParent = donorParents.findById(id).toNullable()
-            ?: throw EntityNotFoundException("No parent donor with id: $id")
+    fun deleteDonorParent(
+        @Argument id: Long,
+    ): Boolean {
+        val donorParent =
+            donorParents.findById(id).toNullable()
+                ?: throw EntityNotFoundException("No parent donor with id: $id")
         donorParent.donors.forEach { donorParent.removeDonor(it) }
         donorParents.delete(donorParent)
         return true
@@ -52,14 +56,14 @@ data class CreateDonorParentInput(
     val name: String,
     val address: String,
     val website: String,
-    val type: DonorParentType
+    val type: DonorParentType,
 ) {
     val entity by lazy {
         DonorParent(
             name = name,
             address = address,
             website = website,
-            type = type
+            type = type,
         )
     }
 }
@@ -71,7 +75,7 @@ data class UpdateDonorParentInput(
     val address: String,
     val website: String,
     val type: DonorParentType,
-    val archived: Boolean? = null
+    val archived: Boolean? = null,
 ) {
     fun apply(entity: DonorParent): DonorParent {
         val self = this

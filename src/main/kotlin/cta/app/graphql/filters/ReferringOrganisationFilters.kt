@@ -17,13 +17,13 @@ class ReferringOrganisationWhereInput(
     var updatedAt: TimeComparison<Instant>? = null,
     var AND: MutableList<ReferringOrganisationWhereInput> = mutableListOf(),
     var OR: MutableList<ReferringOrganisationWhereInput> = mutableListOf(),
-    var NOT: MutableList<ReferringOrganisationWhereInput> = mutableListOf()
+    var NOT: MutableList<ReferringOrganisationWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QReferringOrganisation = QReferringOrganisation.referringOrganisation): BooleanBuilder {
         val builder = BooleanBuilder()
         id?.let { builder.and(it.build(entity.id)) }
         name?.let { builder.and(it.build(entity.name)) }
-        website?.let {builder.and(it.build(entity.website))}
+        website?.let { builder.and(it.build(entity.website)) }
         archived?.let { builder.and(it.build(entity.archived)) }
         createdAt?.let { builder.and(it.build(entity.createdAt)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }

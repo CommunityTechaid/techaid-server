@@ -1,24 +1,19 @@
 package cta.models
 
-
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class TypeFormPayload(
     val eventType: String,
-    val formResponse: TypeformResponse
-) {
-}
+    val formResponse: TypeformResponse,
+)
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class TypeformResponse(
     val formId: String,
-    val hidden: Map<String, String>
-) {
-}
-
+    val hidden: Map<String, String>,
+)
 
 /*
 data class TypeformDefinition(
@@ -49,4 +44,3 @@ data class Choices(
     val refs: List<String>
 )
 */
-

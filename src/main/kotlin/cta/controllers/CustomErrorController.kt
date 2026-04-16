@@ -24,7 +24,6 @@ import org.springframework.web.context.request.ServletWebRequest
 @RestController
 @ConditionalOnWebApplication
 class CustomErrorController : ErrorController {
-
     /**
      * If set will return the full stack trace of the exception
      */
@@ -47,7 +46,10 @@ class CustomErrorController : ErrorController {
      * Returns the error object as a JSON element
      */
     @RequestMapping(value = ["/error"], produces = ["application/json"])
-    fun errorJSON(request: HttpServletRequest, response: HttpServletResponse): CustomErrorModel {
+    fun errorJSON(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ): CustomErrorModel {
         // Appropriate HTTP response code (e.g. 404 or 500) is automatically set by Spring.
         // Here we just define response body.
         return CustomErrorModel.from(response.status, this.application, getErrorAttributes(request, debug))
@@ -57,7 +59,10 @@ class CustomErrorController : ErrorController {
      * Returns the error object as a HTML page
      */
     @RequestMapping(value = ["/error"], produces = ["text/html"])
-    fun errorText(request: HttpServletRequest, response: HttpServletResponse): ResponseEntity<String> {
+    fun errorText(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ): ResponseEntity<String> {
         val message =
             CustomErrorModel.from(response.status, this.application, getErrorAttributes(request, debug)).toString()
         return ResponseEntity(message, HttpStatus.valueOf(response.status))
@@ -67,11 +72,17 @@ class CustomErrorController : ErrorController {
      * Extracts the error attributes from the http request. Includes the error stack trace
      * if requested
      */
-    private fun getErrorAttributes(request: HttpServletRequest, includeStackTrace: Boolean): Map<String, Any> {
+    private fun getErrorAttributes(
+        request: HttpServletRequest,
+        includeStackTrace: Boolean,
+    ): Map<String, Any> {
         val requestAttributes = ServletWebRequest(request)
-        val errorOptions = if(includeStackTrace)
-            ErrorAttributeOptions.defaults().including(ErrorAttributeOptions.Include.STACK_TRACE)
-        else ErrorAttributeOptions.defaults()
+        val errorOptions =
+            if (includeStackTrace) {
+                ErrorAttributeOptions.defaults().including(ErrorAttributeOptions.Include.STACK_TRACE)
+            } else {
+                ErrorAttributeOptions.defaults()
+            }
 
         return errorAttributes.getErrorAttributes(requestAttributes, errorOptions)
     }
@@ -81,12 +92,15 @@ class CustomErrorController : ErrorController {
  * A class to represent a http error within the controllers
  */
 class CustomErrorModel {
-
     companion object {
         /**
          * Creates a custom error model from the provided attributes
          */
-        fun from(status: Int, application: String, errorAttributes: Map<String, Any>): CustomErrorModel {
+        fun from(
+            status: Int,
+            application: String,
+            errorAttributes: Map<String, Any>,
+        ): CustomErrorModel {
             val model = CustomErrorModel()
             model.status = status
             model.application = application
@@ -102,22 +116,27 @@ class CustomErrorModel {
      * Description of the http error that occurred
      */
     var error: String = ""
+
     /**
      * The http error code
      */
     var status: Int = 0
+
     /**
      * Message from the exception if any was raised
      */
     var message: String = ""
+
     /**
      * The time the error was raised
      */
     var timeStamp: String = ""
+
     /**
      * The name of the application. Used to identify this instance
      */
     var application: String = ""
+
     /**
      * The full stacktrace of the exception
      */

@@ -18,10 +18,13 @@ import java.util.Optional
 @PreAuthorize("hasAnyAuthority('app:admin', 'read:donors')")
 class DonorQueries(
     private val donors: DonorRepository,
-    private val filterService: FilterService
-)  {
+    private val filterService: FilterService,
+) {
     @QueryMapping
-    fun donorsConnection(@Argument page: PaginationInput?, @Argument where: DonorWhereInput?): Page<Donor> {
+    fun donorsConnection(
+        @Argument page: PaginationInput?,
+        @Argument where: DonorWhereInput?,
+    ): Page<Donor> {
         val filter = filterService.donorFilter()
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
@@ -31,7 +34,10 @@ class DonorQueries(
     }
 
     @QueryMapping
-    fun donors(@Argument where: DonorWhereInput, @Argument orderBy: MutableList<KeyValuePair>?): List<Donor> {
+    fun donors(
+        @Argument where: DonorWhereInput,
+        @Argument orderBy: MutableList<KeyValuePair>?,
+    ): List<Donor> {
         val filter = filterService.donorFilter()
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
@@ -42,6 +48,7 @@ class DonorQueries(
     }
 
     @QueryMapping
-    fun donor(@Argument where: DonorWhereInput): Optional<Donor> =
-        donors.findOne(filterService.donorFilter().and(where.build()))
+    fun donor(
+        @Argument where: DonorWhereInput,
+    ): Optional<Donor> = donors.findOne(filterService.donorFilter().and(where.build()))
 }

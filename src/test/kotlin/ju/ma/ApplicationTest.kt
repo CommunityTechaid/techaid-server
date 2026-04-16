@@ -12,7 +12,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class ApplicationTest {
-
     @MockBean
     lateinit var jwtDecoder: JwtDecoder
 

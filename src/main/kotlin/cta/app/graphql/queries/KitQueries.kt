@@ -21,22 +21,19 @@ import java.util.Optional
 @PreAuthorize("hasAnyAuthority('read:kits')")
 class KitQueries(
     private val kits: KitRepository,
-    private val filterService: FilterService
-)  {
-
+    private val filterService: FilterService,
+) {
+    @QueryMapping
+    fun statusCount(): List<KitStatusCount> = kits.statusCount()
 
     @QueryMapping
-    fun statusCount(): List<KitStatusCount> {
-        return kits.statusCount()
-    }
+    fun typeCount(): List<KitTypeCount> = kits.typeCount()
 
     @QueryMapping
-    fun typeCount(): List<KitTypeCount> {
-        return kits.typeCount()
-    }
-
-    @QueryMapping
-    fun kitsConnection(@Argument page: PaginationInput?, @Argument where: KitWhereInput?): Page<Kit> {
+    fun kitsConnection(
+        @Argument page: PaginationInput?,
+        @Argument where: KitWhereInput?,
+    ): Page<Kit> {
         val f: PaginationInput = page ?: PaginationInput()
         val filter = filterService.kitFilter()
         if (where == null) {
@@ -46,7 +43,10 @@ class KitQueries(
     }
 
     @QueryMapping
-    fun kits(@Argument where: KitWhereInput, @Argument orderBy: MutableList<KeyValuePair>?): List<Kit> {
+    fun kits(
+        @Argument where: KitWhereInput,
+        @Argument orderBy: MutableList<KeyValuePair>?,
+    ): List<Kit> {
         val filter = filterService.kitFilter()
         return if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
@@ -57,13 +57,17 @@ class KitQueries(
     }
 
     @QueryMapping
-    fun kit(@Argument where: KitWhereInput): Optional<Kit> = kits.findOne(filterService.kitFilter().and(where.build()))
+    fun kit(
+        @Argument where: KitWhereInput,
+    ): Optional<Kit> = kits.findOne(filterService.kitFilter().and(where.build()))
 }
 
 @Controller
-class kitResolver {
+class KitResolver {
     @QueryMapping
-    fun getAttributes(@Argument kit: Kit): KitAttributes {
+    fun getAttributes(
+        @Argument kit: Kit,
+    ): KitAttributes {
         val attr = kit.attributes
         attr.kit = kit
         return attr

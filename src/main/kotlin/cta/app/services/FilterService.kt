@@ -1,9 +1,6 @@
 package cta.app.services
 
 import com.querydsl.core.BooleanBuilder
-import com.querydsl.jpa.JPAExpressions
-import cta.app.QDonor
-import cta.app.QKit
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -11,7 +8,6 @@ import org.springframework.stereotype.Service
 
 @Service
 class FilterService {
-
     @Value("\${auth0.token-attribute}")
     private lateinit var tokenAttribute: String
 
@@ -20,7 +16,9 @@ class FilterService {
             val auth = SecurityContextHolder.getContext().authentication ?: return null
             return if (auth is JwtAuthenticationToken) {
                 auth
-            } else null
+            } else {
+                null
+            }
         }
 
     fun authenticated(): Boolean {
@@ -61,7 +59,10 @@ class FilterService {
     }
 }
 
-data class OAuthUser(val name: String, val email: String) {
+data class OAuthUser(
+    val name: String,
+    val email: String,
+) {
     val empty: Boolean by lazy {
         name.trim().isBlank() && email.trim().isBlank()
     }

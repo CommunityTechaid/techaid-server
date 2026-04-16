@@ -1,8 +1,6 @@
 package cta.commands
 
 import jakarta.activation.DataSource
-import java.util.EnumSet
-import java.util.concurrent.Callable
 import mu.KotlinLogging
 import org.hibernate.boot.MetadataSources
 import org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
@@ -18,38 +16,43 @@ import org.springframework.context.annotation.Profile
 import org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager
 import org.springframework.stereotype.Component
 import picocli.CommandLine
+import java.util.EnumSet
+import java.util.concurrent.Callable
 
 private val logger = KotlinLogging.logger {}
 
 @Profile("console")
 @Component
 @CommandLine.Command(
-    name = "schema:dump", mixinStandardHelpOptions = true, subcommands = [],
-    description = ["Dumps the current hibernate schema"]
+    name = "schema:dump",
+    mixinStandardHelpOptions = true,
+    subcommands = [],
+    description = ["Dumps the current hibernate schema"],
 )
 class DumpSchema(
     val jpaProperties: JpaProperties,
     val entityScanPackages: EntityScanPackages,
-    val dataSource: DataSource
-) : ConsoleCommand, Callable<Int> {
-
+    val dataSource: DataSource,
+) : ConsoleCommand,
+    Callable<Int> {
     @CommandLine.Option(
         names = ["-a", "--action"],
         defaultValue = "CREATE",
-        description = ["The schema type to generate CREATE/DROP/BOTH"]
+        description = ["The schema type to generate CREATE/DROP/BOTH"],
     )
     var action: SchemaExport.Action = SchemaExport.Action.CREATE
 
     override val command: String = "schema:dump"
 
     override fun call(): Int {
-        val registry = StandardServiceRegistryBuilder()
-            .applySettings(jpaProperties.properties as Map<String, Any>?)
-            .applySetting(AvailableSettings.JAKARTA_NON_JTA_DATASOURCE, dataSource)
-            .applySetting(AvailableSettings.PHYSICAL_NAMING_STRATEGY, CamelCaseToUnderscoresNamingStrategy::class.java)
-            .applySetting(AvailableSettings.IMPLICIT_NAMING_STRATEGY, SpringImplicitNamingStrategy::class.java)
-            .applySetting(AvailableSettings.DIALECT, PostgreSQLDialect::class.java)
-            .build()
+        val registry =
+            StandardServiceRegistryBuilder()
+                .applySettings(jpaProperties.properties as Map<String, Any>?)
+                .applySetting(AvailableSettings.JAKARTA_NON_JTA_DATASOURCE, dataSource)
+                .applySetting(AvailableSettings.PHYSICAL_NAMING_STRATEGY, CamelCaseToUnderscoresNamingStrategy::class.java)
+                .applySetting(AvailableSettings.IMPLICIT_NAMING_STRATEGY, SpringImplicitNamingStrategy::class.java)
+                .applySetting(AvailableSettings.DIALECT, PostgreSQLDialect::class.java)
+                .build()
 
         val persistenceUnitManager = DefaultPersistenceUnitManager()
         val packagesToScanArr = entityScanPackages.packageNames.toList()

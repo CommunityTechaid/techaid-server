@@ -16,12 +16,12 @@ import org.springframework.web.servlet.ModelAndView
 @RestController
 class AuthController {
     @GetMapping("/", "/*/*/{path:[^\\.]*}")
-    fun angularRouter(model: ModelMap): ModelAndView {
-        return ModelAndView("forward:/index.html", model)
-    }
+    fun angularRouter(model: ModelMap): ModelAndView = ModelAndView("forward:/index.html", model)
 
     @RequestMapping(value = ["/auth/user"], method = [RequestMethod.GET])
-    fun user(@RequestHeader httpHeaders: HttpHeaders): ResponseEntity<*> {
+    fun user(
+        @RequestHeader httpHeaders: HttpHeaders,
+    ): ResponseEntity<*> {
         val authUser = SecurityContextHolder.getContext().authentication.principal
         val responseBody = LinkedHashMap<String, Any?>()
         responseBody["status"] = HttpStatus.UNAUTHORIZED

@@ -16,10 +16,13 @@ import java.util.Optional
 @Controller
 @PreAuthorize("hasAnyAuthority('app:admin', 'read:donorParents')")
 class DonorParentQueries(
-    private val donorParents: DonorParentRepository
+    private val donorParents: DonorParentRepository,
 ) {
     @QueryMapping
-    fun donorParentsConnection(@Argument page: PaginationInput?, @Argument where: DonorParentWhereInput?): Page<DonorParent> {
+    fun donorParentsConnection(
+        @Argument page: PaginationInput?,
+        @Argument where: DonorParentWhereInput?,
+    ): Page<DonorParent> {
         val f: PaginationInput = page ?: PaginationInput()
         if (where == null) {
             return donorParents.findAll(f.create())
@@ -28,15 +31,19 @@ class DonorParentQueries(
     }
 
     @QueryMapping
-    fun donorParents(@Argument where: DonorParentWhereInput, @Argument orderBy: MutableList<KeyValuePair>?): List<DonorParent> {
-        return if (orderBy != null) {
+    fun donorParents(
+        @Argument where: DonorParentWhereInput,
+        @Argument orderBy: MutableList<KeyValuePair>?,
+    ): List<DonorParent> =
+        if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
             donorParents.findAll(where.build(), sort).toList()
         } else {
             donorParents.findAll(where.build()).toList()
         }
-    }
 
     @QueryMapping
-    fun donorParent(@Argument where: DonorParentWhereInput): Optional<DonorParent> = donorParents.findOne(where.build())
+    fun donorParent(
+        @Argument where: DonorParentWhereInput,
+    ): Optional<DonorParent> = donorParents.findOne(where.build())
 }

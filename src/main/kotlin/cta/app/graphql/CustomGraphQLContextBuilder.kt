@@ -16,20 +16,23 @@ import org.springframework.stereotype.Component
 /**
  * An interface for holding all available GraphQL data Loaders. The loaders
  * are responsible for lazy loading data in batched requests
- *//*
+ */
+/*
 
 interface GraphQLDataLoader<K, V> {
-    */
+ */
 /**
-     * The name of this loader
-     *//*
+ * The name of this loader
+ */
+/*
 
     val name: String
 
-    */
+ */
 /**
-     * The actual loader responsible for batch fetching the data
-     *//*
+ * The actual loader responsible for batch fetching the data
+ */
+/*
 
     fun loader(): DataLoader<K, V>
 }
@@ -38,22 +41,25 @@ interface GraphQLDataLoader<K, V> {
 /**
  * A custom context builder. Allows us to build custom contexts for use
  * with each graphql request to avoid N+1 query issues
- *//*
+ */
+/*
 
 @Component
 class CustomGraphQLContextBuilder : GraphQLContextBuilder {
-    */
+ */
 /**
-     * List of dataLoaders that will be applied to every request
-     *//*
+ * List of dataLoaders that will be applied to every request
+ */
+/*
 
     @Autowired(required = false)
     var dataLoaders: List<GraphQLDataLoader<*, *>> = mutableListOf()
 
-    */
+ */
 /**
-     * Builds the graphql context for http requests
-     *//*
+ * Builds the graphql context for http requests
+ */
+/*
 
     override fun build(req: HttpServletRequest, response: HttpServletResponse): GraphQLContext {
         val context = GraphQLContext(req, response)
@@ -62,10 +68,11 @@ class CustomGraphQLContextBuilder : GraphQLContextBuilder {
         return context
     }
 
-    */
+ */
 /**
-     * Builds the graphql context
-     *//*
+ * Builds the graphql context
+ */
+/*
 
     override fun build(): GraphQLContext {
         val context = GraphQLContext()
@@ -73,10 +80,11 @@ class CustomGraphQLContextBuilder : GraphQLContextBuilder {
         return context
     }
 
-    */
+ */
 /**
-     * Builds the graphql context for web socket subscription requests
-     *//*
+ * Builds the graphql context for web socket subscription requests
+ */
+/*
 
     override fun build(session: Session, request: HandshakeRequest): GraphQLContext {
         val context = GraphQLContext(session, request)
