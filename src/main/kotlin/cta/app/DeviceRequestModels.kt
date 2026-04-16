@@ -92,6 +92,7 @@ class DeviceRequest(
     var isSales: Boolean = false,
     var clientRef: String,
     var borough: String?,
+    @Column(columnDefinition = "TEXT")
     var details: String,
     @NotAudited
     @Formula(
