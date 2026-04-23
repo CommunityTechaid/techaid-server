@@ -224,10 +224,16 @@ extend type Query {
     requestCount: RequestCount
 }
 
+input BulkKitAssignmentInput {
+    deviceRequestId: ID!
+    kitIds: [ID!]!
+}
+
 extend type Mutation {
     #Will throw an exception if device requests for the contact exceeds DEVICE_LIMIT with this request
     createDeviceRequest(data: CreateDeviceRequestInput!) : DeviceRequest!
     updateDeviceRequest(data: UpdateDeviceRequestInput!): DeviceRequest!
     deleteDeviceRequest(id: ID!): Boolean
     synchronizeCollectionDataForDeviceRequest(data: SynchronizeCollectionDataForDeviceRequestInput!): DeviceRequest!
+    assignKitsToDeviceRequest(data: BulkKitAssignmentInput!): DeviceRequest!
 }

@@ -8,7 +8,9 @@ import cta.app.DeviceRequestNote
 import cta.app.DeviceRequestNoteRepository
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
+import cta.app.KitRepository
 import cta.app.KitStatus
+import cta.app.QKit
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.services.FilterService
 import cta.app.services.MailService
@@ -100,7 +102,8 @@ class DeviceRequestMutations(
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
     private val filterService: FilterService,
     private val deviceRequestNotes: DeviceRequestNoteRepository,
-    private val mailService: MailService
+    private val mailService: MailService,
+    private val kits: KitRepository
 )  {
 
     @MutationMapping
@@ -191,6 +194,23 @@ class DeviceRequestMutations(
             ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.id}")
 
         return data.apply(entity)
+    }
+
+    @PreAuthorize("hasAnyAuthority('write:organisations')")
+    @MutationMapping
+    fun assignKitsToDeviceRequest(@Argument @Valid data: BulkKitAssignmentInput): DeviceRequest {
+        val deviceRequest = deviceRequests.findById(data.deviceRequestId).toNullable()
+            ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.deviceRequestId}")
+
+        val predicate = filterService.kitFilter().and(QKit.kit.id.`in`(data.kitIds))
+        val kitsToAssign = kits.findAll(predicate)
+
+        kitsToAssign.forEach { kit ->
+            kit.deviceRequest?.removeKit(kit)
+            deviceRequest.addKit(kit)
+        }
+
+        return deviceRequests.save(deviceRequest)
     }
 
     @PreAuthorize("hasAnyAuthority('delete:organisations')")
@@ -298,6 +318,12 @@ data class UpdateDeviceRequestInput(
         }
     }
 }
+
+data class BulkKitAssignmentInput(
+    @get:NotNull
+    val deviceRequestId: Long,
+    val kitIds: List<Long>
+)
 
 data class SynchronizeCollectionDataForDeviceRequestInput(
     @get:NotNull
