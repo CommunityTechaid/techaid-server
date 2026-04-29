@@ -89,6 +89,7 @@ class DeviceRequest(
     var updatedAt: Instant = Instant.now(),
     @ManyToOne
     var referringOrganisationContact: ReferringOrganisationContact,
+    @Column(nullable = false)
     var isSales: Boolean = false,
     var clientRef: String,
     var borough: String?,
