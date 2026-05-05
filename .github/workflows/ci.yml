@@ -2,19 +2,19 @@ name: CI/CD
 
 on:
   push:
-    branches: [dev, 'maintenance/**']
-  # Manual promotion trigger — select an environment from the dropdown in the
-  # GitHub Actions UI to deploy the current branch to that environment.
+    branches: [dev, master, 'maintenance/**']
+  # Manual production deploy — run from master branch in the GitHub Actions UI.
+  # Optionally specify an image tag (e.g. a short SHA) to pin an exact build.
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Target environment'
-        required: true
-        default: 'Production'
-        type: environment
+      image_tag:
+        description: 'Image tag to deploy to production (default: latest)'
+        required: false
+        default: 'latest'
 
 jobs:
   test:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -42,22 +42,28 @@ jobs:
 
   build:
     needs: test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    # Auto-build on dev pushes; also runs when manually dispatched
-    if: (github.ref == 'refs/heads/dev' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v5
 
-      - name: Lowercase image name
-        id: image
-        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - name: Compute image tags
+        id: tags
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          SHA="${GITHUB_SHA::7}"
+          if [ "$GITHUB_REF" = "refs/heads/master" ]; then
+            # master = production-ready; tag as :latest and :<sha>
+            echo "tags=${IMAGE}:${SHA},${IMAGE}:latest" >> "$GITHUB_OUTPUT"
+          else
+            # dev / maintenance branches = UAT; tag as :dev and :dev-<sha>
+            echo "tags=${IMAGE}:dev-${SHA},${IMAGE}:dev" >> "$GITHUB_OUTPUT"
+          fi
 
-      # Build the Docker image on GitHub Actions so the dev server doesn't
-      # need to compile the Gradle project or run Docker builds.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -68,9 +74,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # The image is pushed to GHCR with a :latest tag.  The Dokku server
-      # polls for new images on a 1-minute cron and deploys automatically
-      # when it detects a change — no SSH push required.
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -78,18 +81,18 @@ jobs:
           push: true
           build-args: |
             GIT_COMMIT=${{ github.sha }}
-          tags: |
-            ${{ steps.image.outputs.name }}:${{ github.sha }}
-            ${{ steps.image.outputs.name }}:latest
+          tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy:
+  deploy-testing:
     needs: build
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
+
     steps:
       - name: Azure login
         uses: azure/login@v3
@@ -98,9 +101,32 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy to Azure Container Apps
+      - name: Deploy to api-testing
         run: |
           az containerapp update \
             --name api-testing \
             --resource-group dashboards \
-            --image ghcr.io/communitytechaid/techaid-server:latest
+            --image ghcr.io/communitytechaid/techaid-server:dev
+
+  deploy-production:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to api-production
+        run: |
+          az containerapp update \
+            --name api-production \
+            --resource-group tada-2026 \
+            --image ghcr.io/communitytechaid/techaid-server:${{ inputs.image_tag }}
