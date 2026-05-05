@@ -16,5 +16,10 @@ auth:
           Access-Control-Allow-Methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
           Access-Control-Allow-Headers: '*'
 
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+
 logging.level:
   cta: DEBUG

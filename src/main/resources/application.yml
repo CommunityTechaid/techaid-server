@@ -115,6 +115,8 @@ spring:
     out-of-order: true
     locations:
       - classpath:db/migration
+  main:
+    lazy-initialization: true
   graphql:
     schema:
       inspection:
@@ -135,7 +137,7 @@ logging.level:
   org.apache.coyote: ERROR
   cta: DEBUG
   org.springframework.security: WARN
-  org.hibernate.type: TRACE
+  org.hibernate.type: WARN
 
 auth:
   admin-secret: ${AUTH_ADMIN_SECRET}
