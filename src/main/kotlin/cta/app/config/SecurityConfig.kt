@@ -7,6 +7,7 @@ import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Lazy
 import org.springframework.core.convert.converter.Converter
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.authentication.AuthenticationManager
@@ -46,6 +47,7 @@ class SecurityConfig(
     var issuer: String = ""
 
     @Bean
+    @Lazy
     fun jwtDecoder(): JwtDecoder {
         val jwtDecoder = JwtDecoders.fromOidcIssuerLocation(issuer) as NimbusJwtDecoder
         val audienceValidator = AudienceValidator(audience)

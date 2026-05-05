@@ -30,4 +30,9 @@ COPY ./Procfile /app
 COPY ./applicationinsights.json /app/
 # COPY ./DOKKU_SCALE /app
 ENTRYPOINT [ "/sbin/tini", "--"]
-CMD ["java", "-javaagent:/app/applicationinsights-agent.jar", "-jar", "/app/app.jar"]
+CMD ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-XX:InitialRAMPercentage=50.0", \
+  "-javaagent:/app/applicationinsights-agent.jar", \
+  "-jar", "/app/app.jar"]
