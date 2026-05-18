@@ -184,9 +184,12 @@ class DeviceRequestMutations(
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
-    fun assignKitsToDeviceRequest(@Argument @Valid data: BulkKitAssignmentInput): DeviceRequest {
-        val deviceRequest = deviceRequests.findById(data.deviceRequestId).toNullable()
-            ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.deviceRequestId}")
+    fun assignKitsToDeviceRequest(
+        @Argument @Valid data: BulkKitAssignmentInput,
+    ): DeviceRequest {
+        val deviceRequest =
+            deviceRequests.findById(data.deviceRequestId).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a device request with id: ${data.deviceRequestId}")
 
         val predicate = filterService.kitFilter().and(QKit.kit.id.`in`(data.kitIds))
         val kitsToAssign = kits.findAll(predicate)
