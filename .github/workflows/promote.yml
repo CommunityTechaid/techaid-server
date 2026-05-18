@@ -2,6 +2,7 @@ name: Promote UAT → Production
 
 on:
   workflow_dispatch:
+    branches: [master]
 
 jobs:
   promote:
