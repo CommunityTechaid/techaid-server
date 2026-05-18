@@ -105,7 +105,7 @@ jobs:
         run: |
           az containerapp update \
             --name api-testing \
-            --resource-group dashboards \
+            --resource-group tada-2026 \
             --image ghcr.io/communitytechaid/techaid-server:dev
 
   deploy-production:
