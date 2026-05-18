@@ -106,7 +106,7 @@ jobs:
           az containerapp update \
             --name api-testing \
             --resource-group tada-2026 \
-            --image ghcr.io/communitytechaid/techaid-server:dev
+            --image ghcr.io/communitytechaid/techaid-server:dev-${GITHUB_SHA::7}
 
   deploy-production:
     if: github.event_name == 'workflow_dispatch'
