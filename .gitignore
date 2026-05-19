@@ -1,4 +1,5 @@
 todo.org
+migrate-prod-db.sh
 HELP.md
 .gradle
 .slice
@@ -37,3 +38,11 @@ manifests/secret.yaml
 
 # Temporary files
 /logs/
+cutover-prod.sh
+cf-proxy-on.sh
+rollback-prod.sh
+app-cname-validate.sh
+RECIPE.md
+POTENTIAL-AZURE-TODOS.md
+POST-MIGRATION-CLEANUP.md
+.security-notes.md

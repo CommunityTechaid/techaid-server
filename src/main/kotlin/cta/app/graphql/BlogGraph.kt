@@ -62,9 +62,8 @@ class BlogQueries(
     ): Post? {
         val post = posts.findOne(where.build()).toNullable() ?: return null
         if (post.secured) {
-            SecurityContextHolder.getContext().authentication?.let { auth ->
-                auth.authorities.firstOrNull { it.authority == "read:content" } ?: return null
-            }
+            val auth = SecurityContextHolder.getContext().authentication ?: return null
+            auth.authorities.firstOrNull { it.authority == "read:content" } ?: return null
         }
         return post
     }

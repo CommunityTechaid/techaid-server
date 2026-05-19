@@ -61,7 +61,7 @@ springBoot {
 }
 
 group = 'cta'
-version = '0.0.2-SNAPSHOT'
+version = '2.0.0'
 sourceCompatibility = '17'
 
 repositories {

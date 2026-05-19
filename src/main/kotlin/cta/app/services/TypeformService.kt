@@ -6,6 +6,7 @@ import cta.models.TypeFormPayload
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.security.MessageDigest
 import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -59,6 +60,7 @@ class TypeformService(
 
         val signatureBytes = hmacSHA256.doFinal(payload.toByteArray(Charsets.UTF_8))
 
-        return Base64.getEncoder().encodeToString(signatureBytes) == cleanReceivedSignature
+        val expected = Base64.getEncoder().encodeToString(signatureBytes)
+        return MessageDigest.isEqual(expected.toByteArray(Charsets.UTF_8), cleanReceivedSignature.toByteArray(Charsets.UTF_8))
     }
 }
