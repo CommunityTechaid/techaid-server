@@ -60,6 +60,15 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Git — Branch Rules
+
+**Never push or merge to `master` without explicit permission in the current conversation.**
+
+- All work goes to `dev` (or a feature branch). PRs target `dev`, not `master`.
+- Merging `dev` → `master` triggers a production image build. Only do this when the user explicitly says to promote to production.
+- "commit/push/PR" means commit to the current branch and open a PR targeting `dev` unless the user says otherwise.
+- If in doubt, ask. The cost of asking is lower than an unintended production build.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
