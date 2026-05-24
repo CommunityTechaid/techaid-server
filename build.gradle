@@ -141,9 +141,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    // OTel API is compileOnly — the Application Insights Java agent supplies the
-    // runtime implementation. Bundling at runtime risks classpath conflicts.
-    compileOnly 'io.opentelemetry:opentelemetry-api:1.46.0'
+    // OTel API at runtime so app code can enrich the current span. The
+    // Application Insights Java agent instruments the calls via bytecode.
+    implementation 'io.opentelemetry:opentelemetry-api:1.46.0'
 
      /* Security */
     implementation 'org.springframework.boot:spring-boot-starter-security'
