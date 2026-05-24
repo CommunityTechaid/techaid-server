@@ -6,7 +6,16 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.graphql.server.WebGraphQlInterceptor
 import org.springframework.graphql.server.WebGraphQlRequest
 import org.springframework.graphql.server.WebGraphQlResponse
+import org.springframework.web.context.request.RequestContextHolder
+import org.springframework.web.context.request.ServletRequestAttributes
 import reactor.core.publisher.Mono
+
+/**
+ * Request attribute name used to surface the GraphQL operation name to the outer
+ * access-log filter, which writes its JSON line AFTER this interceptor's doFinally
+ * has cleared MDC. The MDC value alone is too short-lived to reach the access log.
+ */
+const val GRAPHQL_OPERATION_REQUEST_ATTRIBUTE = "cta.graphql.operation"
 
 @Configuration
 class GraphQlTelemetryConfig {
@@ -16,6 +25,11 @@ class GraphQlTelemetryConfig {
             val operationName = resolveOperationName(request)
             if (operationName != null) {
                 MDC.put("graphql.operation", operationName)
+                // Also stash on the HttpServletRequest so AccessLoggingFilter (which runs
+                // its finally block AFTER our doFinally clears MDC) can include it.
+                (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)
+                    ?.request
+                    ?.setAttribute(GRAPHQL_OPERATION_REQUEST_ATTRIBUTE, operationName)
             }
             chain.next(request)
                 .doFinally { MDC.remove("graphql.operation") }
