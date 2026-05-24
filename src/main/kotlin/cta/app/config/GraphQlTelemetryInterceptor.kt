@@ -46,9 +46,14 @@ class GraphQlTelemetryConfig {
         val explicit = request.operationName
         if (!explicit.isNullOrBlank()) return explicit
 
-        // Fall back to the first named operation in the document text
         val document = request.document ?: return null
-        val match = Regex("""(?:query|mutation|subscription)\s+(\w+)""").find(document)
-        return match?.groupValues?.get(1)
+
+        // Named operation: `query foo { ... }`
+        Regex("""(?:query|mutation|subscription)\s+(\w+)""").find(document)?.let {
+            return it.groupValues[1]
+        }
+
+        // Shorthand: `{ buildInfo { ... } }` — use the first top-level field name
+        return Regex("""^\s*\{\s*(\w+)""").find(document)?.groupValues?.get(1)
     }
 }
