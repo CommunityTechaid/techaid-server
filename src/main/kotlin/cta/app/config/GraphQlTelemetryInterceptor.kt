@@ -1,5 +1,6 @@
 package cta.app.config
 
+import io.opentelemetry.api.trace.Span
 import org.slf4j.MDC
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -28,6 +29,10 @@ class GraphQlTelemetryConfig {
                 (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)
                     ?.request
                     ?.setAttribute(GRAPHQL_OPERATION_REQUEST_ATTRIBUTE, operationName)
+                // Enrich the OpenTelemetry span so App Insights AppRequests shows the
+                // operation name instead of a generic "POST /graphql".
+                Span.current().setAttribute("graphql.operation", operationName)
+                Span.current().updateName("POST /graphql $operationName")
             }
             chain
                 .next(request)
