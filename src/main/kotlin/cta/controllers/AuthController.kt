@@ -15,7 +15,10 @@ import org.springframework.web.servlet.ModelAndView
 
 @RestController
 class AuthController {
-    @GetMapping("/", "/*/*/{path:[^\\.]*}")
+    // "/" is handled by RootController (returns 204). This catch-all forwards
+    // deep SPA routes to /index.html — dead code today (no /index.html in
+    // resources) but left in place for any future colocated frontend.
+    @GetMapping("/*/*/{path:[^\\.]*}")
     fun angularRouter(model: ModelMap): ModelAndView = ModelAndView("forward:/index.html", model)
 
     @RequestMapping(value = ["/auth/user"], method = [RequestMethod.GET])
