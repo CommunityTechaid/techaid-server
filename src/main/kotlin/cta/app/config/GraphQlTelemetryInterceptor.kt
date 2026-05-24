@@ -30,9 +30,12 @@ class GraphQlTelemetryConfig {
                     ?.request
                     ?.setAttribute(GRAPHQL_OPERATION_REQUEST_ATTRIBUTE, operationName)
                 // Enrich the OpenTelemetry span so App Insights AppRequests shows the
-                // operation name instead of a generic "POST /graphql".
-                Span.current().setAttribute("graphql.operation", operationName)
-                Span.current().updateName("POST /graphql $operationName")
+                // operation name instead of a generic "POST /graphql". Guarded so any
+                // agent/classloader issue degrades to "no enrichment" rather than 500.
+                runCatching {
+                    Span.current().setAttribute("graphql.operation", operationName)
+                    Span.current().updateName("POST /graphql $operationName")
+                }
             }
             chain
                 .next(request)
