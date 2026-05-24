@@ -5,10 +5,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.graphql.server.WebGraphQlInterceptor
 import org.springframework.graphql.server.WebGraphQlRequest
-import org.springframework.graphql.server.WebGraphQlResponse
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
-import reactor.core.publisher.Mono
 
 /**
  * Request attribute name used to surface the GraphQL operation name to the outer
@@ -31,7 +29,8 @@ class GraphQlTelemetryConfig {
                     ?.request
                     ?.setAttribute(GRAPHQL_OPERATION_REQUEST_ATTRIBUTE, operationName)
             }
-            chain.next(request)
+            chain
+                .next(request)
                 .doFinally { MDC.remove("graphql.operation") }
         }
 

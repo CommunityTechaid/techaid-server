@@ -49,21 +49,22 @@ class AccessLoggingFilter : OncePerRequestFilter() {
             // With forward-headers-strategy: NATIVE, Tomcat's RemoteIpValve already resolves
             // X-Forwarded-For so remoteAddr is the real client IP.
             val remoteIp = request.remoteAddr
-            val entries = mutableMapOf<String, Any?>(
-                "type" to "access",
-                "method" to request.method,
-                "path" to request.requestURI,
-                "query" to (request.queryString ?: ""),
-                "full_path" to fullPath,
-                "status" to wrappedResponse.status,
-                "request_content_length" to request.contentLengthLong,
-                "response_content_length" to wrappedResponse.contentSize,
-                "duration_ms" to durationMs,
-                "remote_ip" to remoteIp,
-                "user_agent" to (request.getHeader("User-Agent") ?: ""),
-                "referer" to (request.getHeader("Referer") ?: ""),
-                "protocol" to request.protocol,
-            )
+            val entries =
+                mutableMapOf<String, Any?>(
+                    "type" to "access",
+                    "method" to request.method,
+                    "path" to request.requestURI,
+                    "query" to (request.queryString ?: ""),
+                    "full_path" to fullPath,
+                    "status" to wrappedResponse.status,
+                    "request_content_length" to request.contentLengthLong,
+                    "response_content_length" to wrappedResponse.contentSize,
+                    "duration_ms" to durationMs,
+                    "remote_ip" to remoteIp,
+                    "user_agent" to (request.getHeader("User-Agent") ?: ""),
+                    "referer" to (request.getHeader("Referer") ?: ""),
+                    "protocol" to request.protocol,
+                )
             // Populated by GraphQlTelemetryInterceptor for /graphql calls; absent for everything else.
             (request.getAttribute(GRAPHQL_OPERATION_REQUEST_ATTRIBUTE) as? String)?.let {
                 entries["graphql_operation"] = it
