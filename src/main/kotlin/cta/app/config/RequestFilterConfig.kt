@@ -78,6 +78,7 @@ class AccessLoggingFilter : OncePerRequestFilter() {
 class UnknownPathFilter : OncePerRequestFilter() {
     private val allowedPrefixes =
         listOf(
+            "/",
             "/graphql",
             "/actuator",
             "/login",
