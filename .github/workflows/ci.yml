@@ -49,12 +49,15 @@ jobs:
         run: |
           IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
           SHA="${GITHUB_SHA::7}"
+          # Project version from build.gradle (release-please bumps this on dev).
+          # Tolerates a trailing `// x-release-please-version` annotation comment.
+          VERSION=$(grep -E "^version = " build.gradle | head -1 | sed -E "s/^version = '([^']*)'.*/\1/")
           if [ "$GITHUB_REF" = "refs/heads/master" ]; then
-            # master = production-ready; tag as :latest and :<sha>
-            echo "tags=${IMAGE}:${SHA},${IMAGE}:latest" >> "$GITHUB_OUTPUT"
+            # master = production-ready; tag as :latest, :<sha> and :v<version>
+            echo "tags=${IMAGE}:${SHA},${IMAGE}:latest,${IMAGE}:v${VERSION}" >> "$GITHUB_OUTPUT"
           else
-            # dev / maintenance branches = UAT; tag as :dev and :dev-<sha>
-            echo "tags=${IMAGE}:dev-${SHA},${IMAGE}:dev" >> "$GITHUB_OUTPUT"
+            # dev / maintenance branches = UAT; tag as :dev, :dev-<sha> and :v<version>
+            echo "tags=${IMAGE}:dev-${SHA},${IMAGE}:dev,${IMAGE}:v${VERSION}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up Docker Buildx
