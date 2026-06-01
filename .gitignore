@@ -46,3 +46,5 @@ RECIPE.md
 POTENTIAL-AZURE-TODOS.md
 POST-MIGRATION-CLEANUP.md
 .security-notes.md
+.azure/
+.claude/scheduled_tasks.lock
