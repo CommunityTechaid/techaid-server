@@ -3,18 +3,9 @@ name: CI/CD
 on:
   push:
     branches: [dev, master, 'maintenance/**']
-  # Manual production deploy — run from master branch in the GitHub Actions UI.
-  # Optionally specify an image tag (e.g. a short SHA) to pin an exact build.
-  workflow_dispatch:
-    inputs:
-      image_tag:
-        description: 'Image tag to deploy to production (default: latest)'
-        required: false
-        default: 'latest'
 
 jobs:
   test:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -45,7 +36,6 @@ jobs:
 
   build:
     needs: test
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -90,7 +80,7 @@ jobs:
 
   deploy-testing:
     needs: build
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -110,26 +100,3 @@ jobs:
             --name api-testing \
             --resource-group tada-2026 \
             --image ghcr.io/communitytechaid/techaid-server:dev-${GITHUB_SHA::7}
-
-  deploy-production:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    environment: production
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Azure login
-        uses: azure/login@v3
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Deploy to api-production
-        run: |
-          az containerapp update \
-            --name api-production \
-            --resource-group tada-2026 \
-            --image ghcr.io/communitytechaid/techaid-server:${{ inputs.image_tag }}

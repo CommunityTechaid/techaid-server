@@ -1,7 +1,15 @@
 name: Promote UAT → Production
 
 on:
+  # Default (no input): promote the image currently running on UAT (api-testing).
+  # Optional image_tag: pin/rollback prod to a specific tag instead, e.g.
+  # "dev-1a2b3c4" or "v2.1.0". Tags are published to GHCR by the CI build job.
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Specific image tag to deploy (leave blank to promote current UAT image)'
+        required: false
+        default: ''
 
 jobs:
   promote:
@@ -19,20 +27,25 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Read current UAT image
-        id: uat
+      - name: Resolve image to deploy
+        id: image
         run: |
-          IMAGE=$(az containerapp show \
-            --name api-testing \
-            --resource-group tada-2026 \
-            --query "properties.template.containers[0].image" \
-            --output tsv)
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            IMAGE="ghcr.io/communitytechaid/techaid-server:${{ inputs.image_tag }}"
+            echo "Pinning production to requested tag: $IMAGE"
+          else
+            IMAGE=$(az containerapp show \
+              --name api-testing \
+              --resource-group tada-2026 \
+              --query "properties.template.containers[0].image" \
+              --output tsv)
+            echo "Promoting current UAT image: $IMAGE"
+          fi
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
-          echo "Promoting: $IMAGE"
 
       - name: Deploy to api-production
         run: |
           az containerapp update \
             --name api-production \
             --resource-group tada-2026 \
-            --image ${{ steps.uat.outputs.image }}
+            --image ${{ steps.image.outputs.image }}
