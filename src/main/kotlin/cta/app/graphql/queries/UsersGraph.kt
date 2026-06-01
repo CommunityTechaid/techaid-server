@@ -13,6 +13,7 @@ import cta.auth.Auth0Service
 import cta.graphql.PaginationInput
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
+import org.springframework.graphql.data.method.annotation.SchemaMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.validation.annotation.Validated
@@ -115,9 +116,10 @@ data class PermissionInput(
 class RoleResolver(
     private val users: Auth0Service,
 ) {
+    @SchemaMapping(typeName = "Role", field = "permissions")
     fun permissions(
         role: Role,
-        page: PaginationInput?,
+        @Argument page: PaginationInput?,
     ): PermissionsPage {
         val filter =
             if (page == null) {
@@ -132,9 +134,10 @@ class RoleResolver(
             .body
     }
 
+    @SchemaMapping(typeName = "Role", field = "users")
     fun users(
         role: Role,
-        page: PaginationInput?,
+        @Argument page: PaginationInput?,
     ): UsersPage {
         val filter =
             if (page == null) {
@@ -154,9 +157,10 @@ class RoleResolver(
 class UserResolver(
     private val users: Auth0Service,
 ) {
+    @SchemaMapping(typeName = "User", field = "roles")
     fun roles(
         user: User,
-        page: PaginationInput?,
+        @Argument page: PaginationInput?,
     ): RolesPage {
         val filter =
             if (page == null) {
@@ -171,9 +175,9 @@ class UserResolver(
             .body
     }
 
-    @QueryMapping
+    @SchemaMapping(typeName = "User", field = "permissions")
     fun permissions(
-        @Argument user: User,
+        user: User,
         @Argument page: PaginationInput?,
     ): PermissionsPage {
         val filter =
