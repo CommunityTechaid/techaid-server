@@ -55,11 +55,13 @@ class GraphQlErrorLoggingTest {
     @Test
     fun `coercion error is logged with operation name and offending input variables`() {
         // model is String! in CreateKitInput; send a number to reproduce the bulk-insert failure.
+        // Invalid KitType enum is a pre-execution validation error that survives the lenient
+        // String scalar (a numeric `model` is now coerced, not rejected — see lenientStringScalar).
         val body =
             """
             {
               "query": "mutation createKit(${'$'}data: CreateKitInput!) { createKit(data: ${'$'}data) { id } }",
-              "variables": { "data": { "type": "LAPTOP", "model": 3000 } }
+              "variables": { "data": { "type": "NOT_A_KIT_TYPE", "model": "Latitude" } }
             }
             """.trimIndent()
 
@@ -80,7 +82,9 @@ class GraphQlErrorLoggingTest {
         assertTrue(warning != null, "expected a WARN log for the GraphQL error")
         val message = warning!!.formattedMessage
         assertTrue(message.contains("createKit"), "log should name the failing operation: $message")
-        assertTrue(message.contains("\"model\":3000"), "log should show the offending numeric input: $message")
-        assertTrue(message.contains("String"), "log should include the coercion error text: $message")
+        assertTrue(
+            message.contains("\"type\":\"NOT_A_KIT_TYPE\""),
+            "log should show the offending input variables: $message",
+        )
     }
 }
