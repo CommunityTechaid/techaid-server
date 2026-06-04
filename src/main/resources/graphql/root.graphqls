@@ -1,6 +1,8 @@
 "Representation of a Java big decimal"
 scalar BigDecimal
 scalar Long
+"A String input that also accepts numbers/booleans and coerces them to their string form (tolerates bulk imports that send a numeric cell into a text field, e.g. a numeric lotId)."
+scalar LenientString
 
 "A class that makes it easier for passing across key/value pairs within graphql"
 input KeyValuePair {
