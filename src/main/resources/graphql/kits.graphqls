@@ -267,7 +267,7 @@ input CreateKitInput {
     note: CreateNoteInput
     make: String
     deviceVersion: String
-    serialNo: String
+    serialNo: LenientString
     storageCapacity: Int
     typeOfStorage: KitStorageType
     ramCapacity: Int
@@ -275,8 +275,8 @@ input CreateKitInput {
     tpmVersion: String
     cpuCores: Int
     batteryHealth: Int
-    lotId: String
-    locationCode: String
+    lotId: LenientString
+    locationCode: LenientString
     subStatus: KitSubStatusInput
 }
 
@@ -285,8 +285,8 @@ input QuickCreateKitInput {
     make: String
     model: String
     donorId: ID
-    lotId: String
-    locationCode: String
+    lotId: LenientString
+    locationCode: LenientString
 }
 
 
@@ -296,7 +296,7 @@ input AutoCreateKitInput {
     model: String
     make: String
     deviceVersion:String
-    serialNo: String!
+    serialNo: LenientString!
     donorId: ID
     storageCapacity: Int
     typeOfStorage: KitStorageType
@@ -305,8 +305,8 @@ input AutoCreateKitInput {
     tpmVersion: String
     cpuCores: Int
     batteryHealth: Int
-    lotId: String
-    locationCode: String
+    lotId: LenientString
+    locationCode: LenientString
 }
 
 input AutoUpdateKitInput {
@@ -316,7 +316,7 @@ input AutoUpdateKitInput {
     model: String
     make: String,
     deviceVersion:String,
-    serialNo: String,
+    serialNo: LenientString,
     storageCapacity: Int,
     typeOfStorage: KitStorageType,
     ramCapacity: Int,
@@ -324,8 +324,8 @@ input AutoUpdateKitInput {
     tpmVersion: String,
     cpuCores: Int,
     batteryHealth: Int,
-    lotId: String,
-    locationCode: String,
+    lotId: LenientString,
+    locationCode: LenientString,
     subStatus: KitSubStatusInput
 }
 
@@ -343,7 +343,7 @@ input UpdateKitInput {
     note: CreateNoteInput,
     make: String,
     deviceVersion: String,
-    serialNo: String,
+    serialNo: LenientString,
     storageCapacity: Int,
     typeOfStorage: KitStorageType,
     ramCapacity: Int,
@@ -351,8 +351,8 @@ input UpdateKitInput {
     tpmVersion: String,
     cpuCores: Int,
     batteryHealth: Int,
-    lotId: String,
-    locationCode: String,
+    lotId: LenientString,
+    locationCode: LenientString,
     subStatus: KitSubStatusInput
 }
 
@@ -368,8 +368,8 @@ input BulkKitUpdateInput {
     ids: [ID!]!
     status: KitStatus
     archived: Boolean
-    locationCode: String
-    lotId: String
+    locationCode: LenientString
+    lotId: LenientString
 }
 
 extend type Mutation {
