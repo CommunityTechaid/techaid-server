@@ -300,7 +300,11 @@ data class UpdateDeviceRequestInput(
             borough = self.borough ?: entity.borough
             details = self.details
             deviceRequestNeeds = self.deviceRequestNeeds?.entity ?: entity.deviceRequestNeeds
-            collectionDate = parseCollectionDate(self.collectionDate) ?: entity.collectionDate
+            // No `?: entity.collectionDate` fallback: this is a full-replace update and the client
+            // always sends collectionDate, so an explicit null must clear the booking date rather
+            // than preserve the old value. (Partial collection-only sync uses
+            // synchronizeCollectionDataForDeviceRequest, which intentionally keeps its fallback.)
+            collectionDate = parseCollectionDate(self.collectionDate)
             collectionMethod = self.collectionMethod ?: entity.collectionMethod
             collectionContactName = self.collectionContactName ?: entity.collectionContactName
             isPrepped = self.isPrepped ?: entity.isPrepped
