@@ -1,8 +1,10 @@
 package cta.app.graphql.mutations
 
 import cta.app.ReferringOrganisationContact
+import cta.app.ReferringOrganisationContactNote
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.ReferringOrganisationRepository
+import cta.app.services.FilterService
 import cta.toNullable
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
@@ -21,6 +23,7 @@ import org.springframework.validation.annotation.Validated
 class ReferringOrganisationContactMutations(
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
     private val referringOrganisations: ReferringOrganisationRepository,
+    private val filterService: FilterService,
 ) {
     @MutationMapping
     fun createReferringOrganisationContact(
@@ -78,6 +81,22 @@ class ReferringOrganisationContactMutations(
 
                 referringOrganisation.addContact(this)
             }
+
+            if (data.note != null) {
+                if (data.note.content !== "") {
+                    val volunteer =
+                        filterService.userDetails().name.ifBlank {
+                            filterService.userDetails().email
+                        }
+                    val note =
+                        ReferringOrganisationContactNote(
+                            content = data.note.content,
+                            referringOrganisationContact = this,
+                            volunteer = volunteer,
+                        )
+                    referringOrganisationContactNotes.add(note)
+                }
+            }
         }
     }
 
@@ -117,6 +136,7 @@ data class UpdateReferringOrganisationContactInput(
     @get:NotNull
     var referringOrganisationId: Long,
     val archived: Boolean? = null,
+    val note: ReferringOrganisationContactNoteInput? = null,
 ) {
     fun apply(entity: ReferringOrganisationContact): ReferringOrganisationContact {
         val self = this

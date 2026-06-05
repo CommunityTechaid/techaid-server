@@ -1,6 +1,7 @@
 package cta.app.graphql.queries
 
 import cta.app.ReferringOrganisationContact
+import cta.app.ReferringOrganisationContactNote
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.graphql.filters.ReferringOrganisationContactPublicWhereInput
 import cta.app.graphql.filters.ReferringOrganisationContactWhereInput
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
+import org.springframework.graphql.data.method.annotation.SchemaMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import java.util.Optional
@@ -66,6 +68,9 @@ class ReferringOrganisationContactQueries(
     fun referringOrganisationContact(
         @Argument where: ReferringOrganisationContactWhereInput,
     ): Optional<ReferringOrganisationContact> = referringOrganisationContacts.findOne(where.build())
+
+    @SchemaMapping(typeName = "ReferringOrganisationContact", field = "notes")
+    fun notes(contact: ReferringOrganisationContact): Set<ReferringOrganisationContactNote> = contact.referringOrganisationContactNotes
 }
 
 data class ReferringOrganisationContactPublic(

@@ -9,6 +9,7 @@ type ReferringOrganisationContact {
     updatedAt: String
     referringOrganisation: ReferringOrganisation
     requestCount: Int
+    notes: [ReferringOrganisationContactNotes]
 }
 
 "A representation of a page result from a query"
@@ -53,6 +54,7 @@ input UpdateReferringOrganisationContactInput {
     phoneNumber: String
     referringOrganisationId: ID
     archived: Boolean
+    note: ReferringOrganisationContactNoteInput
 }
 
 input ReferringOrganisationContactWhereInput {
