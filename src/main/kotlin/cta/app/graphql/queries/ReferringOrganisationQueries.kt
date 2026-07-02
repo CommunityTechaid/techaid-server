@@ -2,6 +2,7 @@ package cta.app.graphql.queries
 
 import cta.app.ReferringOrganisation
 import cta.app.ReferringOrganisationRepository
+import cta.app.graphql.filters.ReferringOrganisationPublicWhereInput
 import cta.app.graphql.filters.ReferringOrganisationWhereInput
 import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
@@ -45,7 +46,7 @@ class ReferringOrganisationQueries(
 
     @QueryMapping
     fun referringOrganisationsPublic(
-        @Argument where: ReferringOrganisationWhereInput,
+        @Argument where: ReferringOrganisationPublicWhereInput,
         @Argument orderBy: MutableList<KeyValuePair>?,
     ): List<ReferringOrganisationPublic> =
         if (orderBy != null) {

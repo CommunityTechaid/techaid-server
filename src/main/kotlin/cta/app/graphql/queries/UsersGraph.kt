@@ -12,6 +12,7 @@ import com.auth0.json.mgmt.users.UsersPage
 import cta.auth.Auth0Service
 import cta.graphql.PaginationInput
 import org.springframework.graphql.data.method.annotation.Argument
+import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.graphql.data.method.annotation.SchemaMapping
 import org.springframework.security.access.prepost.PreAuthorize
@@ -63,19 +64,19 @@ class UserQueries(
 class UserMutations(
     private val users: Auth0Service,
 ) {
-    @QueryMapping
+    @MutationMapping
     fun assignRoles(
         @Argument roleId: String,
         @Argument userIds: List<String>,
     ): Role = users.assignRoles(roleId, userIds)
 
-    @QueryMapping
+    @MutationMapping
     fun removeRoles(
         @Argument userId: String,
         @Argument roleIds: List<String>,
     ): User = users.removeRoles(userId, roleIds)
 
-    @QueryMapping
+    @MutationMapping
     fun deleteUser(
         @Argument userId: String,
     ): Boolean {
@@ -83,7 +84,7 @@ class UserMutations(
         return true
     }
 
-    @QueryMapping
+    @MutationMapping
     fun removePermissions(
         @Argument userId: String,
         @Argument permissions: List<PermissionInput>,

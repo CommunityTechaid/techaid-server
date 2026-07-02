@@ -31,3 +31,16 @@ gmail:
 
 typeform:
   key: ''
+
+google:
+  places:
+    key: ''
+    # Closed port: geocoding attempts in tests fail fast instead of calling Google.
+    url: http://127.0.0.1:1/geocode
+
+zonky:
+  test:
+    database:
+      # Use embedded Postgres binaries instead of the (default) Docker provider so the
+      # DB-backed tests run without a Docker daemon, locally and in CI.
+      provider: zonky

@@ -20,6 +20,7 @@ import org.springframework.validation.annotation.Validated
 class ReferringOrganisationMutations(
     private val referringOrganisations: ReferringOrganisationRepository,
 ) {
+    @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
     fun createReferringOrganisation(
         @Argument @Valid data: CreateReferringOrganisationInput,

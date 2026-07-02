@@ -9,9 +9,12 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.thymeleaf.TemplateEngine
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.Optional
 
 class DeviceRequestServiceTest {
@@ -108,5 +111,61 @@ class DeviceRequestServiceTest {
 
         assertEquals(DeviceRequestStatus.PROCESSING_EQUALITIES_DATA_COMPLETE, result?.status)
         assertNull(result?.correlationId)
+    }
+
+    // --- declineIncompleteDeviceRequests ---
+
+    private fun incompleteRequest(
+        id: Long,
+        createdAt: Instant,
+    ): cta.app.DeviceRequest =
+        cta.app.DeviceRequest(
+            id = id,
+            correlationId = id,
+            deviceRequestItems = DeviceRequestItems(laptops = 1),
+            referringOrganisationContact = mock(cta.app.ReferringOrganisationContact::class.java),
+            clientRef = "REF$id",
+            borough = "Lambeth",
+            details = "test",
+            deviceRequestNeeds = null,
+            createdAt = createdAt,
+        )
+
+    @Test
+    fun `declineIncompleteDeviceRequests declines only requests older than 20 minutes`() {
+        val stale = incompleteRequest(1L, Instant.now().minus(30, ChronoUnit.MINUTES))
+        val recent = incompleteRequest(2L, Instant.now().minus(5, ChronoUnit.MINUTES))
+        `when`(deviceRequests.findAllByCorrelationIdIsNotNull()).thenReturn(listOf(stale, recent))
+        var saved: List<cta.app.DeviceRequest>? = null
+        `when`(deviceRequests.saveAll(anyList<cta.app.DeviceRequest>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            (invocation.arguments[0] as List<cta.app.DeviceRequest>).also { saved = it }
+        }
+
+        val count = service.declineIncompleteDeviceRequests()
+
+        assertEquals(1, count)
+        assertEquals(DeviceRequestStatus.REQUEST_DECLINED, stale.status)
+        assertNull(stale.correlationId)
+        assertEquals(DeviceRequestStatus.NEW, recent.status)
+        assertEquals(2L, recent.correlationId)
+        assertEquals(listOf(stale), saved, "only the declined request should be written back")
+    }
+
+    @Test
+    fun `declineIncompleteDeviceRequests writes nothing when no request crossed the threshold`() {
+        val recent = incompleteRequest(3L, Instant.now().minus(5, ChronoUnit.MINUTES))
+        `when`(deviceRequests.findAllByCorrelationIdIsNotNull()).thenReturn(listOf(recent))
+        var saved: List<cta.app.DeviceRequest>? = null
+        `when`(deviceRequests.saveAll(anyList<cta.app.DeviceRequest>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            (invocation.arguments[0] as List<cta.app.DeviceRequest>).also { saved = it }
+        }
+
+        val count = service.declineIncompleteDeviceRequests()
+
+        assertEquals(0, count)
+        assertEquals(DeviceRequestStatus.NEW, recent.status)
+        assertTrue(saved.isNullOrEmpty(), "no unchanged requests should be re-saved (audit churn)")
     }
 }

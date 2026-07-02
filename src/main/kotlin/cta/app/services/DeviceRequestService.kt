@@ -34,17 +34,19 @@ class DeviceRequestService(
     }
 
     fun declineIncompleteDeviceRequests(): Int {
-        val incompleteRequests = deviceRequests.findAllByCorrelationIdIsNotNull()
+        val cutoff = Instant.now().minus(20, ChronoUnit.MINUTES)
+        val staleRequests =
+            deviceRequests
+                .findAllByCorrelationIdIsNotNull()
+                .filter { cutoff.isAfter(it.createdAt) }
 
-        incompleteRequests.forEach { request ->
-            if (Instant.now().minus(20, ChronoUnit.MINUTES).isAfter(request.createdAt)) {
-                request.status = DeviceRequestStatus.REQUEST_DECLINED
-                request.correlationId = null
-                notifyDeclinedRequest(request)
-            }
+        staleRequests.forEach { request ->
+            request.status = DeviceRequestStatus.REQUEST_DECLINED
+            request.correlationId = null
+            notifyDeclinedRequest(request)
         }
 
-        return deviceRequests.saveAll(incompleteRequests).count()
+        return deviceRequests.saveAll(staleRequests).count()
     }
 
     fun formatDeviceRequests(
