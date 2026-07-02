@@ -47,3 +47,20 @@ class ReferringOrganisationWhereInput(
         return builder
     }
 }
+
+/**
+ * Restricted filter surface for the anonymous referringOrganisationsPublic query.
+ * The public referral form's typeahead only needs a name search over non-archived
+ * organisations; everything else stays admin-only on the full where-input.
+ */
+class ReferringOrganisationPublicWhereInput(
+    var name: TextComparison? = null,
+    var archived: BooleanComparison? = null,
+) {
+    fun build(entity: QReferringOrganisation = QReferringOrganisation.referringOrganisation): BooleanBuilder {
+        val builder = BooleanBuilder()
+        name?.let { builder.and(it.build(entity.name)) }
+        archived?.let { builder.and(it.build(entity.archived)) }
+        return builder
+    }
+}

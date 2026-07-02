@@ -32,6 +32,12 @@ gmail:
 typeform:
   key: ''
 
+google:
+  places:
+    key: ''
+    # Closed port: geocoding attempts in tests fail fast instead of calling Google.
+    url: http://127.0.0.1:1/geocode
+
 zonky:
   test:
     database:

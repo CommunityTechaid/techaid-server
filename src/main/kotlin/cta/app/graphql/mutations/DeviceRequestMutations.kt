@@ -171,6 +171,9 @@ class DeviceRequestMutations(
         }
     }
 
+    // Called by the Google Apps Script calendar sync, which authenticates with an Auth0
+    // bearer token — verify its client grant includes write:organisations before promoting.
+    @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
     fun synchronizeCollectionDataForDeviceRequest(
         @Argument @Valid data: SynchronizeCollectionDataForDeviceRequestInput,

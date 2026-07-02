@@ -67,10 +67,16 @@ input ReferringOrganisationWhereInput {
     NOT: [ReferringOrganisationWhereInput!]
 }
 
+"Restricted filter surface for the anonymous referringOrganisationsPublic query"
+input ReferringOrganisationPublicWhereInput {
+    name: TextComparison
+    archived: BooleanComparison
+}
+
 
 extend type Query {
     referringOrganisationsConnection(page: PaginationInput, where: ReferringOrganisationWhereInput): ReferringOrganisationPage
-    referringOrganisationsPublic(where: ReferringOrganisationWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationPublic]
+    referringOrganisationsPublic(where: ReferringOrganisationPublicWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationPublic]
     referringOrganisations(where: ReferringOrganisationWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisation!]!
     referringOrganisation(where: ReferringOrganisationWhereInput!): ReferringOrganisation
 }
