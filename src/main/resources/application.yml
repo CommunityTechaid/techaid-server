@@ -17,7 +17,9 @@ management:
     diskspace.enabled: false
   endpoint:
     health:
-      show-details: always
+      # Health endpoint is anonymously reachable (container probes): expose only the
+      # overall status, not component details (DB state etc.), to unauthenticated callers.
+      show-details: when-authorized
   info:
     git.mode: full
   metrics:
@@ -141,29 +143,6 @@ logging.level:
 
 auth:
   admin-secret: ${AUTH_ADMIN_SECRET}
-  cors:
-    enabled: true
-    routes:
-      - origin: 'https://app.communitytechaid.org.uk'
-        path: '*'
-        headers:
-          Access-Control-Allow-Methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-          Access-Control-Allow-Headers: '*'
-      - origin: 'https://app-testing.communitytechaid.org.uk'
-        path: '*'
-        headers:
-          Access-Control-Allow-Methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-          Access-Control-Allow-Headers: '*'
-
-graphql:
-  servlet:
-    mapping: /graphql
-    enabled: true
-    corsEnabled: true
-    actuator-metrics: true
-    tracing-enabled: false
-    # if you want to @ExceptionHandler annotation for custom GraphQLErrors
-    exception-handlers-enabled: true
 
 typeform:
   #hmac key

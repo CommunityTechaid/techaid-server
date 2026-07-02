@@ -18,6 +18,7 @@ import java.util.LinkedHashMap
  */
 class TokenAuthenticationFilter(
     private val authService: AuthService,
+    private val objectMapper: ObjectMapper,
 ) : GenericFilterBean() {
     /**
      * Verifies JWT token from the http-request header
@@ -75,7 +76,7 @@ class TokenAuthenticationFilter(
         responseBody["method"] = httpRequest.method
         responseBody["message"] = message
         responseBody["type"] = type
-        httpResponse.writer.write(ObjectMapper().writeValueAsString(responseBody))
+        httpResponse.writer.write(objectMapper.writeValueAsString(responseBody))
         httpResponse.writer.flush()
         httpResponse.writer.close()
     }

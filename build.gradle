@@ -215,6 +215,9 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     /* Making use of embedded postgres db when running unit tests */
     testImplementation 'io.zonky.test:embedded-database-spring-test:2.5.1'
+    // Embedded Postgres binaries ("zonky" provider) so DB-backed tests run without Docker,
+    // both locally (Docker Desktop npipe is unreliable with testcontainers) and in CI.
+    testImplementation 'io.zonky.test:embedded-postgres:2.1.0'
     /* Providing In-Memory H2 database as the default spring data-source */
     testImplementation 'com.h2database:h2:2.2.224'
     implementation "org.hibernate:hibernate-envers:${hibernate_version}"

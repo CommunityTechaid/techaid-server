@@ -1,5 +1,6 @@
 package cta.app.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import cta.auth.AuthService
 import cta.auth.SecretAuthenticationFilter
 import cta.auth.TokenAuthenticationFilter
@@ -39,6 +40,7 @@ private val logger = KotlinLogging.logger {}
 @EnableMethodSecurity(securedEnabled = true)
 class SecurityConfig(
     private val authService: AuthService,
+    private val objectMapper: ObjectMapper,
 ) {
     @Value("\${auth0.audience}")
     private var audience: String = ""
@@ -74,7 +76,7 @@ class SecurityConfig(
         authenticationConfiguration: AuthenticationConfiguration,
     ): SecurityFilterChain {
         http.csrf { it.disable() }
-        http.addFilterBefore(TokenAuthenticationFilter(authService), BasicAuthenticationFilter::class.java)
+        http.addFilterBefore(TokenAuthenticationFilter(authService, objectMapper), BasicAuthenticationFilter::class.java)
         http.addFilterBefore(secretAuthenticationFilter(authenticationConfiguration), UsernamePasswordAuthenticationFilter::class.java)
         http.oauth2ResourceServer { it.jwt { jwt -> jwt.jwtAuthenticationConverter(Auth0TokenConverter()) } }
         http.authorizeHttpRequests { it.anyRequest().permitAll() }

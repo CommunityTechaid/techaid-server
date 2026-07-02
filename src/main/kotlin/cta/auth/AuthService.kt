@@ -3,6 +3,7 @@ package cta.auth
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Service
+import java.security.MessageDigest
 
 @Service
 class AuthService {
@@ -17,7 +18,9 @@ class AuthService {
             return null
         }
 
-        if (token == secret) {
+        // Constant-time comparison: this token grants full read/write/delete, so it must
+        // not be guessable via response-timing differences.
+        if (MessageDigest.isEqual(token.toByteArray(), secret.toByteArray())) {
             return AppUser(
                 user =
                     User(

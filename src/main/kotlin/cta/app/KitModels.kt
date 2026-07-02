@@ -100,7 +100,9 @@ class Kit(
         return id != 0L && id == other.id
     }
 
-    override fun hashCode() = 13
+    // Matches the id-based equals. Kits are persisted (id assigned) before entering the
+    // DeviceRequest.kits / Donor.kits sets, so the hash is stable for set members.
+    override fun hashCode() = id.hashCode()
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -3,9 +3,11 @@ package cta.app.services
 import com.fasterxml.jackson.annotation.JsonProperty
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
+import java.time.Duration
 
 private val logger = KotlinLogging.logger {}
 
@@ -20,13 +22,25 @@ data class Coordinates(
 class LocationService {
     @Value("\${google.places.key:}")
     private lateinit var key: String
-    private val restTemplate = RestTemplate()
+
+    @Value("\${google.places.url:https://maps.google.com/maps/api/geocode/json}")
+    private var baseUrl: String = "https://maps.google.com/maps/api/geocode/json"
+
+    // A stalled Google call must not pin a request thread indefinitely: on the small
+    // container a few stuck threads exhausts the Tomcat pool and takes the whole app down.
+    private val restTemplate =
+        RestTemplate(
+            SimpleClientHttpRequestFactory().apply {
+                setConnectTimeout(Duration.ofSeconds(2))
+                setReadTimeout(Duration.ofSeconds(5))
+            },
+        )
 
     fun findLocation(address: String): LocationResponse? {
         try {
             val uri =
                 UriComponentsBuilder
-                    .fromHttpUrl("https://maps.google.com/maps/api/geocode/json")
+                    .fromHttpUrl(baseUrl)
                     .queryParam("key", key)
                     .queryParam("address", address)
                     .build(true)
