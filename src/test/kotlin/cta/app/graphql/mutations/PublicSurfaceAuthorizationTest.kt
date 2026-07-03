@@ -89,9 +89,14 @@ class PublicSurfaceAuthorizationTest {
 
     @Test
     fun `createReferringOrganisation admits write-organisations scope`() {
+        // Since the Flyway baseline migration the test schema is complete, so the
+        // mutation succeeds outright — stronger than the old "any error but Access
+        // Denied" assertion (the schema gap used to fail it post-gate on a missing
+        // sequence).
         authorizedGraphQl(createOrgMutation, "write:organisations")
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.errors[0].message").value(notAccessDenied))
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.data.createReferringOrganisation.name").value("Auth Probe Org"))
     }
 
     // The location query proxies the billed Google geocoding key and is unused by the
