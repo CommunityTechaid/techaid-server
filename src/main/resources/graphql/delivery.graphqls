@@ -1,0 +1,66 @@
+"A delivery time window on a given delivery day (e.g. a morning or afternoon slot)."
+type DeliveryWindow {
+    id: ID
+    name: String
+    "Display-formatted start time, e.g. \"10:00am\""
+    startTime: String
+    "Display-formatted end time, e.g. \"1:00pm\""
+    endTime: String
+    "Emoji shown next to the window in the booking UI"
+    icon: String
+}
+
+"How much room is left in a window on a particular day."
+type DeliveryWindowAvailability {
+    window: DeliveryWindow
+    spotsRemaining: Int
+}
+
+"A bookable delivery day and the availability of each of its windows."
+type DeliveryDayAvailability {
+    "ISO date, e.g. \"2026-07-16\""
+    date: String
+    "Full day name, e.g. \"Tuesday\""
+    dayOfWeek: String
+    "Human label, e.g. \"Tuesday 16 July\""
+    dayLabel: String
+    windows: [DeliveryWindowAvailability!]!
+}
+
+"The details a member of the public submits to book a delivery slot."
+input DeliveryBookingInput {
+    "ISO date of the chosen delivery day"
+    date: String!
+    "ID of the chosen delivery window"
+    windowId: ID!
+    firstName: String!
+    surname: String!
+    email: String!
+    phone: String!
+    address: String!
+    accessNotes: String
+    "The client's CTA reference number"
+    ctaReference: String!
+}
+
+"Confirmation returned after a delivery slot is successfully booked."
+type DeliveryBookingConfirmation {
+    id: ID
+    date: String
+    dayLabel: String
+    window: DeliveryWindow
+    address: String
+    ctaReference: String
+    "The email address the confirmation was sent to"
+    confirmationSentTo: String
+}
+
+extend type Query {
+    "Public: upcoming delivery days and remaining capacity per window. No auth required."
+    deliveryAvailabilityPublic: [DeliveryDayAvailability!]!
+}
+
+extend type Mutation {
+    "Public: book a delivery slot. No auth required."
+    submitDeliveryBookingPublic(input: DeliveryBookingInput!): DeliveryBookingConfirmation!
+}
