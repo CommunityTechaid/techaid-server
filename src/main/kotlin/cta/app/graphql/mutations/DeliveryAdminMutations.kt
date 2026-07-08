@@ -14,7 +14,6 @@ import cta.app.graphql.queries.toGql
 import cta.toNullable
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
-import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.graphql.data.method.annotation.Argument
