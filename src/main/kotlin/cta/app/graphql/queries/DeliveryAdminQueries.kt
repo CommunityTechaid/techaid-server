@@ -33,13 +33,11 @@ class DeliveryAdminQueries(
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
-    fun deliveryWindowsAdmin(): List<DeliveryWindowAdminGql> =
-        windows.findAllByOrderBySortOrderAsc().map { it.toAdminGql() }
+    fun deliveryWindowsAdmin(): List<DeliveryWindowAdminGql> = windows.findAllByOrderBySortOrderAsc().map { it.toAdminGql() }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
-    fun deliveryBlockedDates(): List<DeliveryBlockedDateGql> =
-        blockedDates.findAllByOrderByBlockedDateAsc().map { it.toGql() }
+    fun deliveryBlockedDates(): List<DeliveryBlockedDateGql> = blockedDates.findAllByOrderByBlockedDateAsc().map { it.toGql() }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
