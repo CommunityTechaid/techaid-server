@@ -152,6 +152,32 @@ class PublicSurfaceAuthorizationTest {
         )
     }
 
+    // The public booking page reads availability anonymously — the Flyway seed gives it
+    // upcoming Tue/Thu days, so an anonymous caller must get data and no access denial.
+    @Test
+    fun `deliveryAvailabilityPublic is callable anonymously and returns seeded days`() {
+        anonymousGraphQl(
+            """query { deliveryAvailabilityPublic { date dayOfWeek windows { spotsRemaining window { id name } } } }""",
+        ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.data.deliveryAvailabilityPublic").isArray)
+    }
+
+    // The public booking mutation must be reachable without auth; a well-formed but
+    // out-of-policy date is rejected by the booking rules (BAD_REQUEST), never by the auth gate.
+    @Test
+    fun `submitDeliveryBookingPublic is callable anonymously`() {
+        val content =
+            anonymousGraphQl(
+                """mutation { submitDeliveryBookingPublic(input: { date: \"1970-01-01\", windowId: \"1\", firstName: \"A\", surname: \"B\", email: \"a@b.com\", phone: \"0700000000\", address: \"1 Road\", ctaReference: \"CTA-1\" }) { id } }""",
+            ).andExpect(status().isOk)
+                .andReturn()
+                .response
+                .contentAsString
+
+        assertFalse(content.contains("Access Denied"), content)
+    }
+
     companion object {
         private val notAccessDenied = org.hamcrest.Matchers.not("Access Denied")
     }
