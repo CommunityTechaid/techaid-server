@@ -74,6 +74,8 @@ class DeliveryMutations(
                 ),
             )
 
+        delivery.sendConfirmationEmail(saved, window, date)
+
         return DeliveryBookingConfirmationGql(
             id = saved.id.toString(),
             date = input.date,

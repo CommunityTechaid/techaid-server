@@ -118,12 +118,16 @@ interface DeliveryWindowRepository :
     JpaRepository<DeliveryWindow, Long>,
     QuerydslPredicateExecutor<DeliveryWindow> {
     fun findByActiveTrueOrderBySortOrderAsc(): List<DeliveryWindow>
+
+    fun findAllByOrderBySortOrderAsc(): List<DeliveryWindow>
 }
 
 interface DeliveryBlockedDateRepository : JpaRepository<DeliveryBlockedDate, Long> {
     fun existsByBlockedDate(blockedDate: LocalDate): Boolean
 
     fun findAllByBlockedDateGreaterThanEqual(blockedDate: LocalDate): List<DeliveryBlockedDate>
+
+    fun findAllByOrderByBlockedDateAsc(): List<DeliveryBlockedDate>
 }
 
 interface DeliveryBookingRepository :
@@ -133,4 +137,13 @@ interface DeliveryBookingRepository :
         deliveryDate: LocalDate,
         windowId: Long,
     ): Long
+
+    fun countByWindowId(windowId: Long): Long
+
+    fun findAllByOrderByDeliveryDateAscCreatedAtAsc(): List<DeliveryBooking>
+
+    fun findAllByDeliveryDateBetweenOrderByDeliveryDateAscCreatedAtAsc(
+        start: LocalDate,
+        end: LocalDate,
+    ): List<DeliveryBooking>
 }

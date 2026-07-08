@@ -1,0 +1,91 @@
+"Full delivery window including capacity and activation (admin view)."
+type DeliveryWindowAdmin {
+    id: ID
+    name: String
+    startTime: String
+    endTime: String
+    icon: String
+    capacity: Int
+    sortOrder: Int
+    active: Boolean
+}
+
+"Configuration for the public delivery-booking flow (admin view)."
+type DeliveryConfig {
+    id: ID
+    "When false, the public booking page shows nothing bookable."
+    enabled: Boolean
+    "Comma-separated ISO day-of-week numbers we deliver on (1=Mon..7=Sun), e.g. \"2,4\"."
+    daysOfWeek: String
+    "Earliest bookable day is today + leadTimeDays."
+    leadTimeDays: Int
+    "How many upcoming delivery days to offer."
+    advanceDays: Int
+    updatedAt: String
+}
+
+"A date on which no deliveries run."
+type DeliveryBlockedDate {
+    id: ID
+    "ISO date, e.g. \"2026-08-27\""
+    date: String
+    reason: String
+}
+
+"A submitted booking — the admin view of who has signed up for a slot."
+type DeliveryBookingAdmin {
+    id: ID
+    date: String
+    dayLabel: String
+    window: DeliveryWindowAdmin
+    firstName: String
+    surname: String
+    email: String
+    phone: String
+    address: String
+    accessNotes: String
+    ctaReference: String
+    createdAt: String
+}
+
+input UpdateDeliveryConfigInput {
+    enabled: Boolean!
+    daysOfWeek: String!
+    leadTimeDays: Int!
+    advanceDays: Int!
+}
+
+input DeliveryWindowInput {
+    "Omit to create a new window; provide to update an existing one."
+    id: ID
+    name: String!
+    startTime: String!
+    endTime: String!
+    icon: String
+    capacity: Int!
+    sortOrder: Int
+    active: Boolean
+}
+
+input DeliveryBlockedDateInput {
+    date: String!
+    reason: String
+}
+
+extend type Query {
+    deliveryConfig: DeliveryConfig
+    "All delivery windows including inactive ones."
+    deliveryWindowsAdmin: [DeliveryWindowAdmin!]!
+    deliveryBlockedDates: [DeliveryBlockedDate!]!
+    "Bookings between the given ISO dates (inclusive). Omit both for all bookings."
+    deliveryBookingsAdmin(from: String, to: String): [DeliveryBookingAdmin!]!
+}
+
+extend type Mutation {
+    updateDeliveryConfig(data: UpdateDeliveryConfigInput!): DeliveryConfig!
+    "Create (no id) or update (with id) a delivery window."
+    saveDeliveryWindow(data: DeliveryWindowInput!): DeliveryWindowAdmin!
+    deleteDeliveryWindow(id: ID!): Boolean!
+    addDeliveryBlockedDate(data: DeliveryBlockedDateInput!): DeliveryBlockedDate!
+    deleteDeliveryBlockedDate(id: ID!): Boolean!
+}
