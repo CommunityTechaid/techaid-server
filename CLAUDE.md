@@ -4,6 +4,13 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
+## Project operational docs
+
+This file is generic behavioural guidance. **Project-specific operational knowledge lives in
+[`.claude/skills/`](.claude/skills/README.md)** (14 skills — build, deploy, database, debugging,
+config, change control). Start there. For incident response, see
+[`SITE-IS-DOWN.md`](SITE-IS-DOWN.md); for onboarding, [`README.md`](README.md) → "START HERE".
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
