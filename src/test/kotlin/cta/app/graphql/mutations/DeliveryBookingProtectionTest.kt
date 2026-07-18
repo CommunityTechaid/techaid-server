@@ -80,10 +80,11 @@ class DeliveryBookingProtectionTest {
         windowId: String = "1",
         email: String = "test@example.org",
         address: String = "1 Test Street, London SW9 8PR",
+        ctaReference: String = "4298",
     ): String =
         """mutation { submitDeliveryBookingPublic(input: { date: \"$date\", windowId: \"$windowId\", """ +
             """firstName: \"Test\", surname: \"Booker\", email: \"$email\", phone: \"07123456789\", """ +
-            """address: \"$address\", ctaReference: \"4298\" }) { id date } }"""
+            """address: \"$address\", ctaReference: \"$ctaReference\" }) { id date } }"""
 
     /** The seeded delivery days are Tuesday (2) and Thursday (4); advanceDays=4 caps the bookable set. */
     private fun offeredDates(count: Int): List<LocalDate> {
@@ -116,20 +117,21 @@ class DeliveryBookingProtectionTest {
     @Test
     fun `throttles submits from one ip but not a different ip`() {
         val dates = offeredDates(4)
-        // Three fresh slots consume the budget (max-requests=3) for this bucket.
-        listOf(dates[0], dates[1], dates[2]).forEach { date ->
-            graphQl(bookingMutation(date.toString(), windowId = "1"), clientIp = "203.0.113.2")
+        // Three fresh slots consume the budget (max-requests=3) for this bucket. Distinct refs:
+        // these represent three different people, not repeat submits of the same booking.
+        listOf(dates[0], dates[1], dates[2]).forEachIndexed { i, date ->
+            graphQl(bookingMutation(date.toString(), windowId = "1", ctaReference = "RATE-${i + 1}"), clientIp = "203.0.113.2")
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.errors").doesNotExist())
         }
 
         // Fourth attempt from the same bucket is over budget and rejected before any DB work.
-        graphQl(bookingMutation(dates[0].toString(), windowId = "1"), clientIp = "203.0.113.2")
+        graphQl(bookingMutation(dates[0].toString(), windowId = "1", ctaReference = "RATE-4"), clientIp = "203.0.113.2")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors[0].message").value("Too many booking attempts. Please wait a few minutes and try again."))
 
         // A different client IP has its own bucket and is not throttled.
-        graphQl(bookingMutation(dates[3].toString(), windowId = "1"), clientIp = "203.0.113.9")
+        graphQl(bookingMutation(dates[3].toString(), windowId = "1", ctaReference = "RATE-5"), clientIp = "203.0.113.9")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
@@ -140,12 +142,12 @@ class DeliveryBookingProtectionTest {
         val date = offeredDates(1)[0].toString()
 
         setFlag(false)
-        graphQl(bookingMutation(date, windowId = "2"), clientIp = "203.0.113.3")
+        graphQl(bookingMutation(date, windowId = "2", ctaReference = "FLAG-1"), clientIp = "203.0.113.3")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors[0].message").value("Delivery booking is not currently available."))
 
         setFlag(true)
-        graphQl(bookingMutation(date, windowId = "2"), clientIp = "203.0.113.3")
+        graphQl(bookingMutation(date, windowId = "2", ctaReference = "FLAG-1"), clientIp = "203.0.113.3")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
