@@ -93,4 +93,6 @@ extend type Mutation {
     deleteDeliveryWindow(id: ID!): Boolean!
     addDeliveryBlockedDate(data: DeliveryBlockedDateInput!): DeliveryBlockedDate!
     deleteDeliveryBlockedDate(id: ID!): Boolean!
+    "Delete a booking, freeing its slot. Intended for junk/test bookings."
+    deleteDeliveryBooking(id: ID!): Boolean!
 }
