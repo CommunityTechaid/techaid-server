@@ -5,11 +5,13 @@ import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
 import cta.app.graphql.queries.DeliveryWindowGql
 import cta.app.services.DeliveryService
-import cta.toNullable
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
+import jakarta.validation.ConstraintViolationException
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -50,8 +52,10 @@ class DeliveryMutations(
             }
 
         val windowId = input.windowId.toLongOrNull() ?: throw DeliveryBookingException("Unknown delivery window")
+        // Pessimistic lock: concurrent submits for the same window serialise here, so the
+        // capacity check below can't oversell under a read-check-insert race.
         val window =
-            windows.findById(windowId).toNullable()
+            windows.findByIdForUpdate(windowId)
                 ?: throw DeliveryBookingException("Unknown delivery window")
         if (!window.active) throw DeliveryBookingException("That delivery window is no longer available")
         if (!delivery.isBookableDay(date)) throw DeliveryBookingException("Deliveries aren't available on that date")
@@ -94,18 +98,29 @@ class DeliveryMutations(
             .errorType(ErrorType.BAD_REQUEST)
             .message(ex.message)
             .build()
+
+    @GraphQlExceptionHandler
+    fun handleValidationError(ex: ConstraintViolationException): GraphQLError =
+        GraphqlErrorBuilder
+            .newError()
+            .errorType(ErrorType.BAD_REQUEST)
+            .message(
+                ex.constraintViolations.joinToString("; ") {
+                    "${it.propertyPath.toString().substringAfterLast('.')} ${it.message}"
+                },
+            ).build()
 }
 
 data class DeliveryBookingInput(
-    @get:NotBlank var date: String = "",
-    @get:NotBlank var windowId: String = "",
-    @get:NotBlank var firstName: String = "",
-    @get:NotBlank var surname: String = "",
-    @get:NotBlank var email: String = "",
-    @get:NotBlank var phone: String = "",
-    @get:NotBlank var address: String = "",
-    var accessNotes: String? = null,
-    @get:NotBlank var ctaReference: String = "",
+    @get:NotBlank @get:Size(max = 32) var date: String = "",
+    @get:NotBlank @get:Size(max = 32) var windowId: String = "",
+    @get:NotBlank @get:Size(max = 100) var firstName: String = "",
+    @get:NotBlank @get:Size(max = 100) var surname: String = "",
+    @get:NotBlank @get:Email @get:Size(max = 254) var email: String = "",
+    @get:NotBlank @get:Size(max = 32) var phone: String = "",
+    @get:NotBlank @get:Size(max = 1000) var address: String = "",
+    @get:Size(max = 2000) var accessNotes: String? = null,
+    @get:NotBlank @get:Size(max = 64) var ctaReference: String = "",
 )
 
 data class DeliveryBookingConfirmationGql(
