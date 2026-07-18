@@ -46,6 +46,11 @@ type DeliveryBookingAdmin {
     accessNotes: String
     ctaReference: String
     createdAt: String
+    "Id of the device request whose id equals the booking's CTA reference, if any (resolved at read time, never persisted)."
+    matchedRequestId: ID
+    matchedRequestStatus: String
+    "True when the matched request is in an open status; null when unmatched."
+    matchedRequestOpen: Boolean
 }
 
 input UpdateDeliveryConfigInput {

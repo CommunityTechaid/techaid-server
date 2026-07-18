@@ -8,12 +8,27 @@ import cta.app.DeliveryConfig
 import cta.app.DeliveryConfigRepository
 import cta.app.DeliveryWindow
 import cta.app.DeliveryWindowRepository
+import cta.app.DeviceRequest
+import cta.app.DeviceRequestRepository
 import cta.app.services.DeliveryService
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import java.time.LocalDate
+
+/**
+ * Statuses that don't count as "open" for a device request. Parallels
+ * DeviceRequestRepository.requestCount()'s native-query definition of open requests —
+ * keep the two in sync if that set ever changes.
+ */
+private val CLOSED_REQUEST_STATUSES =
+    setOf(
+        "REQUEST_COMPLETED",
+        "REQUEST_DECLINED",
+        "REQUEST_CANCELLED",
+        "REQUEST_COLLECTION_DELIVERY_FAILED",
+    )
 
 /**
  * Admin-only read side of the delivery-slots screen: settings, windows (incl. inactive),
@@ -25,6 +40,7 @@ class DeliveryAdminQueries(
     private val windows: DeliveryWindowRepository,
     private val blockedDates: DeliveryBlockedDateRepository,
     private val bookings: DeliveryBookingRepository,
+    private val deviceRequests: DeviceRequestRepository,
     private val delivery: DeliveryService,
 ) {
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
@@ -54,7 +70,9 @@ class DeliveryAdminQueries(
             } else {
                 bookings.findAllByOrderByDeliveryDateAscCreatedAtAsc()
             }
-        return rows.map { it.toAdminGql(delivery.dayLabel(it.deliveryDate)) }
+        val referencedIds = rows.mapNotNull { it.ctaReference.trim().toLongOrNull() }.distinct()
+        val matchedRequestsById = deviceRequests.findAllById(referencedIds).associateBy { it.id }
+        return rows.map { it.toAdminGql(delivery.dayLabel(it.deliveryDate), matchedRequestsById) }
     }
 }
 
@@ -97,6 +115,9 @@ data class DeliveryBookingAdminGql(
     val accessNotes: String?,
     val ctaReference: String,
     val createdAt: String?,
+    val matchedRequestId: String?,
+    val matchedRequestStatus: String?,
+    val matchedRequestOpen: Boolean?,
 )
 
 fun DeliveryConfig.toGql(): DeliveryConfigGql =
@@ -124,8 +145,12 @@ fun DeliveryWindow.toAdminGql(): DeliveryWindowAdminGql =
 fun DeliveryBlockedDate.toGql(): DeliveryBlockedDateGql =
     DeliveryBlockedDateGql(id = id.toString(), date = blockedDate.toString(), reason = reason)
 
-fun DeliveryBooking.toAdminGql(dayLabel: String): DeliveryBookingAdminGql =
-    DeliveryBookingAdminGql(
+fun DeliveryBooking.toAdminGql(
+    dayLabel: String,
+    matchedRequestsById: Map<Long, DeviceRequest> = emptyMap(),
+): DeliveryBookingAdminGql {
+    val matchedRequest = ctaReference.trim().toLongOrNull()?.let { matchedRequestsById[it] }
+    return DeliveryBookingAdminGql(
         id = id.toString(),
         date = deliveryDate.toString(),
         dayLabel = dayLabel,
@@ -138,4 +163,8 @@ fun DeliveryBooking.toAdminGql(dayLabel: String): DeliveryBookingAdminGql =
         accessNotes = accessNotes,
         ctaReference = ctaReference,
         createdAt = createdAt.toString(),
+        matchedRequestId = matchedRequest?.id?.toString(),
+        matchedRequestStatus = matchedRequest?.status?.name,
+        matchedRequestOpen = matchedRequest?.let { it.status.name !in CLOSED_REQUEST_STATUSES },
     )
+}
