@@ -2,6 +2,31 @@
 
 Provides backing services for the dashboard site at https://app.communitytechaid.org.uk/
 
+## START HERE (new maintainer / new session)
+
+**The operational knowledge for this project lives in `.claude/skills/` — 14 skills covering
+build, deploy, database, debugging, config, and change control. Open
+[`.claude/skills/README.md`](.claude/skills/README.md) first.** A Claude Code session loads them
+automatically by description; a human should read them in the onboarding order that file lists.
+
+Quick reference (the skills have the full detail):
+
+- **Run locally / tests:** see the sections below, and `techaid-build-and-env`. Tests are
+  `./gradlew ktlintCheck test` — zonky embedded Postgres, **no Docker daemon needed**. A red
+  `SchemaValidationTest` locally means a Flyway migration is missing.
+- **Deploy to UAT:** automatic on push to `dev`. Verify:
+  `curl -s https://api-testing.communitytechaid.org.uk/actuator/info` → `git.commit` matches your
+  SHA and the latest revision is Healthy. Full detail: `techaid-deploy-and-operate`.
+- **Deploy to production:** manual only — Actions → "Promote UAT → Production" (requires
+  `production` environment approval). Rollback = same workflow with an `image_tag` input. Gated
+  runbook: `techaid-prod-promotion-campaign`. **Never merge to `master` or create `v*` tags by
+  hand** — release-please owns those.
+- **"The site is down":** see [`SITE-IS-DOWN.md`](SITE-IS-DOWN.md) — first check is almost always
+  a 40–90 s cold start, not an outage.
+- **Environment:** maintained on **Windows via Git Bash** (PowerShell is blocked by antivirus on
+  the maintainer's machine). Prefix `az` commands taking `/subscriptions/...` IDs with
+  `MSYS_NO_PATHCONV=1`.
+
 ```bash
 # It's best to run with docker 
 # To build the codebase and start the service locally on http://localhost:8080
