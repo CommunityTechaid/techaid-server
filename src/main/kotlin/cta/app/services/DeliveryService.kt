@@ -132,6 +132,23 @@ class DeliveryService(
                 setVariable("phone", CONTACT_PHONE)
             }
 
+        val icsContent =
+            try {
+                DeliveryCalendarInvite.build(
+                    bookingId = booking.id,
+                    deliveryDate = date,
+                    windowName = window.name,
+                    windowStartTime = window.startTime,
+                    windowEndTime = window.endTime,
+                    address = booking.address,
+                    ctaReference = booking.ctaReference,
+                    contactPhone = CONTACT_PHONE,
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to build calendar invite for delivery booking ${booking.id}", e)
+                null
+            }
+
         val msg =
             createEmail(
                 to = booking.email,
@@ -140,6 +157,14 @@ class DeliveryService(
                 bodyText = templateEngine.process("email/delivery-confirmation", context),
                 mimeType = "html",
                 charset = "UTF-8",
+                attachment =
+                    icsContent?.let {
+                        EmailAttachment(
+                            filename = "delivery.ics",
+                            content = it,
+                            contentType = "text/calendar; charset=utf-8; method=PUBLISH",
+                        )
+                    },
             )
 
         if (!mailService.bccAddress.isNullOrEmpty()) {

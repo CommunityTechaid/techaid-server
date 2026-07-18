@@ -6,9 +6,13 @@ import com.google.api.services.gmail.Gmail
 import com.google.api.services.gmail.model.Message
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.UserCredentials
+import jakarta.activation.DataHandler
 import jakarta.mail.Session
 import jakarta.mail.internet.InternetAddress
+import jakarta.mail.internet.MimeBodyPart
 import jakarta.mail.internet.MimeMessage
+import jakarta.mail.internet.MimeMultipart
+import jakarta.mail.util.ByteArrayDataSource
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -62,6 +66,13 @@ class MailService {
             .execute()
 }
 
+/** An optional file to attach to an email built with [createEmail]. */
+data class EmailAttachment(
+    val filename: String,
+    val content: String,
+    val contentType: String,
+)
+
 fun createEmail(
     to: String,
     from: String,
@@ -69,6 +80,7 @@ fun createEmail(
     bodyText: String,
     mimeType: String = "plain",
     charset: String? = null,
+    attachment: EmailAttachment? = null,
 ): MimeMessage {
     val props = Properties()
     val session = Session.getDefaultInstance(props, null)
@@ -79,7 +91,24 @@ fun createEmail(
         InternetAddress(to),
     )
     email.subject = subject
-    email.setText(bodyText, charset, mimeType)
+
+    if (attachment == null) {
+        email.setText(bodyText, charset, mimeType)
+    } else {
+        val bodyPart = MimeBodyPart()
+        bodyPart.setText(bodyText, charset, mimeType)
+
+        val attachmentPart = MimeBodyPart()
+        attachmentPart.dataHandler = DataHandler(ByteArrayDataSource(attachment.content, attachment.contentType))
+        attachmentPart.fileName = attachment.filename
+        attachmentPart.disposition = jakarta.mail.Part.ATTACHMENT
+
+        val multipart = MimeMultipart()
+        multipart.addBodyPart(bodyPart)
+        multipart.addBodyPart(attachmentPart)
+        email.setContent(multipart)
+    }
+
     return email
 }
 
