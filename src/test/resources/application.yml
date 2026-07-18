@@ -38,6 +38,19 @@ google:
     # Closed port: geocoding attempts in tests fail fast instead of calling Google.
     url: http://127.0.0.1:1/geocode
 
+turnstile:
+  # Disabled so anonymous submits (PublicSurfaceAuthorizationTest) and the booking tests run
+  # without a token; closed-port url guards against an accidental live siteverify call.
+  enabled: false
+  secret: ''
+  url: http://127.0.0.1:1/siteverify
+
+delivery-booking:
+  enforce-feature-flag: false
+  rate-limit:
+    # High cap so the existing DeliveryMutationsTest (9+ submits from one IP) isn't throttled.
+    max-requests: 1000
+
 zonky:
   test:
     database:

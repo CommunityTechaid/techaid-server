@@ -3,8 +3,12 @@ package cta.app.graphql.mutations
 import cta.app.DeliveryBooking
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
+import cta.app.FeatureFlagRepository
+import cta.app.config.ClientIpResolver
 import cta.app.graphql.queries.DeliveryWindowGql
+import cta.app.services.BookingRateLimiter
 import cta.app.services.DeliveryService
+import cta.app.services.TurnstileService
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import jakarta.validation.ConstraintViolationException
@@ -12,6 +16,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -39,11 +44,35 @@ class DeliveryMutations(
     private val windows: DeliveryWindowRepository,
     private val bookings: DeliveryBookingRepository,
     private val delivery: DeliveryService,
+    private val rateLimiter: BookingRateLimiter,
+    private val turnstile: TurnstileService,
+    private val clientIpResolver: ClientIpResolver,
+    private val featureFlags: FeatureFlagRepository,
+    @Value("\${delivery-booking.enforce-feature-flag}") private val enforceFeatureFlag: Boolean,
 ) {
     @MutationMapping
     fun submitDeliveryBookingPublic(
         @Argument @Valid input: DeliveryBookingInput,
     ): DeliveryBookingConfirmationGql {
+        // Bot protection runs before any DB work so junk traffic is rejected before it takes a
+        // per-window row lock. Order: soft per-IP throttle, then Turnstile, then the flag gate.
+        val clientIp = clientIpResolver.resolve()
+        if (!rateLimiter.tryAcquire(clientIp)) {
+            throw DeliveryBookingException("Too many booking attempts. Please wait a few minutes and try again.")
+        }
+        turnstile.verifyOrThrow(input.turnstileToken, clientIp)
+        // Prod sets enforce-feature-flag=true so the mutation is closed while the page is hidden;
+        // elsewhere it stays open (default false) and the flag only gates the FE.
+        if (enforceFeatureFlag &&
+            featureFlags
+                .findById("delivery-booking")
+                .map { it.enabled }
+                .orElse(false)
+                .not()
+        ) {
+            throw DeliveryBookingException("Delivery booking is not currently available.")
+        }
+
         val date =
             try {
                 LocalDate.parse(input.date)
@@ -121,6 +150,7 @@ data class DeliveryBookingInput(
     @get:NotBlank @get:Size(max = 1000) var address: String = "",
     @get:Size(max = 2000) var accessNotes: String? = null,
     @get:NotBlank @get:Size(max = 64) var ctaReference: String = "",
+    @get:Size(max = 2048) var turnstileToken: String? = null,
 )
 
 data class DeliveryBookingConfirmationGql(
