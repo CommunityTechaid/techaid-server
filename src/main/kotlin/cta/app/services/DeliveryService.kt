@@ -55,47 +55,55 @@ class DeliveryService(
             .mapNotNull { it.trim().toIntOrNull() }
             .toSet()
 
-    fun availability(today: LocalDate = LocalDate.now()): List<DayAvailability> {
+    /**
+     * The dates the public page currently offers: enabled, non-blocked delivery days,
+     * starting at the lead time and capped at advanceDays entries.
+     */
+    fun offeredDates(today: LocalDate = LocalDate.now()): List<LocalDate> {
         val cfg = config.getConfig()
         if (!cfg.enabled) return emptyList()
         val days = deliveryDaysOfWeek()
         if (days.isEmpty()) return emptyList()
-        val activeWindows = windows.findByActiveTrueOrderBySortOrderAsc()
-        if (activeWindows.isEmpty()) return emptyList()
 
         val blocked = blockedDates.findAllByBlockedDateGreaterThanEqual(today).map { it.blockedDate }.toSet()
 
-        val result = mutableListOf<DayAvailability>()
+        val result = mutableListOf<LocalDate>()
         var cursor = today.plusDays(cfg.leadTimeDays.toLong())
         // Bound the scan so a misconfiguration (e.g. no matching days) can never loop forever.
         var guard = 0
         while (result.size < cfg.advanceDays && guard < 400) {
             guard++
             if (cursor.dayOfWeek.value in days && cursor !in blocked) {
-                val windowAvailability =
-                    activeWindows.map { window ->
-                        val booked = bookings.countByDeliveryDateAndWindowId(cursor, window.id)
-                        WindowAvailability(window, (window.capacity - booked).toInt().coerceAtLeast(0))
-                    }
-                result.add(DayAvailability(cursor, windowAvailability))
+                result.add(cursor)
             }
             cursor = cursor.plusDays(1)
         }
         return result
     }
 
-    /** Whether [date] is an enabled, non-blocked delivery day at or beyond the lead time. */
+    fun availability(today: LocalDate = LocalDate.now()): List<DayAvailability> {
+        val activeWindows = windows.findByActiveTrueOrderBySortOrderAsc()
+        if (activeWindows.isEmpty()) return emptyList()
+
+        return offeredDates(today).map { date ->
+            val windowAvailability =
+                activeWindows.map { window ->
+                    val booked = bookings.countByDeliveryDateAndWindowId(date, window.id)
+                    WindowAvailability(window, (window.capacity - booked).toInt().coerceAtLeast(0))
+                }
+            DayAvailability(date, windowAvailability)
+        }
+    }
+
+    /**
+     * Whether [date] is a day the public page currently offers. Sharing [offeredDates]
+     * with availability() means a submit can't book a day the page never showed —
+     * including days beyond the advance window.
+     */
     fun isBookableDay(
         date: LocalDate,
         today: LocalDate = LocalDate.now(),
-    ): Boolean {
-        val cfg = config.getConfig()
-        if (!cfg.enabled) return false
-        if (date.isBefore(today.plusDays(cfg.leadTimeDays.toLong()))) return false
-        if (date.dayOfWeek.value !in deliveryDaysOfWeek()) return false
-        if (blockedDates.existsByBlockedDate(date)) return false
-        return true
-    }
+    ): Boolean = date in offeredDates(today)
 
     fun dayLabel(date: LocalDate): String = date.format(DAY_LABEL_FORMAT)
 

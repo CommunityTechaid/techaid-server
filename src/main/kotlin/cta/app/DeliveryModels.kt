@@ -7,14 +7,17 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.LockModeType
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.SequenceGenerator
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
+import org.springframework.data.repository.query.Param
 import java.time.Instant
 import java.time.LocalDate
 
@@ -120,6 +123,13 @@ interface DeliveryWindowRepository :
     fun findByActiveTrueOrderBySortOrderAsc(): List<DeliveryWindow>
 
     fun findAllByOrderBySortOrderAsc(): List<DeliveryWindow>
+
+    /** Locks the window row so concurrent bookings serialise on the capacity check. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select w from DeliveryWindow w where w.id = :id")
+    fun findByIdForUpdate(
+        @Param("id") id: Long,
+    ): DeliveryWindow?
 }
 
 interface DeliveryBlockedDateRepository : JpaRepository<DeliveryBlockedDate, Long> {
