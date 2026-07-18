@@ -41,6 +41,8 @@ input DeliveryBookingInput {
     accessNotes: String
     "The client's CTA reference number"
     ctaReference: String!
+    "Cloudflare Turnstile token proving the submitter is human; required only when Turnstile is enabled"
+    turnstileToken: String
 }
 
 "Confirmation returned after a delivery slot is successfully booked."
