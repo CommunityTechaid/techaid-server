@@ -81,6 +81,13 @@ class DeliveryMutations(
             }
 
         val windowId = input.windowId.toLongOrNull() ?: throw DeliveryBookingException("Unknown delivery window")
+
+        val normalizedRef = input.ctaReference.trim().lowercase()
+        // Advisory lock is always taken before the per-window row lock below, so lock order is
+        // globally consistent across requests (advisory-then-row) and same-ref-different-window
+        // races can't deadlock against it.
+        bookings.acquireReferenceLock("delivery-booking:$normalizedRef")
+
         // Pessimistic lock: concurrent submits for the same window serialise here, so the
         // capacity check below can't oversell under a read-check-insert race.
         val window =
@@ -91,6 +98,16 @@ class DeliveryMutations(
 
         val booked = bookings.countByDeliveryDateAndWindowId(date, window.id)
         if (booked >= window.capacity) throw DeliveryBookingException("That delivery window is fully booked")
+
+        // One upcoming booking per CTA reference: honest-user dedup only (ctaReference is
+        // attacker-controlled free text; bots/abuse are handled by rate-limit + Turnstile).
+        // Past/delivered bookings never block a new one.
+        if (bookings.existsUpcomingByNormalizedCtaReference(normalizedRef, LocalDate.now())) {
+            // Phone number matches CONTACT_PHONE in DeliveryService.kt (private there, so inlined).
+            throw DeliveryBookingException(
+                "You already have an upcoming delivery booked. If you need to change it, please call us on 020 3488 2912.",
+            )
+        }
 
         val saved =
             bookings.save(

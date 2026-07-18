@@ -156,4 +156,29 @@ interface DeliveryBookingRepository :
         start: LocalDate,
         end: LocalDate,
     ): List<DeliveryBooking>
+
+    /**
+     * Backs the one-upcoming-booking-per-reference policy: true if a booking with this
+     * normalized (trimmed, lower-cased) ctaReference exists on or after [today]. Past/delivered
+     * bookings never match, so they never block a new submission.
+     */
+    @Query(
+        "select count(b) > 0 from DeliveryBooking b " +
+            "where lower(trim(b.ctaReference)) = :normalizedRef and b.deliveryDate >= :today",
+    )
+    fun existsUpcomingByNormalizedCtaReference(
+        @Param("normalizedRef") normalizedRef: String,
+        @Param("today") today: LocalDate,
+    ): Boolean
+
+    /**
+     * Postgres advisory transaction lock keyed on the normalized ctaReference. Serialises
+     * concurrent submits for the same reference across different windows/days, which the
+     * per-window row lock (`findByIdForUpdate`) doesn't cover. Auto-released when the
+     * transaction commits or rolls back.
+     */
+    @Query(value = "select pg_advisory_xact_lock(hashtext(:key))", nativeQuery = true)
+    fun acquireReferenceLock(
+        @Param("key") key: String,
+    )
 }
