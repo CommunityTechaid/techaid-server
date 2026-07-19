@@ -119,6 +119,16 @@ class DeliveryAdminMutations(
         return true
     }
 
+    @PreAuthorize("hasAnyAuthority('write:organisations')")
+    @MutationMapping
+    fun deleteDeliveryBooking(
+        @Argument id: String,
+    ): Boolean {
+        val bookingId = id.toLongOrNull() ?: return false
+        bookings.deleteById(bookingId)
+        return true
+    }
+
     @GraphQlExceptionHandler
     fun handleDeliveryAdminError(ex: DeliveryAdminException): GraphQLError =
         GraphqlErrorBuilder
