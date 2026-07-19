@@ -52,6 +52,11 @@ Not formalized as issues (stay on the spreadsheet):
 4. **#66 scan foundation, then #69, then #68** — the scan programme in
    dependency order.
 
+Board visibility: near-term/in-flight items (#62, #63, #64, #66, #72, #73,
+#76) sit on the [TaDa Kanban](https://github.com/orgs/CommunityTechaid/projects/2)
+org board; the rest join it only when their prerequisites clear, so the board
+stays a "what's moving" view rather than a mirror of this index.
+
 ## Why this order
 
 - **Two spikes gate two programmes.** #63 (do labels scan?) gates the entire
