@@ -10,6 +10,7 @@ import cta.app.services.FilterService
 import cta.app.services.KitService
 import cta.app.services.LocationService
 import cta.app.services.MailService
+import cta.app.services.WipeCertGuardService
 import cta.toNullable
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
@@ -33,6 +34,7 @@ class KitMutations(
     private val filterService: FilterService,
     private val mailService: MailService,
     private val kitService: KitService,
+    private val wipeCertGuard: WipeCertGuardService,
 ) {
     @MutationMapping
     fun createKit(
@@ -93,6 +95,9 @@ class KitMutations(
 
         val previousStatus = entity.status
         return data.apply(entity).apply {
+            // After apply so a cert reference arriving in the same mutation counts (#68).
+            wipeCertGuard.checkStatusChange(this, previousStatus, status, "updateKit")
+
             // Update statusUpdatedAt if status has changed
             if (previousStatus != status) {
                 statusUpdatedAt = Instant.now()
@@ -169,7 +174,10 @@ class KitMutations(
             kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
                 ?: throw RuntimeException("Unable to locate a kit with CTA id: ${data.id}")
 
-        return data.apply(entity)
+        val previousStatus = entity.status
+        return data.apply(entity).also {
+            wipeCertGuard.checkStatusChange(it, previousStatus, it.status, "autoUpdateKit")
+        }
     }
 
     @MutationMapping
@@ -181,7 +189,11 @@ class KitMutations(
                 .kitFilter()
                 .and(QKit.kit.id.`in`(data.ids))
         val entities = kits.findAll(predicate)
-        entities.forEach { data.apply(it) }
+        entities.forEach {
+            val previousStatus = it.status
+            data.apply(it)
+            wipeCertGuard.checkStatusChange(it, previousStatus, it.status, "updateKits")
+        }
         return kits.saveAll(entities)
     }
 

@@ -108,14 +108,24 @@ class WipeCertGuardServiceTest {
     @Test
     fun `enforce - recorded cert allows progression and assignment`() {
         enforcement(on = true)
-        guard.checkStatusChange(kit(cert = "2026-07-19--42--SN123.json"), KitStatus.PROCESSING_WIPED, KitStatus.DISTRIBUTION_DELIVERED, "updateKit")
+        guard.checkStatusChange(
+            kit(cert = "2026-07-19--42--SN123.json"),
+            KitStatus.PROCESSING_WIPED,
+            KitStatus.DISTRIBUTION_DELIVERED,
+            "updateKit",
+        )
         guard.checkAssignment(kit(cert = "2026-07-19--42--SN123.json"), "assignKitsToDeviceRequest")
     }
 
     @Test
     fun `enforce - admin exemption allows progression and assignment`() {
         enforcement(on = true)
-        guard.checkStatusChange(kit(exemption = WipeCertExemption.NO_DRIVE), KitStatus.PROCESSING_WIPED, KitStatus.ALLOCATION_READY, "updateKit")
+        guard.checkStatusChange(
+            kit(exemption = WipeCertExemption.NO_DRIVE),
+            KitStatus.PROCESSING_WIPED,
+            KitStatus.ALLOCATION_READY,
+            "updateKit",
+        )
         guard.checkAssignment(kit(exemption = WipeCertExemption.NO_DRIVE), "assignKitsToDeviceRequest")
     }
 
