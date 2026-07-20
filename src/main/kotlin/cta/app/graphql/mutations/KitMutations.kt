@@ -185,6 +185,20 @@ class KitMutations(
         return kits.saveAll(entities)
     }
 
+    // Compliance override, deliberately gated tighter than ordinary kit edits (#68):
+    // declaring "no drive present" bypasses the wipe-cert guard, so only app:admin.
+    @PreAuthorize("hasAnyAuthority('app:admin')")
+    @MutationMapping
+    fun setKitWipeCertExemption(
+        @Argument @Valid data: SetKitWipeCertExemptionInput,
+    ): Kit {
+        val entity =
+            kits.findOne(filterService.kitFilter().and(QKit.kit.id.eq(data.id))).toNullable()
+                ?: throw EntityNotFoundException("Unable to locate a kit with id: ${data.id}")
+        entity.wipeCertExemption = data.exemption
+        return entity
+    }
+
     @PreAuthorize("hasAnyAuthority('delete:kits')")
     @MutationMapping
     fun deleteKit(

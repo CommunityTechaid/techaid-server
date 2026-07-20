@@ -333,6 +333,7 @@ input AutoUpdateKitInput {
     batteryHealth: Int,
     lotId: LenientString,
     locationCode: LenientString,
+    wipeCertReference: LenientString,
     subStatus: KitSubStatusInput
 }
 
@@ -360,7 +361,14 @@ input UpdateKitInput {
     batteryHealth: Int,
     lotId: LenientString,
     locationCode: LenientString,
+    wipeCertReference: LenientString,
     subStatus: KitSubStatusInput
+}
+
+"Sets or clears the admin-only wipe-cert exemption; a null exemption clears it"
+input SetKitWipeCertExemptionInput {
+    id: ID!
+    exemption: WipeCertExemption
 }
 
 extend type Query {
@@ -387,4 +395,5 @@ extend type Mutation {
     autoCreateKit(data:AutoCreateKitInput!): Kit!
     autoUpdateKit(data:AutoUpdateKitInput!): Kit!
     deleteKit(id: ID!): Boolean
+    setKitWipeCertExemption(data: SetKitWipeCertExemptionInput!): Kit!
 }

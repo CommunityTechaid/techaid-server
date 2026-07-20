@@ -6,6 +6,7 @@ import cta.app.KitStatus
 import cta.app.KitStorageType
 import cta.app.KitSubStatus
 import cta.app.KitType
+import cta.app.WipeCertExemption
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import java.time.Instant
@@ -132,6 +133,7 @@ data class UpdateKitInput(
     val batteryHealth: Int? = null,
     val lotId: String? = null,
     val locationCode: String? = null,
+    val wipeCertReference: String? = null,
     val subStatus: KitSubStatusInput = KitSubStatusInput(),
 ) {
     fun apply(entity: Kit): Kit {
@@ -155,6 +157,7 @@ data class UpdateKitInput(
             batteryHealth = self.batteryHealth ?: batteryHealth
             lotId = self.lotId ?: lotId
             locationCode = self.locationCode ?: locationCode
+            wipeCertReference = self.wipeCertReference ?: wipeCertReference
             subStatus = self.subStatus.apply(entity)
         }
     }
@@ -221,6 +224,7 @@ data class AutoUpdateKitInput(
     val batteryHealth: Int?,
     val lotId: String?,
     val locationCode: String?,
+    val wipeCertReference: String? = null,
     val subStatus: KitSubStatusInput = KitSubStatusInput(),
 ) {
     fun apply(entity: Kit): Kit {
@@ -246,6 +250,7 @@ data class AutoUpdateKitInput(
             batteryHealth = self.batteryHealth ?: batteryHealth
             lotId = self.lotId ?: lotId
             locationCode = self.locationCode ?: locationCode
+            wipeCertReference = self.wipeCertReference ?: wipeCertReference
             subStatus = self.subStatus.apply(entity)
         }
     }
@@ -271,6 +276,13 @@ data class BulkKitUpdateInput(
         }
     }
 }
+
+data class SetKitWipeCertExemptionInput(
+    @get:NotNull
+    val id: Long,
+    // Null clears the exemption.
+    val exemption: WipeCertExemption? = null,
+)
 
 data class KitSubStatusInput(
     var installationOfOSFailed: Boolean = false,

@@ -178,6 +178,35 @@ class PublicSurfaceAuthorizationTest {
         assertFalse(content.contains("Access Denied"), content)
     }
 
+    // The wipe-cert exemption is a compliance override ("no drive present"), so it is
+    // gated tighter than ordinary kit edits: app:admin only, not write:kits (#68).
+    private val setExemptionMutation =
+        """mutation { setKitWipeCertExemption(data: { id: 999999, exemption: NO_DRIVE }) { id } }"""
+
+    @Test
+    fun `setKitWipeCertExemption rejects anonymous callers`() {
+        anonymousGraphQl(setExemptionMutation)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+            .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.nullValue()))
+    }
+
+    @Test
+    fun `setKitWipeCertExemption rejects the ordinary kit-edit scope`() {
+        authorizedGraphQl(setExemptionMutation, "write:kits")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+    }
+
+    @Test
+    fun `setKitWipeCertExemption admits app-admin scope`() {
+        // Kit 999999 doesn't exist in the empty test DB — a not-found error after the
+        // gate still proves authorization passed.
+        authorizedGraphQl(setExemptionMutation, "app:admin")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value(notAccessDenied))
+    }
+
     companion object {
         private val notAccessDenied = org.hamcrest.Matchers.not("Access Denied")
     }
