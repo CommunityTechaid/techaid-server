@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.3.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.2.0...v2.3.0) (2026-07-21)
+
+
+### Features
+
+* wipe-cert status-progression guard ([#68](https://github.com/CommunityTechaid/techaid-server/issues/68)) ([4dd1078](https://github.com/CommunityTechaid/techaid-server/commit/4dd10781c9d8d3b6347d6971d6e43e8d4c6ae817))
+* wipe-cert status-progression guard ([#68](https://github.com/CommunityTechaid/techaid-server/issues/68)) ([#81](https://github.com/CommunityTechaid/techaid-server/issues/81)) ([4dd1078](https://github.com/CommunityTechaid/techaid-server/commit/4dd10781c9d8d3b6347d6971d6e43e8d4c6ae817))
+
+
+### Bug Fixes
+
+* **db:** converge the gdpr schema in fresh databases with the live one ([7ef5ee5](https://github.com/CommunityTechaid/techaid-server/commit/7ef5ee5ddd288529a60a956b7e34b2a0c9604dec))
+* stop the stale-intake sweeper re-emailing declined device requests ([63495cf](https://github.com/CommunityTechaid/techaid-server/commit/63495cfeaab7d42ee3a8b18d17131627f7a72d78))
+* stop the stale-intake sweeper re-emailing declined device requests ([5b6e6cf](https://github.com/CommunityTechaid/techaid-server/commit/5b6e6cf4f5d728350208d4e4a2fb44ff07624c2a))
+* stop the stale-intake sweeper re-emailing declined device requests ([#83](https://github.com/CommunityTechaid/techaid-server/issues/83)) ([63495cf](https://github.com/CommunityTechaid/techaid-server/commit/63495cfeaab7d42ee3a8b18d17131627f7a72d78))
+
 ## [2.2.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.1.0...v2.2.0) (2026-07-21)
 
 
