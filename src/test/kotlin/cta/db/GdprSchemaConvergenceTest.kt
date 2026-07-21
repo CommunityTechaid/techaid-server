@@ -89,6 +89,72 @@ class GdprSchemaConvergenceTest {
             .contains("search_path=")
     }
 
+    private fun insertExpiredDonor(
+        id: Long,
+        parentId: Long?,
+    ) {
+        jdbcTemplate.update(
+            """
+            INSERT INTO donors (id, name, email, phone_number, post_code, referral, created_at, updated_at,
+                                archived, is_lead_contact, donor_parent_id)
+            VALUES ($id, 'Expired Donor $id', 'expired$id@example.org', '07700900000', 'SW9 0AA',
+                    'poster', now() - interval '18 months', now() - interval '18 months', 'N', false,
+                    ${parentId ?: "NULL"})
+            """.trimIndent(),
+        )
+    }
+
+    @Test
+    fun `the retention routine anonymises an expired donor in place rather than deleting it`() {
+        jdbcTemplate.update(
+            """
+            INSERT INTO donor_parents (id, name, type, archived, created_at, updated_at)
+            VALUES (900100, 'A Drop Point', 'DROPPOINT', 'N', now(), now())
+            """.trimIndent(),
+        )
+        insertExpiredDonor(900011, parentId = 900100)
+
+        val summary = jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+        assertThat(summary).contains("GDPR Cleanup: Archived")
+
+        val row = jdbcTemplate.queryForMap("SELECT name, email, phone_number FROM donors WHERE id = 900011")
+        assertThat(row["name"]).isEqualTo("Donor - Erased due to GDPR policy")
+        assertThat(row["email"]).isEqualTo("")
+
+        // The load-bearing assertion: the row SURVIVES. kits.donor_id is ON DELETE SET NULL, so
+        // anonymising rather than deleting is what preserves each kit's donation provenance.
+        // PR #80's first draft hard-deleted here, which would have severed that permanently.
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM donors WHERE id = 900011", Int::class.java))
+            .`as`("retention anonymises in place; deleting would sever kit provenance")
+            .isEqualTo(1)
+    }
+
+    /**
+     * KNOWN DEFECT, pinned deliberately so it is visible rather than theoretical.
+     *
+     * gdpr.donors_to_archive filters on `donor_parents.type <> 'BUSINESS'` across a LEFT JOIN.
+     * For a donor with no donor parent that expression is NULL, and WHERE treats NULL as false —
+     * so donors without a parent are silently excluded from retention entirely and keep their
+     * PII indefinitely. If most individual donors have no parent, retention has been covering a
+     * small fraction of what was intended, in both this routine and the pg_cron job that calls it.
+     *
+     * The likely fix is `AND (donor_parents.type IS NULL OR donor_parents.type <> 'BUSINESS')`,
+     * but the blast radius should be measured on production first — it would suddenly anonymise
+     * every parentless donor over 12 months old. Until that decision is made this test asserts
+     * the CURRENT behaviour, so the day someone fixes the view this fails loudly and points them
+     * at the reason rather than looking like a regression.
+     */
+    @Test
+    fun `a donor with no donor parent is NOT anonymised - known retention gap`() {
+        insertExpiredDonor(900012, parentId = null)
+
+        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        assertThat(jdbcTemplate.queryForObject("SELECT name FROM donors WHERE id = 900012", String::class.java))
+            .`as`("NULL <> 'BUSINESS' is NULL, so parentless donors never enter donors_to_archive")
+            .isEqualTo("Expired Donor 900012")
+    }
+
     @Test
     fun `deleting a donor succeeds and writes a PII-free archive trace`() {
         jdbcTemplate.update(
