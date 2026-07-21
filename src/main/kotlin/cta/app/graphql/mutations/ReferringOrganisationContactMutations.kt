@@ -8,6 +8,7 @@ import cta.app.services.FilterService
 import cta.toNullable
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import org.springframework.graphql.data.method.annotation.Argument
@@ -118,6 +119,7 @@ data class CreateReferringOrganisationContactInput(
     var fullName: String,
     var address: String? = null,
     @get:NotBlank
+    @get:Email
     var email: String = "",
     var phoneNumber: String,
     @get:NotNull
@@ -131,6 +133,7 @@ data class UpdateReferringOrganisationContactInput(
     var fullName: String,
     var address: String? = null,
     @get:NotBlank
+    @get:Email
     var email: String = "",
     var phoneNumber: String,
     @get:NotNull

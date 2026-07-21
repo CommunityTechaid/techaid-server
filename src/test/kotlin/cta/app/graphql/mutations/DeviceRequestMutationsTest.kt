@@ -2,6 +2,7 @@ package cta.app.graphql.mutations
 
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestItems
+import cta.app.DeviceRequestStatus
 import cta.app.ReferringOrganisationContact
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -27,10 +28,14 @@ class DeviceRequestMutationsTest {
             collectionDate = date,
         )
 
-    private fun input(collectionDate: String?): UpdateDeviceRequestInput =
+    private fun input(
+        collectionDate: String?,
+        status: DeviceRequestStatus = DeviceRequestStatus.NEW,
+    ): UpdateDeviceRequestInput =
         UpdateDeviceRequestInput(
             id = 1L,
             deviceRequestItems = DeviceRequestItemsInput(laptops = 1),
+            status = status,
             isSales = false,
             clientRef = "REF001",
             borough = "Lambeth",
@@ -64,5 +69,28 @@ class DeviceRequestMutationsTest {
         input(collectionDate = "2027-03-03T09:00:00Z").apply(entity)
 
         assertEquals(Instant.parse("2027-03-03T09:00:00Z"), entity.collectionDate)
+    }
+
+    // --- correlationId (pending-Typeform marker) ---
+
+    @Test
+    fun `apply clears correlationId when staff move the request out of NEW`() {
+        val entity = entityWithDate(null).also { it.correlationId = 4242L }
+
+        input(collectionDate = null, status = DeviceRequestStatus.PROCESSING_EQUALITIES_DATA_COMPLETE).apply(entity)
+
+        assertNull(
+            entity.correlationId,
+            "a staff-progressed request must leave the stale-intake sweeper's candidate set",
+        )
+    }
+
+    @Test
+    fun `apply keeps correlationId while the request is still NEW`() {
+        val entity = entityWithDate(null).also { it.correlationId = 4242L }
+
+        input(collectionDate = null, status = DeviceRequestStatus.NEW).apply(entity)
+
+        assertEquals(4242L, entity.correlationId, "editing a NEW request must not cancel a genuinely pending Typeform")
     }
 }
