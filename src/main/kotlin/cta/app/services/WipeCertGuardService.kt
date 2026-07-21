@@ -96,7 +96,6 @@ class WipeCertGuardService(
             setOf(
                 KitStatus.PROCESSING_OS_INSTALLED,
                 KitStatus.PROCESSING_STORED,
-                KitStatus.ALLOCATION_ASSESSMENT,
                 KitStatus.ALLOCATION_READY,
                 KitStatus.ALLOCATION_QC_COMPLETED,
                 KitStatus.ALLOCATION_DELIVERY_ARRANGED,

@@ -49,7 +49,6 @@ Key fields on `Kit`: `type`, `status`, `model`/`make`/`deviceVersion`, `serialNo
 | `PROCESSING_WIPED` | refurb | data wiped |
 | `PROCESSING_OS_INSTALLED` | refurb | OS installed |
 | `PROCESSING_STORED` | refurb | refurbished, in storage |
-| `ALLOCATION_ASSESSMENT` | allocation | being matched/assessed |
 | `ALLOCATION_READY` | allocation | ready to allocate |
 | `ALLOCATION_QC_COMPLETED` | allocation | final quality check passed |
 | `ALLOCATION_DELIVERY_ARRANGED` | allocation | delivery booked |
