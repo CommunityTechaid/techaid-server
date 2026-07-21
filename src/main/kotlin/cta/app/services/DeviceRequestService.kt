@@ -43,10 +43,17 @@ class DeviceRequestService(
         staleRequests.forEach { request ->
             request.status = DeviceRequestStatus.REQUEST_DECLINED
             request.correlationId = null
-            notifyDeclinedRequest(request)
         }
 
-        return deviceRequests.saveAll(staleRequests).count()
+        // Persist the declines BEFORE notifying. Emailing first meant any failure while
+        // building or sending a message aborted the sweep before saveAll, leaving every
+        // request in the batch still pending - so the ones already emailed were emailed
+        // again on every subsequent sweep.
+        val declined = deviceRequests.saveAll(staleRequests)
+
+        declined.forEach { request -> notifyDeclinedRequest(request) }
+
+        return declined.count()
     }
 
     fun formatDeviceRequests(
@@ -75,36 +82,36 @@ class DeviceRequestService(
             return
         }
 
-        val context =
-            Context().apply {
-                setVariable("contactName", request.referringOrganisationContact.fullName)
-                setVariable("orgName", request.referringOrganisationContact.referringOrganisation.name)
-                setVariable("requestId", request.id)
-                setVariable("clientRef", request.clientRef)
-                setVariable("deviceItems", formatDeviceRequests(request.deviceRequestItems))
+        try {
+            val context =
+                Context().apply {
+                    setVariable("contactName", request.referringOrganisationContact.fullName)
+                    setVariable("orgName", request.referringOrganisationContact.referringOrganisation.name)
+                    setVariable("requestId", request.id)
+                    setVariable("clientRef", request.clientRef)
+                    setVariable("deviceItems", formatDeviceRequests(request.deviceRequestItems))
+                }
+
+            val msg =
+                createEmail(
+                    to = request.referringOrganisationContact.email,
+                    from = mailService.address,
+                    subject = "Community TechAid: Device Request Acknowledged",
+                    bodyText = templateEngine.process("email/device-request-acknowledged", context),
+                    mimeType = "html",
+                    charset = "UTF-8",
+                )
+
+            if (!mailService.bccAddress.isNullOrEmpty()) {
+                msg.addRecipient(
+                    jakarta.mail.Message.RecipientType.BCC,
+                    InternetAddress(mailService.bccAddress),
+                )
             }
 
-        val msg =
-            createEmail(
-                to = request.referringOrganisationContact.email,
-                from = mailService.address,
-                subject = "Community TechAid: Device Request Acknowledged",
-                bodyText = templateEngine.process("email/device-request-acknowledged", context),
-                mimeType = "html",
-                charset = "UTF-8",
-            )
-
-        if (!mailService.bccAddress.isNullOrEmpty()) {
-            msg.addRecipient(
-                jakarta.mail.Message.RecipientType.BCC,
-                InternetAddress(mailService.bccAddress),
-            )
-        }
-
-        try {
             mailService.sendMessage(msg)
         } catch (e: Exception) {
-            logger.error("Failed to send email", e)
+            logger.error("Failed to send acknowledgement email for device request ${request.id}", e)
         }
     }
 
@@ -115,36 +122,38 @@ class DeviceRequestService(
             return
         }
 
-        val context =
-            Context().apply {
-                setVariable("contactName", request.referringOrganisationContact.fullName)
-                setVariable("orgName", request.referringOrganisationContact.referringOrganisation.name)
-                setVariable("requestId", request.id)
-                setVariable("clientRef", request.clientRef)
-                setVariable("deviceItems", formatDeviceRequests(request.deviceRequestItems))
+        // The whole body is guarded, not just the send: a malformed recipient address or a
+        // template failure must not escape and abort the caller's sweep over other requests.
+        try {
+            val context =
+                Context().apply {
+                    setVariable("contactName", request.referringOrganisationContact.fullName)
+                    setVariable("orgName", request.referringOrganisationContact.referringOrganisation.name)
+                    setVariable("requestId", request.id)
+                    setVariable("clientRef", request.clientRef)
+                    setVariable("deviceItems", formatDeviceRequests(request.deviceRequestItems))
+                }
+
+            val msg =
+                createEmail(
+                    to = request.referringOrganisationContact.email,
+                    from = mailService.address,
+                    subject = "Community TechAid: Device Request Declined",
+                    bodyText = templateEngine.process("email/device-request-declined", context),
+                    mimeType = "html",
+                    charset = "UTF-8",
+                )
+
+            if (!mailService.bccAddress.isNullOrEmpty()) {
+                msg.addRecipient(
+                    jakarta.mail.Message.RecipientType.BCC,
+                    InternetAddress(mailService.bccAddress),
+                )
             }
 
-        val msg =
-            createEmail(
-                to = request.referringOrganisationContact.email,
-                from = mailService.address,
-                subject = "Community TechAid: Device Request Declined",
-                bodyText = templateEngine.process("email/device-request-declined", context),
-                mimeType = "html",
-                charset = "UTF-8",
-            )
-
-        if (!mailService.bccAddress.isNullOrEmpty()) {
-            msg.addRecipient(
-                jakarta.mail.Message.RecipientType.BCC,
-                InternetAddress(mailService.bccAddress),
-            )
-        }
-
-        try {
             mailService.sendMessage(msg)
         } catch (e: Exception) {
-            logger.error("Failed to send email", e)
+            logger.error("Failed to send declined-request email for device request ${request.id}", e)
         }
     }
 }

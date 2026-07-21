@@ -298,6 +298,13 @@ data class UpdateDeviceRequestInput(
         return entity.apply {
             deviceRequestItems = self.deviceRequestItems.entity
             status = self.status
+            // Moving a request out of NEW means staff have taken over the intake, so the
+            // pending-Typeform marker must go: while correlationId is set the 20-minute
+            // sweeper still treats the request as stale and will auto-decline it — emailing
+            // the referee a decline for a request staff had already progressed.
+            if (self.status != DeviceRequestStatus.NEW) {
+                correlationId = null
+            }
             isSales = self.isSales ?: false
             clientRef = self.clientRef
             borough = self.borough ?: entity.borough

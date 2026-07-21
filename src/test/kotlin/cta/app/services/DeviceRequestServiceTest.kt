@@ -9,10 +9,14 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyList
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.mockingDetails
 import org.mockito.Mockito.`when`
 import org.thymeleaf.TemplateEngine
+import org.thymeleaf.context.IContext
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Optional
@@ -118,17 +122,28 @@ class DeviceRequestServiceTest {
     private fun incompleteRequest(
         id: Long,
         createdAt: Instant,
+        contact: cta.app.ReferringOrganisationContact = mock(cta.app.ReferringOrganisationContact::class.java),
     ): cta.app.DeviceRequest =
         cta.app.DeviceRequest(
             id = id,
             correlationId = id,
             deviceRequestItems = DeviceRequestItems(laptops = 1),
-            referringOrganisationContact = mock(cta.app.ReferringOrganisationContact::class.java),
+            referringOrganisationContact = contact,
             clientRef = "REF$id",
             borough = "Lambeth",
             details = "test",
             deviceRequestNeeds = null,
             createdAt = createdAt,
+        )
+
+    private fun contactWithEmail(email: String): cta.app.ReferringOrganisationContact =
+        cta.app.ReferringOrganisationContact(
+            id = 1L,
+            fullName = "Referee",
+            email = email,
+            phoneNumber = "02034887742",
+            address = "1 Test Street",
+            referringOrganisation = cta.app.ReferringOrganisation(id = 1L, name = "Test Org"),
         )
 
     @Test
@@ -167,5 +182,39 @@ class DeviceRequestServiceTest {
         assertEquals(0, count)
         assertEquals(DeviceRequestStatus.NEW, recent.status)
         assertTrue(saved.isNullOrEmpty(), "no unchanged requests should be re-saved (audit churn)")
+    }
+
+    /**
+     * Regression: a referring contact whose stored email has whitespace in the local part made
+     * InternetAddress throw while BUILDING the declined-request message. That happened inside the
+     * per-request loop, before saveAll, so the whole sweep aborted — nothing was persisted, and
+     * every request the sweep had already emailed was emailed again on the next run. Observed on
+     * UAT 2026-07-08 → 2026-07-21: one duplicate "Device Request Declined" per 20-minute sweep.
+     */
+    @Test
+    fun `declineIncompleteDeviceRequests persists every decline even when one recipient address is malformed`() {
+        `when`(mailService.emailEnabled).thenReturn(true)
+        `when`(mailService.address).thenReturn("communitytechaid@gmail.com")
+        `when`(mailService.bccAddress).thenReturn("")
+        `when`(templateEngine.process(anyString(), any(IContext::class.java))).thenReturn("<html></html>")
+
+        val staleAt = Instant.now().minus(30, ChronoUnit.MINUTES)
+        val deliverable = incompleteRequest(1L, staleAt, contactWithEmail("referee@example.org"))
+        val poison = incompleteRequest(2L, staleAt, contactWithEmail("bad address@example.org"))
+        `when`(deviceRequests.findAllByCorrelationIdIsNotNull()).thenReturn(listOf(deliverable, poison))
+        `when`(deviceRequests.saveAll(anyList<cta.app.DeviceRequest>())).thenAnswer { it.arguments[0] }
+
+        val count = service.declineIncompleteDeviceRequests()
+
+        assertEquals(2, count, "a failing recipient must not stop the batch being written")
+        assertEquals(DeviceRequestStatus.REQUEST_DECLINED, deliverable.status)
+        assertEquals(DeviceRequestStatus.REQUEST_DECLINED, poison.status)
+        assertNull(deliverable.correlationId, "a declined request must leave the sweeper's candidate set")
+        assertNull(poison.correlationId, "a declined request must leave the sweeper's candidate set")
+
+        // Counted rather than verify()d: sendMessage takes a non-null Kotlin parameter, so a
+        // null-returning Mockito matcher trips the compiler's intrinsic null check.
+        val sends = mockingDetails(mailService).invocations.count { it.method.name == "sendMessage" }
+        assertEquals(1, sends, "only the deliverable recipient should have been emailed")
     }
 }
