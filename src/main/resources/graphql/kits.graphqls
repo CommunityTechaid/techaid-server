@@ -132,7 +132,14 @@ type Kit {
     batteryHealth: Int,
     lotId: String,
     locationCode: String,
+    wipeCertReference: String,
+    wipeCertExemption: WipeCertExemption,
     subStatus: KitSubStatus
+}
+
+"Admin-declared reason a kit legitimately has no wipe certificate"
+enum WipeCertExemption {
+    NO_DRIVE
 }
 
 type KitAttributes {
@@ -326,6 +333,7 @@ input AutoUpdateKitInput {
     batteryHealth: Int,
     lotId: LenientString,
     locationCode: LenientString,
+    wipeCertReference: LenientString,
     subStatus: KitSubStatusInput
 }
 
@@ -353,7 +361,14 @@ input UpdateKitInput {
     batteryHealth: Int,
     lotId: LenientString,
     locationCode: LenientString,
+    wipeCertReference: LenientString,
     subStatus: KitSubStatusInput
+}
+
+"Sets or clears the admin-only wipe-cert exemption; a null exemption clears it"
+input SetKitWipeCertExemptionInput {
+    id: ID!
+    exemption: WipeCertExemption
 }
 
 extend type Query {
@@ -380,4 +395,5 @@ extend type Mutation {
     autoCreateKit(data:AutoCreateKitInput!): Kit!
     autoUpdateKit(data:AutoUpdateKitInput!): Kit!
     deleteKit(id: ID!): Boolean
+    setKitWipeCertExemption(data: SetKitWipeCertExemptionInput!): Kit!
 }
