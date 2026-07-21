@@ -14,6 +14,8 @@ import cta.app.QKit
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.services.FilterService
 import cta.app.services.MailService
+import cta.app.services.WipeCertGuardService
+import cta.app.services.WipeCertMissingException
 import cta.toNullable
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
@@ -75,6 +77,16 @@ class ControllerExceptionHandler {
             .errorType(ErrorType.BAD_REQUEST)
             .message(ex.message)
             .build()
+
+    // Wipe-cert guard rejection (#68): surface the reason (kit id + missing cert) so the
+    // dashboard and the #66/#69 scan UIs inherit it instead of a generic INTERNAL_ERROR.
+    @GraphQlExceptionHandler
+    fun handleWipeCertMissing(ex: WipeCertMissingException): GraphQLError =
+        GraphqlErrorBuilder
+            .newError()
+            .errorType(ErrorType.BAD_REQUEST)
+            .message(ex.message)
+            .build()
 }
 
 @Controller
@@ -87,6 +99,7 @@ class DeviceRequestMutations(
     private val deviceRequestNotes: DeviceRequestNoteRepository,
     private val mailService: MailService,
     private val kits: KitRepository,
+    private val wipeCertGuard: WipeCertGuardService,
 ) {
     @MutationMapping
     fun createDeviceRequest(
@@ -164,6 +177,12 @@ class DeviceRequestMutations(
                         KitStatus.DISTRIBUTION_REPAIR_RETURN,
                     )
                 kits.filter { it.status !in completedStatuses }.forEach { kit ->
+                    wipeCertGuard.checkStatusChange(
+                        kit,
+                        kit.status,
+                        KitStatus.DISTRIBUTION_DELIVERED,
+                        "updateDeviceRequest.REQUEST_COMPLETED",
+                    )
                     kit.status = KitStatus.DISTRIBUTION_DELIVERED
                     kit.archived = true
                 }
@@ -198,6 +217,7 @@ class DeviceRequestMutations(
         val kitsToAssign = kits.findAll(predicate)
 
         kitsToAssign.forEach { kit ->
+            wipeCertGuard.checkAssignment(kit, "assignKitsToDeviceRequest")
             kit.deviceRequest?.removeKit(kit)
             deviceRequest.addKit(kit)
         }

@@ -91,6 +91,11 @@ class Kit(
     var batteryHealth: Int? = null,
     var lotId: String? = null,
     var locationCode: String? = null,
+    // Wipe-cert linkage (#68): reference to an externally stored erasure certificate.
+    // TaDa only records the linkage — no lookups against wherever certs live.
+    var wipeCertReference: String? = null,
+    @Enumerated(EnumType.STRING)
+    var wipeCertExemption: WipeCertExemption? = null,
     @Embedded
     var subStatus: KitSubStatus = KitSubStatus(),
 ) : BaseEntity() {
@@ -177,3 +182,11 @@ enum class KitStatus {
 }
 
 enum class KitStorageType { HDD, SSD, HYBRID, UNKNOWN }
+
+/**
+ * Admin-declared reason a kit legitimately has no wipe certificate (#68).
+ * Enum-valued so future reasons can be added without a schema change.
+ */
+enum class WipeCertExemption {
+    NO_DRIVE,
+}
