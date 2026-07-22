@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.4.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.3.0...v2.4.0) (2026-07-22)
+
+
+### Features
+
+* **kits:** guard blocking-flag sub-statuses server-side in shadow mode ([#90](https://github.com/CommunityTechaid/techaid-server/issues/90)) ([#94](https://github.com/CommunityTechaid/techaid-server/issues/94)) ([09613b5](https://github.com/CommunityTechaid/techaid-server/commit/09613b590a20eb7b3431a73533db46b23308ff34))
+
+
+### Bug Fixes
+
+* **db:** bring gdpr.performgdprcleanup() under version control ([#87](https://github.com/CommunityTechaid/techaid-server/issues/87)) ([1a90d08](https://github.com/CommunityTechaid/techaid-server/commit/1a90d0877987605ec3044a3e1b2cbc250ab483e8))
+* **db:** converge five UAT/production schema divergences ([#91](https://github.com/CommunityTechaid/techaid-server/issues/91)) ([#99](https://github.com/CommunityTechaid/techaid-server/issues/99)) ([12e3f84](https://github.com/CommunityTechaid/techaid-server/commit/12e3f84fa42fbaa24b471c71465bbd597cdd442f))
+* **gdpr:** include parentless donors in retention ([#93](https://github.com/CommunityTechaid/techaid-server/issues/93)) ([#97](https://github.com/CommunityTechaid/techaid-server/issues/97)) ([939f457](https://github.com/CommunityTechaid/techaid-server/commit/939f4579deab06a84bb02ca48dfb1b074826cca3))
+
 ## [2.3.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.2.0...v2.3.0) (2026-07-21)
 
 
