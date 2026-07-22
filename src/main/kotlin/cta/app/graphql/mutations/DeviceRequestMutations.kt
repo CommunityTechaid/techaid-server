@@ -12,6 +12,8 @@ import cta.app.KitRepository
 import cta.app.KitStatus
 import cta.app.QKit
 import cta.app.ReferringOrganisationContactRepository
+import cta.app.services.BlockingFlagGuardService
+import cta.app.services.BlockingFlagSetException
 import cta.app.services.FilterService
 import cta.app.services.MailService
 import cta.app.services.WipeCertGuardService
@@ -87,6 +89,16 @@ class ControllerExceptionHandler {
             .errorType(ErrorType.BAD_REQUEST)
             .message(ex.message)
             .build()
+
+    // Blocking-flag guard rejection (#90): same treatment — the reason names the kit id
+    // and the offending sub-status flags so the bench operator can act on it.
+    @GraphQlExceptionHandler
+    fun handleBlockingFlagSet(ex: BlockingFlagSetException): GraphQLError =
+        GraphqlErrorBuilder
+            .newError()
+            .errorType(ErrorType.BAD_REQUEST)
+            .message(ex.message)
+            .build()
 }
 
 @Controller
@@ -100,6 +112,7 @@ class DeviceRequestMutations(
     private val mailService: MailService,
     private val kits: KitRepository,
     private val wipeCertGuard: WipeCertGuardService,
+    private val blockingFlagGuard: BlockingFlagGuardService,
 ) {
     @MutationMapping
     fun createDeviceRequest(
@@ -183,6 +196,12 @@ class DeviceRequestMutations(
                         KitStatus.DISTRIBUTION_DELIVERED,
                         "updateDeviceRequest.REQUEST_COMPLETED",
                     )
+                    blockingFlagGuard.checkStatusChange(
+                        kit,
+                        kit.status,
+                        KitStatus.DISTRIBUTION_DELIVERED,
+                        "updateDeviceRequest.REQUEST_COMPLETED",
+                    )
                     kit.status = KitStatus.DISTRIBUTION_DELIVERED
                     kit.archived = true
                 }
@@ -218,6 +237,7 @@ class DeviceRequestMutations(
 
         kitsToAssign.forEach { kit ->
             wipeCertGuard.checkAssignment(kit, "assignKitsToDeviceRequest")
+            blockingFlagGuard.checkAssignment(kit, "assignKitsToDeviceRequest")
             kit.deviceRequest?.removeKit(kit)
             deviceRequest.addKit(kit)
         }
