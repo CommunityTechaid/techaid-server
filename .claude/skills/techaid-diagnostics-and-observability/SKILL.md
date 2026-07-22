@@ -61,6 +61,7 @@ All are read-only, need `az login` done (subscription "CTA Nonprofit Azure Grant
 | `check-health.sh <testing\|production>` | Cold-start-aware `/actuator/health` check with retry loop; prints verdict + running build version and full git commit from `/actuator/info`. Needs no az login. | First command in ANY "is it up / did my deploy land" question. |
 | `query-requests.sh [--hours N]` | `AppRequests` summary: count, failures, avg + p95 duration per operation. | Performance questions; before/after evidence for any perf change. |
 | `replica-events.sh [app] [--hours N]` | Chronological `ContainerAppSystemLogs_CL` events for `api-production` (default) or `api-testing`. | Outage/restart/cold-start investigations. |
+| `query-shadow-guards.sh [--days N] [--raw]` | What the wipe-cert (#68) and blocking-flag (#90) guards **would** have blocked. Both emit a shared `would-block` token; summarises by guard + enforcement point. | Before flipping either enforcement flag. Empty is a legitimate result — the script explains how to tell it from broken telemetry. |
 | `verify-scale-rules.sh` | Shows current min/max replicas + scale rules for api-testing, api-production, superset-production and prints the expected steady state. | Suspected scale-rule drift; after any app recreate. |
 
 Example: `bash .claude/skills/techaid-diagnostics-and-observability/scripts/check-health.sh testing`
