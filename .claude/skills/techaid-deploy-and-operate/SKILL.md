@@ -132,6 +132,23 @@ that window the first request pays the ~40–90 s cold start.
   required in Git Bash on Windows so `/subscriptions/...` URLs aren't mangled into file paths.
 - `api-testing` has **no cron rule** (live-verified): plain 0–1 replicas, waking on HTTP
   traffic. UAT requests after idle always pay the cold start — wait before declaring it broken.
+  Since 2026-07-22 it idles for **15 minutes, not 5**, before scaling to zero
+  (`cooldownPeriod: 900`, against Azure's 300 s default) so staff testing UAT stop hitting the
+  cold start mid-session. Two things to know: like the cron rules this is **not in any IaC
+  file**, so it silently reverts to 300 s if the app is recreated; and
+  `infra/apply-scale-rules.sh` cannot set it, because its api-version `2024-03-01` rejects the
+  field with `Unknown properties cooldownPeriod in ContainerAppScale are not supported` —
+  use `2025-01-01` or later:
+
+  ```bash
+  MSYS_NO_PATHCONV=1 az rest --method PATCH \
+    --url "https://management.azure.com/subscriptions/<sub-id>/resourceGroups/tada-2026/providers/Microsoft.App/containerApps/api-testing?api-version=2025-01-01" \
+    --body '{"properties":{"template":{"scale":{"minReplicas":0,"maxReplicas":1,"cooldownPeriod":900,"rules":null}}}}'
+  ```
+
+  `scripts/verify-scale-rules.sh` in **techaid-diagnostics-and-observability** reports
+  `cooldownPeriod` for all three apps, so this drift surfaces without anyone remembering to
+  look for it.
 - Known noise: occasional off-hours KEDA activations on production (a replica runs ~5 min then
   deactivates, a few times per night, empty trigger reason). Observed for weeks pre-2026-07;
   harmless. Don't burn time investigating unless behaviour changes materially. See
