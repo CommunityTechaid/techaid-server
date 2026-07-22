@@ -30,9 +30,21 @@
 --   pressing on.
 --
 -- APPLIED TO
---   techaid_uat  — NOT YET APPLIED.
---   techaid_prod — NOT YET APPLIED.
---   Update this header with dates and verification evidence when it is applied.
+--   techaid_uat  — 2026-07-22, as techaid_admin, in a single transaction (psql -1).
+--                  Pre-flight: 154 donors, 14 with no donor parent, NOTICE reported 3 newly
+--                  eligible. Verified after commit: gdpr.donors_to_archive went 3 -> 6 rows,
+--                  exactly the 3 predicted. View still owned by techaid_admin; definition
+--                  confirmed to carry (donor_parents.type IS NULL OR ... <> 'BUSINESS') and to
+--                  be otherwise unchanged. gdpr_donors_trigger on donors still resolves to
+--                  archive_donor_info (still SECURITY DEFINER), so CREATE OR REPLACE preserved
+--                  the view OID as intended.
+--                  NOTE: UAT has no pg_cron entry (see issue #92), so nothing anonymises those
+--                  3 donors automatically. This applied the DDL; it did not rehearse the data
+--                  change, and no such rehearsal is available anywhere.
+--   techaid_prod — NOT YET APPLIED. Measured 2026-07-22 at 0 newly eligible of 425 donors, but
+--                  re-read the pre-flight NOTICE at apply time rather than trusting that figure:
+--                  in prod the next Saturday 04:04 run anonymises whatever the view yields,
+--                  irreversibly. UAT returning 3 where prod returned 0 is exactly why.
 --
 -- RUN AS: techaid_admin, connected to the target database. Run inside a transaction so the
 --         pre-flight count can be read before committing.
