@@ -89,20 +89,28 @@ class GdprSchemaConvergenceTest {
             .contains("search_path=")
     }
 
-    private fun insertExpiredDonor(
+    private fun insertDonor(
         id: Long,
         parentId: Long?,
+        age: String,
+        isLeadContact: Boolean = false,
+        name: String? = null,
     ) {
         jdbcTemplate.update(
             """
             INSERT INTO donors (id, name, email, phone_number, post_code, referral, created_at, updated_at,
                                 archived, is_lead_contact, donor_parent_id)
-            VALUES ($id, 'Expired Donor $id', 'expired$id@example.org', '07700900000', 'SW9 0AA',
-                    'poster', now() - interval '18 months', now() - interval '18 months', 'N', false,
+            VALUES ($id, '${name ?: "Expired Donor $id"}', 'expired$id@example.org', '07700900000', 'SW9 0AA',
+                    'poster', now() - interval '$age', now() - interval '$age', 'N', $isLeadContact,
                     ${parentId ?: "NULL"})
             """.trimIndent(),
         )
     }
+
+    private fun insertExpiredDonor(
+        id: Long,
+        parentId: Long?,
+    ) = insertDonor(id, parentId, age = "18 months")
 
     @Test
     fun `the retention routine anonymises an expired donor in place rather than deleting it`() {
@@ -130,29 +138,84 @@ class GdprSchemaConvergenceTest {
     }
 
     /**
-     * KNOWN DEFECT, pinned deliberately so it is visible rather than theoretical.
+     * Issue #93. This test used to assert the OPPOSITE — that a parentless donor is never
+     * anonymised — and that expectation was deliberate, not an oversight.
      *
-     * gdpr.donors_to_archive filters on `donor_parents.type <> 'BUSINESS'` across a LEFT JOIN.
-     * For a donor with no donor parent that expression is NULL, and WHERE treats NULL as false —
-     * so donors without a parent are silently excluded from retention entirely and keep their
-     * PII indefinitely. If most individual donors have no parent, retention has been covering a
-     * small fraction of what was intended, in both this routine and the pg_cron job that calls it.
+     * gdpr.donors_to_archive filtered on `donor_parents.type <> 'BUSINESS'` across a LEFT JOIN.
+     * For a donor with no donor parent that expression is NULL, and WHERE treats NULL as false,
+     * so parentless donors were excluded from retention entirely and kept their PII indefinitely.
+     * The fix was held back only because nobody knew the blast radius: it would anonymise every
+     * parentless donor over 12 months old on the first run, irreversibly.
      *
-     * The likely fix is `AND (donor_parents.type IS NULL OR donor_parents.type <> 'BUSINESS')`,
-     * but the blast radius should be measured on production first — it would suddenly anonymise
-     * every parentless donor over 12 months old. Until that decision is made this test asserts
-     * the CURRENT behaviour, so the day someone fixes the view this fails loudly and points them
-     * at the reason rather than looking like a regression.
+     * Measured against production on 2026-07-22 (issue #93 comment): of 425 donors, ZERO have a
+     * null donor_parent_id, so the corrected predicate selects zero additional rows today. The
+     * hole is still real — DonorMutations accepts a null donorParentId on create and a null id on
+     * update actively detaches — so the fix ships as a zero-risk correctness change, and this test
+     * now pins the CORRECTED behaviour.
+     *
+     * V26.07.22.1200__fix_parentless_donor_retention.sql is the fix.
      */
     @Test
-    fun `a donor with no donor parent is NOT anonymised - known retention gap`() {
+    fun `a donor with no donor parent is anonymised - issue 93`() {
         insertExpiredDonor(900012, parentId = null)
 
         jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
 
         assertThat(jdbcTemplate.queryForObject("SELECT name FROM donors WHERE id = 900012", String::class.java))
-            .`as`("NULL <> 'BUSINESS' is NULL, so parentless donors never enter donors_to_archive")
-            .isEqualTo("Expired Donor 900012")
+            .`as`("a parentless donor past the retention threshold must now enter donors_to_archive")
+            .isEqualTo("Donor - Erased due to GDPR policy")
+    }
+
+    /**
+     * The guard rail for issue #93's fix. Widening the donor-parent predicate is one character
+     * away from widening retention itself, and every row this view yields gets irreversibly
+     * anonymised by the Saturday pg_cron job.
+     *
+     * So this asserts the fix at the view — the only place the predicate exists — and asserts,
+     * with the same weight, that the view's other four conditions still exclude what they always
+     * excluded. The `is_lead_contact = false` case is not hypothetical: it currently exempts 34
+     * named individuals in production (issue #95). If it ever stops excluding them, that is this
+     * change having gone wrong, and it must fail here rather than on a Saturday morning.
+     */
+    @Test
+    fun `the corrected predicate admits parentless donors and nothing else`() {
+        jdbcTemplate.update(
+            """
+            INSERT INTO donor_parents (id, name, type, archived, created_at, updated_at)
+            VALUES (900101, 'A Business', 'BUSINESS', 'N', now(), now())
+            """.trimIndent(),
+        )
+        insertDonor(900020, parentId = null, age = "18 months")
+        insertDonor(900021, parentId = 900101, age = "18 months")
+        insertDonor(900022, parentId = null, age = "18 months", isLeadContact = true)
+        insertDonor(900023, parentId = null, age = "3 months")
+        insertDonor(900024, parentId = null, age = "18 months", name = "Donor - Erased due to GDPR policy")
+        insertDonor(900025, parentId = null, age = "18 months", name = "Warehouse #business")
+
+        val selected =
+            jdbcTemplate.queryForList(
+                "SELECT id FROM gdpr.donors_to_archive WHERE id BETWEEN 900020 AND 900025",
+                Long::class.java,
+            )
+
+        assertThat(selected)
+            .`as`("issue #93: a parentless donor past the 12-month threshold must be selected")
+            .contains(900020L)
+        assertThat(selected)
+            .`as`("a BUSINESS-parented donor must stay excluded")
+            .doesNotContain(900021L)
+        assertThat(selected)
+            .`as`("is_lead_contact = true must stay excluded - 34 named individuals rely on this (#95)")
+            .doesNotContain(900022L)
+        assertThat(selected)
+            .`as`("a donor inside the 12-month window must stay excluded")
+            .doesNotContain(900023L)
+        assertThat(selected)
+            .`as`("an already-erased donor must stay excluded, or every run re-anonymises it")
+            .doesNotContain(900024L)
+        assertThat(selected)
+            .`as`("the '#business' / '#droppoint' name exclusion must survive")
+            .doesNotContain(900025L)
     }
 
     @Test
