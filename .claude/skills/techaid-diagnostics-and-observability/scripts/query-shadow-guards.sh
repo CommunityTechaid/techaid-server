@@ -64,10 +64,17 @@ az monitor log-analytics query -w "$WORKSPACE_GUID" --analytics-query "$QUERY" -
 cat <<'EOF'
 
 No rows is a legitimate result — read it before concluding anything.
-As of 2026-07-22 this returns nothing over 30 days, and that is correct: neither
-guard has ever run in production. The wipe-cert guard shipped in v2.3.0 and the
-blocking-flag guard in v2.4.0, while production still runs 2.1.0; UAT has both but
-only thin bench traffic. The signal starts after the production promote.
+
+UPDATED 2026-07-27: the production promote HAS NOW HAPPENED (2.1.0 -> 2.4.0), so
+both guards are live in production for the first time and the signal has started.
+Before that date this script correctly returned nothing over 30 days, because
+neither guard had ever executed in prod — the wipe-cert guard shipped in v2.3.0 and
+the blocking-flag guard in v2.4.0 while production still ran 2.1.0, and UAT had both
+but only thin bench traffic.
+
+So from 2026-07-27 onward, an empty result over a busy multi-day window is worth a
+second look rather than the expected outcome. Lines appearing now are the signal
+arriving, NOT a regression.
 
 To tell an empty result apart from broken telemetry, check WARNs are flowing at all:
   AppTraces | where TimeGenerated > ago(2d) | summarize n=count() by SeverityLevel
