@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.4.1](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.0...v2.4.1) (2026-07-28)
+
+
+### Bug Fixes
+
+* **geocoding:** encode the query string so addresses with spaces reach Google ([#106](https://github.com/CommunityTechaid/techaid-server/issues/106)) ([cbf1641](https://github.com/CommunityTechaid/techaid-server/commit/cbf164156db2d0fe13edb9960116e692da762201))
+* **test:** stop the test config shadowing the main application.yml ([#108](https://github.com/CommunityTechaid/techaid-server/issues/108)) ([0ff0fa5](https://github.com/CommunityTechaid/techaid-server/commit/0ff0fa527ddd5cdc2c88b9fd0a46113ed8d50534)), closes [#105](https://github.com/CommunityTechaid/techaid-server/issues/105)
+
 ## [2.4.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.3.0...v2.4.0) (2026-07-22)
 
 
