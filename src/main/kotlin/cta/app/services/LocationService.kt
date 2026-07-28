@@ -38,12 +38,18 @@ class LocationService {
 
     fun findLocation(address: String): LocationResponse? {
         try {
+            // Addresses contain spaces and commas, so the query string must be encoded here.
+            // build(true) instead asserts the values are ALREADY encoded and makes Spring
+            // reject the first space, throwing before the request is ever sent — which the
+            // catch below swallows, leaving the kit with no coordinates and the caller none
+            // the wiser.
             val uri =
                 UriComponentsBuilder
                     .fromHttpUrl(baseUrl)
                     .queryParam("key", key)
                     .queryParam("address", address)
-                    .build(true)
+                    .encode()
+                    .build()
                     .toUri()
             return restTemplate.getForEntity(uri, LocationResponse::class.java).body!!
         } catch (e: Exception) {
