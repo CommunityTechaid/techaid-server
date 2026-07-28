@@ -1,5 +1,9 @@
 package cta.app
 
+import com.querydsl.core.types.Predicate
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
@@ -79,6 +83,19 @@ interface RequestCount {
 interface DeviceRequestRepository :
     JpaRepository<DeviceRequest, Long>,
     QuerydslPredicateExecutor<DeviceRequest> {
+    // DeviceRequest.referringOrganisationContact is a @ManyToOne with no fetch type, so it
+    // is EAGER and loads on every row whether or not the caller wants it. Left alone that
+    // is one extra SELECT per distinct contact on the page. Joining it into the page query
+    // keeps the same semantics (it was already eager) and costs no extra round trips.
+    @EntityGraph(attributePaths = ["referringOrganisationContact"])
+    override fun findAll(pageable: Pageable): Page<DeviceRequest>
+
+    @EntityGraph(attributePaths = ["referringOrganisationContact"])
+    override fun findAll(
+        predicate: Predicate,
+        pageable: Pageable,
+    ): Page<DeviceRequest>
+
     @Query(
         """
         SELECT
