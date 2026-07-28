@@ -39,6 +39,10 @@ class ReferringOrganisation(
     var name: String,
     var website: String? = null,
     var phoneNumber: String? = null,
+    // Counts OPEN requests, matching ReferringOrganisationContact.requestCount below — the
+    // same field name must mean the same thing at both levels of the hierarchy. This used to
+    // count status='NEW', which is a transient intake state nothing rests in, so it rendered
+    // 0 for every organisation. Keep the two predicates in step.
     @NotAudited
     @Formula(
         """
@@ -46,7 +50,7 @@ class ReferringOrganisation(
         FROM device_requests dr
         INNER JOIN referring_organisation_contacts roc
             ON dr.referring_organisation_contact_id = roc.id
-        WHERE dr.status='NEW'
+        WHERE dr.status NOT IN ('REQUEST_CANCELLED','REQUEST_COMPLETED','REQUEST_DECLINED')
             AND roc.referring_organisation_id = id)
     """,
     )
