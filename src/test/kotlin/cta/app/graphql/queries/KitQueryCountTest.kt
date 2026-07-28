@@ -43,9 +43,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.MOCK,
     properties = [
+        // Session-boundary settings come from the main application.yml (issue #105).
         "spring.jpa.properties.hibernate.generate_statistics=true",
-        "spring.jpa.open-in-view=false",
-        "spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true",
     ],
 )
 @AutoConfigureMockMvc

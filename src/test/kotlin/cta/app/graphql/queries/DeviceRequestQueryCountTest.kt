@@ -21,6 +21,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import jakarta.persistence.EntityManagerFactory
 import org.hibernate.SessionFactory
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -39,11 +40,14 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 /**
  * Diagnostic instrumentation for the "18 SQL round trips per findAllDeviceRequests page"
  * production finding (14-day App Insights measurement: 209.8ms total / 163.5ms Postgres /
- * 18 SQL calls, vs. 5 for findAllKits). Not a pinning test for a fix — this is the
- * investigation harness: it seeds a realistic page of device requests (referring org
- * contact, notes, kits) and counts+attributes every SQL statement Hibernate issues while
- * rendering the deviceRequestConnection GraphQL query, the shape the dashboard's device
- * request grid actually sends.
+ * 18 SQL calls, vs. 5 for findAllKits). It seeds a realistic page of device requests
+ * (referring org contact, notes, kits) and counts+attributes every SQL statement Hibernate
+ * issues while rendering the deviceRequestConnection GraphQL query, the shape the
+ * dashboard's device request grid actually sends.
+ *
+ * It now also PINS the @EntityGraph fix on DeviceRequestRepository.findAll: without it,
+ * the implicitly-EAGER referringOrganisationContact costs one extra SELECT per distinct
+ * contact on the page, and the statement count rises again.
  *
  * Two SQL-observation channels are used together:
  *  - the "org.hibernate.SQL" logger (DEBUG), captured via a ListAppender, gives the literal
@@ -54,13 +58,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.MOCK,
     properties = [
+        // open-in-view=false and enable_lazy_load_no_trans=true are inherited from the main
+        // application.yml (issue #105), so the session boundary here already matches
+        // production and must not be re-pinned. Only the statistics switch is test-specific.
         "spring.jpa.properties.hibernate.generate_statistics=true",
-        // src/test/resources/application.yml shadows src/main/resources/application.yml
-        // entirely on the test classpath (Gradle puts test resources first at the same
-        // "application.yml" classpath location), so these two production settings are NOT
-        // inherited from main and must be pinned explicitly here to reproduce prod behaviour.
-        "spring.jpa.open-in-view=false",
-        "spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true",
     ],
 )
 @AutoConfigureMockMvc
@@ -233,12 +234,52 @@ class DeviceRequestQueryCountTest {
     @Test
     fun `count and attribute every SQL statement for a page of device requests with kits selected`() {
         seedPage("A")
-        runAndReport("full selection (with kits)", pageQuery("A", includeKits = true))
+        val statements = runAndReport("full selection (with kits)", pageQuery("A", includeKits = true))
+        assertNoPerContactSelect(statements)
     }
 
     @Test
     fun `count and attribute every SQL statement for a page of device requests without kits selected`() {
         seedPage("B")
-        runAndReport("list-view selection (kitCount formula only, no kits)", pageQuery("B", includeKits = false))
+        val statements =
+            runAndReport("list-view selection (kitCount formula only, no kits)", pageQuery("B", includeKits = false))
+        assertNoPerContactSelect(statements)
+    }
+
+    /**
+     * The regression guard for the @EntityGraph on DeviceRequestRepository.findAll.
+     *
+     * referringOrganisationContact is a @ManyToOne with no fetch type, so it is EAGER and
+     * Hibernate loads it for every row. Without the join it issues one standalone SELECT per
+     * DISTINCT contact on the page — 5 for this fixture's 10 requests across 5 contacts. With
+     * the join it issues none, because the contact arrives with the page query.
+     *
+     * Counting standalone contact SELECTs rather than the total statement count keeps this
+     * assertion tied to the specific defect: it cannot be accidentally satisfied by an
+     * unrelated change that happens to move the total.
+     */
+    private fun assertNoPerContactSelect(statements: List<String>) {
+        val perContactSelects =
+            statements.filter { sql ->
+                // hibernate.format_sql is true in the main config, so statements arrive
+                // multi-line and leading-whitespace-prefixed — normalise before matching.
+                val normalised = sql.replace(Regex("\\s+"), " ").trim().lowercase()
+                // The discriminator is which table drives the FROM clause. A standalone
+                // contact load selects FROM referring_organisation_contacts; the join-fetched
+                // page query selects FROM device_requests and merely JOINs the contact in.
+                // (Do not exclude on "join" generally — the standalone contact select itself
+                // joins referring_organisations for its own eager parent.)
+                normalised.startsWith("select") &&
+                    normalised.contains("from referring_organisation_contacts")
+            }
+
+        assertEquals(
+            0,
+            perContactSelects.size,
+            "referringOrganisationContact must be join-fetched with the page query, but " +
+                "${perContactSelects.size} standalone contact SELECT(s) were issued — the " +
+                "@EntityGraph on DeviceRequestRepository.findAll is missing or ineffective:\n" +
+                perContactSelects.joinToString("\n"),
+        )
     }
 }
