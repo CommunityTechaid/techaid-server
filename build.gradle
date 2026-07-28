@@ -92,6 +92,13 @@ compileTestKotlin {
 
 test {
     useJUnitPlatform()
+
+    // Activates src/test/resources/application-test.yml as an OVERLAY on the main
+    // application.yml rather than a replacement for it. Both files used to be named
+    // application.yml and both landed at the classpath root, so Spring only ever saw the
+    // test one and no test ran against the config that ships (issue #105).
+    systemProperty 'spring.profiles.active', 'test'
+
     testLogging {
         events "PASSED", "FAILED", "SKIPPED"
         showExceptions true
