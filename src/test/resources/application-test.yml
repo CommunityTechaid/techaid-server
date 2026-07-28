@@ -1,3 +1,12 @@
+# Test OVERLAY on src/main/resources/application.yml — it does not replace it.
+#
+# Activated by `spring.profiles.active=test`, set in build.gradle's `test` block. Anything
+# not overridden here comes from the main application.yml, so tests run against the config
+# that actually ships (open-in-view: false, ddl-auto: validate, the lazy-load settings...).
+#
+# This file was called application.yml until issue #105. Both files landed at the classpath
+# root, Gradle put test resources first, and Spring read only this one — so no test had ever
+# seen the real config. Do NOT rename it back. MainApplicationConfigVisibilityTest guards this.
 auth0:
   token-attribute: https://test.example.com
   audience: ''
