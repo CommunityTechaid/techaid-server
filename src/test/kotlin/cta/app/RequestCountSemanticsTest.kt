@@ -22,23 +22,6 @@ import org.springframework.security.oauth2.jwt.JwtDecoder
  *
  * Both fields are exposed in the GraphQL schema (referringOrganisations.graphqls:6 and
  * referringOrganisationContact.graphqls:11), so this was user-visible.
- *
- * ## REQUEST_COLLECTION_DELIVERY_FAILED is CLOSED (decided 2026-07-29)
- *
- * It was never chosen — the two @Formula fields inherited a three-status closed set while the
- * project's other two definitions of "open" already excluded it:
- *
- *  - `DeviceRequestRepository.requestCount()` native query — excluded it
- *  - `DeliveryAdminQueries.CLOSED_REQUEST_STATUSES` — excluded it
- *  - the two @Formula fields — counted it as open
- *
- * The contact-level field gates `DEVICE_REQUEST_LIMIT`, so counting it meant a referrer whose
- * delivery had failed had that failure held against their 3-open-request allowance — they
- * could be blocked from requesting again because of an operational failure on our side rather
- * than anything they did. The cap fired 13 times in the 30 days to 2026-07-29 in production.
- *
- * All four definitions now agree. If a new status is added to the enum, decide which side it
- * falls on in ALL FOUR places — the lists here will fail to compile until it is classified.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
@@ -66,6 +49,9 @@ class RequestCountSemanticsTest {
             DeviceRequestStatus.PROCESSING_EQUALITIES_DATA_COMPLETE,
             DeviceRequestStatus.PROCESSING_COLLECTION_DELIVERY_ARRANGED,
             DeviceRequestStatus.PROCESSING_ON_HOLD,
+            // Deliberately open: a failed collection/delivery still needs staff action.
+            // See the note on this test for the argument that this should be revisited.
+            DeviceRequestStatus.REQUEST_COLLECTION_DELIVERY_FAILED,
         )
 
     private val closedStatuses =
@@ -73,10 +59,6 @@ class RequestCountSemanticsTest {
             DeviceRequestStatus.REQUEST_COMPLETED,
             DeviceRequestStatus.REQUEST_CANCELLED,
             DeviceRequestStatus.REQUEST_DECLINED,
-            // Closed as of 2026-07-29 — see the note on this test. It was open at the two
-            // @Formula sites and closed at the other two definitions of "open"; this is the
-            // side the majority already took.
-            DeviceRequestStatus.REQUEST_COLLECTION_DELIVERY_FAILED,
         )
 
     @Test
