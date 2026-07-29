@@ -3,14 +3,11 @@
 ## [2.4.3](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.2...v2.4.3) (2026-07-29)
 
 
-### Bug Fixes
-
-* **requests:** stop counting failed deliveries against the 3-request limit ([#118](https://github.com/CommunityTechaid/techaid-server/issues/118)) ([f53a68d](https://github.com/CommunityTechaid/techaid-server/commit/f53a68d5350011a8713803ec4dab113bf530daaa))
-
-
 ### Reverts
 
 * "fix(requests): stop counting failed deliveries against the 3-request limit ([#118](https://github.com/CommunityTechaid/techaid-server/issues/118))" ([#121](https://github.com/CommunityTechaid/techaid-server/issues/121)) ([375acf6](https://github.com/CommunityTechaid/techaid-server/commit/375acf6e76d0de6b90b6a33eb7d244fc7227c4f2))
+
+  #118 and its revert both fall inside this release, so 2.4.3 contains no net change to application behaviour from 2.4.2. Whether a failed collection/delivery counts as an open device request is being decided in [#120](https://github.com/CommunityTechaid/techaid-server/issues/120); the generated "Bug Fixes" entry for #118 has been removed from this section because that fix is not in the release.
 
 ## [2.4.2](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.1...v2.4.2) (2026-07-29)
 
