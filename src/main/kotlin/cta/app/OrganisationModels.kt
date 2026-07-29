@@ -43,10 +43,6 @@ class ReferringOrganisation(
     // same field name must mean the same thing at both levels of the hierarchy. This used to
     // count status='NEW', which is a transient intake state nothing rests in, so it rendered
     // 0 for every organisation. Keep the two predicates in step.
-    //
-    // The closed set must also stay in step with the other two definitions of "open":
-    // DeviceRequestRepository.requestCount()'s native query and
-    // DeliveryAdminQueries.CLOSED_REQUEST_STATUSES. All four now agree.
     @NotAudited
     @Formula(
         """
@@ -54,10 +50,7 @@ class ReferringOrganisation(
         FROM device_requests dr
         INNER JOIN referring_organisation_contacts roc
             ON dr.referring_organisation_contact_id = roc.id
-        WHERE dr.status NOT IN (
-            'REQUEST_CANCELLED','REQUEST_COMPLETED','REQUEST_DECLINED',
-            'REQUEST_COLLECTION_DELIVERY_FAILED'
-        )
+        WHERE dr.status NOT IN ('REQUEST_CANCELLED','REQUEST_COMPLETED','REQUEST_DECLINED')
             AND roc.referring_organisation_id = id)
     """,
     )
@@ -119,19 +112,12 @@ class ReferringOrganisationContact(
     @ManyToOne
     var referringOrganisation: ReferringOrganisation,
     // A better way would be to use the DeviceRequestStatus enum here but for some reason, it is not considered a constant expression.
-    //
-    // This field gates DEVICE_REQUEST_LIMIT (DeviceRequestMutations), so a status counted here
-    // is a status held against a referrer's 3-open-request allowance. Keep the closed set in
-    // step with ReferringOrganisation.requestCount above.
     @NotAudited
     @Formula(
         """
          (
             SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id
-            AND d.status NOT IN (
-                'REQUEST_CANCELLED','REQUEST_COMPLETED','REQUEST_DECLINED',
-                'REQUEST_COLLECTION_DELIVERY_FAILED'
-            )
+            AND d.status NOT IN ('REQUEST_CANCELLED','REQUEST_COMPLETED','REQUEST_DECLINED')
          )
     """,
     )
