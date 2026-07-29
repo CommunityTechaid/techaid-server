@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.4.2](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.1...v2.4.2) (2026-07-29)
+
+
+### Bug Fixes
+
+* **organisations:** count open requests, not the transient NEW state ([#113](https://github.com/CommunityTechaid/techaid-server/issues/113)) ([d6ac1a2](https://github.com/CommunityTechaid/techaid-server/commit/d6ac1a2753136dbe376364ef140d920eb2d662a7))
+
+
+### Performance Improvements
+
+* **telemetry:** stop double-ingesting the access log into App Insights ([#115](https://github.com/CommunityTechaid/techaid-server/issues/115)) ([aa960b6](https://github.com/CommunityTechaid/techaid-server/commit/aa960b67fe1bf06cd1f203f581c72388a2550375))
+
 ## [2.4.1](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.0...v2.4.1) (2026-07-28)
 
 
