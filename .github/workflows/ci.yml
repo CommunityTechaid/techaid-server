@@ -3,6 +3,10 @@ name: CI/CD
 on:
   push:
     branches: [dev, master, 'maintenance/**']
+  # PRs run the gates only (see the `build` guard below). Without this, no PR ever ran CI and
+  # verification happened only after merge, when it could no longer block anything.
+  pull_request:
+    branches: [dev, master]
 
 jobs:
   test:
@@ -36,6 +40,10 @@ jobs:
 
   build:
     needs: test
+    # Push events only. On a pull_request the image tags below would resolve to :dev and
+    # :dev-<sha>, publishing UNMERGED code to the tag UAT deploys from and that promote.yml
+    # treats as "the image currently running on UAT". PRs must run the gates, not publish.
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
