@@ -131,9 +131,19 @@ Checklist for every commit/PR:
 gh pr create --base dev --title "fix: <what>" --body "<why + test evidence>"
 ```
 
-- CI (`.github/workflows/ci.yml`) will run `ktlintCheck`, `test` (reports
-  uploaded as the `test-reports` artifact), then build/push the image, then
-  auto-deploy `dev` to UAT. A red `test` job blocks the image build entirely.
+- CI (`.github/workflows/ci.yml`) runs on **pull requests** targeting `dev` or
+  `master`, and on **pushes** to `dev` / `master` / `maintenance/**`:
+  - On a PR: `ktlintCheck` + `test` only. The `build` job is guarded by
+    `if: github.event_name == 'push'` — on a PR its tags would resolve to
+    `:dev` / `:dev-<sha>`, publishing unmerged code to the tag UAT deploys
+    from and that `promote.yml` treats as "currently on UAT". PRs gate; they
+    never publish.
+  - On a push to `dev`: the same gates, then build/push the image, then
+    auto-deploy to UAT. A red `test` job blocks the image build entirely.
+
+  The `pull_request` trigger was added 2026-07-29. Before that CI fired on
+  pushes only, so **no PR had ever run CI** — verification happened after
+  merge, when it could no longer block anything.
 
 ## 5. Versioning and releases (release-please)
 
