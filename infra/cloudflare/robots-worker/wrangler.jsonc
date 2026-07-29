@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developers.cloudflare.com/schema/wrangler.json",
+  "name": "techaid-robots",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-29",
+
+  // Community TechAid account (NOT Tony's personal account - wrangler whoami lists both).
+  "account_id": "b54c483820627f3bc0532564ac159369",
+
+  // Scoped to the robots.txt path on the API host. The trailing "*" is required
+  // because Cloudflare route patterns match the FULL URL including query string -
+  // without it, "/robots.txt?x=1" bypasses the Worker and hits the origin (verified).
+  // Widening beyond this is safe only because src/index.js re-checks url.pathname and
+  // passes anything that is not exactly /robots.txt through to the origin.
+  "routes": [
+    {
+      "pattern": "api.communitytechaid.org.uk/robots.txt*",
+      "zone_name": "communitytechaid.org.uk"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}
