@@ -70,7 +70,11 @@ class AccessLoggingFilter : OncePerRequestFilter() {
                 entries["graphql_operation"] = it
             }
             val marker = Markers.appendEntries(entries)
-            accessLogger.info(marker, "{} {} {} {} {}ms", remoteIp, request.method, fullPath, wrappedResponse.status, durationMs)
+            // DEBUG, not INFO: the Application Insights agent captures at INFO and above, so this
+            // keeps the access log on stdout (ContainerAppConsoleLogs_CL) without also duplicating
+            // it into AppTraces. The cta.access logger is pinned to DEBUG in logback-spring.xml —
+            // the two must change together. See AccessLogEmissionTest.
+            accessLogger.debug(marker, "{} {} {} {} {}ms", remoteIp, request.method, fullPath, wrappedResponse.status, durationMs)
         }
     }
 }

@@ -143,7 +143,8 @@ Secret-typed values show as `secretRef`, not plaintext. Real credential values l
 ## 5. Logging configuration
 
 - `src/main/resources/logback-spring.xml`: standard Spring console appender for app logs, plus a dedicated `ACCESS_JSON` appender — logger `cta.access` emits one JSON line per HTTP request (logstash encoder, `additivity=false` so no duplicates). Produced by `AccessLoggingFilter` (`RequestFilterConfig.kt`), includes `graphql_operation` when set. Query it in Log Analytics via `logger == "cta.access"` — interpretation → `techaid-diagnostics-and-observability`.
-- `logging.level` tree in application.yml: `cta: DEBUG`, security/tomcat quieted. `application-production.yml` re-asserts `cta: DEBUG`.
+- **`cta.access` is pinned to `DEBUG` in `logback-spring.xml`, and the call site logs at `.debug`. These two must change together** — the logger carries an explicit level, so it does NOT inherit `logging.level.cta`, and changing only one silently disables the access log everywhere with no error. `AccessLogEmissionTest` guards it. DEBUG is chosen to sit below the App Insights capture threshold (see below), keeping the access log on stdout only.
+- `logging.level` tree in application.yml: `cta: DEBUG`, security/tomcat quieted. `application-production.yml` re-asserts `cta: DEBUG`. Because `cta.access` sets its own level, changing `cta` to `INFO` would not affect the access log.
 - App Insights agent also captures logging at INFO+ (`applicationinsights.json` → `instrumentation.logging.level: INFO`).
 
 ---
