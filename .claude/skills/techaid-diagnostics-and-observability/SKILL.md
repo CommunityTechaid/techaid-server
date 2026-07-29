@@ -70,7 +70,11 @@ Example: `bash .claude/skills/techaid-diagnostics-and-observability/scripts/chec
 
 ### Access log (one JSON line per HTTP request)
 
-Emitted by `AccessLoggingFilter` (`src/main/kotlin/cta/app/config/RequestFilterConfig.kt`) on logger `cta.access`, JSON-encoded by Logstash encoder (`logback-spring.xml`), to stdout → lands in `ContainerAppConsoleLogs_CL.Log_s`. It runs at highest filter precedence, so it captures even requests the `UnknownPathFilter` 404s. Fields:
+Emitted by `AccessLoggingFilter` (`src/main/kotlin/cta/app/config/RequestFilterConfig.kt`) on logger `cta.access`, JSON-encoded by Logstash encoder (`logback-spring.xml`), to stdout → lands in `ContainerAppConsoleLogs_CL.Log_s`. It runs at highest filter precedence, so it captures even requests the `UnknownPathFilter` 404s.
+
+**It is emitted at DEBUG, deliberately, so `ContainerAppConsoleLogs_CL` is the ONLY place it lands.** The App Insights agent captures at INFO and above, so the access log no longer reaches `AppTraces` — it previously duplicated into both, at ~13k rows/week, 69% of all production `AppTraces` rows. Do not look for it in `AppTraces`. The level lives in two places that must agree (the call site and the explicit `<logger name="cta.access">` in `logback-spring.xml`); `AccessLogEmissionTest` guards the pair.
+
+Fields:
 
 | Field | Meaning |
 |---|---|
