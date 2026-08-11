@@ -37,6 +37,36 @@ enum class DeviceRequestStatus {
     REQUEST_CANCELLED,
 }
 
+/**
+ * The single definition of which statuses mean a device request is *closed*. Every other
+ * status counts as open. Use this everywhere an open/closed line is drawn — before this
+ * existed the project drew it three times with three hardcoded lists that disagreed (#120).
+ *
+ * `REQUEST_COLLECTION_DELIVERY_FAILED` is deliberately **open**. A failed collection or
+ * delivery still needs action: the referrer has two weeks to rebook, the device stays
+ * assigned until they do, and only then is the request closed by hand. Counting it as open
+ * is what puts the onus on the referrer to fix the address or turn up, and stops a referrer
+ * accumulating failures. Settled by the team on 2026-07-30 (Cat Smith, Steve Woolnough,
+ * Mahi Nair) — see #120. PR #118 assumed the opposite and was reverted in #121.
+ */
+val CLOSED_REQUEST_STATUSES: Set<DeviceRequestStatus> =
+    setOf(
+        DeviceRequestStatus.REQUEST_COMPLETED,
+        DeviceRequestStatus.REQUEST_DECLINED,
+        DeviceRequestStatus.REQUEST_CANCELLED,
+    )
+
+/**
+ * [CLOSED_REQUEST_STATUSES] as a SQL literal list, for use inside `NOT IN (...)`.
+ *
+ * This duplication is forced: Hibernate `@Formula` and Spring Data `@Query` are annotations,
+ * so their arguments must be compile-time constants. Enum property access
+ * (`DeviceRequestStatus.REQUEST_CANCELLED.name`) is not a constant expression — a `const val`
+ * string is, and a string template made only of `const val`s is too. `RequestCountSemanticsTest`
+ * asserts this literal and [CLOSED_REQUEST_STATUSES] never drift apart.
+ */
+const val CLOSED_REQUEST_STATUSES_SQL = "'REQUEST_COMPLETED','REQUEST_DECLINED','REQUEST_CANCELLED'"
+
 enum class CollectionMethod {
     COLLECTION,
     DELIVERY,

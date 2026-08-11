@@ -119,7 +119,7 @@ interface DeviceRequestRepository :
                 coalesce(comms_devices, 0) as commsDevices,
                 coalesce(broadband_hubs, 0) as broadbandHubs 
             FROM device_requests dr
-            WHERE dr.status not in ('REQUEST_COMPLETED','REQUEST_DECLINED','REQUEST_CANCELLED','REQUEST_COLLECTION_DELIVERY_FAILED') 
+            WHERE dr.status not in ($CLOSED_REQUEST_STATUSES_SQL)
         ) AS src
     """,
         nativeQuery = true,

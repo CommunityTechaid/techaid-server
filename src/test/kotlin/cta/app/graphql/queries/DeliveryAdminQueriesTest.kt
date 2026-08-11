@@ -56,6 +56,7 @@ class DeliveryAdminQueriesTest {
 
     private val openRequestId = 904298L
     private val completedRequestId = 904299L
+    private val failedCollectionDeliveryRequestId = 904300L
 
     private fun anonymousGraphQl(query: String): ResultActions =
         mockMvc.perform(
@@ -114,10 +115,12 @@ class DeliveryAdminQueriesTest {
     fun `resolves matched-request fields for open, closed, unmatched and non-numeric references`() {
         seedDeviceRequest(openRequestId, "NEW")
         seedDeviceRequest(completedRequestId, "REQUEST_COMPLETED")
+        seedDeviceRequest(failedCollectionDeliveryRequestId, "REQUEST_COLLECTION_DELIVERY_FAILED")
 
         seedBooking(openRequestId.toString())
         seedBooking(" $openRequestId ")
         seedBooking(completedRequestId.toString())
+        seedBooking(failedCollectionDeliveryRequestId.toString())
         seedBooking("999999999")
         seedBooking("CTA-XYZ")
 
@@ -148,6 +151,22 @@ class DeliveryAdminQueriesTest {
         assertEquals(completedRequestId.toString(), closedMatch["matchedRequestId"], "closed match id: $closedMatch")
         assertEquals("REQUEST_COMPLETED", closedMatch["matchedRequestStatus"], "closed match status: $closedMatch")
         assertEquals(false, closedMatch["matchedRequestOpen"], "closed match open: $closedMatch")
+
+        // A failed collection/delivery matches, and is flagged as open: settled by the team on
+        // 2026-07-30 (#120) — the referrer has two weeks to rebook, so the request stays open
+        // until then rather than closing automatically on a failed attempt.
+        val failedMatch = rowsByRef.getValue(failedCollectionDeliveryRequestId.toString())
+        assertEquals(
+            failedCollectionDeliveryRequestId.toString(),
+            failedMatch["matchedRequestId"],
+            "failed collection/delivery match id: $failedMatch",
+        )
+        assertEquals(
+            "REQUEST_COLLECTION_DELIVERY_FAILED",
+            failedMatch["matchedRequestStatus"],
+            "failed collection/delivery match status: $failedMatch",
+        )
+        assertEquals(true, failedMatch["matchedRequestOpen"], "failed collection/delivery match open: $failedMatch")
 
         // A numeric reference with no matching request resolves to all-null.
         val unmatchedNumeric = rowsByRef.getValue("999999999")

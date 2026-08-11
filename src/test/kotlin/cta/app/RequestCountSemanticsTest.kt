@@ -22,6 +22,16 @@ import org.springframework.security.oauth2.jwt.JwtDecoder
  *
  * Both fields are exposed in the GraphQL schema (referringOrganisations.graphqls:6 and
  * referringOrganisationContact.graphqls:11), so this was user-visible.
+ *
+ * This test now pins all three definitions of open/closed that existed as separate hardcoded
+ * status lists before #120: the two `requestCount` @Formula fields exercised above, the
+ * `DeviceRequestRepository.requestCount()` demand query, and `DeliveryAdminQueries`'s
+ * open/closed flag (covered in `DeliveryAdminQueriesTest`). It also records the team decision
+ * made on 2026-07-30 (Cat Smith, Steve Woolnough, Mahi Nair — see #120) that
+ * `REQUEST_COLLECTION_DELIVERY_FAILED` is OPEN: the referrer has two weeks to rebook, the
+ * device stays assigned to them until they do, and the request is only then closed by hand.
+ * PR #118 assumed the opposite — that a failed collection/delivery was closed — and was
+ * reverted in #121.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
@@ -49,8 +59,7 @@ class RequestCountSemanticsTest {
             DeviceRequestStatus.PROCESSING_EQUALITIES_DATA_COMPLETE,
             DeviceRequestStatus.PROCESSING_COLLECTION_DELIVERY_ARRANGED,
             DeviceRequestStatus.PROCESSING_ON_HOLD,
-            // Deliberately open: a failed collection/delivery still needs staff action.
-            // See the note on this test for the argument that this should be revisited.
+            // Open by explicit team decision, #120, 2026-07-30 — no longer an open question.
             DeviceRequestStatus.REQUEST_COLLECTION_DELIVERY_FAILED,
         )
 
@@ -106,6 +115,63 @@ class RequestCountSemanticsTest {
 
         assertThat(referringOrganisations.findById(orgId).orElseThrow().requestCount).isEqualTo(1)
         assertThat(referringOrganisationContacts.findById(contactId).orElseThrow().requestCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `the test's own status table matches the production constant`() {
+        assertThat(closedStatuses.toSet())
+            .`as`("this test's closed-status list must match CLOSED_REQUEST_STATUSES")
+            .isEqualTo(CLOSED_REQUEST_STATUSES)
+
+        assertThat((openStatuses + closedStatuses).toSet())
+            .`as`("every enum value must be classified as open or closed exactly once here")
+            .isEqualTo(DeviceRequestStatus.entries.toSet())
+    }
+
+    @Test
+    fun `the SQL literal never drifts from the Kotlin closed-status set`() {
+        val fromSql =
+            CLOSED_REQUEST_STATUSES_SQL
+                .split(",")
+                .map { it.trim().trim('\'') }
+                .toSet()
+
+        assertThat(fromSql)
+            .`as`(
+                "CLOSED_REQUEST_STATUSES_SQL and CLOSED_REQUEST_STATUSES must agree because " +
+                    "annotations can't reference the enum, so the SQL literal is a hand-kept copy",
+            ).isEqualTo(CLOSED_REQUEST_STATUSES.map { it.name }.toSet())
+    }
+
+    @Test
+    fun `a failed collection or delivery counts as open at both levels`() {
+        val (orgId, contactId) = seedOnly("failed", listOf(DeviceRequestStatus.REQUEST_COLLECTION_DELIVERY_FAILED))
+
+        assertThat(referringOrganisations.findById(orgId).orElseThrow().requestCount)
+            .`as`("this is the count that gates DEVICE_REQUEST_LIMIT")
+            .isEqualTo(1)
+        assertThat(referringOrganisationContacts.findById(contactId).orElseThrow().requestCount)
+            .`as`("this is the count that gates DEVICE_REQUEST_LIMIT")
+            .isEqualTo(1)
+    }
+
+    @Test
+    fun `a failed collection or delivery still counts toward outstanding device demand`() {
+        val baseline = deviceRequests.requestCount().laptops.toLong()
+
+        seedOnly("demand-failed", listOf(DeviceRequestStatus.REQUEST_COLLECTION_DELIVERY_FAILED))
+        val afterFailed = deviceRequests.requestCount().laptops.toLong()
+
+        assertThat(afterFailed)
+            .`as`("a failed collection/delivery must still count as outstanding demand")
+            .isEqualTo(baseline + 1L)
+
+        seedOnly("demand-completed", listOf(DeviceRequestStatus.REQUEST_COMPLETED))
+        val afterCompleted = deviceRequests.requestCount().laptops.toLong()
+
+        assertThat(afterCompleted)
+            .`as`("a completed request must not count as outstanding demand")
+            .isEqualTo(afterFailed)
     }
 
     private fun seedOneRequestPerStatus(prefix: String): Pair<Long, Long> = seedOnly(prefix, openStatuses + closedStatuses)
