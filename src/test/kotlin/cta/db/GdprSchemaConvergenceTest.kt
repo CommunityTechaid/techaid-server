@@ -172,13 +172,14 @@ class GdprSchemaConvergenceTest {
      * anonymised by the Saturday pg_cron job.
      *
      * So this asserts the fix at the view — the only place the predicate exists — and asserts,
-     * with the same weight, that the view's other four conditions still exclude what they always
-     * excluded. The `is_lead_contact = false` case is not hypothetical: it currently exempts 34
-     * named individuals in production (issue #95). If it ever stops excluding them, that is this
-     * change having gone wrong, and it must fail here rather than on a Saturday morning.
+     * with the same weight, that the view's remaining conditions still exclude what they always
+     * excluded. Issue #95, decided 2026-08-11: `is_lead_contact = false` used to exempt 34
+     * named individuals in production with no recorded rationale; that exemption is now
+     * removed by V26.08.11.1400__extend_gdpr_retention_scope.sql, so a lead contact must be
+     * admitted exactly like any other individual donor past the 12-month threshold.
      */
     @Test
-    fun `the corrected predicate admits parentless donors and nothing else`() {
+    fun `the corrected predicate admits parentless donors and lead contacts, and nothing else`() {
         jdbcTemplate.update(
             """
             INSERT INTO donor_parents (id, name, type, archived, created_at, updated_at)
@@ -205,8 +206,8 @@ class GdprSchemaConvergenceTest {
             .`as`("a BUSINESS-parented donor must stay excluded")
             .doesNotContain(900021L)
         assertThat(selected)
-            .`as`("is_lead_contact = true must stay excluded - 34 named individuals rely on this (#95)")
-            .doesNotContain(900022L)
+            .`as`("issue #95: a lead contact past the 12-month threshold must now be selected too")
+            .contains(900022L)
         assertThat(selected)
             .`as`("a donor inside the 12-month window must stay excluded")
             .doesNotContain(900023L)
@@ -244,5 +245,188 @@ class GdprSchemaConvergenceTest {
         assertThat(trace.keys)
             .`as`("the archive is deliberately PII-free")
             .doesNotContain("name", "email", "phone_number", "post_code")
+    }
+
+    private fun insertRev(rev: Long) {
+        jdbcTemplate.update(
+            "INSERT INTO custom_rev_info (id, timestamp, custom_user) VALUES ($rev, 0, 'test')",
+        )
+    }
+
+    private fun insertDeviceRequest(
+        id: Long,
+        age: String,
+        details: String,
+        clientRef: String,
+        collectionContactName: String,
+    ) {
+        jdbcTemplate.update(
+            """
+            INSERT INTO device_requests (id, is_prepped, is_sales, status, created_at, updated_at,
+                                          details, client_ref, collection_contact_name)
+            VALUES ($id, false, false, 'NEW', now() - interval '$age', now() - interval '$age',
+                    '$details', '$clientRef', '$collectionContactName')
+            """.trimIndent(),
+        )
+    }
+
+    /**
+     * Issue #127: the weekly routine used to wipe device_requests.details/client_ref in the
+     * live table only. device_requests_audit_trail (14,011 rows in production at the time this
+     * was measured) kept every previous version forever, including the original text behind an
+     * already-"erased" live row. This asserts the audit trail is scrubbed in the same run, keyed
+     * off the live row's updated_at so ordering within the function does not matter.
+     */
+    @Test
+    fun `the retention routine scrubs device_requests_audit_trail in step with the live row - issue 127`() {
+        insertDeviceRequest(
+            900200,
+            age = "60 weeks",
+            details = "Client has a hardship case",
+            clientRef = "REF-DUE",
+            collectionContactName = "Jane Due",
+        )
+        insertRev(900200)
+        jdbcTemplate.update(
+            """
+            INSERT INTO device_requests_audit_trail (id, rev, revtype, updated_at, details, client_ref, collection_contact_name)
+            VALUES (900200, 900200, 0, now() - interval '60 weeks', 'Client has a hardship case', 'REF-DUE', 'Jane Due')
+            """.trimIndent(),
+        )
+
+        insertDeviceRequest(
+            900201,
+            age = "3 months",
+            details = "Recent request, not due yet",
+            clientRef = "REF-RECENT",
+            collectionContactName = "Jo Recent",
+        )
+        insertRev(900201)
+        jdbcTemplate.update(
+            """
+            INSERT INTO device_requests_audit_trail (id, rev, revtype, updated_at, details, client_ref, collection_contact_name)
+            VALUES (900201, 900201, 0, now() - interval '3 months', 'Recent request, not due yet', 'REF-RECENT', 'Jo Recent')
+            """.trimIndent(),
+        )
+
+        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        val liveDue = jdbcTemplate.queryForMap("SELECT details, client_ref, collection_contact_name FROM device_requests WHERE id = 900200")
+        assertThat(liveDue["details"]).isEqualTo("RECORD DELETED BY SYSTEM - GDPR")
+        assertThat(liveDue["client_ref"]).isEqualTo("WIPED - GDPR")
+        assertThat(liveDue["collection_contact_name"])
+            .`as`("issue #128: collection_contact_name scrubs on the same 52-week clock as client_ref")
+            .isEqualTo("WIPED - GDPR")
+
+        val auditDue =
+            jdbcTemplate.queryForMap(
+                "SELECT details, client_ref, collection_contact_name FROM device_requests_audit_trail WHERE id = 900200",
+            )
+        assertThat(auditDue["details"])
+            .`as`("issue #127: the audit trail must not keep the original text behind an erased live row")
+            .isEqualTo("RECORD DELETED BY SYSTEM - GDPR")
+        assertThat(auditDue["client_ref"]).isEqualTo("WIPED - GDPR")
+        assertThat(auditDue["collection_contact_name"]).isEqualTo("WIPED - GDPR")
+
+        val liveRecent =
+            jdbcTemplate.queryForMap(
+                "SELECT details, client_ref, collection_contact_name FROM device_requests WHERE id = 900201",
+            )
+        assertThat(liveRecent["details"]).isEqualTo("Recent request, not due yet")
+        val auditRecent =
+            jdbcTemplate.queryForMap(
+                "SELECT details, client_ref, collection_contact_name FROM device_requests_audit_trail WHERE id = 900201",
+            )
+        assertThat(auditRecent["details"])
+            .`as`("a request inside the retention window must stay untouched in the audit trail too")
+            .isEqualTo("Recent request, not due yet")
+    }
+
+    /**
+     * device_requests_notes.content was confirmed in scope at the 2026-08-11 team review, at
+     * 12 months (52 weeks) off the note's own updated_at. Notes are written once and rarely
+     * updated, so this is effectively "12 months since the note was left".
+     */
+    @Test
+    fun `the retention routine scrubs device_requests_notes content past 52 weeks`() {
+        insertDeviceRequest(900210, age = "13 months", details = "n/a", clientRef = "n/a", collectionContactName = "n/a")
+
+        jdbcTemplate.update(
+            """
+            INSERT INTO device_requests_notes (id, device_request_id, created_at, updated_at, content)
+            VALUES (900211, 900210, now() - interval '60 weeks', now() - interval '60 weeks', 'Client disclosed an immigration case')
+            """.trimIndent(),
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO device_requests_notes (id, device_request_id, created_at, updated_at, content)
+            VALUES (900212, 900210, now() - interval '10 weeks', now() - interval '10 weeks', 'Recent note, not due yet')
+            """.trimIndent(),
+        )
+
+        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        assertThat(jdbcTemplate.queryForObject("SELECT content FROM device_requests_notes WHERE id = 900211", String::class.java))
+            .isEqualTo("Note content deleted due to GDPR policy")
+        assertThat(jdbcTemplate.queryForObject("SELECT content FROM device_requests_notes WHERE id = 900212", String::class.java))
+            .`as`("a note inside the retention window must stay untouched")
+            .isEqualTo("Recent note, not due yet")
+    }
+
+    /**
+     * Issue #129, decided 2026-08-11: referring_organisation_contacts (full_name/email/
+     * phone_number/address) is in scope at 12 months off the contact's own updated_at, live and
+     * audit trail together. The live scrub deliberately does not bump updated_at, so the audit
+     * trail parity update can reuse the same predicate regardless of statement order.
+     */
+    @Test
+    fun `the retention routine scrubs referring_organisation_contacts and its audit trail - issue 129`() {
+        jdbcTemplate.update(
+            """
+            INSERT INTO referring_organisation_contacts (id, full_name, email, phone_number, address, archived, created_at, updated_at)
+            VALUES (900220, 'Jane Referrer', 'jane@example.org', '07700900111', '1 Example St', 'N',
+                    now() - interval '13 months', now() - interval '13 months')
+            """.trimIndent(),
+        )
+        insertRev(900220)
+        jdbcTemplate.update(
+            """
+            INSERT INTO referring_organisation_contacts_audit_trail (id, rev, revtype, full_name, email, phone_number, address, archived, updated_at)
+            VALUES (900220, 900220, 0, 'Jane Referrer', 'jane@example.org', '07700900111', '1 Example St', 'N', now() - interval '13 months')
+            """.trimIndent(),
+        )
+
+        jdbcTemplate.update(
+            """
+            INSERT INTO referring_organisation_contacts (id, full_name, email, phone_number, address, archived, created_at, updated_at)
+            VALUES (900221, 'Recent Contact', 'recent@example.org', '07700900222', '2 Example St', 'N',
+                    now() - interval '3 months', now() - interval '3 months')
+            """.trimIndent(),
+        )
+
+        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        val liveDue =
+            jdbcTemplate.queryForMap(
+                "SELECT full_name, email, phone_number, address FROM referring_organisation_contacts WHERE id = 900220",
+            )
+        assertThat(liveDue["full_name"]).isEqualTo("Contact - Erased due to GDPR policy")
+        assertThat(liveDue["email"]).isEqualTo("")
+        assertThat(liveDue["phone_number"]).isEqualTo("")
+        assertThat(liveDue["address"]).isEqualTo("")
+
+        val auditDue =
+            jdbcTemplate.queryForMap(
+                "SELECT full_name, email, phone_number, address FROM referring_organisation_contacts_audit_trail WHERE id = 900220",
+            )
+        assertThat(auditDue["full_name"])
+            .`as`("issue #129: audit trail must scrub in step with the live row, not lag behind it")
+            .isEqualTo("Contact - Erased due to GDPR policy")
+        assertThat(auditDue["email"]).isEqualTo("")
+
+        assertThat(
+            jdbcTemplate.queryForObject("SELECT full_name FROM referring_organisation_contacts WHERE id = 900221", String::class.java),
+        ).`as`("a contact inside the 12-month window must stay untouched")
+            .isEqualTo("Recent Contact")
     }
 }
