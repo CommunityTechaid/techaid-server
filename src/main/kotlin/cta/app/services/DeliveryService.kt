@@ -1,11 +1,14 @@
 package cta.app.services
 
+import cta.app.CLOSED_REQUEST_STATUSES
 import cta.app.DeliveryBlockedDateRepository
 import cta.app.DeliveryBooking
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryConfigRepository
 import cta.app.DeliveryWindow
 import cta.app.DeliveryWindowRepository
+import cta.app.DeviceRequestRepository
+import cta.app.DeviceRequestStatus
 import jakarta.mail.internet.InternetAddress
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -45,6 +48,7 @@ class DeliveryService(
     private val bookings: DeliveryBookingRepository,
     private val mailService: MailService,
     private val templateEngine: TemplateEngine,
+    private val deviceRequests: DeviceRequestRepository,
 ) {
     /** ISO day-of-week numbers (1=Mon..7=Sun) the charity delivers on. */
     fun deliveryDaysOfWeek(): Set<Int> =
@@ -104,6 +108,21 @@ class DeliveryService(
         date: LocalDate,
         today: LocalDate = LocalDate.now(),
     ): Boolean = date in offeredDates(today)
+
+    /**
+     * Marks the device request identified by a booking's ctaReference as having its
+     * collection/delivery arranged. ctaReference is free text entered by the public,
+     * so a non-numeric or unmatched reference is silently ignored — the booking itself
+     * must still succeed. Closed requests (completed/declined/cancelled) are left alone
+     * so a stray or reused reference can't reopen one.
+     */
+    fun markCollectionDeliveryArranged(ctaReference: String) {
+        val id = ctaReference.trim().toLongOrNull() ?: return
+        val request = deviceRequests.findById(id).orElse(null) ?: return
+        if (request.status in CLOSED_REQUEST_STATUSES) return
+        request.status = DeviceRequestStatus.PROCESSING_COLLECTION_DELIVERY_ARRANGED
+        deviceRequests.save(request)
+    }
 
     fun dayLabel(date: LocalDate): String = date.format(DAY_LABEL_FORMAT)
 

@@ -124,6 +124,7 @@ class DeliveryMutations(
                 ),
             )
 
+        delivery.markCollectionDeliveryArranged(saved.ctaReference)
         delivery.sendConfirmationEmail(saved, window, date)
 
         return DeliveryBookingConfirmationGql(
