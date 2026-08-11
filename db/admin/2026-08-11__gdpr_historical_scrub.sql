@@ -15,7 +15,8 @@
 --   audit_trail.client_ref wiped             40
 --   audit_trail.collection_contact_name       0
 --   device_requests_notes.content wiped   2,916
---   Every count matched the pre-flight measurement exactly. All twelve checks in
+--   kits.coordinates cleared              3,932  (added and run second pass, same day)
+--   Every count matched the pre-flight measurement exactly. All thirteen checks in
 --   db/admin/gdpr_retention_verification.sql returned 0 afterwards, including the three
 --   special-category checks. Pre-scrub snapshot of all five tables:
 --   C:\Users\tonya\Desktop\gdpr-uat-rehearsal-backup-2026-08-11\
@@ -28,6 +29,16 @@
 --   device_requests_notes.content         6,000   <-- 96.6% of the whole table, see WARNING
 --   audit_trail.details                   7,483   of which ~1,900 carry special-category text
 --   audit_trail.client_ref                3,568
+--   kits.coordinates                      3,930   <-- every kit coordinate in the database
+--
+-- IDEMPOTENCY
+--   Proven in UAT on 2026-08-11: a second run of the full script reported 0 for every
+--   statement except the newly added kits.coordinates one. Safe to re-run.
+--
+-- WARNING - kits.coordinates blast radius
+--   All 3,930 kits that hold coordinates in production are already past 12 months; none were
+--   created inside the window. So the rule clears every coordinate in the table, not a tail.
+--   84 of them belong to donors already erased, which is the specific leak that prompted this.
 --
 -- WARNING - device_requests_notes blast radius
 --   These notes are written once and effectively never updated, so almost the entire table is
@@ -89,6 +100,7 @@ DECLARE
     v_aud_clientref     bigint;
     v_aud_collection    bigint;
     v_notes             bigint;
+    v_kit_coords        bigint;
 BEGIN
 
     -- 1. DONORS ------------------------------------------------------------------
@@ -188,6 +200,22 @@ BEGIN
        AND content <> 'RECORD DELETED BY SYSTEM - GDPR';
     GET DIAGNOSTICS v_notes = ROW_COUNT;
 
+    -- 5. KIT COORDINATES --------------------------------------------------------------
+    -- kits.coordinates is a geolocation derived from the collection address, i.e. a home
+    -- address for an individual donor. The donor scrub NULLs donors.coordinates but nothing
+    -- has ever touched the copy held on the kit, so the location outlives the erasure.
+    -- Measured 2026-08-11: 84 kits belonging to already-erased donors were still holding
+    -- coordinates. Same 12-month clock as the donor rule, plus any kit whose donor is
+    -- already erased regardless of the kit's own age.
+    UPDATE kits k
+       SET coordinates = NULL
+     WHERE k.coordinates IS NOT NULL
+       AND (k.created_at <= CURRENT_DATE - INTERVAL '1 year'
+            OR EXISTS (SELECT 1 FROM donors d
+                        WHERE d.id = k.donor_id
+                          AND d.name = 'Donor - Erased due to GDPR policy'));
+    GET DIAGNOSTICS v_kit_coords = ROW_COUNT;
+
     RAISE NOTICE '=== GDPR historical scrub, database % ===', current_database();
     RAISE NOTICE 'donors scrubbed                        : %', v_donors;
     RAISE NOTICE 'donors_audit_trail rows scrubbed       : %', v_donor_audit;
@@ -198,6 +226,7 @@ BEGIN
     RAISE NOTICE 'audit_trail.client_ref wiped           : %', v_aud_clientref;
     RAISE NOTICE 'audit_trail.collection_contact_name    : %', v_aud_collection;
     RAISE NOTICE 'device_requests_notes.content wiped    : %', v_notes;
+    RAISE NOTICE 'kits.coordinates cleared               : %', v_kit_coords;
 END $$;
 
 COMMIT;

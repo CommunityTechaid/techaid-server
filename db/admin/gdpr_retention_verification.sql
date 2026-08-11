@@ -80,6 +80,14 @@ SELECT * FROM (
           WHERE l.updated_at <= CURRENT_DATE - INTERVAL '52 weeks'
             AND a.collection_contact_name IS NOT NULL AND a.collection_contact_name <> '')
 
+    UNION ALL SELECT 9.5, 'kits.coordinates surviving past 12m or on an erased donor',
+        (SELECT count(*) FROM kits k
+          WHERE k.coordinates IS NOT NULL
+            AND (k.created_at <= CURRENT_DATE - INTERVAL '1 year'
+                 OR EXISTS (SELECT 1 FROM donors d
+                             WHERE d.id = k.donor_id
+                               AND d.name = 'Donor - Erased due to GDPR policy')))
+
     -- Special-category indicators surviving anywhere in scope. Indicative, not a determination.
     UNION ALL SELECT 10, 'SPECIAL CATEGORY: indicators left in device_requests.details',
         (SELECT count(*) FROM device_requests
