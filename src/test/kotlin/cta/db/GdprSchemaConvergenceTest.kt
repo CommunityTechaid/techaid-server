@@ -429,4 +429,34 @@ class GdprSchemaConvergenceTest {
         ).`as`("a contact inside the 12-month window must stay untouched")
             .isEqualTo("Recent Contact")
     }
+
+    /**
+     * gdpr_cleanup_runs (V26.08.11.1600) is the durable, structured record of each run -
+     * both for compliance statistics and as the "last successful run" marker
+     * GdprDonorCleanup's startup catch-up checks. This asserts performgdprcleanup() writes
+     * a row every time it runs, whether triggered by pg_cron or the in-app job.
+     */
+    @Test
+    fun `the retention routine records its own run in gdpr_cleanup_runs`() {
+        val before = jdbcTemplate.queryForObject("SELECT count(*) FROM gdpr_cleanup_runs", Int::class.java)!!
+
+        insertExpiredDonor(900230, parentId = null)
+        val summary = jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        val after = jdbcTemplate.queryForObject("SELECT count(*) FROM gdpr_cleanup_runs", Int::class.java)!!
+        assertThat(after)
+            .`as`("every run must leave a trace, or the startup catch-up check can never tell one happened")
+            .isEqualTo(before + 1)
+
+        // >= 1, not == 1: other tests in this class share the embedded DB and don't all
+        // call performgdprcleanup() themselves, so a donor left un-anonymised by an earlier
+        // test can legitimately get swept up by this run too - that's correct behaviour, not
+        // a bug in this test.
+        val row = jdbcTemplate.queryForMap("SELECT * FROM gdpr_cleanup_runs ORDER BY id DESC LIMIT 1")
+        assertThat((row["donor_count"] as Number).toInt())
+            .`as`("this run must have archived at least the donor it just inserted")
+            .isGreaterThanOrEqualTo(1)
+        assertThat(row["summary"]).isEqualTo(summary)
+        assertThat(row["ran_at"]).isNotNull()
+    }
 }
