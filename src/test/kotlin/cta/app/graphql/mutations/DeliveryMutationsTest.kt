@@ -3,14 +3,18 @@ package cta.app.graphql.mutations
 import cta.app.DeliveryBooking
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
+import cta.app.DeviceRequestRepository
+import cta.app.DeviceRequestStatus
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.hamcrest.Matchers.containsString
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
@@ -40,6 +44,12 @@ class DeliveryMutationsTest {
     @Autowired
     lateinit var windowRepository: DeliveryWindowRepository
 
+    @Autowired
+    lateinit var deviceRequestRepository: DeviceRequestRepository
+
+    @Autowired
+    lateinit var jdbcTemplate: JdbcTemplate
+
     private fun graphQl(query: String): ResultActions =
         mockMvc.perform(
             post("/graphql")
@@ -57,6 +67,25 @@ class DeliveryMutationsTest {
         """mutation { submitDeliveryBookingPublic(input: { date: \"$date\", windowId: \"$windowId\", """ +
             """firstName: \"Test\", surname: \"Booker\", email: \"$email\", phone: \"07123456789\", """ +
             """address: \"$address\", ctaReference: \"$ctaReference\" }) { id date } }"""
+
+    /**
+     * device_requests has few NOT NULL columns beyond id (is_prepped, is_sales); the entity
+     * constructor otherwise requires a ReferringOrganisationContact relation we don't want to
+     * build here, so seed with a raw insert instead (mirrors DeliveryAdminQueriesTest).
+     */
+    private fun seedDeviceRequest(
+        id: Long,
+        status: String,
+    ) {
+        jdbcTemplate.update(
+            """
+            insert into device_requests (id, is_prepped, is_sales, status, created_at, updated_at)
+            values (?, false, false, ?, now(), now())
+            """.trimIndent(),
+            id,
+            status,
+        )
+    }
 
     /** The seeded delivery days are Tuesday (2) and Thursday (4) with a 1-day lead time. */
     private fun offeredDates(count: Int): List<LocalDate> {
@@ -180,5 +209,33 @@ class DeliveryMutationsTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+    }
+
+    @Test
+    fun `marks a matched open device request as collection-delivery arranged`() {
+        val requestId = 904301L
+        seedDeviceRequest(requestId, "NEW")
+
+        graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = requestId.toString()))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+
+        val updated = deviceRequestRepository.findById(requestId).orElseThrow()
+        assertEquals(DeviceRequestStatus.PROCESSING_COLLECTION_DELIVERY_ARRANGED, updated.status)
+    }
+
+    @Test
+    fun `leaves a matched closed device request untouched`() {
+        val requestId = 904302L
+        seedDeviceRequest(requestId, "REQUEST_COMPLETED")
+
+        graphQl(bookingMutation(offeredDates(2)[1].toString(), windowId = "2", ctaReference = requestId.toString()))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+
+        val updated = deviceRequestRepository.findById(requestId).orElseThrow()
+        assertEquals(DeviceRequestStatus.REQUEST_COMPLETED, updated.status)
     }
 }
