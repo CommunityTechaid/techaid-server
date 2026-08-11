@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.5.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.3...v2.5.0) (2026-08-11)
+
+
+### Features
+
+* **delivery:** arrange device request status on booking completion ([1d518f7](https://github.com/CommunityTechaid/techaid-server/commit/1d518f705d158f1fe0a2f432e0f274057b06a2a5))
+* **delivery:** arrange device request status on booking completion ([6ea3095](https://github.com/CommunityTechaid/techaid-server/commit/6ea30959b562bea1dd7f3a8b8861238e97fba90b))
+* **gdpr:** add startup catch-up trigger and structured per-run stats ([735ab9f](https://github.com/CommunityTechaid/techaid-server/commit/735ab9f153c60978eb5e02b57dffa9ac7e4854b1))
+* **gdpr:** add startup catch-up trigger and structured per-run stats ([0ed5221](https://github.com/CommunityTechaid/techaid-server/commit/0ed522151297f771fff295c5f421f850c13ee28d))
+* **gdpr:** extend in-app retention job to audit trails, contact name, notes, referring-org contacts ([1f679fe](https://github.com/CommunityTechaid/techaid-server/commit/1f679fe4488dfc6c02c21e2a5be9feea8becebf4))
+* **gdpr:** extend in-app retention job to audit trails, contact name, notes, referring-org contacts ([c6fa92f](https://github.com/CommunityTechaid/techaid-server/commit/c6fa92f788e39730589b88947da85d334e8ad786))
+
+
+### Bug Fixes
+
+* **requests:** count failed collections and deliveries as open everywhere ([#120](https://github.com/CommunityTechaid/techaid-server/issues/120)) ([427bd07](https://github.com/CommunityTechaid/techaid-server/commit/427bd072618870b8aacba49eef83ac3bcd928469))
+
 ## [2.4.3](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.2...v2.4.3) (2026-07-29)
 
 
