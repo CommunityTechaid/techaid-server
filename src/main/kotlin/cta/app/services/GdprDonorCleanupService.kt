@@ -2,6 +2,8 @@ package cta.app.services
 
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
+import java.sql.Timestamp
+import java.time.Instant
 
 @Service
 class GdprDonorCleanupService(
@@ -25,4 +27,11 @@ class GdprDonorCleanupService(
      * Returns the routine's own summary string.
      */
     fun runRetentionCleanup(): String = jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java) ?: ""
+
+    /**
+     * When gdpr.performgdprcleanup() last recorded a run in gdpr_cleanup_runs, regardless of
+     * whether pg_cron or this service triggered it. Null if the table is empty (no run has
+     * ever been recorded) or absent (V26.08.11.1600 has not been applied yet).
+     */
+    fun lastRunAt(): Instant? = jdbcTemplate.queryForObject("SELECT max(ran_at) FROM gdpr_cleanup_runs", Timestamp::class.java)?.toInstant()
 }
