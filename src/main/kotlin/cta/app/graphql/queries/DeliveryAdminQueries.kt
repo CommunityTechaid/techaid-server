@@ -1,5 +1,6 @@
 package cta.app.graphql.queries
 
+import cta.app.CLOSED_REQUEST_STATUSES
 import cta.app.DeliveryBlockedDate
 import cta.app.DeliveryBlockedDateRepository
 import cta.app.DeliveryBooking
@@ -16,19 +17,6 @@ import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import java.time.LocalDate
-
-/**
- * Statuses that don't count as "open" for a device request. Parallels
- * DeviceRequestRepository.requestCount()'s native-query definition of open requests —
- * keep the two in sync if that set ever changes.
- */
-private val CLOSED_REQUEST_STATUSES =
-    setOf(
-        "REQUEST_COMPLETED",
-        "REQUEST_DECLINED",
-        "REQUEST_CANCELLED",
-        "REQUEST_COLLECTION_DELIVERY_FAILED",
-    )
 
 /**
  * Admin-only read side of the delivery-slots screen: settings, windows (incl. inactive),
@@ -165,6 +153,6 @@ fun DeliveryBooking.toAdminGql(
         createdAt = createdAt.toString(),
         matchedRequestId = matchedRequest?.id?.toString(),
         matchedRequestStatus = matchedRequest?.status?.name,
-        matchedRequestOpen = matchedRequest?.let { it.status.name !in CLOSED_REQUEST_STATUSES },
+        matchedRequestOpen = matchedRequest?.let { it.status !in CLOSED_REQUEST_STATUSES },
     )
 }

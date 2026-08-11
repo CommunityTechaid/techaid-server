@@ -50,7 +50,7 @@ class ReferringOrganisation(
         FROM device_requests dr
         INNER JOIN referring_organisation_contacts roc
             ON dr.referring_organisation_contact_id = roc.id
-        WHERE dr.status NOT IN ('REQUEST_CANCELLED','REQUEST_COMPLETED','REQUEST_DECLINED')
+        WHERE dr.status NOT IN ($CLOSED_REQUEST_STATUSES_SQL)
             AND roc.referring_organisation_id = id)
     """,
     )
@@ -111,13 +111,17 @@ class ReferringOrganisationContact(
     var updatedAt: Instant = Instant.now(),
     @ManyToOne
     var referringOrganisation: ReferringOrganisation,
-    // A better way would be to use the DeviceRequestStatus enum here but for some reason, it is not considered a constant expression.
+    // This is the count the 3-request limit checks (DEVICE_REQUEST_LIMIT), so the predicate is
+    // load-bearing, not display-only. It shares CLOSED_REQUEST_STATUSES_SQL with the org-level
+    // formula above and the other open/closed sites. The enum itself can't be referenced here —
+    // annotation arguments must be compile-time constants and enum property access isn't one,
+    // which is why the SQL literal exists (see the note on CLOSED_REQUEST_STATUSES_SQL).
     @NotAudited
     @Formula(
         """
          (
             SELECT COUNT(*) FROM device_requests d where d.referring_organisation_contact_id = id
-            AND d.status NOT IN ('REQUEST_CANCELLED','REQUEST_COMPLETED','REQUEST_DECLINED')
+            AND d.status NOT IN ($CLOSED_REQUEST_STATUSES_SQL)
          )
     """,
     )
