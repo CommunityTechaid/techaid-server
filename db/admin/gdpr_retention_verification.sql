@@ -174,9 +174,24 @@ SELECT 'referring_organisation_contacts with NULL updated_at', count(*)
 -- to 2026-08-08) recovered from Azure log history, so they carry ids ABOVE the live run that
 -- preceded them. Ordering by id here showed the oldest runs while claiming to show the
 -- latest - caught by the first production run of this query.
+--
+-- THE source COLUMN MATTERS. Backfilled rows were reconstructed from the old function's
+-- RAISE LOG line, which only ever reported two categories. Every other count on those rows
+-- is 0 because the column is NOT NULL and the value was never recorded - NOT because
+-- nothing was erased. Only details and client_ref are real on a backfilled row. Do not read
+-- the zeros as measurements, and do not sum these columns across the whole table for a
+-- compliance total: for backfilled rows the honest value is "unknown".
 -- ---------------------------------------------------------------------------------------
-SELECT id, ran_at, donor_count, device_request_notes_count, referring_contact_count,
-       kit_coordinates_count
+SELECT id, ran_at,
+       CASE WHEN summary LIKE '%backfilled from Azure PostgreSQLLogs%'
+            THEN 'backfill: only details/client_ref real'
+            ELSE 'live: all counts real' END       AS source,
+       device_request_details_count                AS details,
+       device_request_clientref_count              AS client_ref,
+       donor_count                                 AS donors,
+       device_request_notes_count                  AS notes,
+       referring_contact_count                     AS ref_contacts,
+       kit_coordinates_count                       AS kit_coords
   FROM gdpr_cleanup_runs
  ORDER BY ran_at DESC
- LIMIT 5;
+ LIMIT 8;
