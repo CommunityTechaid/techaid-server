@@ -167,19 +167,29 @@ class GdprSchemaConvergenceTest {
     }
 
     /**
-     * The guard rail for issue #93's fix. Widening the donor-parent predicate is one character
-     * away from widening retention itself, and every row this view yields gets irreversibly
-     * anonymised by the Saturday pg_cron job.
+     * The guard rail for issue #93's fix, extended by issue #98 to the two donor-business
+     * exclusions. Widening the donor-parent predicate is one character away from widening
+     * retention itself, and every row this view yields gets irreversibly anonymised by the
+     * Saturday pg_cron job.
      *
-     * So this asserts the fix at the view — the only place the predicate exists — and asserts,
+     * So this asserts the fix at the view — the only place the predicates exist — and asserts,
      * with the same weight, that the view's remaining conditions still exclude what they always
      * excluded. Issue #95, decided 2026-08-11: `is_lead_contact = false` used to exempt 34
      * named individuals in production with no recorded rationale; that exemption is now
      * removed by V26.08.11.1400__extend_gdpr_retention_scope.sql, so a lead contact must be
      * admitted exactly like any other individual donor past the 12-month threshold.
+     *
+     * Issue #98, decided 2026-08-12: the two donor-business exclusions — `donor_parents.type
+     * <> 'BUSINESS'` and the `%#(business|droppoint)%` name-tag exclusion — are also dropped,
+     * not just the lead-contact flag. A sample of the newly-caught donors shows the
+     * overwhelming majority are individual people: named human contacts at businesses,
+     * charities, schools and councils, holding a person's name, email, phone and postcode.
+     * The parent is the organisation; the donor row is a natural person. Both exclusions were
+     * reasoning about the wrong record, so they withheld erasure from exactly the people GDPR
+     * covers. V26.08.12.1100 drops both.
      */
     @Test
-    fun `the corrected predicate admits parentless donors and lead contacts, and nothing else`() {
+    fun `the corrected predicate admits parentless donors, lead contacts, and business-parented or business-tagged donors - issue 98`() {
         jdbcTemplate.update(
             """
             INSERT INTO donor_parents (id, name, type, archived, created_at, updated_at)
@@ -203,8 +213,8 @@ class GdprSchemaConvergenceTest {
             .`as`("issue #93: a parentless donor past the 12-month threshold must be selected")
             .contains(900020L)
         assertThat(selected)
-            .`as`("a BUSINESS-parented donor must stay excluded")
-            .doesNotContain(900021L)
+            .`as`("issue #98: a BUSINESS-parented donor is a natural person, not the parent, and must now be selected too")
+            .contains(900021L)
         assertThat(selected)
             .`as`("issue #95: a lead contact past the 12-month threshold must now be selected too")
             .contains(900022L)
@@ -215,8 +225,8 @@ class GdprSchemaConvergenceTest {
             .`as`("an already-erased donor must stay excluded, or every run re-anonymises it")
             .doesNotContain(900024L)
         assertThat(selected)
-            .`as`("the '#business' / '#droppoint' name exclusion must survive")
-            .doesNotContain(900025L)
+            .`as`("issue #98: the '#business'/'#droppoint' name exclusion is dropped as dead weight and must now be selected too")
+            .contains(900025L)
     }
 
     @Test
@@ -245,6 +255,74 @@ class GdprSchemaConvergenceTest {
         assertThat(trace.keys)
             .`as`("the archive is deliberately PII-free")
             .doesNotContain("name", "email", "phone_number", "post_code")
+    }
+
+    private fun insertKit(
+        id: Long,
+        donorId: Long?,
+        createdAgo: String,
+        coordinates: String = """{"lat": 51.5, "lng": -0.1}""",
+    ) {
+        jdbcTemplate.update(
+            """
+            INSERT INTO kits (id, age, donor_id, created_at, updated_at, coordinates, archived, status, type)
+            VALUES ($id, 1, ${donorId ?: "NULL"}, now() - interval '$createdAgo', now() - interval '$createdAgo',
+                    '$coordinates'::jsonb, 'N', 'NEW', 'LAPTOP')
+            """.trimIndent(),
+        )
+    }
+
+    /**
+     * Issue #126, correction 3 of V26.08.12.1100. kits.coordinates is a geolocation derived
+     * from the donor's collection address; the donor-erasure routine has always anonymised
+     * donors.coordinates but never touched the copy sitting on the kit, so the location
+     * outlived the donor's own erasure. Two independent triggers now null it: the kit's own
+     * age (>12 months), or its donor already carrying the GDPR-erased sentinel - checked
+     * AFTER the donor UPDATE in the same function, so a donor erased earlier in the same
+     * call is caught immediately rather than waiting for the next run.
+     *
+     * Note gdpr.donors_to_archive keys donor eligibility off the donor's OWN most recent kit
+     * (`coalesce(max(kits.created_at), donors.created_at)`), so a donor cannot simultaneously
+     * (a) own a recently-created kit and (b) be organically selected for erasure in that same
+     * call - a recent kit is itself evidence the donor is still active. That is exactly why
+     * production shows 84 kits whose donor was ALREADY erased (by a prior run, or an
+     * out-of-band admin action) rather than erased in lockstep with their own kit; this test
+     * reproduces that shape with two calls to performgdprcleanup().
+     */
+    @Test
+    fun `kits coordinates nulls for an old kit or an already-erased donor, and leaves an active donor's kit alone - issue 126`() {
+        // (a) kit older than 12 months, no donor involved -> nulled by the age branch alone.
+        insertKit(900410, donorId = null, createdAgo = "13 months")
+
+        // (c) control: kit recently created, tied to a donor who is NOT erased -> must survive.
+        insertDonor(900411, parentId = null, age = "3 months")
+        insertKit(900412, donorId = 900411, createdAgo = "1 day")
+
+        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        assertThat(jdbcTemplate.queryForObject("SELECT coordinates FROM kits WHERE id = 900410", String::class.java))
+            .`as`("a kit older than 12 months must have its coordinates nulled regardless of donor")
+            .isNull()
+        assertThat(jdbcTemplate.queryForObject("SELECT coordinates FROM kits WHERE id = 900412", String::class.java))
+            .`as`("a recent kit whose donor is not erased must be left alone - the over-erasure guard")
+            .isNotNull()
+
+        // (b) a donor is erased by a call to performgdprcleanup(), then a recent kit is
+        // attached to them afterwards -> nulled by the donor-erased branch alone, proving
+        // it does independent work beyond the age check (this kit is never old enough for
+        // the age branch to fire).
+        insertDonor(900413, parentId = null, age = "18 months")
+        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+        assertThat(jdbcTemplate.queryForObject("SELECT name FROM donors WHERE id = 900413", String::class.java))
+            .`as`("setup check: donor 900413 must actually be erased before the kit is attached")
+            .isEqualTo("Donor - Erased due to GDPR policy")
+
+        insertKit(900414, donorId = 900413, createdAgo = "1 day")
+        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        assertThat(jdbcTemplate.queryForObject("SELECT coordinates FROM kits WHERE id = 900414", String::class.java))
+            .`as`("issue #126: a recent kit whose donor already shows the GDPR sentinel must still be nulled")
+            .isNull()
     }
 
     private fun insertRev(rev: Long) {
@@ -343,6 +421,71 @@ class GdprSchemaConvergenceTest {
     }
 
     /**
+     * Correction 4 of V26.08.12.1100 (issue #98), extending PR #130's fix from
+     * device_requests_audit_trail to referring_organisation_contacts_audit_trail too. The old
+     * predicate gated purely on the LIVE row's updated_at, so once a scrubbed row was edited
+     * for any unrelated reason its updated_at moved back inside the window and its audit
+     * history became permanently unreachable - the only thing that could scrub it was keyed
+     * to a timestamp that kept moving away. The fix: "live row already carries the sentinel
+     * OR live row is past the threshold" - a live row that has been erased can never again
+     * claim its history is still current.
+     *
+     * Both seeded rows here have a RECENT updated_at (inside both the 26-week and 12-month
+     * windows), which is exactly what the old predicate alone would have protected. Only
+     * because the live row already shows its GDPR sentinel does the new OR-branch reach in
+     * and scrub the audit row.
+     */
+    @Test
+    fun `audit trail rows scrub via the OR-branch when the live row already carries the sentinel - issue 98`() {
+        insertDeviceRequest(
+            900320,
+            age = "2 weeks",
+            details = "RECORD DELETED BY SYSTEM - GDPR",
+            clientRef = "REF-LIVE",
+            collectionContactName = "Live Contact",
+        )
+        insertRev(900320)
+        jdbcTemplate.update(
+            """
+            INSERT INTO device_requests_audit_trail (id, rev, revtype, updated_at, details, client_ref, collection_contact_name)
+            VALUES (900320, 900320, 0, now() - interval '2 weeks', 'Client has a hardship case', 'REF-LIVE', 'Live Contact')
+            """.trimIndent(),
+        )
+
+        jdbcTemplate.update(
+            """
+            INSERT INTO referring_organisation_contacts (id, full_name, email, phone_number, address, archived, created_at, updated_at)
+            VALUES (900330, 'Contact - Erased due to GDPR policy', '', '', '', 'N', now() - interval '2 months', now() - interval '2 months')
+            """.trimIndent(),
+        )
+        insertRev(900330)
+        jdbcTemplate.update(
+            """
+            INSERT INTO referring_organisation_contacts_audit_trail (id, rev, revtype, full_name, email, phone_number, address, archived, updated_at)
+            VALUES (900330, 900330, 0, 'Jane Original', 'jane.original@example.org', '07700900333', '3 Example St', 'N', now() - interval '2 months')
+            """.trimIndent(),
+        )
+
+        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT details FROM device_requests_audit_trail WHERE id = 900320",
+                String::class.java,
+            ),
+        ).`as`("the live row already carries the sentinel, so its audit history must scrub even though updated_at is only 2 weeks old")
+            .isEqualTo("RECORD DELETED BY SYSTEM - GDPR")
+
+        assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT full_name FROM referring_organisation_contacts_audit_trail WHERE id = 900330",
+                String::class.java,
+            ),
+        ).`as`("the same OR-branch fix extended to referring_organisation_contacts_audit_trail")
+            .isEqualTo("Contact - Erased due to GDPR policy")
+    }
+
+    /**
      * device_requests_notes.content was confirmed in scope at the 2026-08-11 team review, at
      * 12 months (52 weeks) off the note's own updated_at. Notes are written once and rarely
      * updated, so this is effectively "12 months since the note was left".
@@ -371,6 +514,57 @@ class GdprSchemaConvergenceTest {
         assertThat(jdbcTemplate.queryForObject("SELECT content FROM device_requests_notes WHERE id = 900212", String::class.java))
             .`as`("a note inside the retention window must stay untouched")
             .isEqualTo("Recent note, not due yet")
+    }
+
+    /**
+     * device_requests_notes.content is retained for 12 MONTHS (52 weeks), not the 26-week
+     * clock used by device_requests.details.
+     *
+     * The authority is the team's retention spreadsheet, "GDPR data removal review
+     * 26-08-11.xlsx", sheet "Requests" row 5. Issues #98, #96, #126 and PR #130 all say 26
+     * weeks; all four predate the spreadsheet and were never reconciled to it. Someone
+     * reading only the issue threads will conclude 26 weeks is correct and "fix" this. It is
+     * not. 26 weeks would erase a further 1,033 note bodies in production - 96.9% of the
+     * table - against written policy, irreversibly.
+     *
+     * 40 weeks is the discriminating age: it sits strictly between the two thresholds, so a
+     * 26-week predicate scrubs it and the correct 52-week predicate leaves it alone. The
+     * neighbouring test (60wk/10wk) sits on the same side of both and cannot tell them apart.
+     */
+    @Test
+    fun `device_requests_notes content is retained for 52 weeks, NOT the 26-week details clock`() {
+        insertDeviceRequest(900310, age = "1 year", details = "n/a", clientRef = "n/a", collectionContactName = "n/a")
+
+        jdbcTemplate.update(
+            """
+            INSERT INTO device_requests_notes (id, device_request_id, created_at, updated_at, content)
+            VALUES (900311, 900310, now() - interval '40 weeks', now() - interval '40 weeks', 'Client disclosed a benefits case')
+            """.trimIndent(),
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO device_requests_notes (id, device_request_id, created_at, updated_at, content)
+            VALUES (900313, 900310, now() - interval '60 weeks', now() - interval '60 weeks', 'Old note, genuinely past 52 weeks')
+            """.trimIndent(),
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO device_requests_notes (id, device_request_id, created_at, updated_at, content)
+            VALUES (900312, 900310, now() - interval '10 weeks', now() - interval '10 weeks', 'Recent note inside the window')
+            """.trimIndent(),
+        )
+
+        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        assertThat(jdbcTemplate.queryForObject("SELECT content FROM device_requests_notes WHERE id = 900311", String::class.java))
+            .`as`("40 weeks is INSIDE the 52-week window and must survive; a 26-week threshold would wrongly erase it")
+            .isEqualTo("Client disclosed a benefits case")
+        assertThat(jdbcTemplate.queryForObject("SELECT content FROM device_requests_notes WHERE id = 900313", String::class.java))
+            .`as`("60 weeks is past 52 weeks and must be scrubbed")
+            .isEqualTo("Note content deleted due to GDPR policy")
+        assertThat(jdbcTemplate.queryForObject("SELECT content FROM device_requests_notes WHERE id = 900312", String::class.java))
+            .`as`("a recent note must stay untouched")
+            .isEqualTo("Recent note inside the window")
     }
 
     /**
@@ -458,5 +652,30 @@ class GdprSchemaConvergenceTest {
             .isGreaterThanOrEqualTo(1)
         assertThat(row["summary"]).isEqualTo(summary)
         assertThat(row["ran_at"]).isNotNull()
+    }
+
+    /**
+     * V26.08.12.1000 adds gdpr_cleanup_runs.kit_coordinates_count as the durable record of
+     * correction 3's effect. This asserts the column reports the real number of kits
+     * scrubbed in this specific run - measured empirically via a before/after count of
+     * kits.coordinates - not a static or default value, so it is immune to whatever
+     * coordinate-bearing kits earlier tests in this class may have left behind.
+     */
+    @Test
+    fun `the retention routine records how many kit coordinates it scrubbed`() {
+        insertKit(900420, donorId = null, createdAgo = "13 months")
+
+        val before = jdbcTemplate.queryForObject("SELECT count(*) FROM kits WHERE coordinates IS NOT NULL", Int::class.java)!!
+
+        val summary = jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
+
+        val after = jdbcTemplate.queryForObject("SELECT count(*) FROM kits WHERE coordinates IS NOT NULL", Int::class.java)!!
+        val actuallyScrubbed = before - after
+
+        val row = jdbcTemplate.queryForMap("SELECT kit_coordinates_count, summary FROM gdpr_cleanup_runs ORDER BY id DESC LIMIT 1")
+        assertThat((row["kit_coordinates_count"] as Number).toInt())
+            .`as`("kit_coordinates_count must match the number of kits this run actually nulled")
+            .isEqualTo(actuallyScrubbed)
+        assertThat(row["summary"]).isEqualTo(summary)
     }
 }
