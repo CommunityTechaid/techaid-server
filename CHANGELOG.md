@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.1](https://github.com/CommunityTechaid/techaid-server/compare/v2.5.0...v2.5.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* **gdpr:** correct retention policy to the team spreadsheet, close the audit-trail gap, and prepare the production cutover ([#138](https://github.com/CommunityTechaid/techaid-server/issues/138)) ([92b78e1](https://github.com/CommunityTechaid/techaid-server/commit/92b78e1ce59860fa323734ed8e3c0613437a76f4))
+
 ## [2.5.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.3...v2.5.0) (2026-08-11)
 
 
