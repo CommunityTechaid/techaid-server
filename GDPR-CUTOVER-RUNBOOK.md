@@ -16,6 +16,8 @@ cd /d/Code/techaid-server/scripts/gdpr-cutover
 ./1-apply-prod-sql.sh          # replaces the view + function, grants api_prod. NO DATA CHANGE.
 ./2-enable-and-trigger.sh      # flips the flag and restarts the app. THIS ERASES DATA.
 ./3-verify-and-retire.sh       # proves it worked, then retires pg_cron.
+./4-close-issues.sh --dry-run  # re-measures, reports which issues would close
+./4-close-issues.sh            # closes only those whose own gate passes
 ```
 
 Each script prompts before anything irreversible, prints before/after state, and writes a
@@ -103,6 +105,33 @@ that catalog lives elsewhere on Azure Flexible Server) and offers to backfill th
 historical run records recovered from Azure logs.
 
 To look without touching anything: `./3-verify-and-retire.sh --verify`
+
+### Step 4 — close the issues, gated on the same measurement
+
+`./4-close-issues.sh` re-measures production and closes each GitHub issue **only if that
+issue's own condition holds** — not on "the deploy ran". Each is closed with a comment carrying
+the measured numbers that justified it, so the audit trail is evidence rather than assertion.
+
+| Issue | Closes when |
+|---|---|
+| #62 | flag on, ≥1 recorded run, corrected function live, pg_cron inactive |
+| #93 | view no longer joins `donor_parents`, 0 parentless donors eligible |
+| #95 | view no longer filters `is_lead_contact`, 0 lead contacts past threshold |
+| #126 | every retention category at 0 |
+| #127 | all three audit columns at 0 under the *widened* predicate |
+| #128 | `collection_contact_name` at 0, live and audit |
+| #129 | referring-org contacts at 0, live and audit |
+
+Run `--dry-run` first; it reports without closing anything. Safe to re-run — already-closed
+issues are skipped, and anything that fails its gate simply stays open.
+
+**A note on why there is a global precondition.** Every gate also requires the cutover to have
+actually happened (flag on, ≥1 run, function > 5000 chars). Without it, an issue whose category
+happens to measure zero would close on the strength of there never having been anything to
+clear. #128 is exactly that case — `collection_contact_name` measured 0 rows past threshold
+*before* the cutover as well as after, and a counts-only gate passed it while production was
+still running the old narrow function. A dry run caught it. "The rule exists and has run" is a
+separate condition from "no rows remain", and both are required.
 
 ---
 
