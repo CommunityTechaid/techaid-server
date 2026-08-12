@@ -8,13 +8,16 @@
 --      (flag row, gdpr_cleanup_runs table) apply automatically on that deploy; the two gdpr-
 --      schema migrations are self-gated no-ops there, which is exactly why this script exists.
 --   2. Run as techaid_admin.
---   3. After this runs, also flip the gdpr-in-app-cleanup flag to true in production (Feature
---      Flags admin page, or `UPDATE feature_flags SET enabled = true WHERE flag_key =
+--   3. After this runs, flip the gdpr-in-app-cleanup flag to true in production (Feature Flags
+--      admin page, or `UPDATE feature_flags SET enabled = true WHERE flag_key =
 --      'gdpr-in-app-cleanup';`) - this script does not do that, so the in-app job stays off
 --      and pg_cron keeps running until someone does.
---   4. Once the in-app job has run successfully at least once in production, pg_cron
---      (gdpr-weekly-cleanup, Sat 04:04 UTC) can be unscheduled - a separate, later step, not
---      part of this script. Do not unschedule it before then (issue #62).
+--   4. Then restart api-production so the startup catch-up fires and the in-app job clears the
+--      backlog AS api_prod. See the block above the AFTER section at the foot of this file for
+--      why the run is deliberately not performed here, and for the full five-step sequence.
+--   5. Only once that app-triggered run has succeeded may pg_cron (gdpr-weekly-cleanup, Sat
+--      04:04 UTC) be disabled - db/admin/2026-08-13__disable_pg_cron_gdpr_weekly_prod.sql,
+--      a separate step against the `postgres` database. Do not disable it before then (#62).
 --
 -- WHAT THIS DOES
 --   Same as V26.08.11.1400 + V26.08.11.1650's function/view bodies (#95 lead-contact
@@ -23,9 +26,14 @@
 --   since techaid_admin owns these objects and Flyway does not. Plus grants api_prod real
 --   access, matching what was granted to api_uat on 2026-08-12.
 --
--- BEFORE/AFTER queries are diagnostic only (no hard-coded expected counts, unlike
--- db/admin/2026-08-11__gdpr_historical_scrub.sql - production's current backlog has not been
--- freshly measured for this specific run). Read the printed counts rather than assuming them.
+-- THIS SCRIPT MUTATES NO DATA. It replaces the view and function and grants api_prod access;
+-- the retention backlog is left in place for the application to clear (see the foot of this
+-- file). BEFORE and AFTER counts should therefore MATCH - a difference means something ran that
+-- should not have.
+--
+-- Production's backlog WAS freshly measured, read-only, on 2026-08-12; the expected values are
+-- recorded inline against the AFTER queries. Treat them as a sanity check, not a gate - a day of
+-- ordinary traffic moves them slightly.
 --
 -- APPLIED TO
 --   (none yet - run once prerequisite 1 above is satisfied.)
@@ -213,17 +221,56 @@ $function$;
 GRANT USAGE ON SCHEMA gdpr TO api_prod;
 GRANT EXECUTE ON FUNCTION gdpr.performgdprcleanup() TO api_prod;
 
-SELECT '=== RUNNING gdpr.performgdprcleanup() now, as techaid_admin ===' AS section;
-SELECT gdpr.performgdprcleanup() AS run_summary;
+-- DELIBERATELY NOT RUN HERE. The UAT counterpart ended by calling the function as
+-- techaid_admin; production does not, because that would prove the wrong thing.
+--
+--     SELECT gdpr.performgdprcleanup() AS run_summary;
+--
+-- The grants two lines above are the ONLY prerequisite of the in-app job that has never been
+-- exercised in production - measured 2026-08-12, prod's gdpr schema had nspacl = NULL, i.e. no
+-- role had ever held anything on it. Running the function as its owner exercises the function
+-- body (already proven in UAT on 2026-08-12) while leaving the grant untested, and it writes a
+-- fresh row to gdpr_cleanup_runs, which suppresses the very startup catch-up we want to observe.
+--
+-- Instead, leave the backlog in place and let the application clear it, as api_prod, on the real
+-- code path:
+--   1. (this script) apply the view + function + grants. No data changes.
+--   2. UPDATE feature_flags SET enabled = true WHERE flag_key = 'gdpr-in-app-cleanup';
+--   3. Restart api-production. gdpr_cleanup_runs is empty, so lastRunAt() returns NULL,
+--      GdprDonorCleanup.catchUpOnStartup() sees "overdue", and the job runs as api_prod.
+--   4. Confirm the run: a row in gdpr_cleanup_runs, and "GDPR retention cleanup finished" in
+--      the container logs. That satisfies issue #62's guard for unscheduling pg_cron.
+--   5. Only then: db/admin/2026-08-13__disable_pg_cron_gdpr_weekly_prod.sql, then the
+--      gdpr_cleanup_runs backfill (2026-08-12__backfill_gdpr_cleanup_runs_from_logs.sql) LAST -
+--      its rows are dated to 2026-08-08 and would make the job look recently-run if applied
+--      before step 3.
+--
+-- If step 3 fails, GdprDonorCleanup catches and logs the exception without crashing the app;
+-- the fallback is to uncomment the line above and run it as techaid_admin, exactly as UAT did.
 
-SELECT '=== AFTER ===' AS section;
-SELECT 'donors eligible (should be 0 now)' AS what, count(*) AS n FROM gdpr.donors_to_archive;
-SELECT 'device_requests.details past 26wk unscrubbed (should be 0)' AS what, count(*) AS n FROM device_requests WHERE updated_at <= (current_date - interval '26 weeks') AND details <> 'RECORD DELETED BY SYSTEM - GDPR';
-SELECT 'device_requests.client_ref past 52wk unscrubbed (should be 0)' AS what, count(*) AS n FROM device_requests WHERE updated_at <= (current_date - interval '52 weeks') AND client_ref <> 'WIPED - GDPR';
-SELECT 'device_requests.collection_contact_name past 52wk unscrubbed (should be 0)' AS what, count(*) AS n FROM device_requests WHERE updated_at <= (current_date - interval '52 weeks') AND collection_contact_name IS NOT NULL AND collection_contact_name <> 'WIPED - GDPR';
-SELECT 'device_requests_audit_trail.details behind an already-erased live row (should be 0)' AS what, count(*) AS n FROM device_requests_audit_trail dat JOIN device_requests d ON dat.id = d.id WHERE d.updated_at <= (current_date - interval '26 weeks') AND dat.details <> 'RECORD DELETED BY SYSTEM - GDPR';
-SELECT 'device_requests_notes past 52wk unscrubbed (should be 0)' AS what, count(*) AS n FROM device_requests_notes WHERE updated_at <= (current_date - interval '52 weeks') AND content <> 'Note content deleted due to GDPR policy';
-SELECT 'referring_organisation_contacts past 12mo unscrubbed (should be 0)' AS what, count(*) AS n FROM referring_organisation_contacts WHERE updated_at <= (current_date - interval '12 months') AND full_name <> 'Contact - Erased due to GDPR policy';
+SELECT '=== AFTER: schema applied, data deliberately UNCHANGED ===' AS section;
+SELECT 'api_prod has USAGE on gdpr (expect t)' AS what, has_schema_privilege('api_prod', 'gdpr', 'USAGE')::text AS n;
+SELECT 'api_prod has EXECUTE on performgdprcleanup (expect t)' AS what, has_function_privilege('api_prod', 'gdpr.performgdprcleanup()', 'EXECUTE')::text AS n;
 
-SELECT '=== gdpr_cleanup_runs new row ===' AS section;
-SELECT * FROM gdpr_cleanup_runs ORDER BY id DESC LIMIT 1;
+-- Backlog should be UNCHANGED from the BEFORE block above - this script mutates no data.
+-- Measured 2026-08-12 (read-only, one day before this script's intended run), for reference:
+--   donors eligible under the NEW view ......................... 20  (was 0 under the old view;
+--                                                                    all 20 from dropping the
+--                                                                    is_lead_contact exemption)
+--   device_requests.details past 26wk .......................... 13
+--   device_requests.client_ref past 52wk ....................... 15
+--   device_requests.collection_contact_name past 52wk ........... 0
+--   audit details behind an already-erased live row .......... 6429
+--   audit client_ref behind an already-erased live row ....... 3162
+--   device_requests_notes past 52wk .......................... 4981
+--   referring_organisation_contacts past 12mo ................. 920
+--   referring_organisation_contacts audit past 12mo ........... 293
+SELECT 'donors eligible under the NEW view (expect ~20, unchanged)' AS what, count(*) AS n FROM gdpr.donors_to_archive;
+SELECT 'device_requests.details past 26wk unscrubbed (expect ~13, unchanged)' AS what, count(*) AS n FROM device_requests WHERE updated_at <= (current_date - interval '26 weeks') AND details <> 'RECORD DELETED BY SYSTEM - GDPR';
+SELECT 'device_requests.client_ref past 52wk unscrubbed (expect ~15, unchanged)' AS what, count(*) AS n FROM device_requests WHERE updated_at <= (current_date - interval '52 weeks') AND client_ref <> 'WIPED - GDPR';
+SELECT 'device_requests_audit_trail.details behind an already-erased live row (expect ~6429, unchanged)' AS what, count(*) AS n FROM device_requests_audit_trail dat JOIN device_requests d ON dat.id = d.id WHERE d.updated_at <= (current_date - interval '26 weeks') AND dat.details <> 'RECORD DELETED BY SYSTEM - GDPR';
+SELECT 'device_requests_notes past 52wk unscrubbed (expect ~4981, unchanged)' AS what, count(*) AS n FROM device_requests_notes WHERE updated_at <= (current_date - interval '52 weeks') AND content <> 'Note content deleted due to GDPR policy';
+SELECT 'referring_organisation_contacts past 12mo unscrubbed (expect ~920, unchanged)' AS what, count(*) AS n FROM referring_organisation_contacts WHERE updated_at <= (current_date - interval '12 months') AND full_name <> 'Contact - Erased due to GDPR policy';
+
+SELECT '=== gdpr_cleanup_runs (expect 0 rows - the app writes the first one) ===' AS section;
+SELECT count(*) AS rows_so_far FROM gdpr_cleanup_runs;
