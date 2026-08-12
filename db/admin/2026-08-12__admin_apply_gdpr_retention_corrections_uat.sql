@@ -33,7 +33,18 @@
 -- verifies the existing grants; it does not touch data.
 --
 -- APPLIED TO
---   (none yet)
+--   techaid_uat, 2026-08-12 13:08 UTC, against UAT running 2.5.1 / 1c53641.
+--   Result: clean apply. Verified afterwards -
+--     * gdpr.donors_to_archive no longer contains the name tag or the donor_parents join
+--     * gdpr.performgdprcleanup() carries all four OR-branches, the kits.coordinates scrub,
+--       the kit_coordinates_count recording, and notes still at 52 weeks
+--     * CREATE OR REPLACE FUNCTION PRESERVED the api_uat grants (USAGE + EXECUTE still true)
+--       - worth knowing, because this script does not re-grant them
+--     * smoke run of gdpr.performgdprcleanup() returned all zeros and recorded run id 2
+--   CAVEAT: UAT had already been scrubbed clean on 2026-08-11, and holds 0 kits with
+--   coordinates and 0 donors past 12 months, so the kits.coordinates statement and the
+--   widened donor predicate were exercised structurally here but NOT against real data.
+--   Their behavioural coverage comes from GdprSchemaConvergenceTest, which seeds those cases.
 
 DO $$ BEGIN IF current_database() <> 'techaid_uat' THEN RAISE EXCEPTION 'ABORT: %', current_database(); END IF; END $$;
 
