@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.2](https://github.com/CommunityTechaid/techaid-server/compare/v2.5.1...v2.5.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* **gdpr:** grant the api role SELECT on gdpr.donors_to_archive ([#142](https://github.com/CommunityTechaid/techaid-server/issues/142)) ([f25c1fe](https://github.com/CommunityTechaid/techaid-server/commit/f25c1fe2b6e81e2703016dbc39850049074cecdf))
+* **gdpr:** supersede the function body carrying stale TEMP-REVERT comments ([#145](https://github.com/CommunityTechaid/techaid-server/issues/145)) ([09e1b68](https://github.com/CommunityTechaid/techaid-server/commit/09e1b68c808c710eb8f4a028903a6118162ac486))
+
 ## [2.5.1](https://github.com/CommunityTechaid/techaid-server/compare/v2.5.0...v2.5.1) (2026-08-12)
 
 
