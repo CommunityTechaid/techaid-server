@@ -169,9 +169,14 @@ SELECT 'referring_organisation_contacts with NULL updated_at', count(*)
 -- The job's own record, for cross-reference. The counts above are measured from the data;
 -- these are what the job SAID it did. They should tell the same story - and when they do
 -- not, the data wins.
+--
+-- ORDER BY ran_at, NOT id. The 2026-08-12 backfill inserted 13 historical runs (2026-05-16
+-- to 2026-08-08) recovered from Azure log history, so they carry ids ABOVE the live run that
+-- preceded them. Ordering by id here showed the oldest runs while claiming to show the
+-- latest - caught by the first production run of this query.
 -- ---------------------------------------------------------------------------------------
 SELECT id, ran_at, donor_count, device_request_notes_count, referring_contact_count,
        kit_coordinates_count
   FROM gdpr_cleanup_runs
- ORDER BY id DESC
+ ORDER BY ran_at DESC
  LIMIT 5;
