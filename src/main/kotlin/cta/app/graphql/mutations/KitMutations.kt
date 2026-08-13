@@ -111,8 +111,15 @@ class KitMutations(
                 coordinates = locationService.findCoordinates(location)
             }
 
+            // Clear the FK on this kit rather than going through Donor.removeKit /
+            // DeviceRequest.removeKit (#153). Those call removeIf on the owning collection, which
+            // forces it to load: unassigning one device pulled in every other kit from the same
+            // donor and the same request, purely to discard them. The FK lives on `kits`, so the
+            // collection is not needed to persist the change. Nothing reads the owning collection
+            // from this mutation's response — the dashboard selects `donor { id ... }` and
+            // `deviceRequest { id ... }`, never their `kits`.
             if (data.donorId == null) {
-                donor?.removeKit(this)
+                donor = null
             } else if (data.donorId != donor?.id) {
                 val user =
                     donors.findById(data.donorId).toNullable()
@@ -121,7 +128,7 @@ class KitMutations(
             }
 
             if (data.deviceRequestId == null) {
-                deviceRequest?.removeKit(this)
+                deviceRequest = null
             } else if (data.deviceRequestId != deviceRequest?.id) {
                 val devRequest =
                     deviceRequests.findById(data.deviceRequestId).toNullable()

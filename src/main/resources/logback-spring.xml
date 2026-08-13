@@ -26,8 +26,22 @@
         </encoder>
     </appender>
 
-    <!-- Access logger: JSON only, not forwarded to root (avoids duplicate lines) -->
-    <logger name="cta.access" level="INFO" additivity="false">
+    <!--
+        Access logger: JSON only, not forwarded to root (avoids duplicate lines).
+
+        Level is DEBUG deliberately, and must stay in step with the accessLogger.debug(...) call
+        site in RequestFilterConfig. The Application Insights Java agent captures logs at INFO and
+        above (instrumentation.logging.level in applicationinsights.json), so holding the access
+        log at DEBUG keeps it on stdout — where ContainerAppConsoleLogs_CL collects it — while
+        keeping it out of AppTraces, which it was otherwise flooding at ~13k rows/week (69% of all
+        production AppTraces rows) purely as a duplicate of the console copy.
+
+        This logger carries an explicit level, so it does NOT inherit logging.level.cta from
+        application.yml and is unaffected by changes to it. Changing the level here without also
+        changing the call site (or vice versa) silently disables the access log everywhere;
+        AccessLogEmissionTest guards that.
+    -->
+    <logger name="cta.access" level="DEBUG" additivity="false">
         <appender-ref ref="ACCESS_JSON"/>
     </logger>
 

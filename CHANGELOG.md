@@ -1,5 +1,71 @@
 # Changelog
 
+## [2.5.2](https://github.com/CommunityTechaid/techaid-server/compare/v2.5.1...v2.5.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* **gdpr:** grant the api role SELECT on gdpr.donors_to_archive ([#142](https://github.com/CommunityTechaid/techaid-server/issues/142)) ([f25c1fe](https://github.com/CommunityTechaid/techaid-server/commit/f25c1fe2b6e81e2703016dbc39850049074cecdf))
+* **gdpr:** supersede the function body carrying stale TEMP-REVERT comments ([#145](https://github.com/CommunityTechaid/techaid-server/issues/145)) ([09e1b68](https://github.com/CommunityTechaid/techaid-server/commit/09e1b68c808c710eb8f4a028903a6118162ac486))
+
+## [2.5.1](https://github.com/CommunityTechaid/techaid-server/compare/v2.5.0...v2.5.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* **gdpr:** correct retention policy to the team spreadsheet, close the audit-trail gap, and prepare the production cutover ([#138](https://github.com/CommunityTechaid/techaid-server/issues/138)) ([92b78e1](https://github.com/CommunityTechaid/techaid-server/commit/92b78e1ce59860fa323734ed8e3c0613437a76f4))
+
+## [2.5.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.3...v2.5.0) (2026-08-11)
+
+
+### Features
+
+* **delivery:** arrange device request status on booking completion ([1d518f7](https://github.com/CommunityTechaid/techaid-server/commit/1d518f705d158f1fe0a2f432e0f274057b06a2a5))
+* **delivery:** arrange device request status on booking completion ([6ea3095](https://github.com/CommunityTechaid/techaid-server/commit/6ea30959b562bea1dd7f3a8b8861238e97fba90b))
+* **gdpr:** add startup catch-up trigger and structured per-run stats ([735ab9f](https://github.com/CommunityTechaid/techaid-server/commit/735ab9f153c60978eb5e02b57dffa9ac7e4854b1))
+* **gdpr:** add startup catch-up trigger and structured per-run stats ([0ed5221](https://github.com/CommunityTechaid/techaid-server/commit/0ed522151297f771fff295c5f421f850c13ee28d))
+* **gdpr:** extend in-app retention job to audit trails, contact name, notes, referring-org contacts ([1f679fe](https://github.com/CommunityTechaid/techaid-server/commit/1f679fe4488dfc6c02c21e2a5be9feea8becebf4))
+* **gdpr:** extend in-app retention job to audit trails, contact name, notes, referring-org contacts ([c6fa92f](https://github.com/CommunityTechaid/techaid-server/commit/c6fa92f788e39730589b88947da85d334e8ad786))
+
+
+### Bug Fixes
+
+* **requests:** count failed collections and deliveries as open everywhere ([#120](https://github.com/CommunityTechaid/techaid-server/issues/120)) ([427bd07](https://github.com/CommunityTechaid/techaid-server/commit/427bd072618870b8aacba49eef83ac3bcd928469))
+
+## [2.4.3](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.2...v2.4.3) (2026-07-29)
+
+
+### Reverts
+
+* "fix(requests): stop counting failed deliveries against the 3-request limit ([#118](https://github.com/CommunityTechaid/techaid-server/issues/118))" ([#121](https://github.com/CommunityTechaid/techaid-server/issues/121)) ([375acf6](https://github.com/CommunityTechaid/techaid-server/commit/375acf6e76d0de6b90b6a33eb7d244fc7227c4f2))
+
+  #118 and its revert both fall inside this release, so 2.4.3 contains no net change to application behaviour from 2.4.2. Whether a failed collection/delivery counts as an open device request is being decided in [#120](https://github.com/CommunityTechaid/techaid-server/issues/120); the generated "Bug Fixes" entry for #118 has been removed from this section because that fix is not in the release.
+
+## [2.4.2](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.1...v2.4.2) (2026-07-29)
+
+
+### Bug Fixes
+
+* **organisations:** count open requests, not the transient NEW state ([#113](https://github.com/CommunityTechaid/techaid-server/issues/113)) ([d6ac1a2](https://github.com/CommunityTechaid/techaid-server/commit/d6ac1a2753136dbe376364ef140d920eb2d662a7))
+
+
+### Performance Improvements
+
+* **telemetry:** stop double-ingesting the access log into App Insights ([#115](https://github.com/CommunityTechaid/techaid-server/issues/115)) ([aa960b6](https://github.com/CommunityTechaid/techaid-server/commit/aa960b67fe1bf06cd1f203f581c72388a2550375))
+
+## [2.4.1](https://github.com/CommunityTechaid/techaid-server/compare/v2.4.0...v2.4.1) (2026-07-28)
+
+
+### Bug Fixes
+
+* **geocoding:** encode the query string so addresses with spaces reach Google ([#106](https://github.com/CommunityTechaid/techaid-server/issues/106)) ([cbf1641](https://github.com/CommunityTechaid/techaid-server/commit/cbf164156db2d0fe13edb9960116e692da762201))
+* **test:** stop the test config shadowing the main application.yml ([#108](https://github.com/CommunityTechaid/techaid-server/issues/108)) ([0ff0fa5](https://github.com/CommunityTechaid/techaid-server/commit/0ff0fa527ddd5cdc2c88b9fd0a46113ed8d50534)), closes [#105](https://github.com/CommunityTechaid/techaid-server/issues/105)
+
+
+### Performance Improvements
+
+* **device-requests:** join-fetch the eager contact instead of one select per row ([#107](https://github.com/CommunityTechaid/techaid-server/issues/107)) ([f3c444e](https://github.com/CommunityTechaid/techaid-server/commit/f3c444e5fb65c835c481560da8be3d274dcf3879))
+
 ## [2.4.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.3.0...v2.4.0) (2026-07-22)
 
 

@@ -31,6 +31,7 @@ import org.hibernate.envers.RelationTargetAuditMode
 import org.hibernate.type.SqlTypes
 import org.hibernate.type.YesNoConverter
 import java.time.Instant
+import java.util.Objects
 
 @Entity
 @Table(name = "kits")
@@ -134,7 +135,33 @@ class KitAttributes(
     var status: List<String> = listOf(),
     var network: String? = null,
     var otherNetwork: String? = "UNKNOWN",
-)
+) {
+    /**
+     * Value-based equality here is load-bearing, not cosmetic (#148). This class is mapped to a
+     * `jsonb` column, and Hibernate treats a JSON-mapped attribute as mutable: it deep-copies the
+     * value into the load-time snapshot and dirty-checks by calling `equals`. Without this, that
+     * comparison fell through to identity, the snapshot copy was never the same instance as the live
+     * value, and so every kit loaded into a read-write transaction was reported dirty — rewriting the
+     * row and bumping `updated_at` for kits nobody had touched. [KitTimestampIsolationTest] pins it.
+     *
+     * [kit] is deliberately excluded. It is a read-time back-reference set by `KitResolver`, and it is
+     * `@JsonIgnore`, so it never survives the JSON round-trip Hibernate uses to snapshot this value.
+     * Including it would leave the property permanently dirty — exactly the bug being fixed.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is KitAttributes) return false
+        return otherType == other.otherType &&
+            state == other.state &&
+            notes == other.notes &&
+            credentials == other.credentials &&
+            status == other.status &&
+            network == other.network &&
+            otherNetwork == other.otherNetwork
+    }
+
+    override fun hashCode() = Objects.hash(otherType, state, notes, credentials, status, network, otherNetwork)
+}
 
 @Entity
 @Table(name = "note")

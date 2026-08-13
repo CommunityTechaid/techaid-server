@@ -112,11 +112,21 @@ spring:
         # wasn't fetched in the initial query. This will work, but it's far better to use a DTO projection or
         # a JOIN FETCH query to retrieve the data
         enable_lazy_load_no_trans: true
-        envers:
-          audit_table_suffix: _AUD
-          revision_field_name: revision_id
-          revision_type_field_name: revision_type
-          audit_strategy: org.hibernate.envers.strategy.ValidityAuditStrategy
+        # There are deliberately no Envers settings here. Anything nested under
+        # spring.jpa.properties.hibernate.* is passed through as a property named
+        # "hibernate.<key>", but Envers only reads keys prefixed "org.hibernate.envers.".
+        # The block that used to sit here (audit_table_suffix: _AUD, revision_field_name:
+        # revision_id, revision_type_field_name: revision_type, audit_strategy:
+        # ValidityAuditStrategy) was therefore inert from the day it was written, and the schema
+        # was built against Envers' DEFAULTS instead. The audit tables carry "rev" and "revtype"
+        # columns, not "revision_id"/"revision_type", and they have no "revend" column because
+        # DefaultAuditStrategy -- not ValidityAuditStrategy -- is what has always been in effect.
+        # EnversSchemaContractTest pins that.
+        #
+        # Do NOT "fix" this by adding the org. prefix. Hibernate would immediately start expecting
+        # revision_id/revision_type/revend columns that do not exist, and with ddl-auto: validate
+        # that is a startup crash. Changing the revision column names or the audit strategy now
+        # needs a Flyway migration first. Found while investigating #148.
 
 
     # Hibernate ddl auto (create, create-drop, validate, update, none)
