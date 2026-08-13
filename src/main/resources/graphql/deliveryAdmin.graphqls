@@ -44,7 +44,7 @@ type DeliveryBookingAdmin {
     phone: String
     address: String
     accessNotes: String
-    ctaReference: String
+    ctaReference: Long
     createdAt: String
     "Id of the device request whose id equals the booking's CTA reference, if any (resolved at read time, never persisted)."
     matchedRequestId: ID

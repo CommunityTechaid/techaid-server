@@ -1,23 +1,10 @@
 package cta.app.services
 
 import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatterBuilder
-import java.time.format.DateTimeParseException
 import java.util.Locale
-
-private val LONDON_ZONE: ZoneId = ZoneId.of("Europe/London")
-
-/** Matches the window time storage format seen in the Flyway seed, e.g. "10:00am", "2:00pm". */
-private val WINDOW_TIME_FORMAT: DateTimeFormatter =
-    DateTimeFormatterBuilder()
-        .parseCaseInsensitive()
-        .appendPattern("h:mma")
-        .toFormatter(Locale.ENGLISH)
 
 private val UTC_DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'", Locale.ENGLISH)
 private val ALL_DAY_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd", Locale.ENGLISH)
@@ -81,8 +68,8 @@ object DeliveryCalendarInvite {
         startTime: String,
         endTime: String,
     ): Pair<String, String> {
-        val start = parseTime(startTime)
-        val end = parseTime(endTime)
+        val start = parseWindowTime(startTime)
+        val end = parseWindowTime(endTime)
         if (start == null || end == null) {
             val allDayStart = date.format(ALL_DAY_DATE_FORMAT)
             val allDayEnd = date.plusDays(1).format(ALL_DAY_DATE_FORMAT)
@@ -93,13 +80,6 @@ object DeliveryCalendarInvite {
         val endUtc = ZonedDateTime.of(date, end, LONDON_ZONE).withZoneSameInstant(ZoneOffset.UTC)
         return "DTSTART:${startUtc.format(UTC_DATE_TIME_FORMAT)}" to "DTEND:${endUtc.format(UTC_DATE_TIME_FORMAT)}"
     }
-
-    private fun parseTime(value: String): LocalTime? =
-        try {
-            LocalTime.parse(value.trim(), WINDOW_TIME_FORMAT)
-        } catch (e: DateTimeParseException) {
-            null
-        }
 
     /** RFC 5545 §3.3.11 text escaping: backslash first, then the other reserved characters. */
     private fun escape(value: String): String =

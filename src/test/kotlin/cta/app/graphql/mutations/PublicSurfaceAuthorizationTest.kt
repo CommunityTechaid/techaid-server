@@ -169,7 +169,7 @@ class PublicSurfaceAuthorizationTest {
     fun `submitDeliveryBookingPublic is callable anonymously`() {
         val content =
             anonymousGraphQl(
-                """mutation { submitDeliveryBookingPublic(input: { date: \"1970-01-01\", windowId: \"1\", firstName: \"A\", surname: \"B\", email: \"a@b.com\", phone: \"0700000000\", address: \"1 Road\", ctaReference: \"CTA-1\" }) { id } }""",
+                """mutation { submitDeliveryBookingPublic(input: { date: \"1970-01-01\", windowId: \"1\", firstName: \"A\", surname: \"B\", email: \"a@b.com\", phone: \"0700000000\", address: \"1 Road\", ctaReference: 1 }) { id } }""",
             ).andExpect(status().isOk)
                 .andReturn()
                 .response
