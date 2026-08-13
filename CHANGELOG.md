@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.6.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.5.3...v2.6.0) (2026-08-13)
+
+
+### Features
+
+* **gdpr:** run the in-app retention cleanup Friday 18:00 London ([#147](https://github.com/CommunityTechaid/techaid-server/issues/147)) ([8656393](https://github.com/CommunityTechaid/techaid-server/commit/8656393e71caf506df5ffc658a5663b8273bbf5e))
+
+
+### Bug Fixes
+
+* **delivery:** make ctaReference a device request id end-to-end ([#133](https://github.com/CommunityTechaid/techaid-server/issues/133), [#155](https://github.com/CommunityTechaid/techaid-server/issues/155)) ([#159](https://github.com/CommunityTechaid/techaid-server/issues/159)) ([6e6845c](https://github.com/CommunityTechaid/techaid-server/commit/6e6845cfcede6b99aedf548abce6e874995c2d2c))
+
 ## [2.5.3](https://github.com/CommunityTechaid/techaid-server/compare/v2.5.2...v2.5.3) (2026-08-13)
 
 
