@@ -1,5 +1,6 @@
 package cta.app.graphql.mutations
 
+import cta.app.CollectionMethod
 import cta.app.DeliveryBooking
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
@@ -22,6 +23,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 /**
  * Behaviour of the public submitDeliveryBookingPublic mutation against the Flyway-seeded
@@ -62,11 +66,11 @@ class DeliveryMutationsTest {
         windowId: String = "1",
         email: String = "test@example.org",
         address: String = "1 Test Street, London SW9 8PR",
-        ctaReference: String = "4298",
+        ctaReference: Long = 4298,
     ): String =
         """mutation { submitDeliveryBookingPublic(input: { date: \"$date\", windowId: \"$windowId\", """ +
             """firstName: \"Test\", surname: \"Booker\", email: \"$email\", phone: \"07123456789\", """ +
-            """address: \"$address\", ctaReference: \"$ctaReference\" }) { id date } }"""
+            """address: \"$address\", ctaReference: $ctaReference }) { id date } }"""
 
     /**
      * device_requests has few NOT NULL columns beyond id (is_prepped, is_sales); the entity
@@ -137,7 +141,7 @@ class DeliveryMutationsTest {
         // Distinct refs: these represent four different people, and the one-upcoming-booking
         // policy would otherwise block bookings 2-4 before capacity is even reached.
         (1..4).forEach { i ->
-            graphQl(bookingMutation(date, ctaReference = "FULL-$i"))
+            graphQl(bookingMutation(date, ctaReference = 950000L + i))
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.errors").doesNotExist())
         }
@@ -154,31 +158,11 @@ class DeliveryMutationsTest {
         val firstDay = offeredDates(1)[0].toString()
         val secondDay = offeredDates(2)[1].toString()
 
-        graphQl(bookingMutation(firstDay, windowId = "1", ctaReference = "DUP-1"))
+        graphQl(bookingMutation(firstDay, windowId = "1", ctaReference = 950010L))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
 
-        graphQl(bookingMutation(secondDay, windowId = "2", ctaReference = "DUP-1"))
-            .andExpect(status().isOk)
-            .andExpect(
-                jsonPath("$.errors[0].message")
-                    .value(
-                        "You already have an upcoming delivery booked. If you need to change it, " +
-                            "please call us on 020 3488 2912.",
-                    ),
-            )
-    }
-
-    @Test
-    fun `blocks a duplicate CTA reference regardless of case or whitespace`() {
-        val firstDay = offeredDates(1)[0].toString()
-        val secondDay = offeredDates(2)[1].toString()
-
-        graphQl(bookingMutation(firstDay, windowId = "1", ctaReference = "dup-2"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.errors").doesNotExist())
-
-        graphQl(bookingMutation(secondDay, windowId = "2", ctaReference = " DUP-2 "))
+        graphQl(bookingMutation(secondDay, windowId = "2", ctaReference = 950010L))
             .andExpect(status().isOk)
             .andExpect(
                 jsonPath("$.errors[0].message")
@@ -201,11 +185,11 @@ class DeliveryMutationsTest {
                 email = "past@example.org",
                 phone = "07123456789",
                 address = "1 Test Street, London SW9 8PR",
-                ctaReference = "PAST-1",
+                ctaReference = 950020L,
             ),
         )
 
-        graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = "PAST-1"))
+        graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = 950020L))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
@@ -216,7 +200,7 @@ class DeliveryMutationsTest {
         val requestId = 904301L
         seedDeviceRequest(requestId, "NEW")
 
-        graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = requestId.toString()))
+        graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = requestId))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
@@ -225,12 +209,57 @@ class DeliveryMutationsTest {
         assertEquals(DeviceRequestStatus.PROCESSING_COLLECTION_DELIVERY_ARRANGED, updated.status)
     }
 
+    /**
+     * ctaReference is a DeviceRequest id, so the schema types it as Long and the GraphQL layer
+     * rejects anything that isn't one. Before this was enforced, a mistyped reference produced a
+     * booking that silently linked to nothing (issue #133).
+     */
+    @Test
+    fun `rejects a non-numeric CTA reference`() {
+        val date = offeredDates(1)[0].toString()
+        val mutation =
+            """mutation { submitDeliveryBookingPublic(input: { date: \"$date\", windowId: \"2\", """ +
+                """firstName: \"Test\", surname: \"Booker\", email: \"test@example.org\", """ +
+                """phone: \"07123456789\", address: \"1 Test Street, London SW9 8PR\", """ +
+                """ctaReference: \"CTA-123\" }) { id date } }"""
+
+        graphQl(mutation)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").isNotEmpty)
+            .andExpect(jsonPath("$.data.submitDeliveryBookingPublic").doesNotExist())
+    }
+
+    /**
+     * A booking records what was arranged, not just that something was (issue #155): the request
+     * carries the delivery method, the window start as an instant, and who the slot was booked by.
+     */
+    @Test
+    fun `records the delivery method, date and contact on the matched request`() {
+        val requestId = 904303L
+        seedDeviceRequest(requestId, "NEW")
+        val date = offeredDates(1)[0]
+
+        // Window 2 is the seeded "Afternoon window", 2:00pm.
+        graphQl(bookingMutation(date.toString(), windowId = "2", ctaReference = requestId))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
+
+        val updated = deviceRequestRepository.findById(requestId).orElseThrow()
+        assertEquals(DeviceRequestStatus.PROCESSING_COLLECTION_DELIVERY_ARRANGED, updated.status)
+        assertEquals(CollectionMethod.DELIVERY, updated.collectionMethod)
+        assertEquals(
+            ZonedDateTime.of(date, LocalTime.of(14, 0), ZoneId.of("Europe/London")).toInstant(),
+            updated.collectionDate,
+        )
+        assertEquals("Test Booker", updated.collectionContactName)
+    }
+
     @Test
     fun `leaves a matched closed device request untouched`() {
         val requestId = 904302L
         seedDeviceRequest(requestId, "REQUEST_COMPLETED")
 
-        graphQl(bookingMutation(offeredDates(2)[1].toString(), windowId = "2", ctaReference = requestId.toString()))
+        graphQl(bookingMutation(offeredDates(2)[1].toString(), windowId = "2", ctaReference = requestId))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)

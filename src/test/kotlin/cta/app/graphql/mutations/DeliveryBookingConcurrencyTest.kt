@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
  *     capacity check, so concurrent submits for one window serialise on that row: a window with
  *     capacity N accepts exactly N bookings even when many submits race.
  *  2. **One upcoming booking per CTA reference.** A Postgres advisory transaction lock keyed on the
- *     normalized (trimmed, lower-cased) ctaReference (`acquireReferenceLock`) serialises same-ref
+ *     ctaReference (`acquireReferenceLock`) serialises same-ref
  *     submits — including ones aimed at *different* windows, which the per-window row lock does not
  *     cover — so the "already have an upcoming booking" check can't race: exactly one succeeds.
  *
@@ -111,12 +111,12 @@ class DeliveryBookingConcurrencyTest {
     private fun bookingMutation(
         date: String,
         windowId: String,
-        ctaReference: String,
+        ctaReference: Long,
         email: String,
     ): String =
         """mutation { submitDeliveryBookingPublic(input: { date: \"$date\", windowId: \"$windowId\", """ +
             """firstName: \"Test\", surname: \"Booker\", email: \"$email\", phone: \"07123456789\", """ +
-            """address: \"1 Test Street, London SW9 8PR\", ctaReference: \"$ctaReference\" }) { id date } }"""
+            """address: \"1 Test Street, London SW9 8PR\", ctaReference: $ctaReference }) { id date } }"""
 
     private data class ConcurrentRun(
         val bodies: List<String>,
@@ -173,7 +173,7 @@ class DeliveryBookingConcurrencyTest {
         // only thing that can cap acceptances is the window row lock + capacity check.
         val queries =
             (1..8).map { i ->
-                bookingMutation(date.toString(), windowId = "1", ctaReference = "CAP-$i", email = "cap$i@example.org")
+                bookingMutation(date.toString(), windowId = "1", ctaReference = 960000L + i, email = "cap$i@example.org")
             }
 
         val run = submitConcurrently(queries)
@@ -195,19 +195,17 @@ class DeliveryBookingConcurrencyTest {
     }
 
     @Test
-    fun `the same normalized cta reference gets exactly one upcoming booking under parallel load`() {
+    fun `the same cta reference gets exactly one upcoming booking under parallel load`() {
         // Ample capacity everywhere so capacity can never be the limiter — only the advisory ref
         // lock + upcoming-booking check decides the outcome.
         jdbcTemplate.update("update delivery_windows set capacity = 100")
 
-        // One logical reference submitted eight ways, varying case and surrounding whitespace so all
-        // eight normalise (trim + lower-case) to the same "dup-race". Spread across four offered days
-        // and both windows: eight DISTINCT slots, so the per-window row lock never serialises them —
-        // isolating the advisory reference lock as the thing that must enforce the single booking.
+        // One reference submitted eight times, spread across four offered days and both windows:
+        // eight DISTINCT slots, so the per-window row lock never serialises them — isolating the
+        // advisory reference lock as the thing that must enforce the single booking.
         val dates = offeredDates(4)
         val windows = windowRepository.findByActiveTrueOrderBySortOrderAsc()
-        val refVariants =
-            listOf("dup-race", "DUP-RACE", " dup-race ", "Dup-Race", "  DUP-race", "dup-RACE  ", " DuP-rAcE ", "DUP-RACE ")
+        val raceRef = 960100L
 
         val queries =
             (0 until 8).map { i ->
@@ -216,7 +214,7 @@ class DeliveryBookingConcurrencyTest {
                 bookingMutation(
                     date.toString(),
                     windowId = window.id.toString(),
-                    ctaReference = refVariants[i],
+                    ctaReference = raceRef,
                     email = "dup$i@example.org",
                 )
             }
@@ -233,8 +231,8 @@ class DeliveryBookingConcurrencyTest {
 
         assertThat(successes).isEqualTo(1)
         assertThat(messages.filter { it != null }).hasSize(7).allMatch { it == duplicateMessage }
-        // The durable truth: exactly one row persisted for that normalized reference.
-        val persisted = bookingRepository.findAll().count { it.ctaReference.trim().lowercase() == "dup-race" }
+        // The durable truth: exactly one row persisted for that reference.
+        val persisted = bookingRepository.findAll().count { it.ctaReference == raceRef }
         assertThat(persisted).isEqualTo(1)
     }
 }

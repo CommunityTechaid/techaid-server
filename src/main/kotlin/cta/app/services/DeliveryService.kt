@@ -1,6 +1,7 @@
 package cta.app.services
 
 import cta.app.CLOSED_REQUEST_STATUSES
+import cta.app.CollectionMethod
 import cta.app.DeliveryBlockedDateRepository
 import cta.app.DeliveryBooking
 import cta.app.DeliveryBookingRepository
@@ -110,17 +111,50 @@ class DeliveryService(
     ): Boolean = date in offeredDates(today)
 
     /**
-     * Marks the device request identified by a booking's ctaReference as having its
-     * collection/delivery arranged. ctaReference is free text entered by the public,
-     * so a non-numeric or unmatched reference is silently ignored — the booking itself
-     * must still succeed. Closed requests (completed/declined/cancelled) are left alone
-     * so a stray or reused reference can't reopen one.
+     * Records on the linked device request what the booking arranged: the arranged status, that
+     * it is a delivery, when it starts, and who booked it. Without the last three the request
+     * claims a delivery is arranged while showing no method and no date, and the only record of
+     * either lives on the separate delivery-slots screen (issue #155).
+     *
+     * A reference that matches no request is logged, not thrown: the booking itself has already
+     * succeeded and must stand. Closed requests (completed/declined/cancelled) are left entirely
+     * alone so a stray or reused reference can't stamp a delivery onto finished work.
      */
-    fun markCollectionDeliveryArranged(ctaReference: String) {
-        val id = ctaReference.trim().toLongOrNull() ?: return
-        val request = deviceRequests.findById(id).orElse(null) ?: return
-        if (request.status in CLOSED_REQUEST_STATUSES) return
+    fun markCollectionDeliveryArranged(
+        booking: DeliveryBooking,
+        window: DeliveryWindow,
+        date: LocalDate,
+    ) {
+        val request = deviceRequests.findById(booking.ctaReference).orElse(null)
+        if (request == null) {
+            logger.warn(
+                "Delivery booking ${booking.id} references device request ${booking.ctaReference}, " +
+                    "which does not exist — nothing was forwarded to a request.",
+            )
+            return
+        }
+        if (request.status in CLOSED_REQUEST_STATUSES) {
+            logger.warn(
+                "Delivery booking ${booking.id} references device request ${request.id}, which is " +
+                    "closed (${request.status}) — status, method and date were left untouched.",
+            )
+            return
+        }
+
+        // Null when the window's display-formatted startTime doesn't parse. That leaves the date
+        // unset rather than failing a booking that has already been taken and confirmed.
+        val collectionStart = windowStartInstant(date, window.startTime)
+        if (collectionStart == null) {
+            logger.warn(
+                "Delivery window ${window.id} has an unparseable startTime '${window.startTime}' — " +
+                    "device request ${request.id} was left without a collectionDate.",
+            )
+        }
+
         request.status = DeviceRequestStatus.PROCESSING_COLLECTION_DELIVERY_ARRANGED
+        request.collectionMethod = CollectionMethod.DELIVERY
+        request.collectionDate = collectionStart
+        request.collectionContactName = "${booking.firstName} ${booking.surname}".trim()
         deviceRequests.save(request)
     }
 
@@ -160,7 +194,7 @@ class DeliveryService(
                     windowStartTime = window.startTime,
                     windowEndTime = window.endTime,
                     address = booking.address,
-                    ctaReference = booking.ctaReference,
+                    ctaReference = booking.ctaReference.toString(),
                     contactPhone = CONTACT_PHONE,
                 )
             } catch (e: Exception) {

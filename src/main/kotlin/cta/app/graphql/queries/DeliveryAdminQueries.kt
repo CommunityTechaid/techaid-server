@@ -58,7 +58,7 @@ class DeliveryAdminQueries(
             } else {
                 bookings.findAllByOrderByDeliveryDateAscCreatedAtAsc()
             }
-        val referencedIds = rows.mapNotNull { it.ctaReference.trim().toLongOrNull() }.distinct()
+        val referencedIds = rows.map { it.ctaReference }.distinct()
         val matchedRequestsById = deviceRequests.findAllById(referencedIds).associateBy { it.id }
         return rows.map { it.toAdminGql(delivery.dayLabel(it.deliveryDate), matchedRequestsById) }
     }
@@ -101,7 +101,7 @@ data class DeliveryBookingAdminGql(
     val phone: String,
     val address: String,
     val accessNotes: String?,
-    val ctaReference: String,
+    val ctaReference: Long,
     val createdAt: String?,
     val matchedRequestId: String?,
     val matchedRequestStatus: String?,
@@ -137,7 +137,7 @@ fun DeliveryBooking.toAdminGql(
     dayLabel: String,
     matchedRequestsById: Map<Long, DeviceRequest> = emptyMap(),
 ): DeliveryBookingAdminGql {
-    val matchedRequest = ctaReference.trim().toLongOrNull()?.let { matchedRequestsById[it] }
+    val matchedRequest = matchedRequestsById[ctaReference]
     return DeliveryBookingAdminGql(
         id = id.toString(),
         date = deliveryDate.toString(),

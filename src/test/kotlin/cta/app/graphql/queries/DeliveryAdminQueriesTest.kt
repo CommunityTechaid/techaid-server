@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
 
 /**
- * Admin read-time soft matching of a booking's ctaReference to a DeviceRequest id
+ * Admin read-time matching of a booking's ctaReference to a DeviceRequest id
  * (DeliveryAdminQueries.toAdminGql / CLOSED_REQUEST_STATUSES). This never touches the public
  * booking mutation — unmatched/non-numeric refs simply resolve to null fields, nothing is
  * ever rejected on the anonymous submit path.
@@ -92,7 +92,7 @@ class DeliveryAdminQueriesTest {
         )
     }
 
-    private fun seedBooking(ctaReference: String): DeliveryBooking {
+    private fun seedBooking(ctaReference: Long): DeliveryBooking {
         val window = windowRepository.findAllByOrderBySortOrderAsc().first()
         return bookingRepository.save(
             DeliveryBooking(
@@ -112,17 +112,15 @@ class DeliveryAdminQueriesTest {
         """query { deliveryBookingsAdmin { ctaReference matchedRequestId matchedRequestStatus matchedRequestOpen } }"""
 
     @Test
-    fun `resolves matched-request fields for open, closed, unmatched and non-numeric references`() {
+    fun `resolves matched-request fields for open, closed and unmatched references`() {
         seedDeviceRequest(openRequestId, "NEW")
         seedDeviceRequest(completedRequestId, "REQUEST_COMPLETED")
         seedDeviceRequest(failedCollectionDeliveryRequestId, "REQUEST_COLLECTION_DELIVERY_FAILED")
 
-        seedBooking(openRequestId.toString())
-        seedBooking(" $openRequestId ")
-        seedBooking(completedRequestId.toString())
-        seedBooking(failedCollectionDeliveryRequestId.toString())
-        seedBooking("999999999")
-        seedBooking("CTA-XYZ")
+        seedBooking(openRequestId)
+        seedBooking(completedRequestId)
+        seedBooking(failedCollectionDeliveryRequestId)
+        seedBooking(999999999L)
 
         val response =
             authorizedGraphQl(adminBookingsQuery)
@@ -134,20 +132,14 @@ class DeliveryAdminQueriesTest {
 
         val rowsByRef = extractBookingRowsByCtaReference(response)
 
-        // Exact numeric match on an open request: id + status + open true.
-        val exactMatch = rowsByRef.getValue(openRequestId.toString())
+        // Match on an open request: id + status + open true.
+        val exactMatch = rowsByRef.getValue(openRequestId)
         assertEquals(openRequestId.toString(), exactMatch["matchedRequestId"], "exact match id: $exactMatch")
         assertEquals("NEW", exactMatch["matchedRequestStatus"], "exact match status: $exactMatch")
         assertEquals(true, exactMatch["matchedRequestOpen"], "exact match open: $exactMatch")
 
-        // Same request, but the stored reference has surrounding whitespace: trim() still matches.
-        val trimmedMatch = rowsByRef.getValue(" $openRequestId ")
-        assertEquals(openRequestId.toString(), trimmedMatch["matchedRequestId"], "trimmed match id: $trimmedMatch")
-        assertEquals("NEW", trimmedMatch["matchedRequestStatus"], "trimmed match status: $trimmedMatch")
-        assertEquals(true, trimmedMatch["matchedRequestOpen"], "trimmed match open: $trimmedMatch")
-
         // A closed request matches, but is flagged as not open.
-        val closedMatch = rowsByRef.getValue(completedRequestId.toString())
+        val closedMatch = rowsByRef.getValue(completedRequestId)
         assertEquals(completedRequestId.toString(), closedMatch["matchedRequestId"], "closed match id: $closedMatch")
         assertEquals("REQUEST_COMPLETED", closedMatch["matchedRequestStatus"], "closed match status: $closedMatch")
         assertEquals(false, closedMatch["matchedRequestOpen"], "closed match open: $closedMatch")
@@ -155,7 +147,7 @@ class DeliveryAdminQueriesTest {
         // A failed collection/delivery matches, and is flagged as open: settled by the team on
         // 2026-07-30 (#120) — the referrer has two weeks to rebook, so the request stays open
         // until then rather than closing automatically on a failed attempt.
-        val failedMatch = rowsByRef.getValue(failedCollectionDeliveryRequestId.toString())
+        val failedMatch = rowsByRef.getValue(failedCollectionDeliveryRequestId)
         assertEquals(
             failedCollectionDeliveryRequestId.toString(),
             failedMatch["matchedRequestId"],
@@ -169,16 +161,10 @@ class DeliveryAdminQueriesTest {
         assertEquals(true, failedMatch["matchedRequestOpen"], "failed collection/delivery match open: $failedMatch")
 
         // A numeric reference with no matching request resolves to all-null.
-        val unmatchedNumeric = rowsByRef.getValue("999999999")
+        val unmatchedNumeric = rowsByRef.getValue(999999999L)
         assertEquals(null, unmatchedNumeric["matchedRequestId"], "unmatched numeric id: $unmatchedNumeric")
         assertEquals(null, unmatchedNumeric["matchedRequestStatus"], "unmatched numeric status: $unmatchedNumeric")
         assertEquals(null, unmatchedNumeric["matchedRequestOpen"], "unmatched numeric open: $unmatchedNumeric")
-
-        // A non-numeric reference never matches: also all-null.
-        val nonNumeric = rowsByRef.getValue("CTA-XYZ")
-        assertEquals(null, nonNumeric["matchedRequestId"], "non-numeric id: $nonNumeric")
-        assertEquals(null, nonNumeric["matchedRequestStatus"], "non-numeric status: $nonNumeric")
-        assertEquals(null, nonNumeric["matchedRequestOpen"], "non-numeric open: $nonNumeric")
     }
 
     @Test
@@ -192,15 +178,15 @@ class DeliveryAdminQueriesTest {
     /**
      * Parses the raw GraphQL response body and indexes deliveryBookingsAdmin rows by
      * ctaReference, keeping matchedRequest* values as Any? (String/Boolean/null) so callers can
-     * assert precisely without fighting jsonPath's handling of duplicate/whitespace-bearing keys.
+     * assert precisely without fighting jsonPath's handling of duplicate keys.
      */
-    private fun extractBookingRowsByCtaReference(body: String): Map<String, Map<String, Any?>> {
+    private fun extractBookingRowsByCtaReference(body: String): Map<Long, Map<String, Any?>> {
         val mapper = ObjectMapper()
         val root = mapper.readTree(body)
         val rows = root.get("data").get("deliveryBookingsAdmin")
-        val result = LinkedHashMap<String, Map<String, Any?>>()
+        val result = LinkedHashMap<Long, Map<String, Any?>>()
         rows.forEach { row ->
-            val ref = row.get("ctaReference").asText()
+            val ref = row.get("ctaReference").asLong()
             result[ref] =
                 mapOf(
                     "matchedRequestId" to row.get("matchedRequestId").let { if (it.isNull) null else it.asText() },
