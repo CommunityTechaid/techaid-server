@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.5.3](https://github.com/CommunityTechaid/techaid-server/compare/v2.5.2...v2.5.3) (2026-08-13)
+
+
+### Bug Fixes
+
+* **kits:** stop every kit being rewritten when its request's collection is loaded ([#149](https://github.com/CommunityTechaid/techaid-server/issues/149)) ([6fc0727](https://github.com/CommunityTechaid/techaid-server/commit/6fc07271bbef9367f1e2b1ceb5a94e539c5e1d7c)), closes [#148](https://github.com/CommunityTechaid/techaid-server/issues/148)
+
+
+### Performance Improvements
+
+* **kits:** stop unassigning a kit from loading its siblings ([#157](https://github.com/CommunityTechaid/techaid-server/issues/157)) ([b76d91b](https://github.com/CommunityTechaid/techaid-server/commit/b76d91bffb0f1175157e12afae93adeb3055ff14)), closes [#153](https://github.com/CommunityTechaid/techaid-server/issues/153)
+
 ## [2.5.2](https://github.com/CommunityTechaid/techaid-server/compare/v2.5.1...v2.5.2) (2026-08-12)
 
 
