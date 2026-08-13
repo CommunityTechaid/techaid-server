@@ -15,6 +15,7 @@ import jakarta.validation.ConstraintViolationException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.graphql.data.method.annotation.Argument
@@ -82,11 +83,10 @@ class DeliveryMutations(
 
         val windowId = input.windowId.toLongOrNull() ?: throw DeliveryBookingException("Unknown delivery window")
 
-        val normalizedRef = input.ctaReference.trim().lowercase()
         // Advisory lock is always taken before the per-window row lock below, so lock order is
         // globally consistent across requests (advisory-then-row) and same-ref-different-window
         // races can't deadlock against it.
-        bookings.acquireReferenceLock("delivery-booking:$normalizedRef")
+        bookings.acquireReferenceLock("delivery-booking:${input.ctaReference}")
 
         // Pessimistic lock: concurrent submits for the same window serialise here, so the
         // capacity check below can't oversell under a read-check-insert race.
@@ -102,7 +102,7 @@ class DeliveryMutations(
         // One upcoming booking per CTA reference: honest-user dedup only (ctaReference is
         // attacker-controlled free text; bots/abuse are handled by rate-limit + Turnstile).
         // Past/delivered bookings never block a new one.
-        if (bookings.existsUpcomingByNormalizedCtaReference(normalizedRef, LocalDate.now())) {
+        if (bookings.existsByCtaReferenceAndDeliveryDateGreaterThanEqual(input.ctaReference, LocalDate.now())) {
             // Phone number matches CONTACT_PHONE in DeliveryService.kt (private there, so inlined).
             throw DeliveryBookingException(
                 "You already have an upcoming delivery booked. If you need to change it, please call us on 020 3488 2912.",
@@ -124,7 +124,7 @@ class DeliveryMutations(
                 ),
             )
 
-        delivery.markCollectionDeliveryArranged(saved.ctaReference)
+        delivery.markCollectionDeliveryArranged(saved, window, date)
         delivery.sendConfirmationEmail(saved, window, date)
 
         return DeliveryBookingConfirmationGql(
@@ -167,7 +167,8 @@ data class DeliveryBookingInput(
     @get:NotBlank @get:Size(max = 32) var phone: String = "",
     @get:NotBlank @get:Size(max = 1000) var address: String = "",
     @get:Size(max = 2000) var accessNotes: String? = null,
-    @get:NotBlank @get:Size(max = 64) var ctaReference: String = "",
+    /** The booker's device request id. Typed Long so a non-numeric reference is rejected. */
+    @get:Positive var ctaReference: Long = 0,
     @get:Size(max = 2048) var turnstileToken: String? = null,
 )
 
@@ -177,6 +178,6 @@ data class DeliveryBookingConfirmationGql(
     val dayLabel: String,
     val window: DeliveryWindowGql,
     val address: String,
-    val ctaReference: String,
+    val ctaReference: Long,
     val confirmationSentTo: String,
 )

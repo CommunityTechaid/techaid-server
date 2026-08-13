@@ -13,21 +13,21 @@ import java.time.Instant
 private val logger = KotlinLogging.logger {}
 
 /**
- * In-app GDPR retention cleanup, intended to eventually supersede the pg_cron job
- * `gdpr-weekly-cleanup` — server-side state that is silently lost on any DB restore.
+ * In-app GDPR retention cleanup. It superseded the pg_cron job `gdpr-weekly-cleanup` —
+ * server-side state that is silently lost on any DB restore — at the 2026-08-12 cutover, after
+ * one verified production run. That pg_cron job still exists but is disabled (`active = f`),
+ * so it remains the rollback path: re-enable it if this ever has to be turned off again.
  *
- * PARKED: the flag is seeded OFF and must stay off until the prerequisites documented on
- * [GdprDonorCleanupService.runRetentionCleanup] are resolved. While it is off, pg_cron remains
- * the only thing performing retention, which is the correct state — this must never be the
- * moment retention silently stops happening. Do not unschedule the pg_cron job until this has
- * run successfully in production at least once.
+ * The flag is seeded OFF and is enabled per environment (on in UAT and production since the
+ * cutover). While it is off nothing performs retention at all, so treat turning it off as a
+ * compliance decision, not a toggle.
  *
  * TWO TRIGGERS, ONE REASON: UAT scales to zero on plain on-demand HTTP traffic, with no
- * KEDA business-hours warm window like production has. A fixed Monday-morning cron can
- * therefore miss its slot entirely for weeks if nothing happens to be warming the container
- * at 09:30 London that minute — and Spring's scheduler does not queue or backfill missed
- * firings; a missed slot is just silently gone. [catchUpOnStartup] closes that gap by
- * checking on every app start whether a run is overdue and, if so, running immediately.
+ * KEDA business-hours warm window like production has. A fixed weekly cron can therefore miss
+ * its slot entirely for weeks if nothing happens to be warming the container at that minute —
+ * and Spring's scheduler does not queue or backfill missed firings; a missed slot is just
+ * silently gone. [catchUpOnStartup] closes that gap by checking on every app start whether a
+ * run is overdue and, if so, running immediately.
  */
 @Component
 class GdprDonorCleanup(
@@ -35,13 +35,15 @@ class GdprDonorCleanup(
     private val featureFlags: FeatureFlagRepository,
 ) {
     // Must fire inside the KEDA business-hours window (Mon-Fri 08:00-20:00 London): the app
-    // scales to zero outside it, so an off-hours cron would never run in production.
-    @Scheduled(cron = "0 30 9 * * MON", zone = "Europe/London")
+    // scales to zero outside it, so an off-hours cron would never run in production. Friday
+    // 18:00 is the last workable slot of the week — retention runs after the week's edits are
+    // in, and still two hours clear of the 20:00 scale-down.
+    @Scheduled(cron = "0 0 18 * * FRI", zone = "Europe/London")
     fun runRetentionCleanup() = runIfOverdue(CRON_DEBOUNCE)
 
-    // Catches the case where the container was at zero replicas through the entire Monday
+    // Catches the case where the container was at zero replicas through the entire weekly
     // cron window. A short debounce on the cron path (above) stops this and the cron
-    // double-running if a cold start happens to land right before 09:30.
+    // double-running if a cold start happens to land right before the slot.
     @EventListener(ApplicationReadyEvent::class)
     fun catchUpOnStartup() = runIfOverdue(CATCH_UP_THRESHOLD)
 

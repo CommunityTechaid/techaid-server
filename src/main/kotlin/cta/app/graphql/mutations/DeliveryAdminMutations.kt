@@ -6,6 +6,8 @@ import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryConfigRepository
 import cta.app.DeliveryWindow
 import cta.app.DeliveryWindowRepository
+import cta.app.DeviceRequestRepository
+import cta.app.DeviceRequestStatus
 import cta.app.graphql.queries.DeliveryBlockedDateGql
 import cta.app.graphql.queries.DeliveryConfigGql
 import cta.app.graphql.queries.DeliveryWindowAdminGql
@@ -43,6 +45,7 @@ class DeliveryAdminMutations(
     private val config: DeliveryConfigRepository,
     private val windows: DeliveryWindowRepository,
     private val blockedDates: DeliveryBlockedDateRepository,
+    private val deviceRequests: DeviceRequestRepository,
     private val bookings: DeliveryBookingRepository,
 ) {
     @PreAuthorize("hasAnyAuthority('write:organisations')")
@@ -119,12 +122,35 @@ class DeliveryAdminMutations(
         return true
     }
 
+    /**
+     * Deleting a booking does not unwind what it wrote onto the linked device request, so a
+     * delete would leave that request claiming a delivery is arranged for a date that no longer
+     * exists anywhere (issue #155, Q1). Refuse while the request still shows that status, and say
+     * what to do instead — the same shape as deleteDeliveryWindow refusing a window with bookings.
+     *
+     * Deliberately narrow: only a request still sitting in PROCESSING_COLLECTION_DELIVERY_ARRANGED
+     * is protected. Unmatched bookings, and bookings whose request staff have already moved on,
+     * stay freely deletable — deletion is the only way to free a slot, since capacity counts rows
+     * and a booking has no cancelled state.
+     */
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
     fun deleteDeliveryBooking(
         @Argument id: String,
     ): Boolean {
         val bookingId = id.toLongOrNull() ?: return false
+        // A missing booking stays a silent no-op returning true, matching deleteById's behaviour
+        // on the sibling delete mutations.
+        val booking = bookings.findById(bookingId).toNullable()
+        if (booking != null) {
+            val linked = deviceRequests.findById(booking.ctaReference).toNullable()
+            if (linked?.status == DeviceRequestStatus.PROCESSING_COLLECTION_DELIVERY_ARRANGED) {
+                throw DeliveryAdminException(
+                    "Device request ${linked.id} still shows a delivery as arranged for this booking. " +
+                        "Update that request's status first, then delete the booking.",
+                )
+            }
+        }
         bookings.deleteById(bookingId)
         return true
     }

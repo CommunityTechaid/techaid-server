@@ -39,8 +39,8 @@ input DeliveryBookingInput {
     phone: String!
     address: String!
     accessNotes: String
-    "The client's CTA reference number"
-    ctaReference: String!
+    "The client's CTA reference number — their device request id"
+    ctaReference: Long!
     "Cloudflare Turnstile token proving the submitter is human; required only when Turnstile is enabled"
     turnstileToken: String
 }
@@ -52,7 +52,7 @@ type DeliveryBookingConfirmation {
     dayLabel: String
     window: DeliveryWindow
     address: String
-    ctaReference: String
+    ctaReference: Long
     "The email address the confirmation was sent to"
     confirmationSentTo: String
 }

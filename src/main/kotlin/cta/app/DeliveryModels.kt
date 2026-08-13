@@ -106,7 +106,8 @@ class DeliveryBooking(
     var address: String = "",
     @Column(name = "access_notes", columnDefinition = "TEXT")
     var accessNotes: String? = null,
-    var ctaReference: String = "",
+    /** The booker's device request id — see V26.08.13.1500 for why this is numeric. */
+    var ctaReference: Long = 0,
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
 )
@@ -159,23 +160,20 @@ interface DeliveryBookingRepository :
 
     /**
      * Backs the one-upcoming-booking-per-reference policy: true if a booking with this
-     * normalized (trimmed, lower-cased) ctaReference exists on or after [today]. Past/delivered
-     * bookings never match, so they never block a new submission.
+     * ctaReference exists on or after the given date. Past/delivered bookings never match, so
+     * they never block a new submission. Since ctaReference became a bigint (V26.08.13.1500)
+     * this is plain equality — there is no longer any case or whitespace to normalise away.
      */
-    @Query(
-        "select count(b) > 0 from DeliveryBooking b " +
-            "where lower(trim(b.ctaReference)) = :normalizedRef and b.deliveryDate >= :today",
-    )
-    fun existsUpcomingByNormalizedCtaReference(
-        @Param("normalizedRef") normalizedRef: String,
-        @Param("today") today: LocalDate,
+    fun existsByCtaReferenceAndDeliveryDateGreaterThanEqual(
+        ctaReference: Long,
+        deliveryDate: LocalDate,
     ): Boolean
 
     /**
-     * Postgres advisory transaction lock keyed on the normalized ctaReference. Serialises
-     * concurrent submits for the same reference across different windows/days, which the
-     * per-window row lock (`findByIdForUpdate`) doesn't cover. Auto-released when the
-     * transaction commits or rolls back.
+     * Postgres advisory transaction lock keyed on the ctaReference. Serialises concurrent
+     * submits for the same reference across different windows/days, which the per-window row
+     * lock (`findByIdForUpdate`) doesn't cover. Auto-released when the transaction commits or
+     * rolls back.
      */
     @Query(value = "select pg_advisory_xact_lock(hashtext(:key))", nativeQuery = true)
     fun acquireReferenceLock(
