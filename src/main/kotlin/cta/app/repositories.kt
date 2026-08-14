@@ -96,6 +96,33 @@ interface DeviceRequestRepository :
         pageable: Pageable,
     ): Page<DeviceRequest>
 
+    /**
+     * Open requests a contact holds within a given set of boroughs.
+     *
+     * The per-referee cap used to be one global number against
+     * [ReferringOrganisationContact.requestCount], which counts every open request the contact
+     * has anywhere. Limits are now set per borough group, so the count has to be scoped the same
+     * way — otherwise Tower Hamlets' limit of 1 would be consumed by a referrer's existing
+     * Lambeth requests and the pilot would reject almost everyone on day one.
+     *
+     * Takes the closed statuses as a parameter so it can share [CLOSED_REQUEST_STATUSES] rather
+     * than repeat the literal — unlike the `@Formula` on the entity, a `@Query` parameter is not
+     * an annotation constant and can hold the real enum set.
+     */
+    @Query(
+        """
+        SELECT COUNT(d) FROM DeviceRequest d
+        WHERE d.referringOrganisationContact.id = :contactId
+          AND d.status NOT IN :closedStatuses
+          AND d.borough IN :boroughs
+    """,
+    )
+    fun countOpenForContactInBoroughs(
+        contactId: Long,
+        closedStatuses: Collection<DeviceRequestStatus>,
+        boroughs: Collection<String>,
+    ): Long
+
     @Query(
         """
         SELECT
