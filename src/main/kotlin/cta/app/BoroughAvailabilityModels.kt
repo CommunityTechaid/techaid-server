@@ -104,10 +104,10 @@ class BoroughGroup(
     /**
      * Requests one referee may have open against this group.
      *
-     * Not yet enforced: DEVICE_REQUEST_LIMIT in DeviceRequestMutations.kt is still the cap that
-     * actually rejects a request, and it is global. This column records the intent per group and
-     * is what the admin screen edits; wiring the check to read it is a separate change, so that
-     * moving the number here cannot silently change who gets rejected today.
+     * Enforced on createDeviceRequest via RefereeRequestLimitService, which resolves an
+     * organisation-level exception first and falls back to this value. The open-request count is
+     * scoped to this group's boroughs, so changing this number changes who is rejected for
+     * requests in these boroughs only.
      */
     var maxPerReferee: Int = 0,
     @ElementCollection(fetch = FetchType.EAGER)
@@ -204,4 +204,9 @@ class ReferrerLimitException(
 
 interface BoroughGroupRepository : JpaRepository<BoroughGroup, Long>
 
-interface ReferrerLimitExceptionRepository : JpaRepository<ReferrerLimitException, Long>
+interface ReferrerLimitExceptionRepository : JpaRepository<ReferrerLimitException, Long> {
+    fun findByReferringOrganisationIdAndGroupId(
+        referringOrganisationId: Long,
+        groupId: Long,
+    ): ReferrerLimitException?
+}
