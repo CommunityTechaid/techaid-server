@@ -51,9 +51,17 @@ class DeviceRequestWhereInput(
         }
 
         if (OR.isNotEmpty()) {
-            OR.forEach {
-                builder.or(it.build(entity))
-            }
+            // Group the alternatives, then AND the group in.
+            //
+            // Calling builder.or(...) directly disjoins against everything accumulated so far, so
+            // a where input combining scalar fields with OR silently lost them:
+            // {isSales: {_in: [false]}, OR: [a, b]} became "isSales = false OR a OR b" rather than
+            // "isSales = false AND (a OR b)" — the OR swallowed the other filters instead of
+            // narrowing alongside them. Building the alternatives into their own BooleanBuilder
+            // keeps the precedence the input's shape implies.
+            val alternatives = BooleanBuilder()
+            OR.forEach { alternatives.or(it.build(entity)) }
+            builder.and(alternatives)
         }
 
         if (NOT.isNotEmpty()) {
@@ -198,9 +206,17 @@ class DeviceRequestItemsWhereInput(
         }
 
         if (OR.isNotEmpty()) {
-            OR.forEach {
-                builder.or(it.build(entity))
-            }
+            // Group the alternatives, then AND the group in.
+            //
+            // Calling builder.or(...) directly disjoins against everything accumulated so far, so
+            // a where input combining scalar fields with OR silently lost them:
+            // {isSales: {_in: [false]}, OR: [a, b]} became "isSales = false OR a OR b" rather than
+            // "isSales = false AND (a OR b)" — the OR swallowed the other filters instead of
+            // narrowing alongside them. Building the alternatives into their own BooleanBuilder
+            // keeps the precedence the input's shape implies.
+            val alternatives = BooleanBuilder()
+            OR.forEach { alternatives.or(it.build(entity)) }
+            builder.and(alternatives)
         }
 
         if (NOT.isNotEmpty()) {
