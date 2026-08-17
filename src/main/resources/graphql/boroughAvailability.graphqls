@@ -13,7 +13,11 @@ type BoroughAvailability {
     borough: String!
     "Device type keys currently offered, e.g. [\"laptops\"]. Empty means nothing is on offer."
     offered: [String!]!
-    "Requests one referee may have open here. Advisory for now - see maxPerReferee on the group."
+    """
+    Requests one referee may have open here, counted across this borough's group only.
+    Enforced server-side by createDeviceRequest while the borough-availability-rules flag is on;
+    while it is off this whole query returns an empty list and a global cap of 3 applies.
+    """
     maxPerReferee: Int!
     """
     Device types set to AUTO, which currently resolve to closed because nothing computes the
@@ -92,6 +96,10 @@ extend type Query {
     Public: what each borough currently offers. No auth required - the device request form is
     unauthenticated and needs this to filter its own device list, exactly as featureFlagsPublic
     lets it gate itself.
+
+    Empty while the borough-availability-rules flag is off, which clients already read as "no
+    restriction recorded". The admin queries below are NOT gated by that flag and always return
+    the full configuration.
     """
     boroughAvailabilityPublic: [BoroughAvailability!]!
     "All borough groups with their raw modes (admin)."

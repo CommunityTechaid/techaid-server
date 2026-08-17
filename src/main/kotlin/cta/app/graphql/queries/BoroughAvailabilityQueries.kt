@@ -5,6 +5,7 @@ import cta.app.BoroughGroupRepository
 import cta.app.DeviceType
 import cta.app.ReferrerLimitException
 import cta.app.ReferrerLimitExceptionRepository
+import cta.app.services.BoroughAvailabilityRules
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Controller
 class BoroughAvailabilityQueries(
     private val boroughGroups: BoroughGroupRepository,
     private val limitExceptions: ReferrerLimitExceptionRepository,
+    private val rules: BoroughAvailabilityRules,
 ) {
     /**
      * No @PreAuthorize: the device request form is unauthenticated and needs this to filter its
@@ -22,21 +24,31 @@ class BoroughAvailabilityQueries(
      * borough a postcode fell in; it has no business knowing that Lambeth and Southwark share a
      * configuration record, and it must not be handed raw modes to interpret - resolving AUTO
      * would mean reading a stock signal only the server could have.
+     *
+     * Empty while [BoroughAvailabilityRules] is off. Empty rather than an error because the
+     * dashboard already treats a borough it has no row for as "no restriction recorded" and
+     * offers every device type — the same fail-open path a failed request takes. So switching the
+     * flag off restores the pre-config public form without needing a matching dashboard release,
+     * and the admin queries below keep serving the full configuration regardless.
      */
     @QueryMapping
     fun boroughAvailabilityPublic(): List<BoroughAvailabilityGql> =
-        boroughGroups
-            .findAll()
-            .flatMap { group ->
-                group.boroughs.map { borough ->
-                    BoroughAvailabilityGql(
-                        borough = borough,
-                        offered = group.offeredDeviceTypes(),
-                        maxPerReferee = group.maxPerReferee,
-                        unresolvedAuto = group.unresolvedAutoDeviceTypes(),
-                    )
-                }
-            }.sortedBy { it.borough }
+        if (!rules.enabled()) {
+            emptyList()
+        } else {
+            boroughGroups
+                .findAll()
+                .flatMap { group ->
+                    group.boroughs.map { borough ->
+                        BoroughAvailabilityGql(
+                            borough = borough,
+                            offered = group.offeredDeviceTypes(),
+                            maxPerReferee = group.maxPerReferee,
+                            unresolvedAuto = group.unresolvedAutoDeviceTypes(),
+                        )
+                    }
+                }.sortedBy { it.borough }
+        }
 
     @PreAuthorize("hasAnyAuthority('app:admin')")
     @QueryMapping

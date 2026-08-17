@@ -1,9 +1,12 @@
 package cta.app
 
+import cta.app.services.BoroughAvailabilityRules
 import cta.app.services.DEFAULT_REQUEST_LIMIT
 import cta.app.services.RefereeRequestLimitService
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -46,6 +49,29 @@ class RefereeRequestLimitTest {
 
     @Autowired
     lateinit var limitService: RefereeRequestLimitService
+
+    @Autowired
+    lateinit var featureFlags: FeatureFlagRepository
+
+    /**
+     * Per-group limits only apply while borough-availability-rules is on, and Flyway seeds it OFF
+     * so production promotes without a behaviour change. Every test below that asserts per-group
+     * behaviour therefore has to switch it on first; the one that asserts the flag-off fallback
+     * switches it back within its own body.
+     *
+     * Restored to the seeded default afterwards because this class shares a Spring context — and
+     * so a database — with the other unforked DB-backed tests. Leaving a flag flipped is exactly
+     * the kind of cross-test bleed that makes an unrelated suite fail a week later.
+     */
+    @BeforeEach
+    fun enableBoroughRules() = setBoroughRules(enabled = true)
+
+    @AfterEach
+    fun restoreSeededDefault() = setBoroughRules(enabled = false)
+
+    private fun setBoroughRules(enabled: Boolean) {
+        featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = enabled))
+    }
 
     @Test
     fun `limit comes from the group governing the borough`() {
@@ -208,6 +234,46 @@ class RefereeRequestLimitTest {
 
         request(referee, DeviceRequestStatus.NEW, "Tower Hamlets", "BD-0")
         assertThat(limitService.resolve(refetch(referee), "Tower Hamlets").exceeded).isTrue()
+    }
+
+    @Test
+    fun `with the flag off the pre-config global cap applies, borough or no borough`() {
+        val referee = contact("Org flag-off", "Referee flag-off")
+        repeat(2) { i -> request(referee, DeviceRequestStatus.NEW, "Lambeth", "OFF-L-$i") }
+        request(referee, DeviceRequestStatus.NEW, "Tower Hamlets", "OFF-T-0")
+
+        setBoroughRules(enabled = false)
+        val fresh = refetch(referee)
+
+        // Tower Hamlets' group says limit 1 and would count only its own borough. Off, none of
+        // that is allowed to reach a referrer: the answer is the global cap counted against every
+        // open request the referee holds, which is what production does today.
+        val towerHamlets = limitService.resolve(fresh, "Tower Hamlets")
+        assertThat(towerHamlets.limit).isEqualTo(DEFAULT_REQUEST_LIMIT)
+        assertThat(towerHamlets.scope).isEqualTo("overall")
+        assertThat(towerHamlets.open).isEqualTo(3)
+        assertThat(towerHamlets.exceeded).isTrue()
+
+        // Lambeth resolves to a group whose limit happens to also be 3, so the limit alone cannot
+        // tell the two paths apart — the scope and the global count are what prove which ran.
+        val lambeth = limitService.resolve(fresh, "Lambeth")
+        assertThat(lambeth.scope).isEqualTo("overall")
+        assertThat(lambeth.open).isEqualTo(3)
+    }
+
+    @Test
+    fun `a borough stored with odd casing or padding still counts towards its group`() {
+        val referee = contact("Org stored-casing", "Referee stored-casing")
+        request(referee, DeviceRequestStatus.NEW, "lambeth", "SCS-0")
+        request(referee, DeviceRequestStatus.NEW, "  SOUTHWARK  ", "SCS-1")
+        request(referee, DeviceRequestStatus.NEW, "Lambeth", "SCS-2")
+
+        // groupFor already resolves these to the Lambeth & Southwark group; the count has to agree
+        // with it, or a referee gains headroom purely from how their borough happened to be typed.
+        val result = limitService.resolve(refetch(referee), "Lambeth")
+        assertThat(result.scope).isEqualTo("Lambeth & Southwark")
+        assertThat(result.open).isEqualTo(3)
+        assertThat(result.exceeded).isTrue()
     }
 
     private fun contact(
