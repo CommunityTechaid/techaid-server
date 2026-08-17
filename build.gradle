@@ -210,6 +210,10 @@ dependencies {
     }
     testImplementation 'org.junit.jupiter:junit-jupiter-api'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    /* Executes real GraphQL documents against the wired schema. Needed because some behaviour
+       only exists at the GraphQL layer — nullability, and therefore the shape of an error
+       response — and cannot be observed by calling the controller method directly. */
+    testImplementation 'org.springframework.graphql:spring-graphql-test'
 
     /* Hibernate / DB specific dependencies */
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
