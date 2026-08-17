@@ -5,9 +5,11 @@ import cta.app.graphql.mutations.BoroughGroupInput
 import cta.app.graphql.mutations.DeviceAvailabilityInput
 import cta.app.graphql.mutations.SaveBoroughAvailabilityInput
 import cta.app.graphql.queries.BoroughAvailabilityQueries
+import cta.app.services.BoroughAvailabilityRules
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -48,6 +50,38 @@ class BoroughAvailabilityTest {
 
     @Autowired
     lateinit var mutations: BoroughAvailabilityMutations
+
+    @Autowired
+    lateinit var featureFlags: FeatureFlagRepository
+
+    /**
+     * Flyway seeds borough-availability-rules OFF, so the public query serves nothing until it is
+     * switched on. Every test here but the first is about what the configuration *does*, so they
+     * all need it on. Safe to leave flipped between tests: this class already forks its own
+     * context and embedded database.
+     */
+    @BeforeEach
+    fun enableBoroughRules() {
+        featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = true))
+    }
+
+    @Test
+    @Order(0)
+    @WithMockUser(authorities = ["app:admin"])
+    fun `with the flag off the public query is empty but admins still see everything`() {
+        featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = false))
+
+        // The public form reads an empty list as "no restriction recorded" and offers every
+        // device type, which is the pre-config behaviour this flag exists to preserve.
+        assertThat(queries.boroughAvailabilityPublic()).isEmpty()
+
+        // The whole point of gating only the public path: staff can build and review the matrix,
+        // Tower Hamlets included, while the public journey is untouched.
+        val groups = queries.boroughGroups().associateBy { it.name }
+        assertThat(groups.keys).containsExactlyInAnyOrder("Lambeth & Southwark", "Tower Hamlets")
+        assertThat(groups.getValue("Tower Hamlets").availability).isNotEmpty()
+        assertThat(queries.referrerLimitExceptions()).isEmpty()
+    }
 
     @Test
     @Order(1)

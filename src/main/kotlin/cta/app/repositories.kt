@@ -108,13 +108,18 @@ interface DeviceRequestRepository :
      * Takes the closed statuses as a parameter so it can share [CLOSED_REQUEST_STATUSES] rather
      * than repeat the literal — unlike the `@Formula` on the entity, a `@Query` parameter is not
      * an annotation constant and can hold the real enum set.
+     *
+     * `boroughs` must be passed already trimmed and lower-cased: the stored borough is normalised
+     * the same way here so that matching agrees with how RefereeRequestLimitService resolves the
+     * group in the first place. A borough that resolves to a group but does not count towards it
+     * hands the referee silent extra headroom, which is the one failure mode a cap must not have.
      */
     @Query(
         """
         SELECT COUNT(d) FROM DeviceRequest d
         WHERE d.referringOrganisationContact.id = :contactId
           AND d.status NOT IN :closedStatuses
-          AND d.borough IN :boroughs
+          AND LOWER(TRIM(d.borough)) IN :boroughs
     """,
     )
     fun countOpenForContactInBoroughs(

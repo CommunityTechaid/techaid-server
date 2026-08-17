@@ -59,20 +59,19 @@ class RefereeRequestLimitService(
     private val boroughGroups: BoroughGroupRepository,
     private val limitExceptions: ReferrerLimitExceptionRepository,
     private val deviceRequests: DeviceRequestRepository,
+    private val rules: BoroughAvailabilityRules,
 ) {
     fun resolve(
         contact: ReferringOrganisationContact,
         borough: String?,
     ): RefereeRequestLimit {
-        val group =
-            groupFor(borough)
-                ?: return RefereeRequestLimit(
-                    limit = DEFAULT_REQUEST_LIMIT,
-                    // No group means no borough set to scope by, so fall back to the contact's global
-                    // open count — the exact number the cap has always been checked against.
-                    open = contact.requestCount.toLong(),
-                    scope = "overall",
-                )
+        // Off, the borough configuration must not reach a referrer at all — not the group's
+        // number and not its scoped count. Both have to fall back together: keeping the global
+        // cap but counting per group, or vice versa, is a third behaviour that has never run
+        // anywhere and is not what turning this off is meant to restore.
+        if (!rules.enabled()) return globalLimit(contact)
+
+        val group = groupFor(borough) ?: return globalLimit(contact)
 
         val exception =
             limitExceptions.findByReferringOrganisationIdAndGroupId(
@@ -86,11 +85,25 @@ class RefereeRequestLimitService(
                 deviceRequests.countOpenForContactInBoroughs(
                     contactId = contact.id,
                     closedStatuses = CLOSED_REQUEST_STATUSES,
-                    boroughs = group.boroughs,
+                    // Normalised to match how groupFor resolves the group. Without this the two
+                    // halves disagree: a request stored as "lambeth" resolves TO the group but is
+                    // not counted BY it, so the referee silently gets extra headroom.
+                    boroughs = group.boroughs.map { it.trim().lowercase() },
                 ),
             scope = group.name,
         )
     }
+
+    /**
+     * The cap as it stood before borough configuration existed: one number for everyone, checked
+     * against the referee's total open requests wherever they are.
+     */
+    private fun globalLimit(contact: ReferringOrganisationContact) =
+        RefereeRequestLimit(
+            limit = DEFAULT_REQUEST_LIMIT,
+            open = contact.requestCount.toLong(),
+            scope = "overall",
+        )
 
     /**
      * The group governing a borough, if any.
