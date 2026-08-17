@@ -230,8 +230,18 @@ input BulkKitAssignmentInput {
 }
 
 extend type Mutation {
-    #Will throw an exception if device requests for the contact exceeds DEVICE_LIMIT with this request
-    createDeviceRequest(data: CreateDeviceRequestInput!) : DeviceRequest!
+    """
+    Raise a device request. Rejected with a BAD_REQUEST error if the referee is already at their
+    open-request limit (see RefereeRequestLimitService).
+
+    NULLABLE, deliberately. When the limit rejection fires, ControllerExceptionHandler turns it
+    into a readable BAD_REQUEST error and the resolver returns nothing. Declared non-null, that
+    "nothing" was itself a schema violation, so graphql-java appended a second error — the
+    referrer's response carried both the real message and a spec-violation about a non-null type
+    returning null, and the latter is what got reported to us. A mutation that can fail a business
+    rule has to be nullable for its own error to be the only thing in the payload.
+    """
+    createDeviceRequest(data: CreateDeviceRequestInput!) : DeviceRequest
     updateDeviceRequest(data: UpdateDeviceRequestInput!): DeviceRequest!
     deleteDeviceRequest(id: ID!): Boolean
     synchronizeCollectionDataForDeviceRequest(data: SynchronizeCollectionDataForDeviceRequestInput!): DeviceRequest!
