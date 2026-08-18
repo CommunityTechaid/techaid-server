@@ -1,6 +1,5 @@
 package cta.app
 
-import cta.app.services.Coordinates
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
@@ -16,13 +15,11 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.SequenceGenerator
 import jakarta.persistence.Table
 import org.hibernate.annotations.Formula
-import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.UpdateTimestamp
 import org.hibernate.envers.AuditTable
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.hibernate.envers.RelationTargetAuditMode
-import org.hibernate.type.SqlTypes
 import org.hibernate.type.YesNoConverter
 import java.time.Instant
 
@@ -50,9 +47,6 @@ class Donor(
     var kitCount: Int = 0,
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
-    @NotAudited
-    @JdbcTypeCode(SqlTypes.JSON)
-    var coordinates: Coordinates? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "donor_parent_id")
     var donorParent: DonorParent? = null,

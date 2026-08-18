@@ -116,7 +116,6 @@ type Kit {
     age: Int
     attributes: KitAttributes!
     donor: Donor
-    coordinates: Coordinates
     deviceRequest: DeviceRequest
     notes: [Note]!,
     make: String,

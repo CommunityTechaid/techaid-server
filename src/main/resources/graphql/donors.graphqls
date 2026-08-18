@@ -9,7 +9,6 @@ type Donor {
     updatedAt: String
     kitCount: Int
     kits: [Kit!]
-    coordinates: Coordinates
     donorParent: DonorParent
     archived: Boolean
     isLeadContact: Boolean
