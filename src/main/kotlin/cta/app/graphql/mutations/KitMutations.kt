@@ -9,7 +9,6 @@ import cta.app.QKit
 import cta.app.services.BlockingFlagGuardService
 import cta.app.services.FilterService
 import cta.app.services.KitService
-import cta.app.services.LocationService
 import cta.app.services.MailService
 import cta.app.services.WipeCertGuardService
 import cta.toNullable
@@ -31,7 +30,6 @@ class KitMutations(
     private val kits: KitRepository,
     private val donors: DonorRepository,
     private val deviceRequests: DeviceRequestRepository,
-    private val locationService: LocationService,
     private val filterService: FilterService,
     private val mailService: MailService,
     private val kitService: KitService,
@@ -46,10 +44,6 @@ class KitMutations(
         val kit =
             kits.save(
                 data.entity.apply {
-                    if (location.isNotBlank()) {
-                        coordinates = locationService.findCoordinates(location)
-                    }
-
                     if (data.note != null) {
                         if (data.note.content !== "") {
                             val note = Note(content = data.note.content, kit = this, volunteer = details.email)
@@ -105,10 +99,6 @@ class KitMutations(
             // Update statusUpdatedAt if status has changed
             if (previousStatus != status) {
                 statusUpdatedAt = Instant.now()
-            }
-
-            if (location.isNotBlank() && (coordinates == null || coordinates?.input != location)) {
-                coordinates = locationService.findCoordinates(location)
             }
 
             // Clear the FK on this kit rather than going through Donor.removeKit /

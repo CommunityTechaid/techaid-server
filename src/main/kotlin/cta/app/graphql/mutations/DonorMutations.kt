@@ -5,7 +5,6 @@ import cta.app.DonorParentRepository
 import cta.app.DonorRepository
 import cta.app.QDonor
 import cta.app.services.FilterService
-import cta.app.services.LocationService
 import cta.toNullable
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
@@ -24,7 +23,6 @@ import org.springframework.validation.annotation.Validated
 class DonorMutations(
     private val donors: DonorRepository,
     private val donorParents: DonorParentRepository,
-    private val locationService: LocationService,
     private val filterService: FilterService,
 ) {
     @MutationMapping
@@ -38,9 +36,6 @@ class DonorMutations(
             }
         }
         val donor = donors.save(data.entity)
-        if (donor.postCode.isNotBlank()) {
-            donor.coordinates = locationService.findCoordinates(donor.postCode)
-        }
 
         if (data.donorParentId != null) {
             val donorParent =
@@ -60,10 +55,6 @@ class DonorMutations(
             donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(data.id))).toNullable()
                 ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.id}")
         return data.apply(entity).apply {
-            if (postCode.isNotBlank() && (coordinates == null || coordinates?.input != postCode)) {
-                coordinates = locationService.findCoordinates(postCode)
-            }
-
             if (data.donorParentId == null) {
                 donorParent?.removeDonor(this)
             } else if (data.donorParentId != donorParent?.id) {
