@@ -58,7 +58,56 @@ class KitAuditTrailQueries(
             finalResults.add(revision)
         }
 
-        return finalResults.toList()
+        val shape = revisionShape(where)
+        return finalResults.map {
+            val s = shape[it.revision.id]
+            it.copy(
+                changedNothingAudited = s?.first ?: false,
+                siblingKitsInRevision = s?.second ?: 0,
+            )
+        }
+    }
+
+    /**
+     * Per revision of this kit: did anything but updated_at change, and how many OTHER kits were
+     * written in the same revision.
+     *
+     * Computed in SQL rather than by comparing Kit fields in Kotlin, deliberately. The comparison
+     * has to cover EVERY audited column - a Kotlin list of them is a second copy of the audit
+     * schema that drifts silently the first time someone adds a column, and the failure is
+     * invisible: a revision that changed only the new column would be reported as changing
+     * nothing and hidden from the history. `to_jsonb(row) - 'updated_at'` cannot drift. It is
+     * also the same expression db/admin/2026-08-18__correct_kit_updated_at_collateral.sql uses,
+     * so the API and the correction script agree by construction.
+     *
+     * One extra query per audit view, bounded by that kit's revision count.
+     */
+    private fun revisionShape(kitId: Long): Map<Long, Pair<Boolean, Int>> {
+        @Suppress("UNCHECKED_CAST")
+        val rows =
+            em
+                .createNativeQuery(
+                    """
+                    with seq as (
+                        select k.rev,
+                               k.revtype,
+                               to_jsonb(k) - 'rev' - 'revtype' - 'updated_at' as body,
+                               lag(to_jsonb(k) - 'rev' - 'revtype' - 'updated_at')
+                                   over (order by k.rev)                      as prev_body
+                          from kit_audit_trail k
+                         where k.id = :kitId
+                    )
+                    select s.rev,
+                           coalesce(s.revtype = 1 and s.body = s.prev_body, false) as changed_nothing,
+                           (select count(*) - 1 from kit_audit_trail o where o.rev = s.rev) as siblings
+                      from seq s
+                    """,
+                ).setParameter("kitId", kitId)
+                .resultList as List<Array<Any>>
+
+        return rows.associate {
+            (it[0] as Number).toLong() to Pair(it[1] as Boolean, (it[2] as Number).toInt())
+        }
     }
 
     // fun kitAudits(page: PaginationInput?, id: Long): Page<KitAudit> {
@@ -76,6 +125,9 @@ data class KitAudit(
     val entity: Kit,
     val revision: CustomRevisionInfo,
     val type: RevisionType,
+    /** See the field documentation on KitRevision in kitAuditTrail.graphqls. */
+    val changedNothingAudited: Boolean = false,
+    val siblingKitsInRevision: Int = 0,
 )
 
 // interface KitAuditRepository : PagingAndSortingRepository<KitAudit, Long>, QuerydslPredicateExecutor<KitAudit>
