@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.0.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.7.0...v3.0.0) (2026-08-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **gdpr:** drop the coordinates columns from donors and kits ([#180](https://github.com/CommunityTechaid/techaid-server/issues/180))
+* **gdpr:** Donor.coordinates and Kit.coordinates are removed from the GraphQL schema. Audited against techaid-dashboard: zero references to coordinates, Coordinates or location(address anywhere under src/. The bulk insert script and the TechAid database updater service used by Theta were checked too.
+* **gdpr:** the `gdpr-in-app-cleanup` feature flag is removed. Images built before this change read that flag and fail closed when the row is absent, so rolling production back past this migration stops retention silently - V26.08.18.1500 carries the one-line restore. The dashboard's hard-coded metadata entry for the key is now dead and should be removed on its own schedule; it decorates API rows rather than driving them, so the flags page is unaffected.
+
+### Features
+
+* **gdpr:** drop the coordinates columns from donors and kits ([#180](https://github.com/CommunityTechaid/techaid-server/issues/180)) ([bc25ccc](https://github.com/CommunityTechaid/techaid-server/commit/bc25ccc8fe15a983256bb3ec3a84241c58f68c6f)), closes [#161](https://github.com/CommunityTechaid/techaid-server/issues/161)
+* **gdpr:** make the in-app retention job the only retention path ([#175](https://github.com/CommunityTechaid/techaid-server/issues/175)) ([3bc9e9b](https://github.com/CommunityTechaid/techaid-server/commit/3bc9e9bc3f6d7bf6334a5a05bb8f0d81f9b78920)), closes [#62](https://github.com/CommunityTechaid/techaid-server/issues/62)
+* **gdpr:** stop persisting coordinates on donors and kits ([#179](https://github.com/CommunityTechaid/techaid-server/issues/179)) ([11f30a0](https://github.com/CommunityTechaid/techaid-server/commit/11f30a0a4b1f05d38173f019352f61f6fd1902bd)), closes [#161](https://github.com/CommunityTechaid/techaid-server/issues/161)
+* **kits:** tell the device history which revisions changed nothing ([#178](https://github.com/CommunityTechaid/techaid-server/issues/178)) ([9bea406](https://github.com/CommunityTechaid/techaid-server/commit/9bea40696bd481898f0395079f029d868fe3adef)), closes [#148](https://github.com/CommunityTechaid/techaid-server/issues/148)
+
+
+### Bug Fixes
+
+* **gdpr:** track the shipped referee activity scope in the verification script ([#173](https://github.com/CommunityTechaid/techaid-server/issues/173)) ([0252c9c](https://github.com/CommunityTechaid/techaid-server/commit/0252c9cf21c9969ea544f84aeb8b66763232be26))
+* **kits:** correct updated_at polluted by [#148](https://github.com/CommunityTechaid/techaid-server/issues/148), and stop deleteDonor throwing ([#177](https://github.com/CommunityTechaid/techaid-server/issues/177)) ([134e0ec](https://github.com/CommunityTechaid/techaid-server/commit/134e0ec51cbebd7a1e36888ec1d24c1d01ec85f0))
+
 ## [2.7.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.6.0...v2.7.0) (2026-08-17)
 
 
