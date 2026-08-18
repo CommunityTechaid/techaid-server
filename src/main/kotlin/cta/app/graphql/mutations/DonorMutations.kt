@@ -83,7 +83,11 @@ class DonorMutations(
         val donor =
             donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(id))).toNullable()
                 ?: throw EntityNotFoundException("No donor with id: $id")
-        donor.kits.forEach { donor.removeKit(it) }
+        // Iterate a snapshot: removeKit runs removeIf on `kits`, and mutating the set being
+        // walked throws ConcurrentModificationException. It needs two or more kits to trip -
+        // a HashSet iterator only checks modCount inside next(), so removing the sole element
+        // is never noticed. That is why this survived: most donors have one device.
+        donor.kits.toList().forEach { donor.removeKit(it) }
         donors.delete(donor)
         return true
     }
