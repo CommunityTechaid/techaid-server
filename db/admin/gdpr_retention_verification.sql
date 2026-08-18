@@ -15,6 +15,11 @@
 -- EVERY ROW IN THE FIRST RESULT SET MUST READ 0.
 -- A non-zero anywhere means retention is not doing what it claims.
 --
+-- ORDINAL 3 IS ABSENT AND STAYS ABSENT. It checked kits.coordinates, a column #161 dropped
+-- from donors and kits entirely - there is nothing left to hold or scrub. The remaining
+-- numbers are NOT renumbered: they are how runs of this script are compared to each other
+-- over time, and shifting them would silently re-point every past result.
+--
 -- ---------------------------------------------------------------------------------------
 -- Thresholds and sentinels are mirrored from gdpr.performgdprcleanup() as shipped in
 -- V26.08.12.1100__gdpr_retention_policy_corrections.sql, with the referee scope as corrected
@@ -23,7 +28,6 @@
 -- check here.
 --
 --   donors (+ donors_audit_trail)          12 months   'Donor - Erased due to GDPR policy'
---   kits.coordinates                       12 months   NULL (jsonb - no sentinel)
 --   device_requests.details                26 weeks    'RECORD DELETED BY SYSTEM - GDPR'
 --   device_requests.client_ref             52 weeks    'WIPED - GDPR'
 --   device_requests.collection_contact_name 52 weeks   'WIPED - GDPR'
@@ -89,14 +93,6 @@ SELECT * FROM (
         (SELECT count(*) FROM donors_audit_trail a
           WHERE a.id IN (SELECT id FROM donor_backlog)
             AND a.name <> 'Donor - Erased due to GDPR policy')
-
-    UNION ALL SELECT 3, 'kits.coordinates past 12m or on an erased donor',
-        (SELECT count(*) FROM kits k
-          WHERE k.coordinates IS NOT NULL
-            AND (k.created_at <= CURRENT_DATE - INTERVAL '12 months'
-                 OR EXISTS (SELECT 1 FROM donors d
-                             WHERE d.id = k.donor_id
-                               AND d.name = 'Donor - Erased due to GDPR policy')))
 
     UNION ALL SELECT 4, 'device_requests.details past 26 weeks',
         (SELECT count(*) FROM device_requests
@@ -213,6 +209,10 @@ SELECT 'referring_organisation_contacts with NULL updated_at', count(*)
 -- nothing was erased. Only details and client_ref are real on a backfilled row. Do not read
 -- the zeros as measurements, and do not sum these columns across the whole table for a
 -- compliance total: for backfilled rows the honest value is "unknown".
+--
+-- kit_coordinates_count is no longer selected - #161 removed the column it counted. The
+-- gdpr_cleanup_runs column itself is deliberately kept: it holds the historical record,
+-- including the 3,930 scrubbed on the 2026-08-12 production run.
 -- ---------------------------------------------------------------------------------------
 SELECT id, ran_at,
        CASE WHEN summary LIKE '%backfilled from Azure PostgreSQLLogs%'
@@ -222,8 +222,7 @@ SELECT id, ran_at,
        device_request_clientref_count              AS client_ref,
        donor_count                                 AS donors,
        device_request_notes_count                  AS notes,
-       referring_contact_count                     AS ref_contacts,
-       kit_coordinates_count                       AS kit_coords
+       referring_contact_count                     AS ref_contacts
   FROM gdpr_cleanup_runs
  ORDER BY ran_at DESC
  LIMIT 8;

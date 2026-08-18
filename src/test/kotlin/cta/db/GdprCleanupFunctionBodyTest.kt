@@ -77,4 +77,18 @@ class GdprCleanupFunctionBodyTest {
                     "introduced it, only by superseding the function body.",
             ).doesNotContain("TEMP-REVERT")
     }
+
+    /**
+     * #161 dropped donors.coordinates and kits.coordinates. A plpgsql body resolves column names
+     * at EXECUTION, so a function that still references them would not fail this suite's
+     * migrations, nor a deploy - it would fail the next Friday retention run, which since the
+     * 2026-08-18 switchover is the only thing performing retention and has no alert on it yet
+     * (#174). Cheap to assert, and the failure it prevents is a silent stop to GDPR erasure.
+     */
+    @Test
+    fun `the body no longer references the dropped coordinates columns`() {
+        assertThat(functionBody().lowercase())
+            .describedAs("gdpr.performgdprcleanup() must not touch a column that no longer exists (#161)")
+            .doesNotContain("coordinates")
+    }
 }
