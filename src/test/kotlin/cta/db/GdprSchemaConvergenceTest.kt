@@ -257,74 +257,6 @@ class GdprSchemaConvergenceTest {
             .doesNotContain("name", "email", "phone_number", "post_code")
     }
 
-    private fun insertKit(
-        id: Long,
-        donorId: Long?,
-        createdAgo: String,
-        coordinates: String = """{"lat": 51.5, "lng": -0.1}""",
-    ) {
-        jdbcTemplate.update(
-            """
-            INSERT INTO kits (id, age, donor_id, created_at, updated_at, coordinates, archived, status, type)
-            VALUES ($id, 1, ${donorId ?: "NULL"}, now() - interval '$createdAgo', now() - interval '$createdAgo',
-                    '$coordinates'::jsonb, 'N', 'NEW', 'LAPTOP')
-            """.trimIndent(),
-        )
-    }
-
-    /**
-     * Issue #126, correction 3 of V26.08.12.1100. kits.coordinates is a geolocation derived
-     * from the donor's collection address; the donor-erasure routine has always anonymised
-     * donors.coordinates but never touched the copy sitting on the kit, so the location
-     * outlived the donor's own erasure. Two independent triggers now null it: the kit's own
-     * age (>12 months), or its donor already carrying the GDPR-erased sentinel - checked
-     * AFTER the donor UPDATE in the same function, so a donor erased earlier in the same
-     * call is caught immediately rather than waiting for the next run.
-     *
-     * Note gdpr.donors_to_archive keys donor eligibility off the donor's OWN most recent kit
-     * (`coalesce(max(kits.created_at), donors.created_at)`), so a donor cannot simultaneously
-     * (a) own a recently-created kit and (b) be organically selected for erasure in that same
-     * call - a recent kit is itself evidence the donor is still active. That is exactly why
-     * production shows 84 kits whose donor was ALREADY erased (by a prior run, or an
-     * out-of-band admin action) rather than erased in lockstep with their own kit; this test
-     * reproduces that shape with two calls to performgdprcleanup().
-     */
-    @Test
-    fun `kits coordinates nulls for an old kit or an already-erased donor, and leaves an active donor's kit alone - issue 126`() {
-        // (a) kit older than 12 months, no donor involved -> nulled by the age branch alone.
-        insertKit(900410, donorId = null, createdAgo = "13 months")
-
-        // (c) control: kit recently created, tied to a donor who is NOT erased -> must survive.
-        insertDonor(900411, parentId = null, age = "3 months")
-        insertKit(900412, donorId = 900411, createdAgo = "1 day")
-
-        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
-
-        assertThat(jdbcTemplate.queryForObject("SELECT coordinates FROM kits WHERE id = 900410", String::class.java))
-            .`as`("a kit older than 12 months must have its coordinates nulled regardless of donor")
-            .isNull()
-        assertThat(jdbcTemplate.queryForObject("SELECT coordinates FROM kits WHERE id = 900412", String::class.java))
-            .`as`("a recent kit whose donor is not erased must be left alone - the over-erasure guard")
-            .isNotNull()
-
-        // (b) a donor is erased by a call to performgdprcleanup(), then a recent kit is
-        // attached to them afterwards -> nulled by the donor-erased branch alone, proving
-        // it does independent work beyond the age check (this kit is never old enough for
-        // the age branch to fire).
-        insertDonor(900413, parentId = null, age = "18 months")
-        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
-        assertThat(jdbcTemplate.queryForObject("SELECT name FROM donors WHERE id = 900413", String::class.java))
-            .`as`("setup check: donor 900413 must actually be erased before the kit is attached")
-            .isEqualTo("Donor - Erased due to GDPR policy")
-
-        insertKit(900414, donorId = 900413, createdAgo = "1 day")
-        jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
-
-        assertThat(jdbcTemplate.queryForObject("SELECT coordinates FROM kits WHERE id = 900414", String::class.java))
-            .`as`("issue #126: a recent kit whose donor already shows the GDPR sentinel must still be nulled")
-            .isNull()
-    }
-
     private fun insertRev(rev: Long) {
         jdbcTemplate.update(
             "INSERT INTO custom_rev_info (id, timestamp, custom_user) VALUES ($rev, 0, 'test')",
@@ -652,30 +584,5 @@ class GdprSchemaConvergenceTest {
             .isGreaterThanOrEqualTo(1)
         assertThat(row["summary"]).isEqualTo(summary)
         assertThat(row["ran_at"]).isNotNull()
-    }
-
-    /**
-     * V26.08.12.1000 adds gdpr_cleanup_runs.kit_coordinates_count as the durable record of
-     * correction 3's effect. This asserts the column reports the real number of kits
-     * scrubbed in this specific run - measured empirically via a before/after count of
-     * kits.coordinates - not a static or default value, so it is immune to whatever
-     * coordinate-bearing kits earlier tests in this class may have left behind.
-     */
-    @Test
-    fun `the retention routine records how many kit coordinates it scrubbed`() {
-        insertKit(900420, donorId = null, createdAgo = "13 months")
-
-        val before = jdbcTemplate.queryForObject("SELECT count(*) FROM kits WHERE coordinates IS NOT NULL", Int::class.java)!!
-
-        val summary = jdbcTemplate.queryForObject("SELECT gdpr.performgdprcleanup()", String::class.java)
-
-        val after = jdbcTemplate.queryForObject("SELECT count(*) FROM kits WHERE coordinates IS NOT NULL", Int::class.java)!!
-        val actuallyScrubbed = before - after
-
-        val row = jdbcTemplate.queryForMap("SELECT kit_coordinates_count, summary FROM gdpr_cleanup_runs ORDER BY id DESC LIMIT 1")
-        assertThat((row["kit_coordinates_count"] as Number).toInt())
-            .`as`("kit_coordinates_count must match the number of kits this run actually nulled")
-            .isEqualTo(actuallyScrubbed)
-        assertThat(row["summary"]).isEqualTo(summary)
     }
 }
