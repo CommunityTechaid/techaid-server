@@ -36,10 +36,31 @@
 -- Envers writes one revision per transaction, so a burst is what the bug looked like and a
 -- lone row is what a real attributes edit looks like.
 --
--- THE REPLACEMENT VALUE is the updated_at recorded on that kit's most recent NON-collateral
--- revision - i.e. a value the column actually held at a moment the device was really changed.
--- For 654 kits every revision is collateral, meaning nothing real ever happened after
--- creation; those fall back to created_at.
+-- THE REPLACEMENT VALUE is the updated_at recorded on that kit's most recent ATTRIBUTABLE
+-- real change - i.e. a value the column actually held at a moment the device was really
+-- changed. A revision is attributable when it is not collateral AND one of: it is the kit's
+-- creation (revtype 0), it has a predecessor to compare against, or it stands alone in its
+-- revision. That last clause matters for exactly 2 production kits whose earliest audit row is
+-- a lone single-kit MOD - no predecessor, but no burst either, so it is real.
+--
+-- THE FIRST REVISION OF A KIT IS NOT EVIDENCE OF A REAL CHANGE unless it is the creation.
+-- 654 production kits were created in 2021-2023 but their earliest audit row is a 2026 MOD:
+-- auditing did not capture their creation, so there is nothing to compare that row against.
+-- Those rows are burst-shaped - kits 2669-2676 all carry 2026-01-13 14:37:43.98x, milliseconds
+-- apart, in the peak month of the bug - so treating them as real would re-assert the exact
+-- false signal this script removes. They fall back to created_at.
+--
+-- created_at UNDERSTATES for those 654: the devices demonstrably moved through the pipeline
+-- between 2021 and 2026, and those edits are simply not in the trail. It is chosen anyway
+-- because the purpose here is that updated_at should not claim a recent change that did not
+-- happen. Understating drops them out of "recently updated"; overstating leaves them in.
+-- If a better source for their real history ever appears, the backup table holds what they
+-- had and this reasoning is what to revisit.
+--
+-- NULL HANDLING IS EXPLICIT AND LOAD-BEARING. body = prev_body is NULL on a first revision,
+-- so `revtype = 1 AND body = prev_body AND kits_in_rev > 1` is NULL rather than false, and a
+-- bare `FILTER (WHERE NOT is_collateral)` silently drops those rows from BOTH branches. That
+-- accident produced the right answer for the 654 for the wrong reason. It is now spelled out.
 --
 -- WHY PLAIN SQL. Doing this through the application would audit updated_at and create 2,116
 -- MORE revisions - fixing the symptom by adding to the cause. Direct SQL bypasses Envers.
@@ -73,7 +94,11 @@ WITH seq AS (
       FROM kit_audit_trail k
 )
 SELECT id, rev, updated_at, kits_in_rev,
-       (revtype = 1 AND body = prev_body AND kits_in_rev > 1) AS is_collateral
+       COALESCE(revtype = 1 AND body = prev_body AND kits_in_rev > 1, false) AS is_collateral,
+       -- Can this revision be read as evidence of a real change? A first revision has no
+       -- predecessor, so the body comparison cannot speak for it - but a creation always can,
+       -- and a revision that touched only this kit was nobody's collateral.
+       (revtype = 0 OR prev_body IS NOT NULL OR kits_in_rev = 1)             AS attributable
   FROM seq;
 
 CREATE INDEX ON collateral (id, rev);
@@ -117,7 +142,7 @@ WITH newest AS (
     SELECT DISTINCT ON (id) id, is_collateral FROM collateral ORDER BY id, rev DESC
 ),
 truth AS (
-    SELECT id, max(updated_at) FILTER (WHERE NOT is_collateral) AS true_updated
+    SELECT id, max(updated_at) FILTER (WHERE attributable AND NOT is_collateral) AS true_updated
       FROM collateral GROUP BY id
 )
 SELECT k.id                                              AS kit_id,
@@ -125,7 +150,7 @@ SELECT k.id                                              AS kit_id,
        COALESCE(t.true_updated, k.created_at)             AS new_updated_at,
        CASE WHEN t.true_updated IS NOT NULL
             THEN 'last non-collateral revision'
-            ELSE 'created_at (every revision was collateral)' END AS source,
+            ELSE 'created_at (trail holds no attributable real change)' END AS source,
        now()                                             AS backed_up_at
   FROM kits k
   JOIN newest n ON n.id = k.id
