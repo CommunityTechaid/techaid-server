@@ -17,8 +17,10 @@
 --
 -- ---------------------------------------------------------------------------------------
 -- Thresholds and sentinels are mirrored from gdpr.performgdprcleanup() as shipped in
--- V26.08.12.1100__gdpr_retention_policy_corrections.sql. Each check below is the inverse of
--- one UPDATE in that function. If you change the function, change the matching check here.
+-- V26.08.12.1100__gdpr_retention_policy_corrections.sql, with the referee scope as corrected
+-- by V26.08.13.1200__gdpr_fix_referee_retention_activity_scope.sql. Each check below is the
+-- inverse of one UPDATE in that function. If you change the function, change the matching
+-- check here.
 --
 --   donors (+ donors_audit_trail)          12 months   'Donor - Erased due to GDPR policy'
 --   kits.coordinates                       12 months   NULL (jsonb - no sentinel)
@@ -27,12 +29,23 @@
 --   device_requests.collection_contact_name 52 weeks   'WIPED - GDPR'
 --   device_requests_notes.content          52 weeks    'Note content deleted due to GDPR policy'
 --   referring_organisation_contacts        12 months   'Contact - Erased due to GDPR policy'
+--                                          measured from LAST ACTIVITY, not updated_at
 --   all three audit trails                 live row past threshold OR live row already wiped
 --
 -- NOTE ON device_requests_notes: 52 weeks is CORRECT. The team's retention spreadsheet
 -- ("GDPR data removal review 26-08-11.xlsx", sheet "Requests", row 5) says 12 months. The
 -- 26-week figure written in #98, #96, #126 and PR #130 predates the spreadsheet and was
 -- never reconciled to it. Do not "fix" this to 26 weeks - see note 0 of V26.08.12.1100.
+--
+-- NOTE ON referring contacts: the clock is LAST ACTIVITY, not the contact row's updated_at.
+-- referring_organisation_contacts.updated_at only moves when the contact record itself is
+-- edited, so a referee who has referred continuously for years but whose own details have
+-- not been retyped looks stale on every run. V26.08.13.1200 corrected the function to take
+-- greatest(c.updated_at, max(device-request activity), c.created_at) instead, mirroring
+-- gdpr.donors_to_archive. Checks 11 and 12 tracked the old naive predicate until 2026-08-18
+-- and reported 17 live contacts + 7 audit rows as outstanding when the function was right to
+-- spare every one of them - the same 17 the 2026-08-13 restore put back. A verification
+-- script that lags the function manufactures false breaches; keep them in step.
 -- ---------------------------------------------------------------------------------------
 
 \pset pager off
@@ -48,6 +61,25 @@ WITH donor_backlog AS (
      WHERE d.name <> 'Donor - Erased due to GDPR policy'
      GROUP BY d.id, d.created_at, d.name
     HAVING COALESCE(max(k.created_at), d.created_at) <= CURRENT_DATE - INTERVAL '12 months'
+),
+
+-- Mirrors gdpr.referring_contacts_to_archive as corrected by V26.08.13.1200. Deliberately
+-- recomputed from public tables rather than selecting from that view, so this script stays
+-- runnable by a role with no access to the gdpr schema and stays an INDEPENDENT check of the
+-- policy rather than a restatement of the view the job itself trusts.
+--
+-- No full_name filter here, matching the view: check 11 adds it for live rows, check 12 needs
+-- the unfiltered set because the function's audit UPDATE fires on "in the view OR already
+-- erased".
+referee_backlog AS (
+    SELECT c.id
+      FROM referring_organisation_contacts c
+      LEFT JOIN device_requests d ON d.referring_organisation_contact_id = c.id
+     GROUP BY c.id, c.updated_at, c.created_at
+    HAVING greatest(
+               c.updated_at,
+               COALESCE(max(greatest(d.created_at, d.updated_at)), c.created_at)
+           ) <= CURRENT_DATE - INTERVAL '12 months'
 )
 SELECT * FROM (
     SELECT 1 AS ord, 'donors past 12m still holding personal data' AS check, count(*) AS outstanding
@@ -113,15 +145,15 @@ SELECT * FROM (
           WHERE updated_at <= CURRENT_DATE - INTERVAL '52 weeks'
             AND content <> 'Note content deleted due to GDPR policy')
 
-    UNION ALL SELECT 11, 'referring_organisation_contacts past 12 months',
-        (SELECT count(*) FROM referring_organisation_contacts
-          WHERE updated_at <= CURRENT_DATE - INTERVAL '12 months'
-            AND full_name <> 'Contact - Erased due to GDPR policy')
+    UNION ALL SELECT 11, 'referring contacts with no activity for 12 months',
+        (SELECT count(*) FROM referring_organisation_contacts c
+          WHERE c.id IN (SELECT id FROM referee_backlog)
+            AND c.full_name <> 'Contact - Erased due to GDPR policy')
 
     UNION ALL SELECT 12, 'AUDIT referring contacts where live row is wiped or past 12 months',
         (SELECT count(*) FROM referring_organisation_contacts_audit_trail cat
            JOIN referring_organisation_contacts c ON c.id = cat.id
-          WHERE (c.updated_at <= CURRENT_DATE - INTERVAL '12 months'
+          WHERE (c.id IN (SELECT id FROM referee_backlog)
                  OR c.full_name = 'Contact - Erased due to GDPR policy')
             AND cat.full_name <> 'Contact - Erased due to GDPR policy')
 
