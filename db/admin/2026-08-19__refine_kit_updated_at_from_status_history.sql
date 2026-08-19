@@ -169,6 +169,23 @@ SELECT id, status, old_updated_at, new_updated_at,
 -- ---------------------------------------------------------------------------------------
 \echo ''
 \echo '=== BACKUP: building kit_updated_at_refine_backup_20260819 ==='
+
+-- Re-running after a successful apply finds nothing in scope, so the CREATE below would
+-- rebuild this table EMPTY and the run would then abort - having already destroyed the only
+-- rollback for the previous run. Found by re-running against UAT on 2026-08-19. Refuse to
+-- touch a backup that still holds rows; an empty leftover from an aborted run is safe to drop.
+DO $$
+DECLARE n bigint;
+BEGIN
+    IF to_regclass('public.kit_updated_at_refine_backup_20260819') IS NOT NULL THEN
+        EXECUTE 'SELECT count(*) FROM kit_updated_at_refine_backup_20260819' INTO n;
+        IF n > 0 THEN
+            RAISE EXCEPTION 'ABORT: kit_updated_at_refine_backup_20260819 already holds % rows - it is the rollback for a previous run. Rename or drop it deliberately before re-running.', n;
+        END IF;
+        RAISE NOTICE 'dropping an empty leftover backup table';
+    END IF;
+END $$;
+
 DROP TABLE IF EXISTS kit_updated_at_refine_backup_20260819;
 
 CREATE TABLE kit_updated_at_refine_backup_20260819 AS
