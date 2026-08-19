@@ -16,6 +16,7 @@ import cta.app.services.BlockingFlagGuardService
 import cta.app.services.BlockingFlagSetException
 import cta.app.services.FilterService
 import cta.app.services.MailService
+import cta.app.services.RefereeRequestLimitService
 import cta.app.services.WipeCertGuardService
 import cta.app.services.WipeCertMissingException
 import cta.toNullable
@@ -113,6 +114,7 @@ class DeviceRequestMutations(
     private val kits: KitRepository,
     private val wipeCertGuard: WipeCertGuardService,
     private val blockingFlagGuard: BlockingFlagGuardService,
+    private val refereeRequestLimits: RefereeRequestLimitService,
 ) {
     @MutationMapping
     fun createDeviceRequest(
@@ -122,10 +124,14 @@ class DeviceRequestMutations(
             referringOrganisationContacts.findById(data.referringOrganisationContact).toNullable()
                 ?: throw EntityNotFoundException("No referring contact found with id: ${data.referringOrganisationContact}")
 
-        // Throw an exception if DEVICE_REQUEST_LIMIT is reached
-        if (referringOrganisationContact.requestCount >= DEVICE_REQUEST_LIMIT) {
+        // The per-referee cap is now set per borough group and counted per borough group, so both
+        // the number and what it is counted against come from the request's borough. See
+        // RefereeRequestLimitService — including why the count had to move with the limit.
+        val requestLimit = refereeRequestLimits.resolve(referringOrganisationContact, data.borough)
+        if (requestLimit.exceeded) {
             throw ExceededDeviceRequestLimitException(
-                "Could not create new requests. This user already has ${DEVICE_REQUEST_LIMIT} requests open",
+                "Could not create new requests. This user already has ${requestLimit.open} " +
+                    "requests open in ${requestLimit.scope} (limit ${requestLimit.limit})",
             )
         }
 
@@ -257,9 +263,10 @@ class DeviceRequestMutations(
         return true
     }
 
-    companion object {
-        const val DEVICE_REQUEST_LIMIT = 3
-    }
+    // DEVICE_REQUEST_LIMIT used to live here as a global `const val 3`. The cap is now per borough
+    // group, configured from the admin screen; the same number survives as DEFAULT_REQUEST_LIMIT in
+    // RefereeRequestLimitService, which applies only where no group governs the request. Keeping a
+    // second constant here would give the codebase two answers to "what is the limit?".
 }
 
 data class CreateDeviceRequestInput(

@@ -48,3 +48,7 @@ POST-MIGRATION-CLEANUP.md
 .security-notes.md
 .azure/
 .claude/scheduled_tasks.lock
+
+# Cloudflare API token — never commit
+cf.token
+*.token

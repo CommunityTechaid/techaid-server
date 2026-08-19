@@ -2,7 +2,6 @@ package cta.app
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import cta.app.services.Coordinates
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
@@ -67,10 +66,6 @@ class Kit(
     @Column(columnDefinition = "jsonb")
     @NotAudited
     var attributes: KitAttributes = KitAttributes(),
-    @NotAudited
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    var coordinates: Coordinates? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "donor_id")
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)

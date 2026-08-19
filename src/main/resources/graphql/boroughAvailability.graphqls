@@ -1,0 +1,114 @@
+"""
+Which device types are offered in a borough, already resolved.
+
+This is the PUBLIC shape and it is keyed by borough, not by borough group: the request form knows
+which borough a postcode resolved to and should not have to know that Lambeth and Southwark are
+administered as one record. Groups are an admin concept and stay on the admin side of the fence.
+
+`offered` is resolved server-side. The browser is never given raw modes to interpret, because
+resolving AUTO means reading a stock signal that only the server could have.
+"""
+type BoroughAvailability {
+    "Borough name, spelled as ONS spells it - the same value stored on a device request."
+    borough: String!
+    "Device type keys currently offered, e.g. [\"laptops\"]. Empty means nothing is on offer."
+    offered: [String!]!
+    """
+    Requests one referee may have open here, counted across this borough's group only.
+    Enforced server-side by createDeviceRequest while the borough-availability-rules flag is on;
+    while it is off this whole query returns an empty list and a global cap of 3 applies.
+    """
+    maxPerReferee: Int!
+    """
+    Device types set to AUTO, which currently resolve to closed because nothing computes the
+    stock signal AUTO needs. Surfaced so an admin can see that a mode they selected is inert
+    rather than wondering why an 'open' borough offers nothing.
+    """
+    unresolvedAuto: [String!]!
+}
+
+"A set of boroughs configured as one unit. Admin-facing."
+type BoroughGroup {
+    id: ID!
+    name: String!
+    "Boroughs in this group. A borough belongs to at most one group."
+    boroughs: [String!]!
+    "LIVE, PILOT or DRAFT. Descriptive - nothing branches on it."
+    status: String!
+    maxPerReferee: Int!
+    availability: [DeviceAvailability!]!
+    updatedAt: String
+}
+
+"One device type's mode within a group."
+type DeviceAvailability {
+    "A device type key: phones, tablets, laptops, allInOnes, desktops, commsDevices, broadbandHubs, other."
+    deviceType: String!
+    "ON, OFF or AUTO. AUTO is stored but not implemented - it resolves to closed."
+    mode: String!
+}
+
+"An organisation-specific override of a group's maxPerReferee. Exceptions only."
+type ReferrerLimitException {
+    id: ID!
+    organisationId: ID!
+    organisationName: String!
+    boroughGroupId: ID!
+    maxPerReferee: Int!
+}
+
+input DeviceAvailabilityInput {
+    deviceType: String!
+    mode: String!
+}
+
+input BoroughGroupInput {
+    "Omit to create a new group."
+    id: ID
+    name: String!
+    boroughs: [String!]!
+    status: String!
+    maxPerReferee: Int!
+    availability: [DeviceAvailabilityInput!]!
+}
+
+input ReferrerLimitExceptionInput {
+    organisationId: ID!
+    boroughGroupId: ID!
+    maxPerReferee: Int!
+}
+
+"""
+The whole configuration, saved in one call.
+
+The admin screen stages edits and commits them with a single Save, so the mutation takes the
+complete intended state rather than a stream of per-cell updates. That makes a half-applied
+configuration impossible: either every change lands or none does. Groups absent from `groups` are
+deleted, as are exceptions absent from `exceptions`.
+"""
+input SaveBoroughAvailabilityInput {
+    groups: [BoroughGroupInput!]!
+    exceptions: [ReferrerLimitExceptionInput!]!
+}
+
+extend type Query {
+    """
+    Public: what each borough currently offers. No auth required - the device request form is
+    unauthenticated and needs this to filter its own device list, exactly as featureFlagsPublic
+    lets it gate itself.
+
+    Empty while the borough-availability-rules flag is off, which clients already read as "no
+    restriction recorded". The admin queries below are NOT gated by that flag and always return
+    the full configuration.
+    """
+    boroughAvailabilityPublic: [BoroughAvailability!]!
+    "All borough groups with their raw modes (admin)."
+    boroughGroups: [BoroughGroup!]!
+    "Per-organisation limit overrides (admin)."
+    referrerLimitExceptions: [ReferrerLimitException!]!
+}
+
+extend type Mutation {
+    "Replace the borough availability configuration wholesale (admin)."
+    saveBoroughAvailability(data: SaveBoroughAvailabilityInput!): [BoroughGroup!]!
+}

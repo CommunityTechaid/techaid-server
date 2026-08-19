@@ -1,0 +1,29 @@
+-- Retires the `gdpr-in-app-cleanup` feature flag. The switchover it guarded is now permanent:
+-- GdprDonorCleanup no longer reads a flag, so this row is dead configuration that would
+-- otherwise keep offering an off switch the code has stopped honouring.
+--
+-- WHY REMOVE IT AT ALL. The flag existed to stage the 2026-08-12 cutover from the pg_cron job
+-- to the in-app job — seeded OFF (V26.08.11.1450) until techaid_admin had granted the app
+-- roles what gdpr.performgdprcleanup() needs. That staging is finished: the grants are in
+-- place in UAT and production, the in-app job has run there, and the pg_cron job was deleted
+-- on 2026-08-18. Keeping a switch whose OFF position now means "no retention anywhere, with
+-- nothing to notice" is worse than not having one.
+--
+-- ROLLBACK HAZARD — READ THIS BEFORE PINNING AN OLDER IMAGE. Images built before 2026-08-18
+-- still read this flag and fail CLOSED when the row is missing. Rolling production back to one
+-- of them after this migration has run therefore stops retention silently. If that happens,
+-- put the row back:
+--
+--     insert into feature_flags (flag_key, enabled, updated_at)
+--     values ('gdpr-in-app-cleanup', true, now())
+--     on conflict (flag_key) do update set enabled = true, updated_at = now();
+--
+-- Note `enabled = true`: V26.08.11.1450 seeded it false, which is the wrong value to restore
+-- into an environment that has been performing retention for weeks.
+--
+-- The dashboard carries a hard-coded metadata entry for this key in
+-- feature-flags.component.ts. It decorates rows returned by the API rather than driving them,
+-- so the flags page keeps working with the row gone; the entry is simply dead and should be
+-- removed on the dashboard's own schedule.
+
+delete from feature_flags where flag_key = 'gdpr-in-app-cleanup';

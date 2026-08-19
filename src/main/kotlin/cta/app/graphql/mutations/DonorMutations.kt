@@ -5,7 +5,6 @@ import cta.app.DonorParentRepository
 import cta.app.DonorRepository
 import cta.app.QDonor
 import cta.app.services.FilterService
-import cta.app.services.LocationService
 import cta.toNullable
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
@@ -24,7 +23,6 @@ import org.springframework.validation.annotation.Validated
 class DonorMutations(
     private val donors: DonorRepository,
     private val donorParents: DonorParentRepository,
-    private val locationService: LocationService,
     private val filterService: FilterService,
 ) {
     @MutationMapping
@@ -38,9 +36,6 @@ class DonorMutations(
             }
         }
         val donor = donors.save(data.entity)
-        if (donor.postCode.isNotBlank()) {
-            donor.coordinates = locationService.findCoordinates(donor.postCode)
-        }
 
         if (data.donorParentId != null) {
             val donorParent =
@@ -60,10 +55,6 @@ class DonorMutations(
             donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(data.id))).toNullable()
                 ?: throw EntityNotFoundException("Unable to locate a donor with id: ${data.id}")
         return data.apply(entity).apply {
-            if (postCode.isNotBlank() && (coordinates == null || coordinates?.input != postCode)) {
-                coordinates = locationService.findCoordinates(postCode)
-            }
-
             if (data.donorParentId == null) {
                 donorParent?.removeDonor(this)
             } else if (data.donorParentId != donorParent?.id) {
@@ -83,7 +74,11 @@ class DonorMutations(
         val donor =
             donors.findOne(filterService.donorFilter().and(QDonor.donor.id.eq(id))).toNullable()
                 ?: throw EntityNotFoundException("No donor with id: $id")
-        donor.kits.forEach { donor.removeKit(it) }
+        // Iterate a snapshot: removeKit runs removeIf on `kits`, and mutating the set being
+        // walked throws ConcurrentModificationException. It needs two or more kits to trip -
+        // a HashSet iterator only checks modCount inside next(), so removing the sole element
+        // is never noticed. That is why this survived: most donors have one device.
+        donor.kits.toList().forEach { donor.removeKit(it) }
         donors.delete(donor)
         return true
     }

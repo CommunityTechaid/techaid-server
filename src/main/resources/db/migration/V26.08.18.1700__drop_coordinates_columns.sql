@@ -1,0 +1,31 @@
+-- #161 deploy 2: drops the persisted coordinates columns from donors and kits.
+--
+-- DO NOT SHIP THIS IN THE SAME RELEASE AS THE CODE THAT STOPPED USING THEM (deploy 1,
+-- V26.08.18 code changes). Production runs ddl-auto=none, so a mismatch between entity and
+-- table does not fail at boot - it fails at RUNTIME, on the first query Hibernate builds for
+-- the missing column. Dropping the columns alongside the code that stops selecting them means
+-- any rollback to the previous image lands exactly there, on every donor and kit read.
+--
+-- PRE-FLIGHT, in order:
+--   1. deploy 1 promoted to production and confirmed healthy
+--   2. gdpr.performgdprcleanup() no longer references coordinates - V26.08.18.1600 in fresh
+--      databases, db/admin/2026-08-18__admin_apply_gdpr_drop_coordinates_scrub.sql applied by
+--      techaid_admin in UAT and production. A plpgsql body resolves columns at execution, so a
+--      stale function fails the next retention run rather than this migration.
+--   3. a logical dump taken. Recovery for a dropped column is PITR only (35-day window), and
+--      PITR restores a whole server rather than one table.
+--
+-- WHAT IS LOST. 16 production donor rows still hold a real payload; kits hold none. The values
+-- are a geocode of a postcode we still have, so nothing here is irreplaceable - and the reason
+-- for the drop is precisely that they are personal data (input is the raw donor postcode,
+-- address is Google's formatted version of it, which for an individual donor is a home address)
+-- with no consumer.
+--
+-- AFTERWARDS: Superset's kits dataset carries an auto-introspected column row for coordinates
+-- (superset_prod.table_columns id 24). No chart, saved query or dashboard uses it, so nothing
+-- breaks, but the dataset wants a "Sync columns from source" so the stale entry goes.
+--
+-- Guarded with IF EXISTS so it is a no-op in any database that never had them.
+
+alter table if exists donors drop column if exists coordinates;
+alter table if exists kits   drop column if exists coordinates;

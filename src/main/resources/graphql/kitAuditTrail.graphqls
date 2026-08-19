@@ -13,6 +13,22 @@ type KitRevision {
     entity: Kit
     revision: CustomRevisionInfo,
     type: String
+    """
+    True when this revision changed no audited column except updatedAt - the row records that
+    the device was written, not that anything about it moved.
+
+    Read it together with siblingKitsInRevision. Both true and non-zero together is #148
+    collateral: the device was dragged into someone else's transaction and rewritten untouched.
+    True with zero siblings is a real edit to KitAttributes (notes, state, credentials,
+    network), which is @NotAudited and so invisible here - do not hide those.
+    """
+    changedNothingAudited: Boolean!
+    """
+    How many OTHER kits were written in the same revision. Zero for an ordinary single-device
+    edit. 83,179 audit rows carry a non-zero value here from #148, one revision of which
+    rewrote 2,927 kits at once.
+    """
+    siblingKitsInRevision: Int!
 }
 
 "A representation of a page result from a query"
