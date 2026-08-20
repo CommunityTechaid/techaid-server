@@ -2,6 +2,8 @@ package cta.app.graphql.mutations
 
 import cta.app.DeliveryBlockedDate
 import cta.app.DeliveryBlockedDateRepository
+import cta.app.DeliveryBookingOverride
+import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryConfigRepository
 import cta.app.DeliveryWindow
@@ -13,6 +15,7 @@ import cta.app.graphql.queries.DeliveryConfigGql
 import cta.app.graphql.queries.DeliveryWindowAdminGql
 import cta.app.graphql.queries.toAdminGql
 import cta.app.graphql.queries.toGql
+import cta.app.services.FilterService
 import cta.toNullable
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
@@ -47,6 +50,8 @@ class DeliveryAdminMutations(
     private val blockedDates: DeliveryBlockedDateRepository,
     private val deviceRequests: DeviceRequestRepository,
     private val bookings: DeliveryBookingRepository,
+    private val overrides: DeliveryBookingOverrideRepository,
+    private val filterService: FilterService,
 ) {
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
@@ -126,7 +131,9 @@ class DeliveryAdminMutations(
      * Deleting a booking does not unwind what it wrote onto the linked device request, so a
      * delete would leave that request claiming a delivery is arranged for a date that no longer
      * exists anywhere (issue #155, Q1). Refuse while the request still shows that status, and say
-     * what to do instead — the same shape as deleteDeliveryWindow refusing a window with bookings.
+     * what to do instead — the same shape as deleteDeliveryWindow refusing a window with bookings
+     * — unless the caller opts in via [clearRequestDelivery], in which case the request is
+     * unwound in the same transaction rather than left half-pointing at a deleted booking.
      *
      * Deliberately narrow: only a request still sitting in PROCESSING_COLLECTION_DELIVERY_ARRANGED
      * is protected. Unmatched bookings, and bookings whose request staff have already moved on,
@@ -137,6 +144,7 @@ class DeliveryAdminMutations(
     @MutationMapping
     fun deleteDeliveryBooking(
         @Argument id: String,
+        @Argument clearRequestDelivery: Boolean? = false,
     ): Boolean {
         val bookingId = id.toLongOrNull() ?: return false
         // A missing booking stays a silent no-op returning true, matching deleteById's behaviour
@@ -145,13 +153,54 @@ class DeliveryAdminMutations(
         if (booking != null) {
             val linked = deviceRequests.findById(booking.ctaReference).toNullable()
             if (linked?.status == DeviceRequestStatus.PROCESSING_COLLECTION_DELIVERY_ARRANGED) {
-                throw DeliveryAdminException(
-                    "Device request ${linked.id} still shows a delivery as arranged for this booking. " +
-                        "Update that request's status first, then delete the booking.",
-                )
+                if (clearRequestDelivery != true) {
+                    throw DeliveryAdminException(
+                        "Device request ${linked.id} still shows a delivery as arranged for this booking. " +
+                            "Update that request's status first, then delete the booking.",
+                    )
+                }
+                // Rolled back to PROCESSING_EQUALITIES_DATA_COMPLETE: the status that immediately
+                // precedes PROCESSING_COLLECTION_DELIVERY_ARRANGED in the normal flow (see
+                // DeviceRequestService.markRequestStepsCompleted, the only other place that sets
+                // it) — i.e. "processed, awaiting a collection/delivery method", which is exactly
+                // what unwinding an arranged delivery leaves the request as.
+                linked.status = DeviceRequestStatus.PROCESSING_EQUALITIES_DATA_COMPLETE
+                linked.collectionDate = null
+                linked.collectionMethod = null
+                linked.collectionContactName = null
+                deviceRequests.save(linked)
             }
         }
         bookings.deleteById(bookingId)
+        return true
+    }
+
+    /**
+     * Grants a one-off exemption from the one-booking-per-CTA-reference rule enforced in
+     * DeliveryMutations. Idempotent: granting again while an unconsumed override already exists
+     * for this reference does nothing rather than erroring or stacking a second exemption — the
+     * rule only ever checks for the *existence* of an unconsumed row, not a count.
+     */
+    @PreAuthorize("hasAnyAuthority('write:organisations')")
+    @MutationMapping
+    fun allowAdditionalDeliveryBooking(
+        @Argument ctaReference: Long,
+        @Argument note: String?,
+    ): Boolean {
+        if (overrides.findFirstByCtaReferenceAndConsumedAtIsNull(ctaReference) != null) return true
+        val createdBy =
+            filterService
+                .userDetails()
+                .name
+                .ifBlank { filterService.userDetails().email }
+                .takeIf { it.isNotBlank() }
+        overrides.save(
+            DeliveryBookingOverride(
+                ctaReference = ctaReference,
+                note = note,
+                createdBy = createdBy,
+            ),
+        )
         return true
     }
 

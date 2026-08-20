@@ -112,6 +112,31 @@ class DeliveryBooking(
     var createdAt: Instant = Instant.now(),
 )
 
+/**
+ * A one-off, staff-granted exemption from the one-booking-per-CTA-reference rule. An unconsumed
+ * row (`consumedAt == null`) lets exactly one extra booking through for [ctaReference]; the
+ * booking that uses it stamps [consumedAt] so the exemption cannot be reused.
+ */
+@Entity
+@Table(name = "delivery_booking_overrides")
+class DeliveryBookingOverride(
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "delivery_booking_overrides-seq-generator")
+    @SequenceGenerator(
+        name = "delivery_booking_overrides-seq-generator",
+        sequenceName = "delivery_booking_overrides_sequence",
+        allocationSize = 1,
+    )
+    var id: Long = 0,
+    var ctaReference: Long = 0,
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now(),
+    var createdBy: String? = null,
+    @Column(columnDefinition = "TEXT")
+    var note: String? = null,
+    var consumedAt: Instant? = null,
+)
+
 interface DeliveryConfigRepository : JpaRepository<DeliveryConfig, Long> {
     /** The delivery config is a singleton row (id = 1). */
     @Query("SELECT * FROM delivery_config WHERE id = 1", nativeQuery = true)
@@ -159,15 +184,14 @@ interface DeliveryBookingRepository :
     ): List<DeliveryBooking>
 
     /**
-     * Backs the one-upcoming-booking-per-reference policy: true if a booking with this
-     * ctaReference exists on or after the given date. Past/delivered bookings never match, so
-     * they never block a new submission. Since ctaReference became a bigint (V26.08.13.1500)
-     * this is plain equality — there is no longer any case or whitespace to normalise away.
+     * Backs the one-booking-per-reference policy: true if *any* booking with this ctaReference
+     * exists, past or future. Team decision: a delivered booking still counts, because the
+     * reference has already been used once — a fresh one needs a staff-granted
+     * [DeliveryBookingOverride], not just the calendar moving on. Since ctaReference became a
+     * bigint (V26.08.13.1500) this is plain equality — there is no case or whitespace to
+     * normalise away.
      */
-    fun existsByCtaReferenceAndDeliveryDateGreaterThanEqual(
-        ctaReference: Long,
-        deliveryDate: LocalDate,
-    ): Boolean
+    fun existsByCtaReference(ctaReference: Long): Boolean
 
     /**
      * Postgres advisory transaction lock keyed on the ctaReference. Serialises concurrent
@@ -179,4 +203,16 @@ interface DeliveryBookingRepository :
     fun acquireReferenceLock(
         @Param("key") key: String,
     )
+}
+
+interface DeliveryBookingOverrideRepository : JpaRepository<DeliveryBookingOverride, Long> {
+    /** The unconsumed override for a reference, if any — at most one can exist at a time. */
+    fun findFirstByCtaReferenceAndConsumedAtIsNull(ctaReference: Long): DeliveryBookingOverride?
+
+    /**
+     * Unconsumed overrides for a batch of references in one query, so
+     * `deliveryBookingsAdmin.additionalBookingAllowed` can resolve for a whole page without an
+     * N+1 lookup per row.
+     */
+    fun findAllByCtaReferenceInAndConsumedAtIsNull(ctaReferences: Collection<Long>): List<DeliveryBookingOverride>
 }

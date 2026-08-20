@@ -2,10 +2,15 @@ package cta.app.graphql.mutations
 
 import cta.app.CollectionMethod
 import cta.app.DeliveryBooking
+import cta.app.DeliveryBookingOverride
+import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
+import cta.app.FeatureFlag
+import cta.app.FeatureFlagRepository
+import cta.app.services.BoroughAvailabilityRules
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -46,6 +51,9 @@ class DeliveryMutationsTest {
     lateinit var bookingRepository: DeliveryBookingRepository
 
     @Autowired
+    lateinit var overrideRepository: DeliveryBookingOverrideRepository
+
+    @Autowired
     lateinit var windowRepository: DeliveryWindowRepository
 
     @Autowired
@@ -53,6 +61,9 @@ class DeliveryMutationsTest {
 
     @Autowired
     lateinit var jdbcTemplate: JdbcTemplate
+
+    @Autowired
+    lateinit var featureFlags: FeatureFlagRepository
 
     private fun graphQl(query: String): ResultActions =
         mockMvc.perform(
@@ -80,14 +91,16 @@ class DeliveryMutationsTest {
     private fun seedDeviceRequest(
         id: Long,
         status: String,
+        borough: String? = null,
     ) {
         jdbcTemplate.update(
             """
-            insert into device_requests (id, is_prepped, is_sales, status, created_at, updated_at)
-            values (?, false, false, ?, now(), now())
+            insert into device_requests (id, is_prepped, is_sales, status, borough, created_at, updated_at)
+            values (?, false, false, ?, ?, now(), now())
             """.trimIndent(),
             id,
             status,
+            borough,
         )
     }
 
@@ -173,8 +186,14 @@ class DeliveryMutationsTest {
             )
     }
 
+    /**
+     * Changed 2026-08-20: this test used to be named "does not block ... when ... in the past"
+     * and asserted success. Team decision (sheet row 7) reversed that rule — a past booking now
+     * blocks a new one exactly like an upcoming one, because the reference has already been used
+     * once; a fresh booking needs a staff-granted override, not just the calendar moving on.
+     */
     @Test
-    fun `does not block a new booking when the existing one for that reference is in the past`() {
+    fun `blocks a new booking when the existing one for that reference is in the past`() {
         val window1 = windowRepository.findById(1L).orElseThrow()
         bookingRepository.save(
             DeliveryBooking(
@@ -191,8 +210,57 @@ class DeliveryMutationsTest {
 
         graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = 950020L))
             .andExpect(status().isOk)
+            .andExpect(
+                jsonPath("$.errors[0].message")
+                    .value(
+                        "You already have an upcoming delivery booked. If you need to change it, " +
+                            "please call us on 020 3488 7742.",
+                    ),
+            )
+    }
+
+    /**
+     * A staff-granted DeliveryBookingOverride lets exactly one more booking through for a
+     * reference that already has one, then is consumed so it cannot be reused.
+     */
+    @Test
+    fun `an unconsumed override lets a second booking through and is then consumed`() {
+        val window1 = windowRepository.findById(1L).orElseThrow()
+        val ctaReference = 950030L
+        bookingRepository.save(
+            DeliveryBooking(
+                deliveryDate = LocalDate.now().minusDays(7),
+                window = window1,
+                firstName = "Past",
+                surname = "Booker",
+                email = "past@example.org",
+                phone = "07123456789",
+                address = "1 Test Street, London SW9 8PR",
+                ctaReference = ctaReference,
+            ),
+        )
+        val override = overrideRepository.save(DeliveryBookingOverride(ctaReference = ctaReference, note = "test"))
+
+        // Day 3 (untouched by any other test in this class) so this test's capacity accounting
+        // can't collide with anything else's.
+        graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "1", ctaReference = ctaReference))
+            .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+
+        val consumed = overrideRepository.findById(override.id).orElseThrow()
+        assertEquals(true, consumed.consumedAt != null)
+
+        // The override is spent: a third booking for the same reference is blocked again.
+        graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "2", ctaReference = ctaReference))
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath("$.errors[0].message")
+                    .value(
+                        "You already have an upcoming delivery booked. If you need to change it, " +
+                            "please call us on 020 3488 7742.",
+                    ),
+            )
     }
 
     @Test
@@ -266,5 +334,89 @@ class DeliveryMutationsTest {
 
         val updated = deviceRequestRepository.findById(requestId).orElseThrow()
         assertEquals(DeviceRequestStatus.REQUEST_COMPLETED, updated.status)
+    }
+
+    /**
+     * Borough gate (sheet row 18), gated behind borough-availability-rules. Flyway seeds two
+     * live groups covering "Lambeth", "Southwark" and "Tower Hamlets" (V26.08.14.2100) — reused
+     * here rather than inventing test-only groups, so these tests exercise the real matching
+     * RefereeRequestLimitService.groupFor performs.
+     */
+    @Test
+    fun `with the flag on, a covered borough is allowed`() {
+        featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = true))
+        try {
+            val requestId = 904320L
+            seedDeviceRequest(requestId, "NEW", borough = "Lambeth")
+
+            // Day 3, untouched by any other test in this class, so capacity accounting can't
+            // collide with anything else's.
+            graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "1", ctaReference = requestId))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+        } finally {
+            featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = false))
+        }
+    }
+
+    @Test
+    fun `with the flag on, a borough matching no group is refused`() {
+        featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = true))
+        try {
+            val requestId = 904321L
+            seedDeviceRequest(requestId, "NEW", borough = "Westminster")
+
+            graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = requestId))
+                .andExpect(status().isOk)
+                .andExpect(
+                    jsonPath("$.errors[0].message")
+                        .value(containsString("020 3488 7742")),
+                )
+        } finally {
+            featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = false))
+        }
+    }
+
+    @Test
+    fun `with the flag on, a blank borough fails open`() {
+        featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = true))
+        try {
+            val requestId = 904322L
+            seedDeviceRequest(requestId, "NEW", borough = null)
+
+            graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "2", ctaReference = requestId))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+        } finally {
+            featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = false))
+        }
+    }
+
+    @Test
+    fun `with the flag on, an unmatched CTA reference fails open`() {
+        featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = true))
+        try {
+            // 904399 deliberately matches no seeded device request.
+            graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "1", ctaReference = 904399L))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+        } finally {
+            featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = false))
+        }
+    }
+
+    @Test
+    fun `with the flag off, an uncovered borough is allowed, matching todays behaviour`() {
+        featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = false))
+        val requestId = 904323L
+        seedDeviceRequest(requestId, "NEW", borough = "Westminster")
+
+        graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "2", ctaReference = requestId))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
     }
 }

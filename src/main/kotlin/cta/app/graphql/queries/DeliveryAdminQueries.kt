@@ -4,6 +4,7 @@ import cta.app.CLOSED_REQUEST_STATUSES
 import cta.app.DeliveryBlockedDate
 import cta.app.DeliveryBlockedDateRepository
 import cta.app.DeliveryBooking
+import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryConfig
 import cta.app.DeliveryConfigRepository
@@ -28,6 +29,7 @@ class DeliveryAdminQueries(
     private val windows: DeliveryWindowRepository,
     private val blockedDates: DeliveryBlockedDateRepository,
     private val bookings: DeliveryBookingRepository,
+    private val overrides: DeliveryBookingOverrideRepository,
     private val deviceRequests: DeviceRequestRepository,
     private val delivery: DeliveryService,
 ) {
@@ -60,7 +62,17 @@ class DeliveryAdminQueries(
             }
         val referencedIds = rows.map { it.ctaReference }.distinct()
         val matchedRequestsById = deviceRequests.findAllById(referencedIds).associateBy { it.id }
-        return rows.map { it.toAdminGql(delivery.dayLabel(it.deliveryDate), matchedRequestsById) }
+        // Resolved for the whole page in one query rather than per row, which would be an N+1
+        // across every booking on the screen.
+        val referencesWithUnconsumedOverride =
+            overrides.findAllByCtaReferenceInAndConsumedAtIsNull(referencedIds).map { it.ctaReference }.toSet()
+        return rows.map {
+            it.toAdminGql(
+                delivery.dayLabel(it.deliveryDate),
+                matchedRequestsById,
+                it.ctaReference in referencesWithUnconsumedOverride,
+            )
+        }
     }
 }
 
@@ -106,6 +118,7 @@ data class DeliveryBookingAdminGql(
     val matchedRequestId: String?,
     val matchedRequestStatus: String?,
     val matchedRequestOpen: Boolean?,
+    val additionalBookingAllowed: Boolean,
 )
 
 fun DeliveryConfig.toGql(): DeliveryConfigGql =
@@ -136,6 +149,7 @@ fun DeliveryBlockedDate.toGql(): DeliveryBlockedDateGql =
 fun DeliveryBooking.toAdminGql(
     dayLabel: String,
     matchedRequestsById: Map<Long, DeviceRequest> = emptyMap(),
+    additionalBookingAllowed: Boolean = false,
 ): DeliveryBookingAdminGql {
     val matchedRequest = matchedRequestsById[ctaReference]
     return DeliveryBookingAdminGql(
@@ -154,5 +168,6 @@ fun DeliveryBooking.toAdminGql(
         matchedRequestId = matchedRequest?.id?.toString(),
         matchedRequestStatus = matchedRequest?.status?.name,
         matchedRequestOpen = matchedRequest?.let { it.status !in CLOSED_REQUEST_STATUSES },
+        additionalBookingAllowed = additionalBookingAllowed,
     )
 }
