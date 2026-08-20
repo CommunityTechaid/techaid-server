@@ -168,7 +168,7 @@ class DeliveryMutationsTest {
                 jsonPath("$.errors[0].message")
                     .value(
                         "You already have an upcoming delivery booked. If you need to change it, " +
-                            "please call us on 020 3488 2912.",
+                            "please call us on 020 3488 7742.",
                     ),
             )
     }

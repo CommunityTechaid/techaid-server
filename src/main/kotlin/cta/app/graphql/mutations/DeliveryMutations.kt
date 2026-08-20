@@ -105,7 +105,7 @@ class DeliveryMutations(
         if (bookings.existsByCtaReferenceAndDeliveryDateGreaterThanEqual(input.ctaReference, LocalDate.now())) {
             // Phone number matches CONTACT_PHONE in DeliveryService.kt (private there, so inlined).
             throw DeliveryBookingException(
-                "You already have an upcoming delivery booked. If you need to change it, please call us on 020 3488 2912.",
+                "You already have an upcoming delivery booked. If you need to change it, please call us on 020 3488 7742.",
             )
         }
 
