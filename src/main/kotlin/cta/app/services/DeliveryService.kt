@@ -21,7 +21,7 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 private val DAY_LABEL_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ENGLISH)
-private const val CONTACT_PHONE = "020 3488 2912"
+private const val CONTACT_PHONE = "020 3488 7742"
 private val logger = KotlinLogging.logger {}
 
 /** Remaining capacity for one window on one day. */

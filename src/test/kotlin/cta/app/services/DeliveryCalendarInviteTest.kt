@@ -20,7 +20,7 @@ class DeliveryCalendarInviteTest {
         windowEndTime: String = "1:00pm",
         address: String = "Flat 2, 14 Coldharbour Lane, London SW9 8PR",
         ctaReference: String = "4298",
-        contactPhone: String = "020 3488 2912",
+        contactPhone: String = "020 3488 7742",
     ) = DeliveryCalendarInvite.build(
         bookingId = bookingId,
         deliveryDate = deliveryDate,
@@ -82,11 +82,11 @@ class DeliveryCalendarInviteTest {
 
     @Test
     fun `description includes window details, CTA reference and contact phone`() {
-        val ics = build(windowName = "Afternoon window", ctaReference = "9911", contactPhone = "020 3488 2912")
+        val ics = build(windowName = "Afternoon window", ctaReference = "9911", contactPhone = "020 3488 7742")
 
         assertTrue(ics.contains("Afternoon window"))
         assertTrue(ics.contains("CTA reference: 9911"))
-        assertTrue(ics.contains("020 3488 2912"))
+        assertTrue(ics.contains("020 3488 7742"))
     }
 
     @Test

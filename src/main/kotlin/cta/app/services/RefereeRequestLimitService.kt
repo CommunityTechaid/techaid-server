@@ -112,8 +112,11 @@ class RefereeRequestLimitService(
      * has arrived from several places over the years — the old iframe lookup, the new postcode
      * table, and hand entry. A capitalisation difference must not silently drop a referrer into
      * the fallback cap.
+     *
+     * Internal (not private): DeliveryMutations' borough-availability check reuses this exact
+     * matching rather than writing a second one.
      */
-    private fun groupFor(borough: String?): BoroughGroup? {
+    internal fun groupFor(borough: String?): BoroughGroup? {
         val wanted = borough?.trim()?.lowercase()
         if (wanted.isNullOrEmpty()) return null
         return boroughGroups.findAll().firstOrNull { group ->

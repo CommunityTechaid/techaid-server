@@ -51,6 +51,8 @@ type DeliveryBookingAdmin {
     matchedRequestStatus: String
     "True when the matched request is in an open status; null when unmatched."
     matchedRequestOpen: Boolean
+    "True when an unconsumed staff-granted DeliveryBookingOverride exists for this ctaReference."
+    additionalBookingAllowed: Boolean!
 }
 
 input UpdateDeliveryConfigInput {
@@ -93,6 +95,13 @@ extend type Mutation {
     deleteDeliveryWindow(id: ID!): Boolean!
     addDeliveryBlockedDate(data: DeliveryBlockedDateInput!): DeliveryBlockedDate!
     deleteDeliveryBlockedDate(id: ID!): Boolean!
-    "Delete a booking, freeing its slot. Intended for junk/test bookings."
-    deleteDeliveryBooking(id: ID!): Boolean!
+    """
+    Delete a booking, freeing its slot. Intended for junk/test bookings. When the linked request
+    still shows PROCESSING_COLLECTION_DELIVERY_ARRANGED, this refuses unless clearRequestDelivery
+    is true, in which case the request's collection date/method/contact are cleared and its
+    status rolled back before the booking is deleted.
+    """
+    deleteDeliveryBooking(id: ID!, clearRequestDelivery: Boolean): Boolean!
+    "Grants a one-off exemption from the one-booking-per-CTA-reference rule. Idempotent."
+    allowAdditionalDeliveryBooking(ctaReference: Long!, note: String): Boolean!
 }
