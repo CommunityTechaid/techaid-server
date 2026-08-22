@@ -158,8 +158,8 @@ class DeliveryMutations(
             val override =
                 overrides.findFirstByCtaReferenceAndConsumedAtIsNull(input.ctaReference)
                     ?: throw DeliveryBookingException(
-                        "You already have an upcoming delivery booked. If you need to change it, " +
-                            "please call us on 020 3488 7742.",
+                        "This CTA reference number has already been used to book a delivery. " +
+                            "If you need to book another, please call us on 020 3488 7742.",
                     )
             override.consumedAt = Instant.now()
             overrides.save(override)

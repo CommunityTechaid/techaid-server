@@ -32,10 +32,10 @@ import java.util.concurrent.TimeUnit
  *     row lock on the window (`findByIdForUpdate`, PESSIMISTIC_WRITE) before the read-check-insert
  *     capacity check, so concurrent submits for one window serialise on that row: a window with
  *     capacity N accepts exactly N bookings even when many submits race.
- *  2. **One upcoming booking per CTA reference.** A Postgres advisory transaction lock keyed on the
+ *  2. **One booking per CTA reference.** A Postgres advisory transaction lock keyed on the
  *     ctaReference (`acquireReferenceLock`) serialises same-ref
  *     submits — including ones aimed at *different* windows, which the per-window row lock does not
- *     cover — so the "already have an upcoming booking" check can't race: exactly one succeeds.
+ *     cover — so the "reference already used" check can't race: exactly one succeeds.
  *
  * Lock ordering (documented, not directly assertable from outside a transaction): the mutation
  * always takes the advisory ref lock BEFORE the pessimistic window row lock. That ordering is
@@ -224,8 +224,8 @@ class DeliveryBookingConcurrencyTest {
         assertThat(run.threadNames).hasSize(8)
 
         val duplicateMessage =
-            "You already have an upcoming delivery booked. If you need to change it, " +
-                "please call us on 020 3488 7742."
+            "This CTA reference number has already been used to book a delivery. " +
+                "If you need to book another, please call us on 020 3488 7742."
         val messages = run.bodies.map { errorMessage(it) }
         val successes = messages.count { it == null }
 

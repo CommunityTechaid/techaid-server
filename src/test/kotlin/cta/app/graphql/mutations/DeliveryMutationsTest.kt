@@ -180,8 +180,8 @@ class DeliveryMutationsTest {
             .andExpect(
                 jsonPath("$.errors[0].message")
                     .value(
-                        "You already have an upcoming delivery booked. If you need to change it, " +
-                            "please call us on 020 3488 7742.",
+                        "This CTA reference number has already been used to book a delivery. " +
+                            "If you need to book another, please call us on 020 3488 7742.",
                     ),
             )
     }
@@ -213,8 +213,8 @@ class DeliveryMutationsTest {
             .andExpect(
                 jsonPath("$.errors[0].message")
                     .value(
-                        "You already have an upcoming delivery booked. If you need to change it, " +
-                            "please call us on 020 3488 7742.",
+                        "This CTA reference number has already been used to book a delivery. " +
+                            "If you need to book another, please call us on 020 3488 7742.",
                     ),
             )
     }
@@ -257,8 +257,8 @@ class DeliveryMutationsTest {
             .andExpect(
                 jsonPath("$.errors[0].message")
                     .value(
-                        "You already have an upcoming delivery booked. If you need to change it, " +
-                            "please call us on 020 3488 7742.",
+                        "This CTA reference number has already been used to book a delivery. " +
+                            "If you need to book another, please call us on 020 3488 7742.",
                     ),
             )
     }
