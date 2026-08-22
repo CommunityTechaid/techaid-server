@@ -140,23 +140,40 @@ Build one from the Phase 0 commit list: for each risky commit write *what could 
 prod that could not break on UAT* (prod-only data, prod-only integrations, first-boot
 migrations) and *how you will observe it* in Phase 5.
 
-**Live example (as of 2026-07-05 — retire this block once the PR #48/#49 delta is
-promoted):** prod runs 2.1.0 / commit `3e076d8` (verified via `/actuator/info`
-2026-07-05); the pending delta carries the auth-gap fixes and the Flyway baseline:
+**Worked example — the 3.0.0 promote, 2026-08-19.** Kept as an illustration of a good
+register, not as a live one. It is deliberately a *past* promote so it cannot go stale;
+write your own register for the delta in front of you.
 
-- **Calendar sync:** `synchronizeCollectionDataForDeviceRequest` now requires
-  `write:organisations`. The Google Apps Script caller's Auth0 client grant is
-  believed-but-not-proven to include it. Watch the first post-promote sync (business
-  hours) for `Access Denied` on that operation — observation recipe in Phase 5.
-- **Baseline migration `V26.07.03.0900__baseline_unmanaged_schema.sql`** runs on
-  `techaid_prod` at first prod boot. Expected: applies cleanly (statements are
-  `IF NOT EXISTS`-guarded; it may genuinely create tables Hibernate never created there).
-  Table ownership was pre-transferred to `api_prod` on 2026-07-02, so an ownership
-  failure is NOT expected — if Flyway fails with "must be owner of…" →
-  `techaid-database-operations`, and the app will crash-loop: treat as Phase 4 branch C.
-- **Health output shape changes:** prod anonymous `/actuator/health` currently returns
-  full component details; after this promote it must return status-only (as UAT does).
-  That is a deliberate hardening, not a regression.
+That delta dropped the `coordinates` columns from `donors` and `kits`. The register was:
+
+- **The GDPR scrub function reads the dropped columns.** A plpgsql body resolves column
+  names at execution, so a stale `gdpr.performgdprcleanup` would NOT fail the deploy — it
+  would fail the following Friday 18:00 retention run, silently, in the only job now
+  performing retention. *Mitigation:* replace the function BEFORE the promote drops the
+  columns (it runs correctly against either schema), gate on `mentions_coordinates = 0`
+  and an md5 matching UAT, then prove it still executes as `api_prod` — `CREATE OR
+  REPLACE` can quietly break that. All three gates passed.
+- **The old image does not fail at boot on a missing column.** Prod runs `ddl-auto=none`,
+  so a rollback to the pre-drop image fails at *runtime*, on every donor and kit read —
+  presenting as a total outage of the dashboard's main screens, with nothing wrong in
+  `/actuator/health`. The tell is `column k1_0.coordinates does not exist` in container
+  logs. *Mitigation:* a two-step rollback (re-pin the image, then re-add the columns
+  empty), rehearsed on UAT beforehand.
+- **Recovery for a dropped column is PITR only**, and PITR restores a whole server.
+  *Mitigation:* a logical `pg_dump -Fc -n public` taken before anything else; check the
+  file size, because `api_prod` cannot read the `gdpr` schema and an unrestricted dump
+  dies leaving a 0-byte file.
+- **The cutover window.** Both the "stop writing the column" and "drop the column"
+  deploys shipped in one image, so the old revision was briefly alive while the new
+  revision's migration dropped the columns. *Observation:* grep the OLD revision's logs
+  for `coordinates does not exist` / `SQLGrammarException` afterwards. It came back
+  clean, but the window was real and a two-deploy split would have removed it.
+
+**One lesson from that promote's gates.** Its runbook required `location(address:)` to
+still resolve. It returned `null` — but it also returned null on prod *before* the
+promote, and on UAT, because the Google key is referer-restricted (issue #186). A gate
+you have never seen green is not a gate; **capture the pre-promote value of every check
+you intend to gate on**, or you cannot tell a regression from a pre-existing fault.
 
 ## PHASE 4 — Execute
 
@@ -283,9 +300,10 @@ Authored 2026-07-03/05 against repo state at commit 76b092f. Workflow mechanics 
 `.github/workflows/promote.yml` and `ci.yml`; auth gates and probe shapes from
 `src/main/kotlin/cta/app/graphql/**` and `src/main/resources/graphql/*.graphqls`; live
 endpoints, hostname binding, and probe outputs verified 2026-07-05 with read-only
-az/curl. The Phase 3 "live example" block describes the then-pending PR #48/#49 promote —
-**delete it after that promote completes** and replace with the next delta's register.
-Operational lore (wedged revision, 2026-07-01 node outage, ownership pre-clear) is from
+az/curl. Revised 2026-08-19 after the 3.0.0 promote: the Phase 3 block was a live register
+for the long-since-completed PR #48/#49 delta and had rotted, so it is now a dated worked
+example from a past promote — keep it that way rather than storing a pending register here,
+which is what made it stale. Operational lore (wedged revision, 2026-07-01 node outage, ownership pre-clear) is from
 incident history, not re-derivable from the repo — see `techaid-failure-archaeology`.
 
 Re-verify before trusting:

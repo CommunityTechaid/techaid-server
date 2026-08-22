@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.1.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.0.1...v3.1.0) (2026-08-22)
+
+
+### Features
+
+* **delivery:** the UAT feedback round — phone, email, duplicate rule, delete unwind, borough gate ([#188](https://github.com/CommunityTechaid/techaid-server/issues/188)) ([7d4f8cb](https://github.com/CommunityTechaid/techaid-server/commit/7d4f8cbf18daceb54ee5832cf40039a1f9ae9637))
+
+
+### Bug Fixes
+
+* **delivery:** match the duplicate-booking copy to the any-booking rule ([#190](https://github.com/CommunityTechaid/techaid-server/issues/190)) ([55bead7](https://github.com/CommunityTechaid/techaid-server/commit/55bead79467458ebfc041cfcf1b93150180610f8))
+
+## [3.0.1](https://github.com/CommunityTechaid/techaid-server/compare/v3.0.0...v3.0.1) (2026-08-19)
+
+
+### Bug Fixes
+
+* **kits:** finish the updated_at repair using status history ([#183](https://github.com/CommunityTechaid/techaid-server/issues/183)) ([9396df5](https://github.com/CommunityTechaid/techaid-server/commit/9396df537e970a75123c729df7ba6660d7b4c164))
+
 ## [3.0.0](https://github.com/CommunityTechaid/techaid-server/compare/v2.7.0...v3.0.0) (2026-08-18)
 
 

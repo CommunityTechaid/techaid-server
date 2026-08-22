@@ -2,6 +2,8 @@ package cta.app.graphql.queries
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import cta.app.DeliveryBooking
+import cta.app.DeliveryBookingOverride
+import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
@@ -22,6 +24,7 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.time.Instant
 import java.time.LocalDate
 
 /**
@@ -50,6 +53,9 @@ class DeliveryAdminQueriesTest {
 
     @Autowired
     lateinit var bookingRepository: DeliveryBookingRepository
+
+    @Autowired
+    lateinit var overrideRepository: DeliveryBookingOverrideRepository
 
     @Autowired
     lateinit var windowRepository: DeliveryWindowRepository
@@ -173,6 +179,43 @@ class DeliveryAdminQueriesTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
             .andExpect(jsonPath("$.data").value(nullValue()))
+    }
+
+    /**
+     * additionalBookingAllowed is resolved for the whole page in one query
+     * (findAllByCtaReferenceInAndConsumedAtIsNull), not per row — this exercises all three
+     * states an override can leave a reference in: unconsumed, none, and already consumed.
+     */
+    @Test
+    fun `additionalBookingAllowed reflects an unconsumed override`() {
+        val withOverrideRef = 904330L
+        val withoutOverrideRef = 904331L
+        val consumedOverrideRef = 904332L
+
+        seedBooking(withOverrideRef)
+        seedBooking(withoutOverrideRef)
+        seedBooking(consumedOverrideRef)
+
+        overrideRepository.save(DeliveryBookingOverride(ctaReference = withOverrideRef))
+        val consumed = overrideRepository.save(DeliveryBookingOverride(ctaReference = consumedOverrideRef))
+        consumed.consumedAt = Instant.now()
+        overrideRepository.save(consumed)
+
+        val response =
+            authorizedGraphQl("query { deliveryBookingsAdmin { ctaReference additionalBookingAllowed } }")
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andReturn()
+                .response
+                .contentAsString
+
+        val rows = ObjectMapper().readTree(response).get("data").get("deliveryBookingsAdmin")
+        val allowedByRef = mutableMapOf<Long, Boolean>()
+        rows.forEach { row -> allowedByRef[row.get("ctaReference").asLong()] = row.get("additionalBookingAllowed").asBoolean() }
+
+        assertEquals(true, allowedByRef[withOverrideRef])
+        assertEquals(false, allowedByRef[withoutOverrideRef])
+        assertEquals(false, allowedByRef[consumedOverrideRef])
     }
 
     /**
