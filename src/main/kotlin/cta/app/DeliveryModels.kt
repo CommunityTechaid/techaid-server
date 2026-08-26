@@ -39,6 +39,11 @@ class DeliveryConfig(
     var leadTimeDays: Int = 1,
     /** How many upcoming delivery days to offer. */
     var advanceDays: Int = 4,
+    /**
+     * Off-by-default gate for per-weekday borough restriction (sheet row 23). Independent of
+     * BoroughAvailabilityRules.FLAG_KEY — see DeliveryService.checkBoroughDaySchedule.
+     */
+    var boroughSchedulingEnabled: Boolean = false,
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
@@ -113,28 +118,25 @@ class DeliveryBooking(
 )
 
 /**
- * A one-off, staff-granted exemption from the one-booking-per-CTA-reference rule. An unconsumed
- * row (`consumedAt == null`) lets exactly one extra booking through for [ctaReference]; the
- * booking that uses it stamps [consumedAt] so the exemption cannot be reused.
+ * A borough allowed to book on a given ISO weekday (sheet row 23), e.g. dayOfWeek=2 (Tuesday),
+ * borough="Southwark". Held separately from BoroughGroup/BoroughAvailability — this restricts
+ * which *day* a borough may book, not which device types it may ask for. A weekday with no rows
+ * here is open to every borough; see DeliveryService.checkBoroughDaySchedule.
  */
 @Entity
-@Table(name = "delivery_booking_overrides")
-class DeliveryBookingOverride(
+@Table(name = "delivery_day_boroughs")
+class DeliveryDayBorough(
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "delivery_booking_overrides-seq-generator")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "delivery_day_boroughs-seq-generator")
     @SequenceGenerator(
-        name = "delivery_booking_overrides-seq-generator",
-        sequenceName = "delivery_booking_overrides_sequence",
+        name = "delivery_day_boroughs-seq-generator",
+        sequenceName = "delivery_day_boroughs_sequence",
         allocationSize = 1,
     )
     var id: Long = 0,
-    var ctaReference: Long = 0,
-    @CreationTimestamp
-    var createdAt: Instant = Instant.now(),
-    var createdBy: String? = null,
-    @Column(columnDefinition = "TEXT")
-    var note: String? = null,
-    var consumedAt: Instant? = null,
+    /** ISO day-of-week (1=Mon..7=Sun). */
+    var dayOfWeek: Int = 0,
+    var borough: String = "",
 )
 
 interface DeliveryConfigRepository : JpaRepository<DeliveryConfig, Long> {
@@ -184,16 +186,6 @@ interface DeliveryBookingRepository :
     ): List<DeliveryBooking>
 
     /**
-     * Backs the one-booking-per-reference policy: true if *any* booking with this ctaReference
-     * exists, past or future. Team decision: a delivered booking still counts, because the
-     * reference has already been used once — a fresh one needs a staff-granted
-     * [DeliveryBookingOverride], not just the calendar moving on. Since ctaReference became a
-     * bigint (V26.08.13.1500) this is plain equality — there is no case or whitespace to
-     * normalise away.
-     */
-    fun existsByCtaReference(ctaReference: Long): Boolean
-
-    /**
      * Postgres advisory transaction lock keyed on the ctaReference. Serialises concurrent
      * submits for the same reference across different windows/days, which the per-window row
      * lock (`findByIdForUpdate`) doesn't cover. Auto-released when the transaction commits or
@@ -205,14 +197,10 @@ interface DeliveryBookingRepository :
     )
 }
 
-interface DeliveryBookingOverrideRepository : JpaRepository<DeliveryBookingOverride, Long> {
-    /** The unconsumed override for a reference, if any — at most one can exist at a time. */
-    fun findFirstByCtaReferenceAndConsumedAtIsNull(ctaReference: Long): DeliveryBookingOverride?
+interface DeliveryDayBoroughRepository : JpaRepository<DeliveryDayBorough, Long> {
+    fun findAllByOrderByDayOfWeekAscBoroughAsc(): List<DeliveryDayBorough>
 
-    /**
-     * Unconsumed overrides for a batch of references in one query, so
-     * `deliveryBookingsAdmin.additionalBookingAllowed` can resolve for a whole page without an
-     * N+1 lookup per row.
-     */
-    fun findAllByCtaReferenceInAndConsumedAtIsNull(ctaReferences: Collection<Long>): List<DeliveryBookingOverride>
+    fun findAllByDayOfWeek(dayOfWeek: Int): List<DeliveryDayBorough>
+
+    fun deleteByDayOfWeek(dayOfWeek: Int)
 }

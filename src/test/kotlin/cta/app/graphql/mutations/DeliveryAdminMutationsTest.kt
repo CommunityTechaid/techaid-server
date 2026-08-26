@@ -3,26 +3,21 @@ package cta.app.graphql.mutations
 import cta.app.CollectionMethod
 import cta.app.DeliveryBlockedDateRepository
 import cta.app.DeliveryBooking
-import cta.app.DeliveryBookingOverride
-import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryConfigRepository
+import cta.app.DeliveryDayBoroughRepository
 import cta.app.DeliveryWindowRepository
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestItems
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
 import cta.app.ReferringOrganisationContact
-import cta.app.services.FilterService
-import cta.app.services.OAuthUser
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito.mock
@@ -41,8 +36,6 @@ import java.util.Optional
 class DeliveryAdminMutationsTest {
     private val bookings = mock(DeliveryBookingRepository::class.java)
     private val deviceRequests = mock(DeviceRequestRepository::class.java)
-    private val overrides = mock(DeliveryBookingOverrideRepository::class.java)
-    private val filterService = mock(FilterService::class.java)
 
     private val mutations =
         DeliveryAdminMutations(
@@ -51,8 +44,7 @@ class DeliveryAdminMutationsTest {
             blockedDates = mock(DeliveryBlockedDateRepository::class.java),
             deviceRequests = deviceRequests,
             bookings = bookings,
-            overrides = overrides,
-            filterService = filterService,
+            dayBoroughs = mock(DeliveryDayBoroughRepository::class.java),
         )
 
     @Test
@@ -160,32 +152,5 @@ class DeliveryAdminMutationsTest {
             mutations.deleteDeliveryBooking("45", clearRequestDelivery = false)
         }
         verify(bookings, never()).deleteById(anyLong())
-    }
-
-    @Test
-    fun `allowAdditionalDeliveryBooking grants a new override recording who granted it`() {
-        given(overrides.findFirstByCtaReferenceAndConsumedAtIsNull(904314L)).willReturn(null)
-        given(filterService.userDetails()).willReturn(OAuthUser(name = "Staff Member", email = "staff@example.org"))
-
-        val result = mutations.allowAdditionalDeliveryBooking(904314L, "one-off exemption")
-
-        assertTrue(result)
-        val captor = ArgumentCaptor.forClass(DeliveryBookingOverride::class.java)
-        verify(overrides).save(captor.capture())
-        assertEquals(904314L, captor.value.ctaReference)
-        assertEquals("one-off exemption", captor.value.note)
-        assertEquals("Staff Member", captor.value.createdBy)
-    }
-
-    /** Granting again while one is already unconsumed is a no-op, not an error or a second row. */
-    @Test
-    fun `allowAdditionalDeliveryBooking is idempotent when an unconsumed override already exists`() {
-        val existing = DeliveryBookingOverride(id = 1, ctaReference = 904315L)
-        given(overrides.findFirstByCtaReferenceAndConsumedAtIsNull(904315L)).willReturn(existing)
-
-        val result = mutations.allowAdditionalDeliveryBooking(904315L, null)
-
-        assertTrue(result)
-        verify(overrides, never()).save(any(DeliveryBookingOverride::class.java))
     }
 }
