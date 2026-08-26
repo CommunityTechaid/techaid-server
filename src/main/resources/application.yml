@@ -55,6 +55,11 @@ delivery-booking:
     enabled: ${DELIVERY_RATE_LIMIT_ENABLED:true}
     max-requests: ${DELIVERY_RATE_LIMIT_MAX:5}
     window-seconds: ${DELIVERY_RATE_LIMIT_WINDOW_SECONDS:600}
+    eligibility:
+      # More generous than submit's budget above: a cheap read, and legitimate users retype a
+      # mistyped CTA reference a few times before getting it right (see BookingRateLimiterConfig).
+      max-requests: ${DELIVERY_RATE_LIMIT_ELIGIBILITY_MAX:20}
+      window-seconds: ${DELIVERY_RATE_LIMIT_ELIGIBILITY_WINDOW_SECONDS:600}
 
 server:
   port: ${PORT:8080}

@@ -7,6 +7,7 @@ import cta.app.services.BookingRateLimiter
 import cta.app.services.DeliveryService
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
 import org.springframework.graphql.data.method.annotation.QueryMapping
@@ -20,7 +21,7 @@ import org.springframework.stereotype.Controller
 @Controller
 class DeliveryQueries(
     private val delivery: DeliveryService,
-    private val rateLimiter: BookingRateLimiter,
+    @Qualifier("deliveryBookingEligibilityRateLimiter") private val rateLimiter: BookingRateLimiter,
     private val clientIpResolver: ClientIpResolver,
 ) {
     @QueryMapping
@@ -46,7 +47,9 @@ class DeliveryQueries(
      * Lets the booking form check a CTA reference before submit rather than only finding out at
      * the end (sheet row 24). Applies the same rule as submitDeliveryBookingPublic — see
      * DeliveryService.checkBookingEligibility — so the two can never drift apart. Unauthenticated,
-     * so rate-limited per client IP the same way the mutation is; no Turnstile here.
+     * so rate-limited per client IP, but against its own budget (see
+     * BookingRateLimiterConfig) distinct from submit's, so retyping a reference here can't
+     * spend the submit budget; no Turnstile here.
      */
     @QueryMapping
     fun deliveryBookingEligibilityPublic(

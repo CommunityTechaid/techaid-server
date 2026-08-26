@@ -36,6 +36,7 @@ import java.time.LocalDate
 @TestPropertySource(
     properties = [
         "delivery-booking.rate-limit.max-requests=3",
+        "delivery-booking.rate-limit.eligibility.max-requests=3",
         "delivery-booking.enforce-feature-flag=true",
     ],
 )
@@ -93,6 +94,9 @@ class DeliveryBookingProtectionTest {
         if (clientIp != null) request.header("CF-Connecting-IP", clientIp)
         return mockMvc.perform(request)
     }
+
+    private fun eligibilityQuery(ctaReference: Long): String =
+        """query { deliveryBookingEligibilityPublic(ctaReference: $ctaReference) { eligible message } }"""
 
     private fun bookingMutation(
         date: String,
@@ -159,6 +163,57 @@ class DeliveryBookingProtectionTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+    }
+
+    @Test
+    fun `eligibility and submit rate limits are independent budgets`() {
+        // Exhaust the eligibility budget (max-requests=3 for this context) for one IP. The
+        // reference need not exist or be eligible — the query never errors either way, so a
+        // clean run here proves only that the throttle hasn't fired yet.
+        val eligibilityIp = "203.0.113.20"
+        repeat(3) {
+            graphQl(eligibilityQuery(4298), clientIp = eligibilityIp)
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors").doesNotExist())
+        }
+        graphQl(eligibilityQuery(4298), clientIp = eligibilityIp)
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath("$.errors[0].message")
+                    .value("Too many booking attempts. Please wait a few minutes and try again."),
+            )
+
+        // Submit still works from that same now eligibility-throttled IP: the two budgets
+        // must not share state.
+        val submitAfterEligibilityExhausted = offeredDates(1)[0].toString()
+        seedDeviceRequest(970020L)
+        graphQl(
+            bookingMutation(submitAfterEligibilityExhausted, windowId = "1", ctaReference = 970020L),
+            clientIp = eligibilityIp,
+        ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
+
+        // Now the reverse: exhaust submit's own budget (max-requests=3) from a fresh IP...
+        val submitIp = "203.0.113.21"
+        val dates = offeredDates(4)
+        listOf(dates[0], dates[1], dates[2]).forEachIndexed { i, date ->
+            val ref = 970021L + i
+            seedDeviceRequest(ref)
+            graphQl(bookingMutation(date.toString(), windowId = "1", ctaReference = ref), clientIp = submitIp)
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors").doesNotExist())
+        }
+        graphQl(bookingMutation(dates[0].toString(), windowId = "1", ctaReference = 970024L), clientIp = submitIp)
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath("$.errors[0].message")
+                    .value("Too many booking attempts. Please wait a few minutes and try again."),
+            )
+
+        // ...eligibility still works on that same now submit-throttled IP.
+        graphQl(eligibilityQuery(4298), clientIp = submitIp)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
     }
 
     @Test

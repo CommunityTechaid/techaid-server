@@ -22,6 +22,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import mu.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
@@ -53,7 +54,7 @@ class DeliveryMutations(
     private val bookings: DeliveryBookingRepository,
     private val deviceRequests: DeviceRequestRepository,
     private val delivery: DeliveryService,
-    private val rateLimiter: BookingRateLimiter,
+    @Qualifier("deliveryBookingSubmitRateLimiter") private val rateLimiter: BookingRateLimiter,
     private val turnstile: TurnstileService,
     private val clientIpResolver: ClientIpResolver,
     private val featureFlags: FeatureFlagRepository,

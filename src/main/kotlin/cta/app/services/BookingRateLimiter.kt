@@ -1,38 +1,31 @@
 package cta.app.services
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * In-memory sliding-window rate limiter for the anonymous delivery-booking mutation.
+ * In-memory sliding-window rate limiter for the anonymous delivery-booking surface.
  *
  * Scope note: state lives in this process only. Production runs a single Container Apps
  * replica (KEDA min 0 / max 1), so one bucket per client IP is sufficient; the state resets
  * whenever the replica scales to zero, which is accepted for a soft throttle. Do not rely on
  * this for hard quotas.
  *
- * The [Clock] is injectable so unit tests can advance time deterministically. Spring wires the
- * secondary constructor from config; tests call the primary constructor directly with a fake
- * clock and explicit limits.
+ * Two beans of this class are wired by [cta.app.config.BookingRateLimiterConfig] — one for
+ * submit, one for eligibility — each with its own budget, so exhausting one can never block the
+ * other. See that class for why a shared bucket was a problem.
+ *
+ * The [Clock] is injectable so unit tests can advance time deterministically. Spring wires this
+ * via the config class's @Bean methods; tests call this constructor directly with a fake clock
+ * and explicit limits.
  */
-@Service
 class BookingRateLimiter(
     private val clock: Clock,
     private val enabled: Boolean,
     private val maxRequests: Int,
     private val windowSeconds: Long,
 ) {
-    @Autowired
-    constructor(
-        @Value("\${delivery-booking.rate-limit.enabled:true}") enabled: Boolean,
-        @Value("\${delivery-booking.rate-limit.max-requests:5}") maxRequests: Int,
-        @Value("\${delivery-booking.rate-limit.window-seconds:600}") windowSeconds: Long,
-    ) : this(Clock.systemUTC(), enabled, maxRequests, windowSeconds)
-
     private val hits = ConcurrentHashMap<String, ArrayDeque<Instant>>()
 
     /**
