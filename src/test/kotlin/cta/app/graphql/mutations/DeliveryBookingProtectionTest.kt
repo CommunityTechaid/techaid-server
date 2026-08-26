@@ -63,6 +63,25 @@ class DeliveryBookingProtectionTest {
         jdbcTemplate.update("update feature_flags set enabled = ? where flag_key = 'delivery-booking'", enabled)
     }
 
+    /**
+     * device_requests has few NOT NULL columns beyond id (is_prepped, is_sales); raw insert
+     * mirrors DeliveryMutationsTest/DeliveryAdminQueriesTest rather than building the full entity
+     * graph a ReferringOrganisationContact relation would need.
+     */
+    private fun seedDeviceRequest(
+        id: Long,
+        status: String = "PROCESSING_EQUALITIES_DATA_COMPLETE",
+    ) {
+        jdbcTemplate.update(
+            """
+            insert into device_requests (id, is_prepped, is_sales, status, created_at, updated_at)
+            values (?, false, false, ?, now(), now())
+            """.trimIndent(),
+            id,
+            status,
+        )
+    }
+
     private fun graphQl(
         query: String,
         clientIp: String? = null,
@@ -118,19 +137,24 @@ class DeliveryBookingProtectionTest {
     fun `throttles submits from one ip but not a different ip`() {
         val dates = offeredDates(4)
         // Three fresh slots consume the budget (max-requests=3) for this bucket. Distinct refs:
-        // these represent three different people, not repeat submits of the same booking.
+        // these represent three different people, not repeat submits of the same booking. Each
+        // must be seeded eligible to clear the PROCESSING_EQUALITIES_DATA_COMPLETE gate.
         listOf(dates[0], dates[1], dates[2]).forEachIndexed { i, date ->
-            graphQl(bookingMutation(date.toString(), windowId = "1", ctaReference = 970000L + i), clientIp = "203.0.113.2")
+            val ref = 970000L + i
+            seedDeviceRequest(ref)
+            graphQl(bookingMutation(date.toString(), windowId = "1", ctaReference = ref), clientIp = "203.0.113.2")
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.errors").doesNotExist())
         }
 
-        // Fourth attempt from the same bucket is over budget and rejected before any DB work.
+        // Fourth attempt from the same bucket is over budget and rejected before any DB work
+        // (including the eligibility gate), so this reference is deliberately left unseeded.
         graphQl(bookingMutation(dates[0].toString(), windowId = "1", ctaReference = 970004L), clientIp = "203.0.113.2")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors[0].message").value("Too many booking attempts. Please wait a few minutes and try again."))
 
         // A different client IP has its own bucket and is not throttled.
+        seedDeviceRequest(970005L)
         graphQl(bookingMutation(dates[3].toString(), windowId = "1", ctaReference = 970005L), clientIp = "203.0.113.9")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
@@ -140,6 +164,7 @@ class DeliveryBookingProtectionTest {
     @Test
     fun `feature flag gate blocks bookings until the flag is enabled`() {
         val date = offeredDates(1)[0].toString()
+        seedDeviceRequest(970010L)
 
         setFlag(false)
         graphQl(bookingMutation(date, windowId = "2", ctaReference = 970010L), clientIp = "203.0.113.3")

@@ -6,6 +6,7 @@ import cta.app.DeliveryBlockedDateRepository
 import cta.app.DeliveryBooking
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryConfigRepository
+import cta.app.DeliveryDayBoroughRepository
 import cta.app.DeliveryWindow
 import cta.app.DeliveryWindowRepository
 import cta.app.DeviceRequestRepository
@@ -23,6 +24,21 @@ import java.util.Locale
 private val DAY_LABEL_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ENGLISH)
 private const val CONTACT_PHONE = "020 3488 7742"
 private val logger = KotlinLogging.logger {}
+
+/** Result of [DeliveryService.checkBookingEligibility]. [message] is set only when ineligible. */
+data class BookingEligibility(
+    val eligible: Boolean,
+    val message: String?,
+)
+
+/**
+ * Result of [DeliveryService.checkBoroughDaySchedule]. [borough] is set only when [allowed] is
+ * false, so callers have what they need to build a rejection message without a second lookup.
+ */
+data class BoroughDaySchedule(
+    val allowed: Boolean,
+    val borough: String? = null,
+)
 
 /** Remaining capacity for one window on one day. */
 data class WindowAvailability(
@@ -50,6 +66,7 @@ class DeliveryService(
     private val mailService: MailService,
     private val templateEngine: TemplateEngine,
     private val deviceRequests: DeviceRequestRepository,
+    private val dayBoroughs: DeliveryDayBoroughRepository,
 ) {
     /** ISO day-of-week numbers (1=Mon..7=Sun) the charity delivers on. */
     fun deliveryDaysOfWeek(): Set<Int> =
@@ -86,18 +103,27 @@ class DeliveryService(
         return result
     }
 
-    fun availability(today: LocalDate = LocalDate.now()): List<DayAvailability> {
+    /**
+     * [ctaReference] is optional (sheet row 23): when supplied, days whose weekday is restricted
+     * away from that reference's borough are dropped — see [checkBoroughDaySchedule].
+     */
+    fun availability(
+        today: LocalDate = LocalDate.now(),
+        ctaReference: Long? = null,
+    ): List<DayAvailability> {
         val activeWindows = windows.findByActiveTrueOrderBySortOrderAsc()
         if (activeWindows.isEmpty()) return emptyList()
 
-        return offeredDates(today).map { date ->
-            val windowAvailability =
-                activeWindows.map { window ->
-                    val booked = bookings.countByDeliveryDateAndWindowId(date, window.id)
-                    WindowAvailability(window, (window.capacity - booked).toInt().coerceAtLeast(0))
-                }
-            DayAvailability(date, windowAvailability)
-        }
+        return offeredDates(today)
+            .filter { date -> checkBoroughDaySchedule(ctaReference, date).allowed }
+            .map { date ->
+                val windowAvailability =
+                    activeWindows.map { window ->
+                        val booked = bookings.countByDeliveryDateAndWindowId(date, window.id)
+                        WindowAvailability(window, (window.capacity - booked).toInt().coerceAtLeast(0))
+                    }
+                DayAvailability(date, windowAvailability)
+            }
     }
 
     /**
@@ -156,6 +182,57 @@ class DeliveryService(
         request.collectionDate = collectionStart
         request.collectionContactName = "${booking.firstName} ${booking.surname}".trim()
         deviceRequests.save(request)
+    }
+
+    /**
+     * The status gate a delivery booking's ctaReference must clear (sheet row 24): eligible only
+     * when a DeviceRequest exists with id == [ctaReference] and status exactly
+     * PROCESSING_EQUALITIES_DATA_COMPLETE. Shared by submitDeliveryBookingPublic and
+     * deliveryBookingEligibilityPublic so the two can never drift apart. Deliberately does NOT
+     * fail open — unlike the borough gate — and the message is identical whether the reference
+     * doesn't exist or is just in the wrong status, so an unauthenticated caller can't use it to
+     * fish for which references exist.
+     */
+    fun checkBookingEligibility(ctaReference: Long): BookingEligibility {
+        val request = deviceRequests.findById(ctaReference).orElse(null)
+        return if (request?.status == DeviceRequestStatus.PROCESSING_EQUALITIES_DATA_COMPLETE) {
+            BookingEligibility(eligible = true, message = null)
+        } else {
+            BookingEligibility(eligible = false, message = ineligibleBookingMessage(ctaReference))
+        }
+    }
+
+    /**
+     * Per-weekday borough restriction (sheet row 23), shared by deliveryAvailabilityPublic and
+     * submitDeliveryBookingPublic so the two can never drift apart — mirrors how
+     * [checkBookingEligibility] is shared. Off by default via
+     * [cta.app.DeliveryConfig.boroughSchedulingEnabled], and independent of the
+     * borough-availability-rules feature flag ([BoroughAvailabilityRules]).
+     *
+     * Fails open at every step: disabled config, no reference, an unresolvable request, or a
+     * blank borough all return allowed. We already accepted the linked request, so wrongly
+     * turning someone away is worse than letting a booking through we'd rather have scheduled
+     * differently. A weekday with no configured boroughs is open to every borough.
+     */
+    fun checkBoroughDaySchedule(
+        ctaReference: Long?,
+        date: LocalDate,
+    ): BoroughDaySchedule {
+        if (!config.getConfig().boroughSchedulingEnabled) return BoroughDaySchedule(allowed = true)
+        if (ctaReference == null) return BoroughDaySchedule(allowed = true)
+        val borough =
+            try {
+                deviceRequests.findById(ctaReference).orElse(null)?.borough
+            } catch (e: Exception) {
+                logger.warn(e) { "Borough day schedule: failed to look up device request $ctaReference; letting it through." }
+                null
+            }
+        if (borough.isNullOrBlank()) return BoroughDaySchedule(allowed = true)
+
+        val restricted = dayBoroughs.findAllByDayOfWeek(date.dayOfWeek.value).map { it.borough }.toSet()
+        if (restricted.isEmpty()) return BoroughDaySchedule(allowed = true)
+
+        return BoroughDaySchedule(allowed = borough in restricted, borough = borough)
     }
 
     fun dayLabel(date: LocalDate): String = date.format(DAY_LABEL_FORMAT)
@@ -234,3 +311,8 @@ class DeliveryService(
         }
     }
 }
+
+private fun ineligibleBookingMessage(ctaReference: Long): String =
+    "You are not able to book a delivery for request ID '$ctaReference' at this time. Please check the number " +
+        "is correct, and try again if not. Otherwise please contact distributions@communitytechaid.org.uk " +
+        "quoting your request ID for further information"

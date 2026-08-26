@@ -4,20 +4,29 @@ import cta.app.CLOSED_REQUEST_STATUSES
 import cta.app.DeliveryBlockedDate
 import cta.app.DeliveryBlockedDateRepository
 import cta.app.DeliveryBooking
-import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryConfig
 import cta.app.DeliveryConfigRepository
+import cta.app.DeliveryDayBoroughRepository
 import cta.app.DeliveryWindow
 import cta.app.DeliveryWindowRepository
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestRepository
+import cta.app.DeviceRequestStatus
 import cta.app.services.DeliveryService
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
+import java.time.Instant
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+
+/** Bookings whose linked request has been closed this long or longer are hidden (sheet row 25). */
+private const val STALE_BOOKING_THRESHOLD_DAYS = 7L
+
+/** Only these two closed statuses count as "stale" for hiding a booking; others stay visible. */
+private val STALE_BOOKING_STATUSES = setOf(DeviceRequestStatus.REQUEST_COMPLETED, DeviceRequestStatus.REQUEST_CANCELLED)
 
 /**
  * Admin-only read side of the delivery-slots screen: settings, windows (incl. inactive),
@@ -29,13 +38,22 @@ class DeliveryAdminQueries(
     private val windows: DeliveryWindowRepository,
     private val blockedDates: DeliveryBlockedDateRepository,
     private val bookings: DeliveryBookingRepository,
-    private val overrides: DeliveryBookingOverrideRepository,
     private val deviceRequests: DeviceRequestRepository,
     private val delivery: DeliveryService,
+    private val dayBoroughs: DeliveryDayBoroughRepository,
 ) {
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
     fun deliveryConfig(): DeliveryConfigGql = config.getConfig().toGql()
+
+    /** Only weekdays with a configured restriction appear; an absent weekday allows every borough. */
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @QueryMapping
+    fun deliveryDayBoroughs(): List<DeliveryDayBoroughsGql> =
+        dayBoroughs
+            .findAllByOrderByDayOfWeekAscBoroughAsc()
+            .groupBy { it.dayOfWeek }
+            .map { (dayOfWeek, rows) -> DeliveryDayBoroughsGql(dayOfWeek, rows.map { it.borough }) }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
@@ -45,6 +63,12 @@ class DeliveryAdminQueries(
     @QueryMapping
     fun deliveryBlockedDates(): List<DeliveryBlockedDateGql> = blockedDates.findAllByOrderByBlockedDateAsc().map { it.toGql() }
 
+    /**
+     * Excludes bookings whose linked request has been closed as completed or cancelled for
+     * [STALE_BOOKING_THRESHOLD_DAYS] or longer (sheet row 25) — display filter only, nothing is
+     * deleted. `REQUEST_DECLINED` and `REQUEST_COLLECTION_DELIVERY_FAILED` stay visible. A
+     * booking with no resolvable request stays visible too (fails open).
+     */
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
     fun deliveryBookingsAdmin(
@@ -62,17 +86,12 @@ class DeliveryAdminQueries(
             }
         val referencedIds = rows.map { it.ctaReference }.distinct()
         val matchedRequestsById = deviceRequests.findAllById(referencedIds).associateBy { it.id }
-        // Resolved for the whole page in one query rather than per row, which would be an N+1
-        // across every booking on the screen.
-        val referencesWithUnconsumedOverride =
-            overrides.findAllByCtaReferenceInAndConsumedAtIsNull(referencedIds).map { it.ctaReference }.toSet()
-        return rows.map {
-            it.toAdminGql(
-                delivery.dayLabel(it.deliveryDate),
-                matchedRequestsById,
-                it.ctaReference in referencesWithUnconsumedOverride,
-            )
-        }
+        val staleCutoff = Instant.now().minus(STALE_BOOKING_THRESHOLD_DAYS, ChronoUnit.DAYS)
+        return rows
+            .filterNot { booking ->
+                val request = matchedRequestsById[booking.ctaReference]
+                request != null && request.status in STALE_BOOKING_STATUSES && request.updatedAt.isBefore(staleCutoff)
+            }.map { it.toAdminGql(delivery.dayLabel(it.deliveryDate), matchedRequestsById) }
     }
 }
 
@@ -82,7 +101,13 @@ data class DeliveryConfigGql(
     val daysOfWeek: String,
     val leadTimeDays: Int,
     val advanceDays: Int,
+    val boroughSchedulingEnabled: Boolean,
     val updatedAt: String?,
+)
+
+data class DeliveryDayBoroughsGql(
+    val dayOfWeek: Int,
+    val boroughs: List<String>,
 )
 
 data class DeliveryWindowAdminGql(
@@ -118,7 +143,6 @@ data class DeliveryBookingAdminGql(
     val matchedRequestId: String?,
     val matchedRequestStatus: String?,
     val matchedRequestOpen: Boolean?,
-    val additionalBookingAllowed: Boolean,
 )
 
 fun DeliveryConfig.toGql(): DeliveryConfigGql =
@@ -128,6 +152,7 @@ fun DeliveryConfig.toGql(): DeliveryConfigGql =
         daysOfWeek = daysOfWeek,
         leadTimeDays = leadTimeDays,
         advanceDays = advanceDays,
+        boroughSchedulingEnabled = boroughSchedulingEnabled,
         updatedAt = updatedAt.toString(),
     )
 
@@ -149,7 +174,6 @@ fun DeliveryBlockedDate.toGql(): DeliveryBlockedDateGql =
 fun DeliveryBooking.toAdminGql(
     dayLabel: String,
     matchedRequestsById: Map<Long, DeviceRequest> = emptyMap(),
-    additionalBookingAllowed: Boolean = false,
 ): DeliveryBookingAdminGql {
     val matchedRequest = matchedRequestsById[ctaReference]
     return DeliveryBookingAdminGql(
@@ -168,6 +192,5 @@ fun DeliveryBooking.toAdminGql(
         matchedRequestId = matchedRequest?.id?.toString(),
         matchedRequestStatus = matchedRequest?.status?.name,
         matchedRequestOpen = matchedRequest?.let { it.status !in CLOSED_REQUEST_STATUSES },
-        additionalBookingAllowed = additionalBookingAllowed,
     )
 }

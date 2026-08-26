@@ -2,20 +2,20 @@ package cta.app.graphql.mutations
 
 import cta.app.DeliveryBlockedDate
 import cta.app.DeliveryBlockedDateRepository
-import cta.app.DeliveryBookingOverride
-import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryConfigRepository
+import cta.app.DeliveryDayBorough
+import cta.app.DeliveryDayBoroughRepository
 import cta.app.DeliveryWindow
 import cta.app.DeliveryWindowRepository
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
 import cta.app.graphql.queries.DeliveryBlockedDateGql
 import cta.app.graphql.queries.DeliveryConfigGql
+import cta.app.graphql.queries.DeliveryDayBoroughsGql
 import cta.app.graphql.queries.DeliveryWindowAdminGql
 import cta.app.graphql.queries.toAdminGql
 import cta.app.graphql.queries.toGql
-import cta.app.services.FilterService
 import cta.toNullable
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
@@ -50,8 +50,7 @@ class DeliveryAdminMutations(
     private val blockedDates: DeliveryBlockedDateRepository,
     private val deviceRequests: DeviceRequestRepository,
     private val bookings: DeliveryBookingRepository,
-    private val overrides: DeliveryBookingOverrideRepository,
-    private val filterService: FilterService,
+    private val dayBoroughs: DeliveryDayBoroughRepository,
 ) {
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
@@ -63,7 +62,26 @@ class DeliveryAdminMutations(
         entity.daysOfWeek = normaliseDaysOfWeek(data.daysOfWeek)
         entity.leadTimeDays = data.leadTimeDays.coerceAtLeast(0)
         entity.advanceDays = data.advanceDays.coerceIn(1, 60)
+        entity.boroughSchedulingEnabled = data.boroughSchedulingEnabled
         return config.save(entity).toGql()
+    }
+
+    /**
+     * Replaces the whole set of allowed boroughs for [dayOfWeek] (sheet row 23): delete-then-
+     * insert, matching the "the caller sends the full desired state" shape the dashboard already
+     * uses for daysOfWeek. An empty [boroughs] clears the restriction, opening the weekday back
+     * up to every borough — see DeliveryService.checkBoroughDaySchedule.
+     */
+    @PreAuthorize("hasAnyAuthority('write:organisations')")
+    @MutationMapping
+    fun setDeliveryDayBoroughs(
+        @Argument dayOfWeek: Int,
+        @Argument boroughs: List<String>,
+    ): DeliveryDayBoroughsGql {
+        dayBoroughs.deleteByDayOfWeek(dayOfWeek)
+        val distinct = boroughs.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        distinct.forEach { borough -> dayBoroughs.save(DeliveryDayBorough(dayOfWeek = dayOfWeek, borough = borough)) }
+        return DeliveryDayBoroughsGql(dayOfWeek = dayOfWeek, boroughs = distinct)
     }
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
@@ -175,35 +193,6 @@ class DeliveryAdminMutations(
         return true
     }
 
-    /**
-     * Grants a one-off exemption from the one-booking-per-CTA-reference rule enforced in
-     * DeliveryMutations. Idempotent: granting again while an unconsumed override already exists
-     * for this reference does nothing rather than erroring or stacking a second exemption — the
-     * rule only ever checks for the *existence* of an unconsumed row, not a count.
-     */
-    @PreAuthorize("hasAnyAuthority('write:organisations')")
-    @MutationMapping
-    fun allowAdditionalDeliveryBooking(
-        @Argument ctaReference: Long,
-        @Argument note: String?,
-    ): Boolean {
-        if (overrides.findFirstByCtaReferenceAndConsumedAtIsNull(ctaReference) != null) return true
-        val createdBy =
-            filterService
-                .userDetails()
-                .name
-                .ifBlank { filterService.userDetails().email }
-                .takeIf { it.isNotBlank() }
-        overrides.save(
-            DeliveryBookingOverride(
-                ctaReference = ctaReference,
-                note = note,
-                createdBy = createdBy,
-            ),
-        )
-        return true
-    }
-
     @GraphQlExceptionHandler
     fun handleDeliveryAdminError(ex: DeliveryAdminException): GraphQLError =
         GraphqlErrorBuilder
@@ -229,6 +218,7 @@ data class UpdateDeliveryConfigInput(
     var daysOfWeek: String = "",
     var leadTimeDays: Int = 1,
     var advanceDays: Int = 4,
+    var boroughSchedulingEnabled: Boolean = false,
 )
 
 data class DeliveryWindowInput(

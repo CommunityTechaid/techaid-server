@@ -2,13 +2,13 @@ package cta.app.graphql.queries
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import cta.app.DeliveryBooking
-import cta.app.DeliveryBookingOverride
-import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -24,7 +24,6 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.Instant
 import java.time.LocalDate
 
 /**
@@ -53,9 +52,6 @@ class DeliveryAdminQueriesTest {
 
     @Autowired
     lateinit var bookingRepository: DeliveryBookingRepository
-
-    @Autowired
-    lateinit var overrideRepository: DeliveryBookingOverrideRepository
 
     @Autowired
     lateinit var windowRepository: DeliveryWindowRepository
@@ -87,14 +83,16 @@ class DeliveryAdminQueriesTest {
     private fun seedDeviceRequest(
         id: Long,
         status: String,
+        updatedDaysAgo: Int = 0,
     ) {
         jdbcTemplate.update(
             """
             insert into device_requests (id, is_prepped, is_sales, status, created_at, updated_at)
-            values (?, false, false, ?, now(), now())
+            values (?, false, false, ?, now(), now() - make_interval(days => ?))
             """.trimIndent(),
             id,
             status,
+            updatedDaysAgo,
         )
     }
 
@@ -182,40 +180,45 @@ class DeliveryAdminQueriesTest {
     }
 
     /**
-     * additionalBookingAllowed is resolved for the whole page in one query
-     * (findAllByCtaReferenceInAndConsumedAtIsNull), not per row — this exercises all three
-     * states an override can leave a reference in: unconsumed, none, and already consumed.
+     * Sheet row 25: a booking is hidden once its linked request has been closed as completed or
+     * cancelled for more than STALE_BOOKING_THRESHOLD_DAYS. Declined/failed-collection-delivery
+     * requests are unaffected regardless of age, and an unmatched reference always stays visible
+     * (fails open) — this is a display filter only, nothing is deleted.
      */
     @Test
-    fun `additionalBookingAllowed reflects an unconsumed override`() {
-        val withOverrideRef = 904330L
-        val withoutOverrideRef = 904331L
-        val consumedOverrideRef = 904332L
+    fun `hides bookings whose request has been closed as completed or cancelled for over a week`() {
+        val staleCompletedRef = 904340L
+        val staleCancelledRef = 904341L
+        val recentlyCompletedRef = 904342L
+        val staleDeclinedRef = 904343L
+        val unmatchedRef = 904344L
 
-        seedBooking(withOverrideRef)
-        seedBooking(withoutOverrideRef)
-        seedBooking(consumedOverrideRef)
+        seedDeviceRequest(staleCompletedRef, "REQUEST_COMPLETED", updatedDaysAgo = 8)
+        seedDeviceRequest(staleCancelledRef, "REQUEST_CANCELLED", updatedDaysAgo = 8)
+        seedDeviceRequest(recentlyCompletedRef, "REQUEST_COMPLETED", updatedDaysAgo = 1)
+        seedDeviceRequest(staleDeclinedRef, "REQUEST_DECLINED", updatedDaysAgo = 30)
 
-        overrideRepository.save(DeliveryBookingOverride(ctaReference = withOverrideRef))
-        val consumed = overrideRepository.save(DeliveryBookingOverride(ctaReference = consumedOverrideRef))
-        consumed.consumedAt = Instant.now()
-        overrideRepository.save(consumed)
+        seedBooking(staleCompletedRef)
+        seedBooking(staleCancelledRef)
+        seedBooking(recentlyCompletedRef)
+        seedBooking(staleDeclinedRef)
+        seedBooking(unmatchedRef)
 
         val response =
-            authorizedGraphQl("query { deliveryBookingsAdmin { ctaReference additionalBookingAllowed } }")
+            authorizedGraphQl(adminBookingsQuery)
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.errors").doesNotExist())
                 .andReturn()
                 .response
                 .contentAsString
 
-        val rows = ObjectMapper().readTree(response).get("data").get("deliveryBookingsAdmin")
-        val allowedByRef = mutableMapOf<Long, Boolean>()
-        rows.forEach { row -> allowedByRef[row.get("ctaReference").asLong()] = row.get("additionalBookingAllowed").asBoolean() }
+        val refs = extractBookingRowsByCtaReference(response).keys
 
-        assertEquals(true, allowedByRef[withOverrideRef])
-        assertEquals(false, allowedByRef[withoutOverrideRef])
-        assertEquals(false, allowedByRef[consumedOverrideRef])
+        assertFalse(refs.contains(staleCompletedRef), "stale completed booking should be hidden")
+        assertFalse(refs.contains(staleCancelledRef), "stale cancelled booking should be hidden")
+        assertTrue(refs.contains(recentlyCompletedRef), "recently completed booking should stay visible")
+        assertTrue(refs.contains(staleDeclinedRef), "declined bookings stay visible regardless of age")
+        assertTrue(refs.contains(unmatchedRef), "unmatched booking stays visible (fails open)")
     }
 
     /**

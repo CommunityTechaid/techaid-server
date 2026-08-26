@@ -97,6 +97,25 @@ class DeliveryBookingConcurrencyTest {
         jdbcTemplate.update("update delivery_windows set capacity = 4")
     }
 
+    /**
+     * device_requests has few NOT NULL columns beyond id (is_prepped, is_sales); raw insert
+     * mirrors DeliveryMutationsTest/DeliveryAdminQueriesTest rather than building the full entity
+     * graph a ReferringOrganisationContact relation would need.
+     */
+    private fun seedDeviceRequest(
+        id: Long,
+        status: String = "PROCESSING_EQUALITIES_DATA_COMPLETE",
+    ) {
+        jdbcTemplate.update(
+            """
+            insert into device_requests (id, is_prepped, is_sales, status, created_at, updated_at)
+            values (?, false, false, ?, now(), now())
+            """.trimIndent(),
+            id,
+            status,
+        )
+    }
+
     /** The seeded delivery days are Tuesday (2) and Thursday (4) with a 1-day lead time. */
     private fun offeredDates(count: Int): List<LocalDate> {
         val dates = mutableListOf<LocalDate>()
@@ -169,11 +188,14 @@ class DeliveryBookingConcurrencyTest {
         val date = offeredDates(2)[1]
         jdbcTemplate.update("update delivery_windows set capacity = ? where id = 1", capacity)
 
-        // Eight distinct references (distinct people): the per-reference dedup never fires, so the
-        // only thing that can cap acceptances is the window row lock + capacity check.
+        // Eight distinct references (distinct people), each seeded eligible: the per-reference
+        // dedup never fires, so the only thing that can cap acceptances is the window row lock +
+        // capacity check.
         val queries =
             (1..8).map { i ->
-                bookingMutation(date.toString(), windowId = "1", ctaReference = 960000L + i, email = "cap$i@example.org")
+                val ref = 960000L + i
+                seedDeviceRequest(ref)
+                bookingMutation(date.toString(), windowId = "1", ctaReference = ref, email = "cap$i@example.org")
             }
 
         val run = submitConcurrently(queries)
@@ -194,18 +216,31 @@ class DeliveryBookingConcurrencyTest {
         assertThat(bookingRepository.countByDeliveryDateAndWindowId(date, 1L)).isEqualTo(capacity.toLong())
     }
 
+    /**
+     * Changed 2026-08-26 (sheet row 24): there is no longer a standalone duplicate-reference
+     * check — a reference is only ever eligible to book while its linked DeviceRequest sits in
+     * PROCESSING_EQUALITIES_DATA_COMPLETE (DeliveryService.checkBookingEligibility), and the
+     * first successful booking flips that request to PROCESSING_COLLECTION_DELIVERY_ARRANGED
+     * (markCollectionDeliveryArranged). So the "exactly one booking per reference" invariant now
+     * falls out of the status gate, not a dedup check: the advisory ref lock still matters (it
+     * serialises the racing submits so the read-then-flip can't itself race), but the thing that
+     * rejects the other seven is eligibility, and their error message is the ineligibility
+     * message, not a "reference already used" message.
+     */
     @Test
     fun `the same cta reference gets exactly one upcoming booking under parallel load`() {
         // Ample capacity everywhere so capacity can never be the limiter — only the advisory ref
-        // lock + upcoming-booking check decides the outcome.
+        // lock + eligibility status gate decides the outcome.
         jdbcTemplate.update("update delivery_windows set capacity = 100")
 
-        // One reference submitted eight times, spread across four offered days and both windows:
-        // eight DISTINCT slots, so the per-window row lock never serialises them — isolating the
-        // advisory reference lock as the thing that must enforce the single booking.
+        // One reference, seeded eligible once, submitted eight times, spread across four offered
+        // days and both windows: eight DISTINCT slots, so the per-window row lock never
+        // serialises them — isolating the advisory reference lock as the thing that must
+        // serialise the racing eligibility check/status flip.
         val dates = offeredDates(4)
         val windows = windowRepository.findByActiveTrueOrderBySortOrderAsc()
         val raceRef = 960100L
+        seedDeviceRequest(raceRef)
 
         val queries =
             (0 until 8).map { i ->
@@ -223,14 +258,15 @@ class DeliveryBookingConcurrencyTest {
 
         assertThat(run.threadNames).hasSize(8)
 
-        val duplicateMessage =
-            "This CTA reference number has already been used to book a delivery. " +
-                "If you need to book another, please call us on 020 3488 7742."
+        val ineligibleMessage =
+            "You are not able to book a delivery for request ID '$raceRef' at this time. Please check the number " +
+                "is correct, and try again if not. Otherwise please contact distributions@communitytechaid.org.uk " +
+                "quoting your request ID for further information"
         val messages = run.bodies.map { errorMessage(it) }
         val successes = messages.count { it == null }
 
         assertThat(successes).isEqualTo(1)
-        assertThat(messages.filter { it != null }).hasSize(7).allMatch { it == duplicateMessage }
+        assertThat(messages.filter { it != null }).hasSize(7).allMatch { it == ineligibleMessage }
         // The durable truth: exactly one row persisted for that reference.
         val persisted = bookingRepository.findAll().count { it.ctaReference == raceRef }
         assertThat(persisted).isEqualTo(1)
