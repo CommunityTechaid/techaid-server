@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.2.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.1.0...v3.2.0) (2026-09-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **delivery:** the allowAdditionalDeliveryBooking mutation and the additionalBookingAllowed field on DeliveryBookingAdmin are removed. The delivery_booking_overrides table is deliberately left in place, unused, rather than dropped, so the record of who granted what survives.
+
+### Features
+
+* **delivery:** status-gated booking, borough delivery days, stale-slot hiding ([#193](https://github.com/CommunityTechaid/techaid-server/issues/193)) ([ce1a0a7](https://github.com/CommunityTechaid/techaid-server/commit/ce1a0a7a412825c63bf92506a64a18dc659f3454))
+
+
+### Bug Fixes
+
+* **delivery:** let older dashboard builds save delivery settings ([#196](https://github.com/CommunityTechaid/techaid-server/issues/196)) ([08d7fd1](https://github.com/CommunityTechaid/techaid-server/commit/08d7fd1c5dd47d4a18466f8094e434a88dea346c))
+
+
+### Miscellaneous Chores
+
+* release the delivery changes as 3.2.0, not 4.0.0 ([#195](https://github.com/CommunityTechaid/techaid-server/issues/195)) ([e10b7f7](https://github.com/CommunityTechaid/techaid-server/commit/e10b7f7662e11c1c5c033a41456a561970e3ab65))
+
 ## [3.1.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.0.1...v3.1.0) (2026-08-22)
 
 

@@ -21,7 +21,16 @@ type DeliveryConfig {
     leadTimeDays: Int
     "How many upcoming delivery days to offer."
     advanceDays: Int
+    "Off by default. When on, deliveryDayBoroughs restricts which boroughs may book which weekday."
+    boroughSchedulingEnabled: Boolean
     updatedAt: String
+}
+
+"The boroughs allowed to book on one weekday. An empty list means every borough is allowed."
+type DeliveryDayBoroughs {
+    "ISO day-of-week (1=Mon..7=Sun)."
+    dayOfWeek: Int!
+    boroughs: [String!]!
 }
 
 "A date on which no deliveries run."
@@ -51,8 +60,6 @@ type DeliveryBookingAdmin {
     matchedRequestStatus: String
     "True when the matched request is in an open status; null when unmatched."
     matchedRequestOpen: Boolean
-    "True when an unconsumed staff-granted DeliveryBookingOverride exists for this ctaReference."
-    additionalBookingAllowed: Boolean!
 }
 
 input UpdateDeliveryConfigInput {
@@ -60,6 +67,8 @@ input UpdateDeliveryConfigInput {
     daysOfWeek: String!
     leadTimeDays: Int!
     advanceDays: Int!
+    "Omit to leave the stored value unchanged — lets dashboard builds that predate this field still save settings."
+    boroughSchedulingEnabled: Boolean
 }
 
 input DeliveryWindowInput {
@@ -86,6 +95,8 @@ extend type Query {
     deliveryBlockedDates: [DeliveryBlockedDate!]!
     "Bookings between the given ISO dates (inclusive). Omit both for all bookings."
     deliveryBookingsAdmin(from: String, to: String): [DeliveryBookingAdmin!]!
+    "One entry per weekday that has a borough restriction configured; an absent weekday means every borough is allowed."
+    deliveryDayBoroughs: [DeliveryDayBoroughs!]!
 }
 
 extend type Mutation {
@@ -102,6 +113,6 @@ extend type Mutation {
     status rolled back before the booking is deleted.
     """
     deleteDeliveryBooking(id: ID!, clearRequestDelivery: Boolean): Boolean!
-    "Grants a one-off exemption from the one-booking-per-CTA-reference rule. Idempotent."
-    allowAdditionalDeliveryBooking(ctaReference: Long!, note: String): Boolean!
+    "Replaces the whole set of allowed boroughs for the given weekday. An empty list clears the restriction."
+    setDeliveryDayBoroughs(dayOfWeek: Int!, boroughs: [String!]!): DeliveryDayBoroughs!
 }

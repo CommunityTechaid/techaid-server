@@ -2,8 +2,6 @@ package cta.app.graphql.mutations
 
 import cta.app.CollectionMethod
 import cta.app.DeliveryBooking
-import cta.app.DeliveryBookingOverride
-import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
 import cta.app.DeviceRequestRepository
@@ -49,9 +47,6 @@ class DeliveryMutationsTest {
 
     @Autowired
     lateinit var bookingRepository: DeliveryBookingRepository
-
-    @Autowired
-    lateinit var overrideRepository: DeliveryBookingOverrideRepository
 
     @Autowired
     lateinit var windowRepository: DeliveryWindowRepository
@@ -117,6 +112,8 @@ class DeliveryMutationsTest {
 
     @Test
     fun `books a slot on an offered day`() {
+        seedDeviceRequest(4298L, "PROCESSING_EQUALITIES_DATA_COMPLETE")
+
         graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "2"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
@@ -149,12 +146,13 @@ class DeliveryMutationsTest {
 
     @Test
     fun `rejects a booking once the window is full`() {
-        // Window 1 (capacity 4) on the second offered day, so this test owns the slot.
+        // Window 1 (capacity 4) on the second offered day, so this test owns the slot. Distinct,
+        // eligible refs: each must clear the PROCESSING_EQUALITIES_DATA_COMPLETE gate on its own.
         val date = offeredDates(2)[1].toString()
-        // Distinct refs: these represent four different people, and the one-upcoming-booking
-        // policy would otherwise block bookings 2-4 before capacity is even reached.
         (1..4).forEach { i ->
-            graphQl(bookingMutation(date, ctaReference = 950000L + i))
+            val ref = 950000L + i
+            seedDeviceRequest(ref, "PROCESSING_EQUALITIES_DATA_COMPLETE")
+            graphQl(bookingMutation(date, ctaReference = ref))
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.errors").doesNotExist())
         }
@@ -164,36 +162,42 @@ class DeliveryMutationsTest {
             .andExpect(jsonPath("$.errors[0].message").value("That delivery window is fully booked"))
     }
 
+    /**
+     * Changed 2026-08-26 (sheet row 24): the old duplicate-booking rule was removed. A second
+     * booking for the same reference is now blocked only because the first booking already moved
+     * the linked request out of PROCESSING_EQUALITIES_DATA_COMPLETE (see
+     * DeliveryService.markCollectionDeliveryArranged), not because of any dedup check.
+     */
     @Test
-    fun `blocks a second upcoming booking for the same CTA reference`() {
+    fun `a second booking for the same reference is ineligible once the first has moved the request on`() {
+        val requestId = 950010L
+        seedDeviceRequest(requestId, "PROCESSING_EQUALITIES_DATA_COMPLETE")
         // Window 1 on the first offered day, window 2 on the second offered day: neither slot
         // is touched by the other tests in this class, so capacity here is untouched.
         val firstDay = offeredDates(1)[0].toString()
         val secondDay = offeredDates(2)[1].toString()
 
-        graphQl(bookingMutation(firstDay, windowId = "1", ctaReference = 950010L))
+        graphQl(bookingMutation(firstDay, windowId = "1", ctaReference = requestId))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
 
-        graphQl(bookingMutation(secondDay, windowId = "2", ctaReference = 950010L))
+        graphQl(bookingMutation(secondDay, windowId = "2", ctaReference = requestId))
             .andExpect(status().isOk)
             .andExpect(
                 jsonPath("$.errors[0].message")
-                    .value(
-                        "This CTA reference number has already been used to book a delivery. " +
-                            "If you need to book another, please call us on 020 3488 7742.",
-                    ),
+                    .value(containsString("You are not able to book a delivery for request ID '$requestId'")),
             )
     }
 
     /**
-     * Changed 2026-08-20: this test used to be named "does not block ... when ... in the past"
-     * and asserted success. Team decision (sheet row 7) reversed that rule — a past booking now
-     * blocks a new one exactly like an upcoming one, because the reference has already been used
-     * once; a fresh booking needs a staff-granted override, not just the calendar moving on.
+     * Changed 2026-08-26 (sheet row 24): the old rule blocked a new booking whenever *any* row
+     * existed for the reference, past or future. That rule is gone — only the linked request's
+     * status matters now, so a stray past booking row no longer blocks anything by itself.
      */
     @Test
-    fun `blocks a new booking when the existing one for that reference is in the past`() {
+    fun `a past booking row for the same reference no longer blocks a new one by itself`() {
+        val requestId = 950020L
+        seedDeviceRequest(requestId, "PROCESSING_EQUALITIES_DATA_COMPLETE")
         val window1 = windowRepository.findById(1L).orElseThrow()
         bookingRepository.save(
             DeliveryBooking(
@@ -204,69 +208,22 @@ class DeliveryMutationsTest {
                 email = "past@example.org",
                 phone = "07123456789",
                 address = "1 Test Street, London SW9 8PR",
-                ctaReference = 950020L,
+                ctaReference = requestId,
             ),
         )
 
-        graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = 950020L))
-            .andExpect(status().isOk)
-            .andExpect(
-                jsonPath("$.errors[0].message")
-                    .value(
-                        "This CTA reference number has already been used to book a delivery. " +
-                            "If you need to book another, please call us on 020 3488 7742.",
-                    ),
-            )
-    }
-
-    /**
-     * A staff-granted DeliveryBookingOverride lets exactly one more booking through for a
-     * reference that already has one, then is consumed so it cannot be reused.
-     */
-    @Test
-    fun `an unconsumed override lets a second booking through and is then consumed`() {
-        val window1 = windowRepository.findById(1L).orElseThrow()
-        val ctaReference = 950030L
-        bookingRepository.save(
-            DeliveryBooking(
-                deliveryDate = LocalDate.now().minusDays(7),
-                window = window1,
-                firstName = "Past",
-                surname = "Booker",
-                email = "past@example.org",
-                phone = "07123456789",
-                address = "1 Test Street, London SW9 8PR",
-                ctaReference = ctaReference,
-            ),
-        )
-        val override = overrideRepository.save(DeliveryBookingOverride(ctaReference = ctaReference, note = "test"))
-
-        // Day 3 (untouched by any other test in this class) so this test's capacity accounting
+        // Day 4 (untouched by any other test in this class) so this test's capacity accounting
         // can't collide with anything else's.
-        graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "1", ctaReference = ctaReference))
+        graphQl(bookingMutation(offeredDates(4)[3].toString(), windowId = "1", ctaReference = requestId))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
-
-        val consumed = overrideRepository.findById(override.id).orElseThrow()
-        assertEquals(true, consumed.consumedAt != null)
-
-        // The override is spent: a third booking for the same reference is blocked again.
-        graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "2", ctaReference = ctaReference))
-            .andExpect(status().isOk)
-            .andExpect(
-                jsonPath("$.errors[0].message")
-                    .value(
-                        "This CTA reference number has already been used to book a delivery. " +
-                            "If you need to book another, please call us on 020 3488 7742.",
-                    ),
-            )
     }
 
     @Test
     fun `marks a matched open device request as collection-delivery arranged`() {
         val requestId = 904301L
-        seedDeviceRequest(requestId, "NEW")
+        seedDeviceRequest(requestId, "PROCESSING_EQUALITIES_DATA_COMPLETE")
 
         graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = requestId))
             .andExpect(status().isOk)
@@ -304,7 +261,7 @@ class DeliveryMutationsTest {
     @Test
     fun `records the delivery method, date and contact on the matched request`() {
         val requestId = 904303L
-        seedDeviceRequest(requestId, "NEW")
+        seedDeviceRequest(requestId, "PROCESSING_EQUALITIES_DATA_COMPLETE")
         val date = offeredDates(1)[0]
 
         // Window 2 is the seeded "Afternoon window", 2:00pm.
@@ -322,15 +279,22 @@ class DeliveryMutationsTest {
         assertEquals("Test Booker", updated.collectionContactName)
     }
 
+    /**
+     * Changed 2026-08-26 (sheet row 24): a closed request is no longer eligible to book at all —
+     * only PROCESSING_EQUALITIES_DATA_COMPLETE is. This used to assert the booking succeeded but
+     * left the request untouched; now it must be rejected outright, before any booking is saved.
+     */
     @Test
-    fun `leaves a matched closed device request untouched`() {
+    fun `rejects a booking for a matched but closed device request`() {
         val requestId = 904302L
         seedDeviceRequest(requestId, "REQUEST_COMPLETED")
 
         graphQl(bookingMutation(offeredDates(2)[1].toString(), windowId = "2", ctaReference = requestId))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.errors").doesNotExist())
-            .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+            .andExpect(
+                jsonPath("$.errors[0].message")
+                    .value(containsString("You are not able to book a delivery for request ID '$requestId'")),
+            )
 
         val updated = deviceRequestRepository.findById(requestId).orElseThrow()
         assertEquals(DeviceRequestStatus.REQUEST_COMPLETED, updated.status)
@@ -340,14 +304,15 @@ class DeliveryMutationsTest {
      * Borough gate (sheet row 18), gated behind borough-availability-rules. Flyway seeds two
      * live groups covering "Lambeth", "Southwark" and "Tower Hamlets" (V26.08.14.2100) — reused
      * here rather than inventing test-only groups, so these tests exercise the real matching
-     * RefereeRequestLimitService.groupFor performs.
+     * RefereeRequestLimitService.groupFor performs. All requests are seeded eligible
+     * (PROCESSING_EQUALITIES_DATA_COMPLETE) so the borough gate is what's actually under test.
      */
     @Test
     fun `with the flag on, a covered borough is allowed`() {
         featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = true))
         try {
             val requestId = 904320L
-            seedDeviceRequest(requestId, "NEW", borough = "Lambeth")
+            seedDeviceRequest(requestId, "PROCESSING_EQUALITIES_DATA_COMPLETE", borough = "Lambeth")
 
             // Day 3, untouched by any other test in this class, so capacity accounting can't
             // collide with anything else's.
@@ -365,7 +330,7 @@ class DeliveryMutationsTest {
         featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = true))
         try {
             val requestId = 904321L
-            seedDeviceRequest(requestId, "NEW", borough = "Westminster")
+            seedDeviceRequest(requestId, "PROCESSING_EQUALITIES_DATA_COMPLETE", borough = "Westminster")
 
             graphQl(bookingMutation(offeredDates(1)[0].toString(), windowId = "1", ctaReference = requestId))
                 .andExpect(status().isOk)
@@ -383,7 +348,7 @@ class DeliveryMutationsTest {
         featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = true))
         try {
             val requestId = 904322L
-            seedDeviceRequest(requestId, "NEW", borough = null)
+            seedDeviceRequest(requestId, "PROCESSING_EQUALITIES_DATA_COMPLETE", borough = null)
 
             graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "2", ctaReference = requestId))
                 .andExpect(status().isOk)
@@ -394,15 +359,22 @@ class DeliveryMutationsTest {
         }
     }
 
+    /**
+     * Changed 2026-08-26 (sheet row 24): the borough gate still fails open for an unmatched
+     * reference, but the new eligibility gate does NOT — it runs unconditionally and rejects an
+     * unresolvable reference outright, so the overall booking is now refused.
+     */
     @Test
-    fun `with the flag on, an unmatched CTA reference fails open`() {
+    fun `with the flag on, an unmatched CTA reference fails the (non-fail-open) eligibility gate`() {
         featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = true))
         try {
             // 904399 deliberately matches no seeded device request.
             graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "1", ctaReference = 904399L))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("$.errors").doesNotExist())
-                .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
+                .andExpect(
+                    jsonPath("$.errors[0].message")
+                        .value(containsString("You are not able to book a delivery for request ID '904399'")),
+                )
         } finally {
             featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = false))
         }
@@ -412,7 +384,7 @@ class DeliveryMutationsTest {
     fun `with the flag off, an uncovered borough is allowed, matching todays behaviour`() {
         featureFlags.save(FeatureFlag(key = BoroughAvailabilityRules.FLAG_KEY, enabled = false))
         val requestId = 904323L
-        seedDeviceRequest(requestId, "NEW", borough = "Westminster")
+        seedDeviceRequest(requestId, "PROCESSING_EQUALITIES_DATA_COMPLETE", borough = "Westminster")
 
         graphQl(bookingMutation(offeredDates(3)[2].toString(), windowId = "2", ctaReference = requestId))
             .andExpect(status().isOk)

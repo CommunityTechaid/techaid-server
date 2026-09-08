@@ -1,7 +1,6 @@
 package cta.app.graphql.mutations
 
 import cta.app.DeliveryBooking
-import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
 import cta.app.DeviceRequestRepository
@@ -23,6 +22,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import mu.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
@@ -31,7 +31,6 @@ import org.springframework.graphql.execution.ErrorType
 import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
-import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
@@ -53,10 +52,9 @@ class DeliveryBookingException(
 class DeliveryMutations(
     private val windows: DeliveryWindowRepository,
     private val bookings: DeliveryBookingRepository,
-    private val overrides: DeliveryBookingOverrideRepository,
     private val deviceRequests: DeviceRequestRepository,
     private val delivery: DeliveryService,
-    private val rateLimiter: BookingRateLimiter,
+    @Qualifier("deliveryBookingSubmitRateLimiter") private val rateLimiter: BookingRateLimiter,
     private val turnstile: TurnstileService,
     private val clientIpResolver: ClientIpResolver,
     private val featureFlags: FeatureFlagRepository,
@@ -109,6 +107,18 @@ class DeliveryMutations(
         if (!window.active) throw DeliveryBookingException("That delivery window is no longer available")
         if (!delivery.isBookableDay(date)) throw DeliveryBookingException("Deliveries aren't available on that date")
 
+        // Borough-specific delivery days (sheet row 23): re-applies the same check
+        // deliveryAvailabilityPublic used to decide whether to offer this date, so a stale
+        // availability read can't book a day the page shouldn't have shown. Off by default and
+        // always fails open — see DeliveryService.checkBoroughDaySchedule.
+        val boroughDaySchedule = delivery.checkBoroughDaySchedule(input.ctaReference, date)
+        if (!boroughDaySchedule.allowed) {
+            throw DeliveryBookingException(
+                "Deliveries to ${boroughDaySchedule.borough} are not available on ${delivery.dayOfWeekName(date)}. " +
+                    "Please choose a different day.",
+            )
+        }
+
         val booked = bookings.countByDeliveryDateAndWindowId(date, window.id)
         if (booked >= window.capacity) throw DeliveryBookingException("That delivery window is fully booked")
 
@@ -149,21 +159,12 @@ class DeliveryMutations(
             }
         }
 
-        // One booking per CTA reference, past or future: honest-user dedup only (ctaReference is
-        // attacker-controlled free text; bots/abuse are handled by rate-limit + Turnstile). Staff
-        // can grant a one-off DeliveryBookingOverride to let a reference book again; using it here
-        // consumes it, so the exemption is worth exactly one booking.
-        if (bookings.existsByCtaReference(input.ctaReference)) {
-            // Phone number matches CONTACT_PHONE in DeliveryService.kt (private there, so inlined).
-            val override =
-                overrides.findFirstByCtaReferenceAndConsumedAtIsNull(input.ctaReference)
-                    ?: throw DeliveryBookingException(
-                        "This CTA reference number has already been used to book a delivery. " +
-                            "If you need to book another, please call us on 020 3488 7742.",
-                    )
-            override.consumedAt = Instant.now()
-            overrides.save(override)
-        }
+        // Eligibility gate (sheet row 24): accepted only if ctaReference names a DeviceRequest
+        // that is exactly PROCESSING_EQUALITIES_DATA_COMPLETE. Runs unconditionally — unlike the
+        // borough gate above, it does NOT fail open. Shared with deliveryBookingEligibilityPublic
+        // via DeliveryService.checkBookingEligibility so the two rules can never drift apart.
+        val eligibility = delivery.checkBookingEligibility(input.ctaReference)
+        if (!eligibility.eligible) throw DeliveryBookingException(eligibility.message!!)
 
         val saved =
             bookings.save(

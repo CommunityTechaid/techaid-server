@@ -57,9 +57,22 @@ type DeliveryBookingConfirmation {
     confirmationSentTo: String
 }
 
+"Whether a CTA reference is currently eligible to book a delivery."
+type DeliveryBookingEligibility {
+    eligible: Boolean!
+    "Set only when ineligible. Deliberately identical for an unknown reference and a reference in the wrong status."
+    message: String
+}
+
 extend type Query {
-    "Public: upcoming delivery days and remaining capacity per window. No auth required."
-    deliveryAvailabilityPublic: [DeliveryDayAvailability!]!
+    """
+    Public: upcoming delivery days and remaining capacity per window. No auth required.
+    ctaReference is optional; when supplied and borough scheduling is enabled, days restricted
+    away from the reference's borough are omitted.
+    """
+    deliveryAvailabilityPublic(ctaReference: Long): [DeliveryDayAvailability!]!
+    "Public: whether a CTA reference can currently book a delivery. No auth required, rate-limited per IP."
+    deliveryBookingEligibilityPublic(ctaReference: Long!): DeliveryBookingEligibility!
 }
 
 extend type Mutation {

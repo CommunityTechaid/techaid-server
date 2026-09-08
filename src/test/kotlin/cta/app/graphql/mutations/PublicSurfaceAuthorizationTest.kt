@@ -163,6 +163,17 @@ class PublicSurfaceAuthorizationTest {
             .andExpect(jsonPath("$.data.deliveryAvailabilityPublic").isArray)
     }
 
+    // The eligibility check backs the booking form's new reference step and must be reachable
+    // without auth just like deliveryAvailabilityPublic above — it's a deliberately
+    // unauthenticated query, and this is the guard that would catch a stray @PreAuthorize.
+    @Test
+    fun `deliveryBookingEligibilityPublic is callable anonymously`() {
+        anonymousGraphQl(
+            """query { deliveryBookingEligibilityPublic(ctaReference: 1) { eligible message } }""",
+        ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
+    }
+
     // The public booking mutation must be reachable without auth; a well-formed but
     // out-of-policy date is rejected by the booking rules (BAD_REQUEST), never by the auth gate.
     @Test

@@ -3,26 +3,22 @@ package cta.app.graphql.mutations
 import cta.app.CollectionMethod
 import cta.app.DeliveryBlockedDateRepository
 import cta.app.DeliveryBooking
-import cta.app.DeliveryBookingOverride
-import cta.app.DeliveryBookingOverrideRepository
 import cta.app.DeliveryBookingRepository
+import cta.app.DeliveryConfig
 import cta.app.DeliveryConfigRepository
+import cta.app.DeliveryDayBoroughRepository
 import cta.app.DeliveryWindowRepository
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestItems
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
 import cta.app.ReferringOrganisationContact
-import cta.app.services.FilterService
-import cta.app.services.OAuthUser
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito.mock
@@ -33,26 +29,25 @@ import java.time.Instant
 import java.util.Optional
 
 /**
- * Unit tests for deleteDeliveryBooking against mocked repositories — no Spring context, no
- * database. Mirrors the sibling deleteDeliveryWindow/deleteDeliveryBlockedDate style: deleteById
+ * Unit tests for deleteDeliveryBooking, and for updateDeliveryConfig's handling of the optional
+ * boroughSchedulingEnabled field, against mocked repositories — no Spring context, no database.
+ * Mirrors the sibling deleteDeliveryWindow/deleteDeliveryBlockedDate style: deleteById
  * on Spring Data JPA 3.4 is a silent no-op for a missing row (findById(id).ifPresent(delete)), so
  * this mutation only reports false for a malformed (non-numeric) id, not a missing one.
  */
 class DeliveryAdminMutationsTest {
     private val bookings = mock(DeliveryBookingRepository::class.java)
     private val deviceRequests = mock(DeviceRequestRepository::class.java)
-    private val overrides = mock(DeliveryBookingOverrideRepository::class.java)
-    private val filterService = mock(FilterService::class.java)
+    private val config = mock(DeliveryConfigRepository::class.java)
 
     private val mutations =
         DeliveryAdminMutations(
-            config = mock(DeliveryConfigRepository::class.java),
+            config = config,
             windows = mock(DeliveryWindowRepository::class.java),
             blockedDates = mock(DeliveryBlockedDateRepository::class.java),
             deviceRequests = deviceRequests,
             bookings = bookings,
-            overrides = overrides,
-            filterService = filterService,
+            dayBoroughs = mock(DeliveryDayBoroughRepository::class.java),
         )
 
     @Test
@@ -162,30 +157,29 @@ class DeliveryAdminMutationsTest {
         verify(bookings, never()).deleteById(anyLong())
     }
 
+    /**
+     * boroughSchedulingEnabled is optional so older dashboard builds that predate the field can
+     * still save settings — omitting it (the null default) must leave the stored value alone.
+     */
     @Test
-    fun `allowAdditionalDeliveryBooking grants a new override recording who granted it`() {
-        given(overrides.findFirstByCtaReferenceAndConsumedAtIsNull(904314L)).willReturn(null)
-        given(filterService.userDetails()).willReturn(OAuthUser(name = "Staff Member", email = "staff@example.org"))
+    fun `omitting boroughSchedulingEnabled leaves the stored value unchanged`() {
+        val entity = DeliveryConfig(boroughSchedulingEnabled = true)
+        given(config.getConfig()).willReturn(entity)
+        given(config.save(entity)).willReturn(entity)
 
-        val result = mutations.allowAdditionalDeliveryBooking(904314L, "one-off exemption")
+        mutations.updateDeliveryConfig(UpdateDeliveryConfigInput(daysOfWeek = "2,4"))
 
-        assertTrue(result)
-        val captor = ArgumentCaptor.forClass(DeliveryBookingOverride::class.java)
-        verify(overrides).save(captor.capture())
-        assertEquals(904314L, captor.value.ctaReference)
-        assertEquals("one-off exemption", captor.value.note)
-        assertEquals("Staff Member", captor.value.createdBy)
+        assertTrue(entity.boroughSchedulingEnabled)
     }
 
-    /** Granting again while one is already unconsumed is a no-op, not an error or a second row. */
     @Test
-    fun `allowAdditionalDeliveryBooking is idempotent when an unconsumed override already exists`() {
-        val existing = DeliveryBookingOverride(id = 1, ctaReference = 904315L)
-        given(overrides.findFirstByCtaReferenceAndConsumedAtIsNull(904315L)).willReturn(existing)
+    fun `supplying boroughSchedulingEnabled updates the stored value`() {
+        val entity = DeliveryConfig(boroughSchedulingEnabled = true)
+        given(config.getConfig()).willReturn(entity)
+        given(config.save(entity)).willReturn(entity)
 
-        val result = mutations.allowAdditionalDeliveryBooking(904315L, null)
+        mutations.updateDeliveryConfig(UpdateDeliveryConfigInput(daysOfWeek = "2,4", boroughSchedulingEnabled = false))
 
-        assertTrue(result)
-        verify(overrides, never()).save(any(DeliveryBookingOverride::class.java))
+        assertFalse(entity.boroughSchedulingEnabled)
     }
 }
