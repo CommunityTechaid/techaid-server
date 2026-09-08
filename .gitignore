@@ -52,3 +52,13 @@ POST-MIGRATION-CLEANUP.md
 # Cloudflare API token — never commit
 cf.token
 *.token
+
+# Local working notes and scratch artefacts (never part of the codebase).
+# Some carry real names of referees/staff - see _staff_note_* - so they must not be
+# committable by an accidental `git add -A`.
+_session_handoff_*.md
+_staff_note_*.md
+_check_prompt_*.md
+_rollout_note_*.md
+*.xlsx
+.kotlin/
