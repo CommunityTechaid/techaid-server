@@ -67,7 +67,8 @@ input UpdateDeliveryConfigInput {
     daysOfWeek: String!
     leadTimeDays: Int!
     advanceDays: Int!
-    boroughSchedulingEnabled: Boolean!
+    "Omit to leave the stored value unchanged — lets dashboard builds that predate this field still save settings."
+    boroughSchedulingEnabled: Boolean
 }
 
 input DeliveryWindowInput {

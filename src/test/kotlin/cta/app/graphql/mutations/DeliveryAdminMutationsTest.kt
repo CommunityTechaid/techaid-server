@@ -4,6 +4,7 @@ import cta.app.CollectionMethod
 import cta.app.DeliveryBlockedDateRepository
 import cta.app.DeliveryBooking
 import cta.app.DeliveryBookingRepository
+import cta.app.DeliveryConfig
 import cta.app.DeliveryConfigRepository
 import cta.app.DeliveryDayBoroughRepository
 import cta.app.DeliveryWindowRepository
@@ -28,18 +29,20 @@ import java.time.Instant
 import java.util.Optional
 
 /**
- * Unit tests for deleteDeliveryBooking against mocked repositories — no Spring context, no
- * database. Mirrors the sibling deleteDeliveryWindow/deleteDeliveryBlockedDate style: deleteById
+ * Unit tests for deleteDeliveryBooking, and for updateDeliveryConfig's handling of the optional
+ * boroughSchedulingEnabled field, against mocked repositories — no Spring context, no database.
+ * Mirrors the sibling deleteDeliveryWindow/deleteDeliveryBlockedDate style: deleteById
  * on Spring Data JPA 3.4 is a silent no-op for a missing row (findById(id).ifPresent(delete)), so
  * this mutation only reports false for a malformed (non-numeric) id, not a missing one.
  */
 class DeliveryAdminMutationsTest {
     private val bookings = mock(DeliveryBookingRepository::class.java)
     private val deviceRequests = mock(DeviceRequestRepository::class.java)
+    private val config = mock(DeliveryConfigRepository::class.java)
 
     private val mutations =
         DeliveryAdminMutations(
-            config = mock(DeliveryConfigRepository::class.java),
+            config = config,
             windows = mock(DeliveryWindowRepository::class.java),
             blockedDates = mock(DeliveryBlockedDateRepository::class.java),
             deviceRequests = deviceRequests,
@@ -152,5 +155,31 @@ class DeliveryAdminMutationsTest {
             mutations.deleteDeliveryBooking("45", clearRequestDelivery = false)
         }
         verify(bookings, never()).deleteById(anyLong())
+    }
+
+    /**
+     * boroughSchedulingEnabled is optional so older dashboard builds that predate the field can
+     * still save settings — omitting it (the null default) must leave the stored value alone.
+     */
+    @Test
+    fun `omitting boroughSchedulingEnabled leaves the stored value unchanged`() {
+        val entity = DeliveryConfig(boroughSchedulingEnabled = true)
+        given(config.getConfig()).willReturn(entity)
+        given(config.save(entity)).willReturn(entity)
+
+        mutations.updateDeliveryConfig(UpdateDeliveryConfigInput(daysOfWeek = "2,4"))
+
+        assertTrue(entity.boroughSchedulingEnabled)
+    }
+
+    @Test
+    fun `supplying boroughSchedulingEnabled updates the stored value`() {
+        val entity = DeliveryConfig(boroughSchedulingEnabled = true)
+        given(config.getConfig()).willReturn(entity)
+        given(config.save(entity)).willReturn(entity)
+
+        mutations.updateDeliveryConfig(UpdateDeliveryConfigInput(daysOfWeek = "2,4", boroughSchedulingEnabled = false))
+
+        assertFalse(entity.boroughSchedulingEnabled)
     }
 }
