@@ -62,7 +62,10 @@ class DeliveryAdminMutations(
         entity.daysOfWeek = normaliseDaysOfWeek(data.daysOfWeek)
         entity.leadTimeDays = data.leadTimeDays.coerceAtLeast(0)
         entity.advanceDays = data.advanceDays.coerceIn(1, 60)
-        entity.boroughSchedulingEnabled = data.boroughSchedulingEnabled
+        // null means "not supplied" (older dashboard builds predate this field) — leave the
+        // existing value alone rather than falling back to a default that would silently
+        // disable borough scheduling on every save from such a client.
+        data.boroughSchedulingEnabled?.let { entity.boroughSchedulingEnabled = it }
         return config.save(entity).toGql()
     }
 
@@ -218,7 +221,7 @@ data class UpdateDeliveryConfigInput(
     var daysOfWeek: String = "",
     var leadTimeDays: Int = 1,
     var advanceDays: Int = 4,
-    var boroughSchedulingEnabled: Boolean = false,
+    var boroughSchedulingEnabled: Boolean? = null,
 )
 
 data class DeliveryWindowInput(
