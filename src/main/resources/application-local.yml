@@ -2,6 +2,20 @@ spring:
   flyway.locations:
     - classpath:db/migration
     - classpath:db/local
+  graphql:
+    schema:
+      # Local development ONLY. application.yml closes introspection for every profile after
+      # production was found answering `__schema` to anonymous callers; this reopens it here so
+      # schema exploration from a GraphQL client (Altair, Insomnia, Apollo Sandbox, an IDE
+      # plugin) still works on a developer machine. The `local` profile is never active on
+      # UAT/testing or production, so this cannot leak there.
+      #
+      # Nothing in the repo depends on live introspection: Spring's GraphiQL
+      # (spring.graphql.graphiql.enabled) defaults to false and is not enabled anywhere, the
+      # kickstart graphiql/voyager starters are commented out in build.gradle, and
+      # techaid-dashboard has no GraphQL codegen step (hand-written graphql-tag documents).
+      introspection:
+        enabled: true
 
 management:
   endpoints.web.exposure.include: "*"

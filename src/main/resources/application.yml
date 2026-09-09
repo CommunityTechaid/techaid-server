@@ -149,7 +149,20 @@ spring:
     lazy-initialization: true
   graphql:
     schema:
+      # `inspection` and `introspection` are two DIFFERENT settings one letter apart.
+      #
+      # inspection = Spring GraphQL's startup schema-mapping REPORT (a build-time diagnostic that
+      # cross-checks @SchemaMapping methods against the .graphqls files). Off because
+      # SchemaMappingInspector fails on a Kotlin 2.x null-method reflection issue. Purely local
+      # to startup; it has no bearing on what the /graphql endpoint answers. Leave it as it is.
       inspection:
+        enabled: false
+      # introspection = whether /graphql answers `__schema` / `__type`. Until this was set,
+      # only `inspection` was present, and production happily enumerated the whole schema —
+      # every type, every field — to an unauthenticated caller. Closed here for every profile;
+      # application-local.yml turns it back on for local development only.
+      # GraphQlIntrospectionDisabledTest pins this shut.
+      introspection:
         enabled: false
   resources:
     static-locations:
