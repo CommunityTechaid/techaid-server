@@ -383,6 +383,8 @@ input BulkKitUpdateInput {
     archived: Boolean
     locationCode: LenientString
     lotId: LenientString
+    "Appended to every kit in `ids` as its own note, exactly as updateKit's `note` does. Blank content adds nothing."
+    note: CreateNoteInput
 }
 
 extend type Mutation {

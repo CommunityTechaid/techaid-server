@@ -191,9 +191,21 @@ class KitMutations(
                 .kitFilter()
                 .and(QKit.kit.id.`in`(data.ids))
         val entities = kits.findAll(predicate)
+        // Resolved once, outside the loop: the volunteer is the caller, not the
+        // kit, and a bulk update can cover hundreds of them.
+        val noteContent = data.note?.content?.takeIf { it.isNotBlank() }
+        val volunteer =
+            noteContent?.let {
+                filterService.userDetails().name.ifBlank {
+                    filterService.userDetails().email
+                }
+            }
         entities.forEach {
             val previousStatus = it.status
             data.apply(it)
+            if (noteContent != null) {
+                it.notes.add(Note(content = noteContent, kit = it, volunteer = volunteer))
+            }
             wipeCertGuard.checkStatusChange(it, previousStatus, it.status, "updateKits")
             blockingFlagGuard.checkStatusChange(it, previousStatus, it.status, "updateKits")
         }
