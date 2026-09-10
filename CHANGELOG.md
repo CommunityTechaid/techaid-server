@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.3.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.2.0...v3.3.0) (2026-09-10)
+
+
+### Features
+
+* **kits:** let updateKits carry a note for every kit in the batch ([#201](https://github.com/CommunityTechaid/techaid-server/issues/201)) ([1d05603](https://github.com/CommunityTechaid/techaid-server/commit/1d05603c7d0925cebc83f65dce56fa24239310d9))
+
+
+### Bug Fixes
+
+* **security:** close GraphQL introspection to anonymous callers ([#199](https://github.com/CommunityTechaid/techaid-server/issues/199)) ([4def978](https://github.com/CommunityTechaid/techaid-server/commit/4def9786fdb2db8683a07fa034aacabb9045a616))
+
 ## [3.2.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.1.0...v3.2.0) (2026-09-08)
 
 
