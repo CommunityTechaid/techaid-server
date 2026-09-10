@@ -262,6 +262,10 @@ data class BulkKitUpdateInput(
     val archived: Boolean? = null,
     val locationCode: String? = null,
     val lotId: String? = null,
+    // Deliberately not handled in apply(): building a Note needs the calling
+    // volunteer, which only the mutation can reach via FilterService, so
+    // updateKits appends it per kit instead.
+    val note: CreateNoteInput? = null,
 ) {
     fun apply(entity: Kit): Kit {
         val self = this
