@@ -52,12 +52,60 @@ Enumerate exactly what would ship:
 ```bash
 git fetch origin
 git log origin/master..origin/dev --oneline        # the delta that goes live
-gh pr list --state open                            # note the open release-please PR
+gh pr list --state open                            # an open release-please PR? -> PHASE 0b
 ```
 
 **Expected:** a finite, explainable commit list. You must be able to say what each commit
 changes in production behavior. If any commit is a mystery → read its PR before
 proceeding, do not promote code you cannot explain.
+
+## PHASE 0b — Release-please precondition (BEFORE Phase 1, not after)
+
+**Prod promotes a release commit.** Every prod promote on record landed on a
+release-please `chore(dev): release X.Y.Z` commit:
+
+```
+a7debfe -> chore(dev): release 3.2.0 (#194)
+8046593 -> chore(dev): release 2.6.0 (#160)
+0a984d5 -> chore(dev): release 2.5.2 (#144)
+```
+
+So if `gh pr list` shows an open `chore(dev): release X.Y.Z` PR, **dev HEAD is ahead of the
+last release commit** and UAT is running unreleased code. Merge that PR first, let CI build
+it and UAT deploy it, then promote — that order is the whole point of the version string.
+
+```bash
+gh pr view <release-pr> --json files -q '[.files[].path]'
+# EXPECTED: only build.gradle, CHANGELOG.md, .release-please-manifest.json
+```
+
+**If it touches anything else →** it is not a plain release PR; read it before merging.
+
+**The held-CI trap.** A release-please PR arrives with its CI/CD run held at
+`action_required`, which shows up as `mergeStateStatus: UNSTABLE` and as a suspiciously
+short `gh pr checks` list (CodeQL only — the test job is not merely pending, it is absent).
+Merging then merges *past* the test gate. Approve the run first:
+
+```bash
+gh run list --branch release-please--branches--dev -L 3          # find the pending run
+gh api repos/CommunityTechaid/techaid-server/actions/runs/<id>/approve -X POST
+```
+
+**Re-promoting after a version-only merge needs no soak.** The release PR changes no
+functional code, so the image is byte-identical in behaviour to what UAT already soaked.
+Say that plainly rather than performing a fake waiting period.
+
+**If you promote ahead of the release anyway** (urgent fix, deliberate call): it is
+functionally fine — prod gets exactly dev HEAD — but `/actuator/info` will report the
+PREVIOUS version while holding the next version's content, and a later dev→master merge
+builds a `:v<old-version>` tag over content that is not that version. Record the decision
+and correct it at the next opportunity.
+
+**Worked example — 2026-09-15.** This step did not exist; #199/#201 were promoted with the
+3.3.0 release PR (#200) still open, so prod reported 3.2.0 while running 3.3.0's content.
+Caught by the maintainer, not by this runbook. Nothing broke; the fix was to merge #200 and
+re-promote. The cause was this skill filing release-please under Phase 7 bookkeeping, which
+reads as "afterwards" — hence this phase.
 
 ## PHASE 1 — UAT soak verification (all read-only)
 
@@ -275,8 +323,10 @@ rolling back (additive `IF NOT EXISTS` changes usually are; drops/renames are no
 
 - **Merge dev→master ONLY with explicit user permission** — same CLAUDE.md §5 gate. It
   records "master = what prod runs" and triggers a master image build (not a deploy).
-- Release-please: an open `chore(dev): release X.Y.Z` PR (e.g. #46, open as of
-  2026-07-05) versions the dev line; handle per `techaid-change-control`.
+- Release-please is **not** a Phase 7 step — it is a Phase 0b precondition. If you reach
+  here with an unmerged release PR, the promote happened out of order; see 0b for what
+  that costs and how to correct it. (This bullet used to imply the opposite, which is
+  what caused the 2026-09-15 out-of-order promote.)
 - Update any doc-of-record the delta made stale, and retire satisfied risk-register
   entries in this skill (see Provenance).
 
@@ -291,6 +341,8 @@ rolling back (additive `IF NOT EXISTS` changes usually are; drops/renames are no
   prod** — that failure is the safety net working; fix the schema/migration
   (`techaid-database-operations`).
 - **Never skip or shortcut Phase 0**, including for rollbacks.
+- **Never promote with an open release-please PR** without consciously accepting a wrong
+  version string in prod — see Phase 0b.
 - **Never weaken an auth gate to make an external caller work** — fix the caller's
   credentials/grant.
 
@@ -303,7 +355,11 @@ endpoints, hostname binding, and probe outputs verified 2026-07-05 with read-onl
 az/curl. Revised 2026-08-19 after the 3.0.0 promote: the Phase 3 block was a live register
 for the long-since-completed PR #48/#49 delta and had rotted, so it is now a dated worked
 example from a past promote — keep it that way rather than storing a pending register here,
-which is what made it stale. Operational lore (wedged revision, 2026-07-01 node outage, ownership pre-clear) is from
+which is what made it stale. Revised 2026-09-15 after the 3.3.0 promote: added PHASE 0b because release-please sat under
+Phase 7 "Bookkeeping" and read as an after-the-fact step, so a promote shipped ahead of its
+release commit; the prod-commit evidence in 0b was taken with
+`git log -1 --format=%s <prod-commit>` over the three previous promotes.
+Operational lore (wedged revision, 2026-07-01 node outage, ownership pre-clear) is from
 incident history, not re-derivable from the repo — see `techaid-failure-archaeology`.
 
 Re-verify before trusting:
