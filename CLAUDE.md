@@ -77,11 +77,18 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   `production` environment) points `api-production` at whatever image `api-testing` is already
   running. What ships to prod is the artefact UAT exercised — that is the whole point of the
   pipeline, so never route a prod deploy through `master`.
-- Merging `dev` → `master` **records what already shipped**. It builds a `master`-tagged image that
-  no job deploys (`deploy-testing` is guarded to `dev`; there is no deploy-production job), so the
-  merge cannot reach production. It still needs explicit permission — see the rule above.
-- The dashboard repo works the same way from the other end: `deploy-prod.yml` refuses to run unless
-  dispatched from `dev`, and fast-forwards `master` to the deployed commit as its final step.
+- **`master` advances by itself.** `promote.yml`'s final step fast-forwards `master` to the commit
+  it just deployed, so the record keeps itself and there is normally no `dev` → `master` merge to
+  ask for. The permission you already gave for the promote covers it. The push is a plain
+  fast-forward: on a rollback (an older image) it fails rather than rewriting `master`, leaving
+  `master` ahead of production for a human to resolve deliberately.
+- A **manual** `dev` → `master` merge still **records what already shipped**, and still needs
+  explicit permission — see the rule above. It builds a `master`-tagged image that no job deploys
+  (`deploy-testing` is guarded to `dev`; there is no deploy-production job), so it cannot reach
+  production. You should rarely need one now.
+- The dashboard repo works the same way: `deploy-prod.yml` refuses to run unless dispatched from
+  `dev`, and fast-forwards `master` to the deployed commit as its final step. Both repos have
+  behaved this way since 2026-09-15; before that only the dashboard did.
 - To answer "what is running in production?", read the running image
   (`az containerapp show -n api-production ...`) or `/actuator/info`. Never infer it from `master`.
 - "commit/push/PR" means commit to the current branch and open a PR targeting `dev` unless the user says otherwise.

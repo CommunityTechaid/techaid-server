@@ -17,9 +17,19 @@ jobs:
     environment: production
     permissions:
       id-token: write
-      contents: read
+      # write, not read: the final step fast-forwards master to the deployed commit.
+      contents: write
 
     steps:
+      # Full history, so the deployed commit object exists locally and the
+      # ancestry check below can resolve it. `ref: dev` rather than the dispatch
+      # ref: a promote is dispatched from whatever branch the operator happened to
+      # be on, which is not necessarily where the deployed commit lives.
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
       - name: Azure login
         uses: azure/login@v3
         with:
@@ -49,3 +59,46 @@ jobs:
             --name api-production \
             --resource-group tada-2026 \
             --image ${{ steps.image.outputs.image }}
+
+      # Bookkeeping: master records what production runs. Runs only after a
+      # successful deploy. Mirrors techaid-dashboard's deploy-prod.yml, which has
+      # advanced master this way for months. techaid-server previously needed a
+      # hand-opened dev->master PR that only its author could merge, and only by
+      # bypassing a review requirement they could not themselves satisfy.
+      #
+      # The commit comes from the IMAGE TAG, never from the checkout: the checkout
+      # is dev HEAD, which may already be ahead of what was just promoted.
+      - name: Fast-forward master to the deployed commit
+        run: |
+          IMAGE='${{ steps.image.outputs.image }}'
+          TAG="${IMAGE##*:}"
+
+          # Only dev-<sha> tags map to a commit. A pinned version tag (v2.1.0)
+          # does not, so there is nothing to record and we stop cleanly.
+          case "$TAG" in
+            dev-*) SHORT="${TAG#dev-}" ;;
+            *)
+              echo "::notice::Image tag '$TAG' is not a dev-<sha> tag; master left unchanged."
+              exit 0 ;;
+          esac
+
+          if ! SHA=$(git rev-parse --verify "${SHORT}^{commit}" 2>/dev/null); then
+            echo "::warning::Commit $SHORT not found in dev history; master left unchanged."
+            exit 0
+          fi
+
+          git fetch origin master
+          if git merge-base --is-ancestor "$SHA" origin/master; then
+            echo "::notice::master already contains $SHA; nothing to do."
+            exit 0
+          fi
+
+          # No --force, deliberately. A rollback promotes an OLDER image, which is
+          # not a fast-forward, so this fails rather than rewriting master. That is
+          # the intended outcome: production moved backwards and a human should
+          # decide what the record says. The deploy itself has already succeeded.
+          if ! git push origin "$SHA:refs/heads/master"; then
+            echo "::error::Could not fast-forward master to $SHA (likely a rollback, so master is now AHEAD of production). The deploy SUCCEEDED; master needs manual attention."
+            exit 1
+          fi
+          echo "master fast-forwarded to $SHA"
