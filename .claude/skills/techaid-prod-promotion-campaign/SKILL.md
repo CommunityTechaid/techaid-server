@@ -321,8 +321,16 @@ rolling back (additive `IF NOT EXISTS` changes usually are; drops/renames are no
 
 ## PHASE 7 — Bookkeeping
 
-- **Merge dev→master ONLY with explicit user permission** — same CLAUDE.md §5 gate. It
-  records "master = what prod runs" and triggers a master image build (not a deploy).
+- **`master` fast-forwards itself.** Since 2026-09-15 `promote.yml`'s last step pushes the
+  deployed commit to `master`, so there is normally nothing to do here — check the step
+  passed and move on. It is a plain push: it succeeds only if `master` is strictly behind,
+  which is what keeps `master` from ever diverging.
+  - **Step failed?** Almost always a rollback: prod went backwards, so the deployed commit
+    is not a descendant of `master` and the push is correctly refused. The deploy itself
+    already succeeded. Decide deliberately what the record should say — do not force-push.
+  - A **manual** dev→master merge is still occasionally wanted (e.g. to record docs
+    commits that never shipped). That needs explicit user permission, same CLAUDE.md §5
+    gate, and a PR for it cannot be approved by its own author.
 - Release-please is **not** a Phase 7 step — it is a Phase 0b precondition. If you reach
   here with an unmerged release PR, the promote happened out of order; see 0b for what
   that costs and how to correct it. (This bullet used to imply the opposite, which is
