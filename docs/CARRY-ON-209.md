@@ -10,14 +10,14 @@ Companion: `MAINTENANCE_PLAN.md` → "Tier 4 — Dependency currency, 2026-09" (
 
 | Thing | State |
 |---|---|
-| Branch | `chore/dependency-currency-209`, 12 commits, tree clean |
+| Branch | `chore/dependency-currency-209`, 20 commits, tree clean. **Phase A is COMPLETE** |
 | Forked from | `dev` @ `1726099` (unmoved) |
 | PR | **none opened yet** — a *draft* PR against `dev` is the end state |
 | `master` / production / UAT | untouched. Prod is server 3.3.0 / `c605bf0` |
 | Feature flags | untouched |
 | Dependabot PRs | #212–#221 all still open; none merged or closed |
 | release-please PR #205 | untouched |
-| Suite | `314 passed / 0 failed / 2 skipped`, green at every commit |
+| Suite | `316 passed / 0 failed / 2 skipped`, green at every commit (was 314; +2 from the new guard test) |
 
 **Hard constraint from Tony: nothing merges to `dev` yet.** A `dev` merge auto-deploys UAT and he
 wants to soak this later in the week.
@@ -66,6 +66,11 @@ anything issue #209 or an older note says.**
 | `87789e5` | this note, rewritten against verified sources |
 | `fde2284` | **Phase A** Gradle wrapper **and** build image `8.12.1` → `8.14.5`. Dependabot #217 (image → 9.7.1) deliberately NOT taken |
 | `14f734c` | **Phase A** Kotlin `2.1.20` → `2.2.21`, plus a new `ext['kotlin.version']` override so stdlib/reflect follow the compiler |
+| `2dbda2e` | **Phase A** dropped `querydsl-jpa-postgres-json` and its two dead method bodies |
+| `31809ca` | **Phase A** pinned `graphql-java-extended-scalars` at 19.0 — a verified no-op that closes the DGS trap |
+| `aad1d80` | **Phase A** `GraphQlSchemaSwitchesTest`, plus removal of the `application-test.yml` override that made it unable to fire |
+| `9211ed2` | **Phase A** root `type Mutation` declared legally (promoted in `adminConfig.graphqls`) |
+| `e2c450c` | **Phase A** Flyway `10.22.0` → `11.20.3` |
 
 ### Why A5 became a deletion
 
@@ -92,32 +97,37 @@ BOM `hibernate.version` on Boot 4.1 would have failed dependency resolution outr
 
 ## Next steps
 
-### Phase A — front-loadable onto Boot 3.4.4, one green commit each
+### Phase A — COMPLETE
 
-1. **Delete `com.github.alexliesenfeld:querydsl-jpa-postgres-json:0.0.7`** — proven dead code,
-   see issue #222 below. Two imports plus two dead method bodies.
-2. **Pin `graphql-java-extended-scalars` explicitly** — see the trap below. Do this **before**
-   anything touches the DGS plugin.
-3. **Flyway 10.22.0 → 11.x** as the waypoint. **NOT 12.x — see below.**
+All seven steps landed, one green commit each, each verified against the **full** suite rather
+than the tests expected to be affected. Nothing merged to `dev`.
 
-> **Resolved, was Phase A step 6.** `io.github.microutils:kotlin-logging-jvm:3.0.5` was expected to
-> break on Kotlin 2.2 (Kotlin 1.x metadata; the coordinate has moved to `io.github.oshai`). It
-> compiles clean on 2.2.21 with **zero** metadata warnings, so no move is needed now. It may still
-> break at 2.3.21 during the Boot bump — do not treat this as cleared permanently.
-4. **Guard the schema-inspection config key with a test.** `application.yml:164-172` sets
-   `spring.graphql.schema.inspection.enabled: false`, and it is **load-bearing** —
-   SchemaMappingInspector breaks on Kotlin 2.x reflection, and Kotlin is already at 2.2.21 (`14f734c`).
-   `GraphQlIntrospectionDisabledTest` would catch a dead *introspection* key, but nothing catches a
-   renamed or dropped **`inspection`** key: it would silently start running the inspector again.
-   spring-graphql 2.0 also **extends** the inspector to nullability checks, so an accidental
-   re-enable would be loud in a new way. Write the test now, on Boot 3.4.4, pinning the current
-   behaviour so a Boot 4 rename fails the suite instead of surfacing at startup.
-5. **Consolidate the empty `type Mutation { }`** at `root.graphqls:109-110`. The GraphQL spec's
-   `FieldsDefinition` requires >= 1 field; this only parses because graphql-java v25's grammar is
-   `fieldsDefinition : '{' fieldDefinition* '}'` (zero-or-more, with `+` used only for *extension*
-   definitions). It rides a deliberate vendor laxity rather than the spec. Note the fix is not a
-   deletion — every other `.graphqls` does `extend type Mutation`, which requires the base type to
-   exist, so a real field has to move onto the root. `SchemaAssemblyTest` is the check.
+What Phase A changed about the plan — read this before Phase B:
+
+- **The QueryDSL/kapt blocker in issue #209 does not exist.** kapt still generates all 26 Q-classes
+  on Kotlin 2.2.21. K2 kapt has been default since 2.1.20, which was already the pin.
+- **Zero JSpecify diagnostics** appeared with `-Xjsr305=strict` still set. That means the Framework
+  7 JSpecify fallout is entirely ahead of us; the Kotlin move did not surface any of it.
+- **`kotlin-logging-jvm:3.0.5` survived** Kotlin 2.2 with no metadata warnings, so the
+  `io.github.oshai` move is not needed *yet*. It may still be needed at 2.3.21.
+- **extended-scalars cannot be moved while the DGS plugin exists.** `graphql-dgs-platform:5.5.1`
+  applies `strictly [19.0, 20[`, a hard range, not a preference. And the latest release is **24.0**
+  — there is no 23.x and no 25.x; the artifact does not track graphql-java's version line. 24.0
+  declares graphql-java 24.1 while `io.spring.dependency-management` **forces** the BOM's
+  graphql-java, which is a runtime `NoSuchMethodError` pairing a green build will not catch.
+  Order: pin (done) → delete DGS plugin → move version, with coercion tests first.
+- **`application-test.yml` can silently blind a test.** `GraphQlSchemaSwitchesTest` passed with the
+  shipped flag flipped to `true`, because the test yml restated the same key — a leftover from
+  before #105, when that file *replaced* `application.yml` instead of overlaying it. **Other
+  pre-#105 leftovers may still be masking things in that file; nobody has swept it.**
+- **The SchemaMappingInspector crash is now evidenced, not folklore.** Enabling it fails context
+  refresh through `getOrCreateReport` → `checkFieldsContainer` → `checkField` →
+  `DefaultInitializer.inspect`. It does not warn; it kills startup.
+- **A schema input field with no Kotlin counterpart exists today**: `deviceRequests.graphqls:94`
+  declares `filters: [JsonComparison!]` and `DeviceRequestItemsWhereInput` has no such property.
+  That is exactly what SchemaMappingInspector would report, and it is off.
+- **Gradle 9 is not a bump.** The build still reports "Deprecated Gradle features were used in this
+  build, making it incompatible with Gradle 9.0". Dependabot #217 was declined for this reason.
 
 ### Phase B — the Boot bump
 
@@ -131,7 +141,8 @@ Spring Framework 7 / Spring Security 7.1 fallout, and the spring-graphql 2.0 jum
 ### Phase C — after it runs
 
 Envers `NOT_AUDITED` re-verification (below); the #222 decision; **delete the vestigial DGS codegen
-plugin — but only after Phase A step 2**; `bootRun` + `/actuator/health` locally.
+plugin — the extended-scalars pin it depends on is already done (`31809ca`), so this is now
+unblocked**; `bootRun` + `/actuator/health` locally.
 
 ## The four things the first note got wrong
 
@@ -258,8 +269,9 @@ maps the literal `/graphql`; no `AccessDecisionManager`/`AccessDecisionVoter`.
 - Whether `spring-boot-jackson2` genuinely restores an **injectable bean** vs just the classes.
   Settle by reading that module's `Jackson2AutoConfiguration` source.
 - Whether `spring.graphql.schema.introspection.enabled` and **`inspection.enabled`** survive Boot 4
-  (`application.yml:164-172`). Not researched — **Phase A step 4 guards it with a test instead**,
-  which is cheaper than settling the documentation question.
+  (`application.yml:164-172`). Not researched — **`GraphQlSchemaSwitchesTest` (`aad1d80`) guards it
+  with a test instead**, which is cheaper than settling the documentation question. Note its scope
+  limit: it catches a changed yml path, not an inspector that crashes at startup.
 - Whether spring-graphql 2.0 changed `DataFetcherExceptionResolverAdapter`, `RuntimeWiringConfigurer`
   or `WebGraphQlInterceptor`. The 2.0 notes list **no removed APIs at all** — weak evidence, not
   strong.
