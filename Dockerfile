@@ -6,7 +6,7 @@ COPY ./src /app/src
 COPY ./build.gradle settings.gradle .editorconfig /app/
 RUN gradle -p /app clean build -x test -PgitCommit=${GIT_COMMIT}
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 COPY --from=builder /app/build/libs/*.jar /app/app.jar
 RUN apk add --no-cache --update \
     openssl \
