@@ -1,0 +1,87 @@
+# Dependabot configuration.
+#
+# Alerts and automated security fixes are already enabled at the repository level, but before
+# this file existed GitHub's dependency graph contained ZERO Java/Kotlin packages for this repo -
+# only the GitHub Actions used by the workflows. That is why a High-severity Spring Boot advisory
+# affecting our pinned version produced no alert. Declaring the gradle ecosystem here is what
+# gives Dependabot a manifest to parse, so "no open alerts" starts meaning something.
+#
+# Two settings matter more than the rest:
+#   target-branch: dev   - master is a record of what shipped, never a source. A PR opened
+#                          against master would be pointing the wrong way.
+#   commit-message       - release-please reads conventional commits. `chore(deps)` keeps
+#                          dependency bumps out of the release notes' feature list while still
+#                          riding along in the next release.
+#
+# Major upgrades are deliberately ignored for the three dependencies where a major bump is a
+# project rather than a patch (see the dependency-currency issue): Spring Boot, Kotlin and
+# QueryDSL. Without that, this file would open the same unmergeable Boot 4 PR every week and
+# train everyone to ignore Dependabot.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/London
+    target-branch: dev
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      # One PR for the whole Spring family - they are released together and bumping them
+      # separately produces PRs that cannot pass CI on their own.
+      spring:
+        patterns:
+          - "org.springframework*"
+          - "org.springframework.boot*"
+      # Test-only churn, batched so it never competes for attention with runtime changes.
+      test-infrastructure:
+        patterns:
+          - "io.zonky.test*"
+          - "org.junit*"
+          - "org.mockito*"
+          - "com.h2database*"
+    ignore:
+      # A major bump on each of these is tracked work, not a routine PR.
+      - dependency-name: "org.springframework.boot*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "org.jetbrains.kotlin*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "com.querydsl*"
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+      timezone: Europe/London
+    target-branch: dev
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(ci)"
+
+  # The runtime image and the build image are both pinned in the Dockerfile, as is the
+  # Application Insights agent version - but that last one is a plain ARG, so Dependabot cannot
+  # see it. It still needs bumping by hand.
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: monthly
+      timezone: Europe/London
+    target-branch: dev
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(docker)"
