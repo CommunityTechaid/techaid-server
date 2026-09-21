@@ -235,12 +235,12 @@ dependencies {
     kapt "com.querydsl:querydsl-apt:5.0.0:jakarta"
     runtimeOnly 'org.postgresql:postgresql'
     /* Making use of embedded postgres db when running unit tests */
-    testImplementation 'io.zonky.test:embedded-database-spring-test:2.5.1'
+    testImplementation 'io.zonky.test:embedded-database-spring-test:2.8.0'
     // Embedded Postgres binaries ("zonky" provider) so DB-backed tests run without Docker,
     // both locally (Docker Desktop npipe is unreliable with testcontainers) and in CI.
-    testImplementation 'io.zonky.test:embedded-postgres:2.1.0'
+    testImplementation 'io.zonky.test:embedded-postgres:2.2.2'
     /* Providing In-Memory H2 database as the default spring data-source */
-    testImplementation 'com.h2database:h2:2.2.224'
+    testImplementation 'com.h2database:h2:2.5.250'
     implementation "org.hibernate:hibernate-envers:${hibernate_version}"
 
     implementation("org.hibernate.tool:hibernate-tools-orm:${hibernate_version}")
