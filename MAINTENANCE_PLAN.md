@@ -172,12 +172,22 @@ Branch `chore/dependency-currency-209`. One commit per step; the full suite
 (`./gradlew ktlintCheck test`) must be green before the next step starts.
 **Baseline before any change: 314 passed / 0 failed / 2 skipped, BUILD SUCCESSFUL in 2m 38s.**
 
-Verified facts this tier is planned around (Maven Central metadata, 2026-09-21):
-Spring Boot 3.4 stops at **3.4.13** and 3.5 stops at **3.5.16** on Maven Central; both lines
-are past OSS end-of-life (2025-12-31 and 2026-06-30). The `3.4.16` named as the fix for
-CVE-2026-40973 is a **commercial-only** build and is not publicly obtainable, so that advisory
-cannot be closed on the 3.4 line at all. It *can* be closed by moving to 3.5.16, which sits
-above the 3.5.14 fix.
+**Target: Spring Boot 4.1.x.** Everything in this tier is a prerequisite for that move, and
+the 3.5 line is deliberately skipped.
+
+Verified facts this tier is planned around (Maven Central metadata, 2026-09-21): Spring Boot 3.4
+stops at **3.4.13** and 3.5 stops at **3.5.16** on Maven Central; both lines are past OSS
+end-of-life (2025-12-31 and 2026-06-30), so 3.5 is not a destination, only a resting place.
+The `3.4.16` named as the fix for CVE-2026-40973 is a **commercial-only** build and is not
+publicly obtainable, so that advisory cannot be closed on the 3.4 line at all - but its
+precondition is inactive here (`server.servlet.session.persistent` is unset everywhere and
+defaults to false), so it does not force a move on its own.
+
+Why not step through 3.5.16 first: it would move spring-graphql 1.3.4 -> 1.4.6 and graphql-java
+22.3 -> 24.3, and Boot 4.1 moves both again. That is the highest-risk migration in this repo -
+hand-written SDL, the `LenientString` scalar, the depth limit in `GraphQlConfig.kt`, schema
+inspection disabled - and stepping through 3.5 means paying for it twice and discarding the
+first payment. Dependabot #216 (3.4.4 -> 3.5.16) is closed for this reason, not merged.
 
 ### Group A — dependabot configuration
 
@@ -230,13 +240,6 @@ Postgres and runs all migrations, so the whole suite is the test for this group
 - [ ] Flyway `10.22.0` → `11.20.3`, both `flyway-core` and `flyway-database-postgresql`
   (the separate Postgres module is already declared, so this is a version bump, not a new
   dependency). Java 17 remains the floor
-- [ ] **PENDING DECISION** Spring Boot `3.4.4` → `3.5.16` (Dependabot #216). The only publicly
-  available remediation for CVE-2026-40973 short of Boot 4. Carries spring-graphql
-  `1.3.4` → `1.4.6` and graphql-java `22.3` → `24.3`, which is the real risk surface for this
-  repo: hand-written SDL, the `LenientString` scalar, the depth limit in `GraphQlConfig.kt`, and
-  disabled schema inspection. Hibernate moves patch-only (6.6.11 → 6.6.53), so no Envers
-  migration is forced. The `spring.graphql.path` → `spring.graphql.http.path` property move does
-  not affect us — `application.yml` sets only `spring.graphql.schema.*` keys
 
 **Verify:** `./gradlew ktlintCheck test` green after each commit, with particular attention to
 `SchemaValidationTest`, `SchemaDriftConvergenceTest`, `IndexMigrationTest`,
@@ -251,12 +254,14 @@ that; watch Flyway's own log lines on first start.
   plus kapt → KSP). Its own project; blocks the Kotlin upgrade
 - [ ] Kotlin `2.1.20` → 2.4.x, gated behind the QueryDSL move (kapt does not support Kotlin
   language version 2.0+ without falling back to 1.9)
-- [ ] Spring Boot → 4.1.x. Land on **≥ 4.0.6**: CVE-2026-40976 (Critical, 9.1) affects
-  4.0.0–4.0.5, where the default filter chain grants all endpoints when actuator is present
-  without the health dependency
+- [ ] **Spring Boot `3.4.4` → 4.1.x — the goal this whole tier serves.** Land on **≥ 4.0.6**:
+  CVE-2026-40976 (Critical, 9.1) affects 4.0.0–4.0.5, where the default filter chain grants all
+  endpoints when actuator is present without the health dependency. Java 17 is supported through
+  4.1, so no JDK move is required to get there
 - [ ] `eclipse-temurin` 17 → 25 (Dependabot #215). Held: Java-17 bytecode on a JRE 25 is safe in
   itself, but the Application Insights agent has an open Java 25 native-access issue
-  (microsoft/ApplicationInsights-Java#4851). Belongs with the Boot 4 work
+  (microsoft/ApplicationInsights-Java#4851). Elective: Boot 4.1 supports Java 17–26, so this is
+  **not** on the path to the target
 - [ ] Gradle build image `8.12.1-jdk17` → `9.7.1-jdk17` (Dependabot #217). Held: a real Gradle 9
   migration, **and it exposed a latent divergence** — `Dockerfile:7` builds the shipped jar with
   bare `gradle` (the image's own version), while CI's test job uses `./gradlew` (8.12.1). They
