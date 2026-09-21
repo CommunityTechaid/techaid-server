@@ -258,7 +258,7 @@ maps the literal `/graphql`; no `AccessDecisionManager`/`AccessDecisionVoter`.
 - Whether `spring-boot-jackson2` genuinely restores an **injectable bean** vs just the classes.
   Settle by reading that module's `Jackson2AutoConfiguration` source.
 - Whether `spring.graphql.schema.introspection.enabled` and **`inspection.enabled`** survive Boot 4
-  (`application.yml:164-172`). Not researched — **Phase A step 7 guards it with a test instead**,
+  (`application.yml:164-172`). Not researched — **Phase A step 4 guards it with a test instead**,
   which is cheaper than settling the documentation question.
 - Whether spring-graphql 2.0 changed `DataFetcherExceptionResolverAdapter`, `RuntimeWiringConfigurer`
   or `WebGraphQlInterceptor`. The 2.0 notes list **no removed APIs at all** — weak evidence, not
@@ -293,7 +293,11 @@ predicate — a product decision, not an upgrade blocker.
 - **Folded:** #218 (done in `fff0d49`) — can be closed.
 - **Fold in:** #219 font-awesome, #220 auth0 1.12.1, #221 jakarta.mail 2.0.2.
 - **Close, do not merge:** #216 (3.4.4 → 3.5.16).
-- **Now required:** #217 (gradle build image) — pairs with the wrapper bump, Phase A step 1.
+- **Close, do not merge:** #217 (gradle build image → `9.7.1-jdk17`). The wrapper and the image
+  were moved together to **8.14.5** in `fde2284`, which is what Boot 4.1 needs. Taking #217 now
+  would put the image on Gradle 9 while the wrapper stayed on 8.x. The build still reports
+  "Deprecated Gradle features ... incompatible with Gradle 9.0", and a Gradle 9 move also has to
+  clear the DGS codegen plugin, so 9.x is separate work.
 - **Hold:** #215 (temurin 17 → 25) — elective; 4.1 supports Java 17–26, and the AI agent has an
   open Java 25 native-access issue (ApplicationInsights-Java#4851).
 - **Undecided:** #212/#213/#214 action majors. The inputs this repo passes are unaffected.
