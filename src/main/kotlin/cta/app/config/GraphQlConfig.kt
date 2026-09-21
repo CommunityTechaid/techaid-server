@@ -1,7 +1,9 @@
 package cta.app.config
 
 import graphql.GraphQLContext
+import graphql.analysis.MaxQueryDepthInstrumentation
 import graphql.execution.CoercedVariables
+import graphql.execution.instrumentation.Instrumentation
 import graphql.language.BooleanValue
 import graphql.language.FloatValue
 import graphql.language.IntValue
@@ -19,6 +21,23 @@ import java.util.*
 
 @Configuration
 public class GraphQlConfig {
+    /**
+     * Rejects absurdly nested documents before any data fetcher runs.
+     *
+     * There was no depth or complexity bound at all, and the public surface is anonymous, so one
+     * request could alias a nested selection hundreds of levels deep and fan out into hundreds of
+     * unpaginated queries against a single scale-to-zero replica - outside the per-IP booking
+     * limiters, which only cover the delivery endpoints.
+     *
+     * The limit is deliberately generous. The deepest document the dashboard actually sends is
+     * depth 6 (kitsConnection -> content -> deviceRequest -> referringOrganisationContact ->
+     * referringOrganisation -> name), so 15 leaves well over twice the headroom a real query
+     * needs. Validation runs before authorisation, so a document that breaches this is refused
+     * for authenticated staff too - which is why the headroom matters.
+     */
+    @Bean
+    fun maxQueryDepthInstrumentation(): Instrumentation = MaxQueryDepthInstrumentation(MAX_QUERY_DEPTH)
+
     @Bean
     fun runtimeWiringConfigurer(
         instantScalar: GraphQLScalarType,
@@ -31,6 +50,11 @@ public class GraphQlConfig {
                 .scalar(instantScalar)
                 .scalar(lenientStringScalar)
         }
+
+    companion object {
+        /** Maximum field-selection depth accepted on any document. Deepest real query is 6. */
+        const val MAX_QUERY_DEPTH: Int = 15
+    }
 }
 
 @Configuration

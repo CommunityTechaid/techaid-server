@@ -10,9 +10,15 @@ management:
     web:
       exposure:
         include:
+          # health: anonymous, status only - container probes, the ctawatch monitor and
+          #   the collection-booking Apps Script warm-up all poll it.
+          # info: anonymous - this is how a deploy gets verified (version + git commit),
+          #   so it stays; it discloses nothing beyond what it is for.
+          # metrics: REMOVED 2026-09-21. Nothing consumed it - no CI step, no probe, no
+          #   monitor - and it let an anonymous caller enumerate JVM, Hikari and
+          #   http.server.requests metric names and read their values.
           - health
           - info
-          - metrics
   health:
     diskspace.enabled: false
   endpoint:
