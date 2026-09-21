@@ -166,6 +166,115 @@ Branch strategy: work on `dev`, PR to `master` when each tier or group is done.
 
 ---
 
+## Tier 4 — Dependency currency, 2026-09 (issue #209)
+
+Branch `chore/dependency-currency-209`. One commit per step; the full suite
+(`./gradlew ktlintCheck test`) must be green before the next step starts.
+**Baseline before any change: 314 passed / 0 failed / 2 skipped, BUILD SUCCESSFUL in 2m 38s.**
+
+Verified facts this tier is planned around (Maven Central metadata, 2026-09-21):
+Spring Boot 3.4 stops at **3.4.13** and 3.5 stops at **3.5.16** on Maven Central; both lines
+are past OSS end-of-life (2025-12-31 and 2026-06-30). The `3.4.16` named as the fix for
+CVE-2026-40973 is a **commercial-only** build and is not publicly obtainable, so that advisory
+cannot be closed on the 3.4 line at all. It *can* be closed by moving to 3.5.16, which sits
+above the 3.5.14 fix.
+
+### Group A — dependabot configuration
+
+- [x] Add `version-update:semver-major` ignores to the **docker** and **github-actions** blocks
+  of `.github/dependabot.yml`; the gradle block already had them, which is why the first run
+  opened six unmergeable major PRs
+
+**Verify:** `.github/dependabot.yml` parses and all three ecosystems carry an `ignore` list
+
+### Group B — low-risk version bumps
+
+- [ ] Application Insights agent `3.7.8` → `3.7.10` (`Dockerfile` ARG). The 3.7.10 JFR event
+  rename `MachineStats` → `MachineInfo` is inert here: the repo ships no `.jfc` file
+- [ ] ktlint gradle plugin `12.1.1` → `14.2.0`. The plugin's default engine is already 1.5.0,
+  identical to the `ktlint { version }` pin, so no formatting rules change
+- [ ] **CRITICAL** PostgreSQL JDBC. Two separate pins, and the issue only named one:
+  - [ ] buildscript classpath `42.7.10` → `42.7.13`
+  - [ ] **the runtime driver.** `runtimeOnly 'org.postgresql:postgresql'` is unpinned and rides
+    the Boot BOM, which resolves it to **42.7.5** — inside CVE-2026-54291's affected range
+    (42.7.4–42.7.11). Bumping the buildscript pin alone does not change what ships. Boot 3.5.16's
+    BOM resolves 42.7.11, still in range, so this pin is needed whichever Boot version we land on
+- [ ] `org.webjars:font-awesome` `6.4.2` → `7.3.0` (Dependabot #219)
+- [ ] `com.auth0:mvc-auth-commons` `1.11.1` → `1.12.1` (Dependabot #220)
+- [ ] `com.sun.mail:jakarta.mail` `2.0.1` → `2.0.2` (Dependabot #221)
+
+**Verify:** `./gradlew ktlintCheck test` green; `./gradlew dependencyInsight --configuration
+runtimeClasspath --dependency org.postgresql:postgresql` reports **42.7.13** (it reports 42.7.5
+today — this is the check that distinguishes a real fix from a cosmetic one)
+
+### Group C — test infrastructure (prerequisite for Group D)
+
+- [ ] `io.zonky.test:embedded-postgres` `2.1.0` → `2.2.2`
+- [ ] `io.zonky.test:embedded-database-spring-test` `2.5.1` → `2.8.0`.
+  **Do not land on 2.7.0** — it ships a runtime `ClassNotFoundException` for shaded Guava
+  (zonkyio/embedded-database-spring-test#310), fixed in 2.7.1
+- [ ] `com.h2database:h2` `2.2.224` → `2.5.250` (Dependabot #218)
+
+Why this gates Group D: Flyway 11 support arrived in `embedded-database-spring-test` **2.6.0**,
+so the Flyway bump cannot be verified by the test suite until this group lands.
+
+**Verify:** `./gradlew ktlintCheck test` green — every DB-backed test spins a fresh embedded
+Postgres and runs all migrations, so the whole suite is the test for this group
+
+### Group D — framework
+
+- [ ] `@MockBean` → `@MockitoBean` (`org.springframework.test.context.bean.override.mockito`).
+  Measured footprint: **45 files, 48 annotation sites, 45 import lines**. There is **no
+  `@SpyBean` anywhere in the repo**, so no `@MockitoSpyBean` work. Deprecated since Boot 3.4,
+  removed in Boot 4 — this is the gate for any 4.x move, not optional polish
+- [ ] Flyway `10.22.0` → `11.20.3`, both `flyway-core` and `flyway-database-postgresql`
+  (the separate Postgres module is already declared, so this is a version bump, not a new
+  dependency). Java 17 remains the floor
+- [ ] **PENDING DECISION** Spring Boot `3.4.4` → `3.5.16` (Dependabot #216). The only publicly
+  available remediation for CVE-2026-40973 short of Boot 4. Carries spring-graphql
+  `1.3.4` → `1.4.6` and graphql-java `22.3` → `24.3`, which is the real risk surface for this
+  repo: hand-written SDL, the `LenientString` scalar, the depth limit in `GraphQlConfig.kt`, and
+  disabled schema inspection. Hibernate moves patch-only (6.6.11 → 6.6.53), so no Envers
+  migration is forced. The `spring.graphql.path` → `spring.graphql.http.path` property move does
+  not affect us — `application.yml` sets only `spring.graphql.schema.*` keys
+
+**Verify:** `./gradlew ktlintCheck test` green after each commit, with particular attention to
+`SchemaValidationTest`, `SchemaDriftConvergenceTest`, `IndexMigrationTest`,
+`EnversSchemaContractTest`, the `Gdpr*` suites, and `PublicSurfaceAuthorizationTest`.
+**Known gap:** the embedded-DB tests run migrations from an empty database, so they do **not**
+exercise Flyway 11 re-validating an existing `flyway_schema_history`. Only the UAT deploy proves
+that; watch Flyway's own log lines on first start.
+
+### Not in this tier — tracked separately
+
+- [ ] QueryDSL `com.querydsl:5.0.0` → the `io.github.openfeign.querydsl` fork (groupId change
+  plus kapt → KSP). Its own project; blocks the Kotlin upgrade
+- [ ] Kotlin `2.1.20` → 2.4.x, gated behind the QueryDSL move (kapt does not support Kotlin
+  language version 2.0+ without falling back to 1.9)
+- [ ] Spring Boot → 4.1.x. Land on **≥ 4.0.6**: CVE-2026-40976 (Critical, 9.1) affects
+  4.0.0–4.0.5, where the default filter chain grants all endpoints when actuator is present
+  without the health dependency
+- [ ] `eclipse-temurin` 17 → 25 (Dependabot #215). Held: Java-17 bytecode on a JRE 25 is safe in
+  itself, but the Application Insights agent has an open Java 25 native-access issue
+  (microsoft/ApplicationInsights-Java#4851). Belongs with the Boot 4 work
+- [ ] Gradle build image `8.12.1-jdk17` → `9.7.1-jdk17` (Dependabot #217). Held: a real Gradle 9
+  migration, **and it exposed a latent divergence** — `Dockerfile:7` builds the shipped jar with
+  bare `gradle` (the image's own version), while CI's test job uses `./gradlew` (8.12.1). They
+  agree today by coincidence. Worth a separate change making the Dockerfile use the wrapper so
+  the pin is the single source of truth
+
+### Observations, not acted on (CLAUDE.md §3)
+
+- `com.h2database:h2` is declared `testImplementation` but **nothing in `src/main` or `src/test`
+  references it** (`org.h2`, `jdbc:h2`, `H2Dialect` all absent — apparent matches for "h2" are
+  substrings of `oauth2`). Dead weight since the zonky switch; a candidate for removal
+- `org.webjars:font-awesome` is likewise unreferenced
+- This file's header still says "PR to `master` when each tier or group is done", which
+  contradicts CLAUDE.md §5 — PRs target `dev`, and `master` only ever records what shipped
+
+
+---
+
 ## Notes
 
 **2026-04-15 — Group A/B complete, tests green**
