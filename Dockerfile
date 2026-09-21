@@ -1,5 +1,5 @@
 # NOTE: This is the production and uat version. Please use Dockerfile.dev for local development testing
-FROM gradle:8.12.1-jdk17 AS builder
+FROM gradle:9.7.1-jdk17 AS builder
 USER root
 ARG GIT_COMMIT=unknown
 COPY ./src /app/src
