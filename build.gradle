@@ -206,8 +206,26 @@ dependencies {
 
     /* Graphql */
     implementation 'org.springframework.boot:spring-boot-starter-graphql'
-    // https://mvnrepository.com/artifact/com.graphql-java/graphql-java-extended-scalars
-    implementation 'com.graphql-java:graphql-java-extended-scalars'
+    /*
+     * Pinned to exactly what resolves today. This is NOT a version choice - it closes a trap.
+     *
+     * The coordinate used to carry no version. The Spring Boot BOM does not manage
+     * graphql-java-extended-scalars (it manages only graphql-java), so the version was arriving
+     * from the vestigial DGS codegen plugin, whose platform applies a hard constraint:
+     *     strictly [19.0, 20[; prefer 19.0; reject 18.2
+     * That constraint both SUPPLIES the version and CAPS it below 20, so extended-scalars cannot
+     * be moved at all while the DGS plugin is on the build. Deleting that plugin - which the
+     * upgrade plan wants to do - would remove the only version source and leave this
+     * unresolvable.
+     *
+     * Order of operations: pin here first (this commit), delete the DGS plugin second, move the
+     * version third. The move is its own change: the latest release is 24.0 (there is no 23.x and
+     * no 25.x - the artifact does not track graphql-java's version line), and 24.0 declares
+     * graphql-java 24.1 while io.spring.dependency-management FORCES the BOM's graphql-java. A
+     * mismatched pair there is a runtime NoSuchMethodError that a green build will not catch, so
+     * it needs the BigDecimal/Long coercion tests first.
+     */
+    implementation 'com.graphql-java:graphql-java-extended-scalars:19.0'
 
 
 
