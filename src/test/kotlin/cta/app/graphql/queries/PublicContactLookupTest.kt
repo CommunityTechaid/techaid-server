@@ -2,8 +2,10 @@ package cta.app.graphql.queries
 
 import com.querydsl.core.types.Predicate
 import cta.app.QReferringOrganisationContact
+import cta.app.ReferringOrganisation
 import cta.app.ReferringOrganisationContact
 import cta.app.ReferringOrganisationContactRepository
+import cta.app.ReferringOrganisationRepository
 import cta.app.config.GraphQLScalarConfig
 import cta.app.graphql.filters.ReferringOrganisationContactPublicWhereInput
 import cta.graphql.ExactTextComparison
@@ -62,6 +64,12 @@ class PublicContactLookupTest {
 
     @Autowired
     lateinit var mockMvc: MockMvc
+
+    @Autowired
+    lateinit var contacts: ReferringOrganisationContactRepository
+
+    @Autowired
+    lateinit var organisations: ReferringOrganisationRepository
 
     private fun graphQl(body: String): String =
         mockMvc
@@ -125,6 +133,48 @@ class PublicContactLookupTest {
         assertTrue(
             content.contains("\"referringOrganisationContactsPublic\":[]"),
             "an address nobody holds should come back empty: $content",
+        )
+    }
+
+    /**
+     * The positive path, and the one whose absence would be silent: if the exact match stopped
+     * matching, the public form would simply never recognise a returning referee and would
+     * offer to create a duplicate contact instead. Nothing would error.
+     */
+    @Test
+    fun `a real contact is still found, whatever the caller's capitalisation`() {
+        val organisation = organisations.save(ReferringOrganisation(name = "Positive Path Org ${System.nanoTime()}"))
+        val address = "Returning.Referee.${System.nanoTime()}@Example.ORG"
+        val saved =
+            contacts.save(
+                ReferringOrganisationContact(
+                    fullName = "Returning Referee",
+                    email = address,
+                    phoneNumber = "07000000000",
+                    address = "1 Test Street",
+                    referringOrganisation = organisation,
+                ),
+            )
+
+        val content = lookup(address.uppercase(), organisation.id)
+
+        assertFalse(content.contains("\"errors\""), "a differently-cased exact address must still match: $content")
+        assertTrue(
+            content.contains("\"id\":\"${saved.id}\""),
+            "the stored contact should come back so the form reuses it instead of creating a duplicate: $content",
+        )
+    }
+
+    private fun lookup(
+        address: String,
+        organisationId: Long,
+    ): String {
+        val document =
+            "query findOrganisationContact(${'$'}email: String, ${'$'}refOrgId: Long) " +
+                "{ referringOrganisationContactsPublic(where: { email: { _ilike: ${'$'}email } " +
+                "referringOrganisation: { id: { _eq: ${'$'}refOrgId } } }) { id fullName } }"
+        return graphQl(
+            """{"query":"$document","variables":{"email":"$address","refOrgId":$organisationId}}""",
         )
     }
 
