@@ -254,6 +254,47 @@ class TextComparison(
 }
 
 /**
+ * A deliberately narrow text filter for the ANONYMOUS GraphQL surface: case-insensitive exact
+ * match only.
+ *
+ * [TextComparison] also carries `_like`, `_contains`, `_in` and `_matches`. On a public query
+ * those turn a lookup into a bulk export: measured against production on 2026-09-21,
+ * `referringOrganisationContactsPublic(where: {email: {_like: "%"}})` returned every referee's
+ * id and full name - 2,387 rows - to an unauthenticated caller. Public inputs take this type
+ * instead, so the only question an anonymous caller can ask is "is this exact address
+ * registered".
+ *
+ * `_ilike` is accepted as a second spelling because the deployed dashboard sends it
+ * (org-request.ts, findOrganisationContact). It never sends a wildcard, and here the operator
+ * means exact-ignoring-case - wildcards are matched literally, not interpreted.
+ */
+class ExactTextComparison(
+    /**
+     * Matches values equal to, ignoring case
+     */
+    var _eq: String? = null,
+    /**
+     * Matches values equal to, ignoring case. Wildcards are NOT interpreted.
+     */
+    var _ilike: String? = null,
+) {
+    /**
+     * Returns a filter for the specified [path].
+     *
+     * With no usable value this matches NOTHING. An empty predicate would mean an anonymous
+     * caller who omits the address gets the whole table back.
+     */
+    fun build(path: StringExpression): BooleanBuilder {
+        val builder = BooleanBuilder()
+        val value = (_eq ?: _ilike)?.trim()
+        if (value.isNullOrBlank()) {
+            return builder.and(path.isNull).and(path.isNotNull)
+        }
+        return builder.and(path.equalsIgnoreCase(value))
+    }
+}
+
+/**
  * A string comparison object
  */
 open class EnumComparison<T>(

@@ -100,6 +100,20 @@ input BigDecimalComparison {
     _string: TextComparison
 }
 
+"""
+Case-insensitive EXACT text match, and nothing else. Used by the anonymous (public) queries.
+
+TextComparison's `_like`/`_contains`/`_in`/`_matches` turn a public lookup into a bulk export,
+so the public inputs take this type instead. `_ilike` is accepted as a second spelling for the
+dashboard's existing query; wildcards in either operator are matched literally.
+"""
+input ExactTextComparison {
+    "Matches values that are equal to, ignoring case"
+    _eq: String
+    "Matches values that are equal to, ignoring case. Wildcards are NOT interpreted."
+    _ilike: String
+}
+
 "Integer comparison filter"
 input TextComparison {
     "Matches values that are equal to"

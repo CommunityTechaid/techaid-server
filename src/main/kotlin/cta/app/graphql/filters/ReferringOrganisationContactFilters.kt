@@ -3,6 +3,7 @@ package cta.app.graphql.filters
 import com.querydsl.core.BooleanBuilder
 import cta.app.QReferringOrganisationContact
 import cta.graphql.BooleanComparison
+import cta.graphql.ExactTextComparison
 import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
@@ -54,36 +55,27 @@ class ReferringOrganisationContactWhereInput(
     }
 }
 
+/**
+ * The anonymous "is this address already registered" lookup.
+ *
+ * [email] is required by the schema and only does a case-insensitive EXACT match: the query is
+ * reachable without credentials, so it must not be able to answer anything broader than one
+ * address. [ExactTextComparison] explains what this replaced and why. The boolean combinators
+ * that the staff-facing input carries are deliberately absent here.
+ */
 data class ReferringOrganisationContactPublicWhereInput(
-    var email: TextComparison? = null,
+    var email: ExactTextComparison? = null,
     var referringOrganisation: ReferringOrganisationWhereInput? = null,
     var archived: BooleanComparison? = null,
-    var AND: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
-    var OR: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
-    var NOT: MutableList<ReferringOrganisationContactPublicWhereInput> = mutableListOf(),
 ) {
     fun build(entity: QReferringOrganisationContact = QReferringOrganisationContact.referringOrganisationContact): BooleanBuilder {
         val builder = BooleanBuilder()
-        email?.let { builder.and(it.build(entity.email)) }
+        // The schema makes email non-null, so this is belt and braces: with no address at all we
+        // match nothing rather than returning the table.
+        val emailFilter = email ?: ExactTextComparison()
+        builder.and(emailFilter.build(entity.email))
         referringOrganisation?.let { builder.and(it.build(entity.referringOrganisation)) }
         archived?.let { builder.and(it.build(entity.archived)) }
-        if (AND.isNotEmpty()) {
-            AND.forEach {
-                builder.and(it.build(entity))
-            }
-        }
-
-        if (OR.isNotEmpty()) {
-            OR.forEach {
-                builder.or(it.build(entity))
-            }
-        }
-
-        if (NOT.isNotEmpty()) {
-            NOT.forEach {
-                builder.andNot(it.build(entity))
-            }
-        }
         return builder
     }
 }
