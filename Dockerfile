@@ -18,7 +18,7 @@ RUN apk add --no-cache --update \
 
 # Download Application Insights Java agent
 # Agent version: https://github.com/microsoft/ApplicationInsights-Java/releases
-ARG AI_AGENT_VERSION=3.7.8
+ARG AI_AGENT_VERSION=3.7.10
 RUN wget -q "https://github.com/microsoft/ApplicationInsights-Java/releases/download/${AI_AGENT_VERSION}/applicationinsights-agent-${AI_AGENT_VERSION}.jar" \
     -O /app/applicationinsights-agent.jar
 
