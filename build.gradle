@@ -207,9 +207,6 @@ dependencies {
     //Tony A - March 6, 2024 - This is the recommended package for using latest jakarta with graphql
 /*    implementation "com.graphql-java-kickstart:graphql-java-servlet:15.1.0"*/
 
-    /* Utility Dependencies */
-    implementation "info.picocli:picocli-spring-boot-starter:4.7.7"
-
     /* Logging / Monitoring Dependencies */
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
     // logback-classic version managed by Spring Boot BOM (1.5.x with Spring Boot 3.4+)
@@ -242,9 +239,6 @@ dependencies {
     /* Providing In-Memory H2 database as the default spring data-source */
     testImplementation 'com.h2database:h2:2.5.250'
     implementation "org.hibernate:hibernate-envers:${hibernate_version}"
-
-    implementation("org.hibernate.tool:hibernate-tools-orm:${hibernate_version}")
-    implementation("org.hibernate.tool:hibernate-tools-utils:${hibernate_version}")
 
     /* Devtools for hot reload */
     compileOnly("org.springframework.boot:spring-boot-devtools:${springBootVersion}")
