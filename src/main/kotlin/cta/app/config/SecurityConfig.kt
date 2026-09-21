@@ -2,7 +2,6 @@ package cta.app.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import cta.auth.AuthService
-import cta.auth.SecretAuthenticationFilter
 import cta.auth.TokenAuthenticationFilter
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
@@ -11,8 +10,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
 import org.springframework.core.convert.converter.Converter
 import org.springframework.security.authentication.AbstractAuthenticationToken
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -29,8 +26,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
 
 private val logger = KotlinLogging.logger {}
@@ -59,25 +54,26 @@ class SecurityConfig(
         return jwtDecoder
     }
 
+    /**
+     * The admin secret is accepted in the `X-Auth-Admin-Secret` header only.
+     *
+     * There used to be a second route: `SecretAuthenticationFilter` read the same secret from an
+     * `x-admin-token` REQUEST PARAMETER on `POST /login` and minted a session carrying the full
+     * set of admin authorities. It is gone, because `AccessLoggingFilter` logs the whole query
+     * string at DEBUG and production runs `cta: DEBUG` - so authenticating that way wrote the
+     * admin secret in clear into container logs that are retained for 90 days. Two entry points
+     * to the same static secret, one of which self-leaks, is not a trade worth keeping.
+     *
+     * Its `AuthenticationProvider` went with it, and so did the `AuthenticationManager` bean that
+     * existed only to feed that filter. Leaving the bean behind is a trap: with no provider left
+     * to terminate it, `AuthenticationConfiguration.getAuthenticationManager()` resolves back to
+     * the bean it is defining, and any `POST /login` dies with a StackOverflowError. Nothing else
+     * in the app injects an `AuthenticationManager`; `formLogin` is left with Spring's default.
+     */
     @Bean
-    public fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager =
-        authenticationConfiguration.getAuthenticationManager()
-
-    fun secretAuthenticationFilter(authenticationConfiguration: AuthenticationConfiguration): SecretAuthenticationFilter {
-        val filter = SecretAuthenticationFilter()
-        filter.setAuthenticationManager(authenticationManager(authenticationConfiguration))
-        filter.setAuthenticationFailureHandler(SimpleUrlAuthenticationFailureHandler("/login?error=true"))
-        return filter
-    }
-
-    @Bean
-    public fun filterChain(
-        http: HttpSecurity,
-        authenticationConfiguration: AuthenticationConfiguration,
-    ): SecurityFilterChain {
+    public fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http.csrf { it.disable() }
         http.addFilterBefore(TokenAuthenticationFilter(authService, objectMapper), BasicAuthenticationFilter::class.java)
-        http.addFilterBefore(secretAuthenticationFilter(authenticationConfiguration), UsernamePasswordAuthenticationFilter::class.java)
         http.oauth2ResourceServer { it.jwt { jwt -> jwt.jwtAuthenticationConverter(Auth0TokenConverter()) } }
         http.authorizeHttpRequests { it.anyRequest().permitAll() }
         http.formLogin { form ->
