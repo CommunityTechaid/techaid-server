@@ -1,6 +1,5 @@
 package cta.graphql
 
-import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.DateTimePath
@@ -479,19 +478,13 @@ class JsonComparison(
     var _in: MutableList<Any>? = null,
     var _nin: MutableList<Any>? = null,
 ) {
-    /**
-     * Returns a filter for the specified [path]
+    /*
+     * This input deliberately has no `build()`. It used to compile a jsonb predicate via
+     * com.github.alexliesenfeld:querydsl-jpa-postgres-json, dropped for the Spring Boot 4.1 work:
+     * the library is abandoned at 0.0.7 and its only caller was KitAttributesWhereInput.build(),
+     * which nothing has called since 6c2ced4 (2024-11-12). See issue #222.
+     *
+     * The class and its fields stay: the GraphQL schema declares `input JsonComparison`
+     * (filters.graphqls:215) and two inputs reference it.
      */
-    fun build(path: JsonPath): BooleanBuilder {
-        val json = path.get(key)
-        val builder = BooleanBuilder()
-        _int?.let { builder.and(it.build(json.asInt())) }
-        _long?.let { builder.and(it.build(json.asLong())) }
-        _text?.let { builder.and(it.build(json.asText())) }
-        _length?.let { builder.and(it.build(json.length())) }
-        _in?.let { builder.and(json.contains(it)) }
-        _nin?.let { builder.and(json.contains(it).not()) }
-        _bool?.let { builder.and(it.build(json.asBool())) }
-        return builder
-    }
 }
