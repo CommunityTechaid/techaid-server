@@ -21,7 +21,7 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-noarg:${kotlinVersion}")
-        classpath("org.postgresql:postgresql:42.7.10")
+        classpath("org.postgresql:postgresql:42.7.13")
     }
 }
 
@@ -63,6 +63,16 @@ springBoot {
 group = 'cta'
 version = '3.3.0' // x-release-please-version
 sourceCompatibility = '17'
+
+/*
+ * The runtime Postgres driver is declared without a version (`runtimeOnly
+ * 'org.postgresql:postgresql'`) and so takes whatever the Spring Boot BOM manages - 42.7.5 under
+ * Boot 3.4.4, which is inside the affected range of CVE-2026-54291 (channel-binding downgrade,
+ * 42.7.4 to 42.7.11, fixed in 42.7.12). Bumping the buildscript classpath pin above does NOT
+ * change what ships; only overriding the managed version does. Keep this at or above 42.7.12 -
+ * the Boot 3.5 and 4.x BOMs also manage versions inside the affected range.
+ */
+ext['postgresql.version'] = '42.7.13'
 
 repositories {
     mavenCentral()
