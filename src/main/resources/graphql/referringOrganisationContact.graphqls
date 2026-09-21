@@ -72,13 +72,17 @@ input ReferringOrganisationContactWhereInput {
     NOT: [ReferringOrganisationContactWhereInput!]
 }
 
+"""
+The anonymous "is this address already registered" lookup.
+
+`email` is REQUIRED and matches exactly (ignoring case): this query is reachable without
+credentials, so it must not be able to answer anything broader than a single address. The
+boolean combinators are deliberately absent for the same reason - see ExactTextComparison.
+"""
 input ReferringOrganisationContactPublicWhereInput{
-    email: TextComparison
+    email: ExactTextComparison!
     referringOrganisation: ReferringOrganisationWhereInput
     archived: BooleanComparison
-    AND: [ReferringOrganisationContactPublicWhereInput!]
-    OR: [ReferringOrganisationContactPublicWhereInput!]
-    NOT: [ReferringOrganisationContactPublicWhereInput!]
 }
 
 type ReferringOrganisationContactPublic{
