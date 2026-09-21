@@ -10,7 +10,7 @@ Companion: `MAINTENANCE_PLAN.md` → "Tier 4 — Dependency currency, 2026-09" (
 
 | Thing | State |
 |---|---|
-| Branch | `chore/dependency-currency-209`, 10 commits, tree clean |
+| Branch | `chore/dependency-currency-209`, 12 commits, tree clean |
 | Forked from | `dev` @ `1726099` (unmoved) |
 | PR | **none opened yet** — a *draft* PR against `dev` is the end state |
 | `master` / production / UAT | untouched. Prod is server 3.3.0 / `c605bf0` |
@@ -63,6 +63,9 @@ anything issue #209 or an older note says.**
 | `fff0d49` | **Phase A1** zonky `embedded-database-spring-test` 2.5.1 → 2.8.0, `embedded-postgres` 2.1.0 → 2.2.2, h2 2.2.224 → 2.5.250. Folds Dependabot #218 |
 | `4f1936d` | **Phase A2** `@MockBean` → `@MockitoBean`, **47 sites / 45 files** (not 48 — one match was a comment) |
 | `953d03f` | **Phase A5** deleted `cta/commands` entirely + picocli + both `hibernate-tools` pins |
+| `87789e5` | this note, rewritten against verified sources |
+| `fde2284` | **Phase A** Gradle wrapper **and** build image `8.12.1` → `8.14.5`. Dependabot #217 (image → 9.7.1) deliberately NOT taken |
+| `14f734c` | **Phase A** Kotlin `2.1.20` → `2.2.21`, plus a new `ext['kotlin.version']` override so stdlib/reflect follow the compiler |
 
 ### Why A5 became a deletion
 
@@ -91,29 +94,25 @@ BOM `hibernate.version` on Boot 4.1 would have failed dependency resolution outr
 
 ### Phase A — front-loadable onto Boot 3.4.4, one green commit each
 
-1. **Gradle wrapper** 8.12.1 → **>= 8.14** (the 4.1 floor for the 8.x line).
-   **This makes Dependabot #217 required, not optional**: `Dockerfile:7` builds the shipped jar
-   with **bare `gradle`** from `gradle:8.12.1-jdk17`, so the image Gradle must move too.
-2. **Kotlin** 2.1.20 → **>= 2.2** (the 4.1 floor; BOM picks 2.3.21). **Independent of QueryDSL.**
-   Verify `./gradlew kaptKotlin` still generates Q-classes. Expect JSpecify diagnostics — Kotlin
-   >= 2.1 treats JSpecify mismatches as **compile errors**, and spring-graphql 2.0 applies JSpecify
-   to its whole public API.
-3. **Delete `com.github.alexliesenfeld:querydsl-jpa-postgres-json:0.0.7`** — proven dead code,
+1. **Delete `com.github.alexliesenfeld:querydsl-jpa-postgres-json:0.0.7`** — proven dead code,
    see issue #222 below. Two imports plus two dead method bodies.
-4. **Pin `graphql-java-extended-scalars` explicitly** — see the trap below. Do this **before**
+2. **Pin `graphql-java-extended-scalars` explicitly** — see the trap below. Do this **before**
    anything touches the DGS plugin.
-5. **Flyway 10.22.0 → 11.x** as the waypoint. **NOT 12.x — see below.**
-6. `io.github.microutils:kotlin-logging-jvm:3.0.5` may not survive Kotlin 2.2 (Kotlin 1.x
-   metadata; the coordinate has moved to `io.github.oshai`). Contingent on step 2.
-7. **Guard the schema-inspection config key with a test.** `application.yml:164-172` sets
+3. **Flyway 10.22.0 → 11.x** as the waypoint. **NOT 12.x — see below.**
+
+> **Resolved, was Phase A step 6.** `io.github.microutils:kotlin-logging-jvm:3.0.5` was expected to
+> break on Kotlin 2.2 (Kotlin 1.x metadata; the coordinate has moved to `io.github.oshai`). It
+> compiles clean on 2.2.21 with **zero** metadata warnings, so no move is needed now. It may still
+> break at 2.3.21 during the Boot bump — do not treat this as cleared permanently.
+4. **Guard the schema-inspection config key with a test.** `application.yml:164-172` sets
    `spring.graphql.schema.inspection.enabled: false`, and it is **load-bearing** —
-   SchemaMappingInspector breaks on Kotlin 2.x reflection, and Phase A step 2 forces Kotlin >= 2.2.
+   SchemaMappingInspector breaks on Kotlin 2.x reflection, and Kotlin is already at 2.2.21 (`14f734c`).
    `GraphQlIntrospectionDisabledTest` would catch a dead *introspection* key, but nothing catches a
    renamed or dropped **`inspection`** key: it would silently start running the inspector again.
    spring-graphql 2.0 also **extends** the inspector to nullability checks, so an accidental
    re-enable would be loud in a new way. Write the test now, on Boot 3.4.4, pinning the current
    behaviour so a Boot 4 rename fails the suite instead of surfacing at startup.
-8. **Consolidate the empty `type Mutation { }`** at `root.graphqls:109-110`. The GraphQL spec's
+5. **Consolidate the empty `type Mutation { }`** at `root.graphqls:109-110`. The GraphQL spec's
    `FieldsDefinition` requires >= 1 field; this only parses because graphql-java v25's grammar is
    `fieldsDefinition : '{' fieldDefinition* '}'` (zero-or-more, with `+` used only for *extension*
    definitions). It rides a deliberate vendor laxity rather than the spec. Note the fix is not a
@@ -132,7 +131,7 @@ Spring Framework 7 / Spring Security 7.1 fallout, and the spring-graphql 2.0 jum
 ### Phase C — after it runs
 
 Envers `NOT_AUDITED` re-verification (below); the #222 decision; **delete the vestigial DGS codegen
-plugin — but only after Phase A step 4**; `bootRun` + `/actuator/health` locally.
+plugin — but only after Phase A step 2**; `bootRun` + `/actuator/health` locally.
 
 ## The four things the first note got wrong
 
