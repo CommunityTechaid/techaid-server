@@ -262,11 +262,17 @@ that; watch Flyway's own log lines on first start.
   itself, but the Application Insights agent has an open Java 25 native-access issue
   (microsoft/ApplicationInsights-Java#4851). Elective: Boot 4.1 supports Java 17–26, so this is
   **not** on the path to the target
-- [ ] Gradle build image `8.12.1-jdk17` → `9.7.1-jdk17` (Dependabot #217). Held: a real Gradle 9
-  migration, **and it exposed a latent divergence** — `Dockerfile:7` builds the shipped jar with
-  bare `gradle` (the image's own version), while CI's test job uses `./gradlew` (8.12.1). They
-  agree today by coincidence. Worth a separate change making the Dockerfile use the wrapper so
-  the pin is the single source of truth
+- [x] Gradle wrapper **and** build image `8.12.1` → `8.14.5` (the highest 8.x release). Boot 4.1
+  floors the 8.x line at 8.14, so this was required, not elective. **Dependabot #217 proposes
+  `9.7.1-jdk17` for the image only — do not merge it**: that would push the image to Gradle 9
+  while the wrapper stayed on 8.x, turning the latent divergence below into a real one, and a
+  Gradle 9 migration also has to clear the DGS codegen plugin (6.0.3). Moving both to 8.14.5
+  keeps them aligned and satisfies the Boot 4.1 floor in one step
+- [ ] **The divergence itself is still open.** `Dockerfile:7` builds the shipped jar with bare
+  `gradle` (the image's own version), while CI's test job uses `./gradlew`. They agree today
+  because both were moved together, not because anything enforces it. Worth a separate change
+  making the Dockerfile use the wrapper so the pin is the single source of truth. `Dockerfile.dev`
+  is a third, already-diverged copy — it pins Gradle 8.6
 
 ### Observations, not acted on (CLAUDE.md §3)
 

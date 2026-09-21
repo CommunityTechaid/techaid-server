@@ -40,7 +40,7 @@ unless marked otherwise.
 |---|---|---|
 | JDK | **17** (Temurin recommended) | `sourceCompatibility = '17'`, `jvmTarget = '17'` in `build.gradle`. Verified working locally with Temurin 17.0.18. |
 | Git | any recent | |
-| Gradle | **none — do not install** | Wrapper pins 8.12.1 (`gradle/wrapper/gradle-wrapper.properties`). |
+| Gradle | **none — do not install** | Wrapper pins 8.14.5 (`gradle/wrapper/gradle-wrapper.properties`). |
 | Docker | **optional** | Needed only for the docker-compose way of *running* the app. Tests do NOT need Docker: `build.gradle` declares `io.zonky.test:embedded-database-spring-test:2.5.1` + `io.zonky.test:embedded-postgres:2.1.0`, and `src/test/resources/application.yml` sets `zonky.test.database.provider: zonky` (embedded binaries, not the Docker provider) precisely because Docker Desktop's npipe was unreliable. |
 
 Check: `java -version` → must say 17.x.
@@ -56,7 +56,7 @@ cd techaid-server
 
 What to expect:
 
-- **First run**: Gradle 8.12.1 distribution + all dependencies + embedded Postgres binaries download. Budget extra time on first run.
+- **First run**: Gradle 8.14.5 distribution + all dependencies + embedded Postgres binaries download. Budget extra time on first run.
 - **Warm run, measured 2026-07-03 on a Windows dev laptop: BUILD SUCCESSFUL in 3m 34s** (`ktlintCheck test`, 19 actionable tasks). Tests boot several Spring contexts and start/stop embedded Postgres instances — the wall of Postgres log lines (`received fast shutdown request`, `DROP DATABASE IF EXISTS …`) at the end is normal, not an error.
 - Test events print as `PASSED`/`FAILED`/`SKIPPED` (configured in `build.gradle` `test {}` block). HTML report: `build/reports/tests/test/index.html`.
 - `test` is finalized by `jacocoTestReport` (coverage; xml/csv outputs disabled).
@@ -123,8 +123,8 @@ The `local` profile (`application-local.yml`) exposes all actuator endpoints and
 
 | File | Purpose | State |
 |---|---|---|
-| `Dockerfile` | **Production/UAT image** (built by CI). Multi-stage: `gradle:8.12.1-jdk17` builder (`clean build -x test -PgitCommit=…`) → `eclipse-temurin:17-jre-alpine` + tini init + Application Insights Java agent (downloaded at build, `AI_AGENT_VERSION=3.7.8`) + `applicationinsights.json`. JVM: `-XX:MaxRAMPercentage=75.0`. | Current. **Trap:** the builder copies `src`, `build.gradle`, `settings.gradle`, **and `.editorconfig`** — ktlint config lives in `.editorconfig`; a past image build broke when it wasn't copied. If you add root-level files the build needs, add them to the `COPY` line. |
-| `Dockerfile.dev` | The docker-compose `web` service: pre-fetches deps via `getDeps`, then idles for interactive `bootRun`. | Works, but internally pins Gradle **8.6** (repo wrapper is 8.12.1) — a version skew nobody has fixed; expect the container to use 8.6. |
+| `Dockerfile` | **Production/UAT image** (built by CI). Multi-stage: `gradle:8.14.5-jdk17` builder (`clean build -x test -PgitCommit=…`) → `eclipse-temurin:17-jre-alpine` + tini init + Application Insights Java agent (downloaded at build, `AI_AGENT_VERSION=3.7.10`) + `applicationinsights.json`. JVM: `-XX:MaxRAMPercentage=75.0`. | Current. **Trap:** the builder copies `src`, `build.gradle`, `settings.gradle`, **and `.editorconfig`** — ktlint config lives in `.editorconfig`; a past image build broke when it wasn't copied. If you add root-level files the build needs, add them to the `COPY` line. |
+| `Dockerfile.dev` | The docker-compose `web` service: pre-fetches deps via `getDeps`, then idles for interactive `bootRun`. | Works, but internally pins Gradle **8.6** (repo wrapper is 8.14.5) — a version skew nobody has fixed; expect the container to use 8.6. |
 | `Dockerfile.local` | Wrap a locally built jar (`build/libs/*.jar`) in a minimal image. | **Stale/broken**: base is `adoptopenjdk/openjdk11` JRE but the app requires Java 17. Do not use without fixing the base image. |
 
 ## 6. Windows / tooling traps (as of 2026-07-03)

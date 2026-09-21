@@ -105,6 +105,20 @@ BOM `hibernate.version` on Boot 4.1 would have failed dependency resolution outr
 5. **Flyway 10.22.0 → 11.x** as the waypoint. **NOT 12.x — see below.**
 6. `io.github.microutils:kotlin-logging-jvm:3.0.5` may not survive Kotlin 2.2 (Kotlin 1.x
    metadata; the coordinate has moved to `io.github.oshai`). Contingent on step 2.
+7. **Guard the schema-inspection config key with a test.** `application.yml:164-172` sets
+   `spring.graphql.schema.inspection.enabled: false`, and it is **load-bearing** —
+   SchemaMappingInspector breaks on Kotlin 2.x reflection, and Phase A step 2 forces Kotlin >= 2.2.
+   `GraphQlIntrospectionDisabledTest` would catch a dead *introspection* key, but nothing catches a
+   renamed or dropped **`inspection`** key: it would silently start running the inspector again.
+   spring-graphql 2.0 also **extends** the inspector to nullability checks, so an accidental
+   re-enable would be loud in a new way. Write the test now, on Boot 3.4.4, pinning the current
+   behaviour so a Boot 4 rename fails the suite instead of surfacing at startup.
+8. **Consolidate the empty `type Mutation { }`** at `root.graphqls:109-110`. The GraphQL spec's
+   `FieldsDefinition` requires >= 1 field; this only parses because graphql-java v25's grammar is
+   `fieldsDefinition : '{' fieldDefinition* '}'` (zero-or-more, with `+` used only for *extension*
+   definitions). It rides a deliberate vendor laxity rather than the spec. Note the fix is not a
+   deletion — every other `.graphqls` does `extend type Mutation`, which requires the base type to
+   exist, so a real field has to move onto the root. `SchemaAssemblyTest` is the check.
 
 ### Phase B — the Boot bump
 
@@ -245,11 +259,8 @@ maps the literal `/graphql`; no `AccessDecisionManager`/`AccessDecisionVoter`.
 - Whether `spring-boot-jackson2` genuinely restores an **injectable bean** vs just the classes.
   Settle by reading that module's `Jackson2AutoConfiguration` source.
 - Whether `spring.graphql.schema.introspection.enabled` and **`inspection.enabled`** survive Boot 4
-  (`application.yml:164-172`). `GraphQlIntrospectionDisabledTest` would catch a dead *introspection*
-  key; **nothing catches a renamed `inspection` key**, and that one is load-bearing — it is off
-  because SchemaMappingInspector breaks on Kotlin 2.x reflection, and Boot 4.1 forces Kotlin >= 2.2.
-  Worse, spring-graphql 2.0 **extends** the inspector to nullability checks, so re-enabling it
-  accidentally would be noisy. **Worth its own issue.**
+  (`application.yml:164-172`). Not researched — **Phase A step 7 guards it with a test instead**,
+  which is cheaper than settling the documentation question.
 - Whether spring-graphql 2.0 changed `DataFetcherExceptionResolverAdapter`, `RuntimeWiringConfigurer`
   or `WebGraphQlInterceptor`. The 2.0 notes list **no removed APIs at all** — weak evidence, not
   strong.
@@ -277,13 +288,6 @@ filter** (`kit-index.component.ts:42`, the main kit-list search box), in an `OR`
 `serialNo` / `id` — so results come back HTTP 200, just missing notes matches. No test covers the
 path, which is why it survived. Restoring it needs a `FunctionContributor` or a native jsonb
 predicate — a product decision, not an upgrade blocker.
-
-## Also worth an issue
-
-`root.graphqls:109-110` is an **empty `type Mutation { }`**. The GraphQL spec's `FieldsDefinition`
-requires >= 1 field; it only parses because graphql-java v25's grammar is
-`fieldsDefinition : '{' fieldDefinition* '}'` (zero-or-more, with `+` used only for *extension*
-definitions). It rides a deliberate vendor laxity rather than the spec.
 
 ## Dependabot verdicts
 
