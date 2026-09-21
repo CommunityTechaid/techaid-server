@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.4.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.3.0...v3.4.0) (2026-09-21)
+
+
+### Features
+
+* **ci:** fast-forward master to the deployed commit after a prod promote ([#204](https://github.com/CommunityTechaid/techaid-server/issues/204)) ([4d1696b](https://github.com/CommunityTechaid/techaid-server/commit/4d1696bb4f2060bd192b0f86f477a733cbdd3206))
+
+
+### Bug Fixes
+
+* **security:** close three unauthenticated surfaces ([#210](https://github.com/CommunityTechaid/techaid-server/issues/210)) ([eab3321](https://github.com/CommunityTechaid/techaid-server/commit/eab3321c050134a785c35f25bb24acc1ca36a204))
+* **security:** require an exact email on the anonymous referee lookup ([#206](https://github.com/CommunityTechaid/techaid-server/issues/206)) ([ac719a0](https://github.com/CommunityTechaid/techaid-server/commit/ac719a0b59cfe44f3c4cadee5764f5d97bbd1722))
+* **security:** stop echoing raw exception text to anonymous callers ([#207](https://github.com/CommunityTechaid/techaid-server/issues/207)) ([f4f05c8](https://github.com/CommunityTechaid/techaid-server/commit/f4f05c834aa9beed76acad49b25b5ae91b1f240d))
+
 ## [3.3.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.2.0...v3.3.0) (2026-09-10)
 
 
