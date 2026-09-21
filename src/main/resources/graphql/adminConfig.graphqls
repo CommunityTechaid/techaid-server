@@ -23,7 +23,11 @@ extend type Query {
     adminConfig: AdminConfig
 }
 
-extend type Mutation {
+# The base declaration of the root Mutation type. Every other domain file uses
+# `extend type Mutation`, and one file has to declare it. This one is an arbitrary but
+# deliberate choice - admin config is the least domain-specific of the candidates - and it can
+# be moved to any of them without changing the assembled schema. See root.graphqls.
+type Mutation {
     updateAdminConfig(data: UpdateAdminConfigInput): AdminConfig
 }
 
