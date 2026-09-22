@@ -10,14 +10,14 @@ Companion: `MAINTENANCE_PLAN.md` → "Tier 4 — Dependency currency, 2026-09" (
 
 | Thing | State |
 |---|---|
-| Branch | `chore/dependency-currency-209`, 20 commits, tree clean. **Phase A is COMPLETE** |
+| Branch | `chore/dependency-currency-209`, 26 commits, tree clean. **Phases A and B are COMPLETE; C all but the runtime check** |
 | Forked from | `dev` @ `1726099` (unmoved) |
 | PR | **none opened yet** — a *draft* PR against `dev` is the end state |
 | `master` / production / UAT | untouched. Prod is server 3.3.0 / `c605bf0` |
 | Feature flags | untouched |
 | Dependabot PRs | #212–#221 all still open; none merged or closed |
 | release-please PR #205 | untouched |
-| Suite | `316 passed / 0 failed / 2 skipped`, green at every commit (was 314; +2 from the new guard test) |
+| Suite | **318 tests, 0 failures, 0 skipped**, green at every commit. NOTE: earlier entries in this file and in commit messages said "2 skipped" - that was a miscount of Gradle TASK skips, not tests. There have never been skipped tests. |
 
 **Hard constraint from Tony: nothing merges to `dev` yet.** A `dev` merge auto-deploys UAT and he
 wants to soak this later in the week.
@@ -71,6 +71,11 @@ anything issue #209 or an older note says.**
 | `aad1d80` | **Phase A** `GraphQlSchemaSwitchesTest`, plus removal of the `application-test.yml` override that made it unable to fire |
 | `9211ed2` | **Phase A** root `type Mutation` declared legally (promoted in `adminConfig.graphqls`) |
 | `e2c450c` | **Phase A** Flyway `10.22.0` → `11.20.3` |
+| `bd88e5b` | **Phase B** Spring Boot `3.4.4` → `4.1.1` (Framework 7.0.9, Security 7.1.1, Hibernate 7.4.5, Kotlin 2.3.21, Flyway 12.4.0, QueryDSL 5.1.0, spring-graphql 2.0.5) |
+| `8b6a3a8` | embedded Postgres binaries pinned to **17.11.0**, matching production |
+| `ad96dd3` | **Jackson 3** - the spring-boot-jackson2 bridge removed |
+| `5c9411d` | **Phase C** vestigial DGS codegen plugin deleted |
+| `9b0eba0` | **Phase C** Envers `NOT_AUDITED` semantics measured and pinned |
 
 ### Why A5 became a deletion
 
@@ -129,20 +134,108 @@ What Phase A changed about the plan — read this before Phase B:
 - **Gradle 9 is not a bump.** The build still reports "Deprecated Gradle features were used in this
   build, making it incompatible with Gradle 9.0". Dependabot #217 was declined for this reason.
 
-### Phase B — the Boot bump
+### Phase B — COMPLETE
 
-`springBootVersion` + plugin to 4.1.x; replace the `flyway-core` / `flyway-database-postgresql`
-pins with **`spring-boot-starter-flyway`**; `hypersistence-utils-hibernate-63` → **`-73`**
-(3.16.0; there is no `-74`); QueryDSL 5.0.0 → **5.1.0** or drop the version and let the BOM
-manage it; **keep `ext['postgresql.version'] = '42.7.13'`** (the 4.x BOM is also inside the
-CVE-2026-54291 range); **the Jackson 2 → 3 migration (below)**; then Jakarta EE 11 / Servlet 6.1 /
-Spring Framework 7 / Spring Security 7.1 fallout, and the spring-graphql 2.0 jump.
+Landed as `bd88e5b` plus the three follow-ups above. Unlike Phase A it could not be split into
+individually-compiling steps.
 
-### Phase C — after it runs
+**What the plan did not predict:**
 
-Envers `NOT_AUDITED` re-verification (below); the #222 decision; **delete the vestigial DGS codegen
-plugin — the extended-scalars pin it depends on is already done (`31809ca`), so this is now
-unblocked**; `bootRun` + `/actuator/health` locally.
+- **The Flyway trap has TWO halves and this note only recorded one.** It warned that missing
+  `spring-boot-starter-flyway` makes migrations silently stop running. The opposite is also true:
+  the starter ships **no database dialect** (it pulls spring-boot-flyway, spring-boot-jdbc and
+  flyway-core only), and since Flyway 10 the dialects are separate modules, so flyway-core alone
+  rejects **every** PostgreSQL with `Unsupported Database: PostgreSQL <version>`. You need the
+  starter **and** `flyway-database-postgresql`.
+- **`hypersistence-utils` was deleted, not upgraded.** Its only use was an `@Converts` block on
+  `BaseEntity` mapping `attributeName` "json"/"jsonb" to `JsonStringType`/`JsonBinaryType`. Those
+  are Hibernate **UserTypes, not JPA AttributeConverters** - identical in `-63` and `-73` - and
+  `BaseEntity` has no attributes for the names to match. It compiled only because Jakarta
+  Persistence 3.1 declared `Convert.converter()` as a raw `Class`; 3.2 tightened it. The real jsonb
+  mapping is `@JdbcTypeCode(SqlTypes.JSON)` on `Kit.attributes`.
+- **`org.hibernate:hibernate-envers` publishes a POM but no jar for 7.x** - a relocation stub. Use
+  `org.hibernate.orm:hibernate-envers`, version omitted so the BOM keeps it with the JPA starter.
+- **Boot 4 gutted `spring-boot-test-autoconfigure`** to the jdbc and json slices only. Test slices
+  moved to per-technology `spring-boot-<tech>-test` artifacts that `spring-boot-starter-test` does
+  NOT pull. Needed `spring-boot-webmvc-test` and `spring-boot-graphql-test`.
+- **The QueryDSL/kapt blocker central to issue #209 never existed** (already established in Phase
+  A): kapt generated all 26 Q-classes on Kotlin 2.3.21 too.
+
+**Moved types:** `EntityScan` → `org.springframework.boot.persistence.autoconfigure`;
+`ErrorController`/`ErrorAttributes` → `org.springframework.boot.webmvc.error` (but
+`ErrorAttributeOptions` did **not** move); `GraphQlProperties` →
+`org.springframework.boot.graphql.autoconfigure`; `AutoConfigureMockMvc` →
+`org.springframework.boot.webmvc.test.autoconfigure` (22 files); `AutoConfigureGraphQlTester` →
+`org.springframework.boot.graphql.test.autoconfigure.tester`.
+
+**JSpecify produced seven errors, all fixed by intent rather than `!!`:** a JWT with no `aud` claim
+now FAILS audience validation instead of throwing; a null GraphQL string literal raises
+`CoercingParseLiteralException`; `AuthController` propagates a null principal into the 401 branch
+that already existed; `UriComponentsBuilder.fromHttpUrl` is gone (→ `fromUriString`).
+
+### Jackson 3 - three failure modes, three different detectors
+
+Worth reading before any similar migration. Each needed a different instrument:
+
+1. **Compile errors** - the import moves. Found by the compiler.
+2. **Runtime only** - two tests `@Autowired` a `com.fasterxml.jackson` `ObjectMapper`. With the
+   bridge gone Boot publishes a `JsonMapper` and no Jackson 2 `ObjectMapper` bean, so they would
+   have failed at context startup. They **compiled fine**, because
+   `logstash-logback-encoder` still drags Jackson 2 onto the classpath transitively. So "it
+   compiles" proves nothing about whether this migration is complete.
+3. **Silent rebinding** - Jackson 3 adds `<R> R map(Function<JsonNode, R>)` as a **member** of
+   `JsonNode`. In Kotlin a member beats an extension, so `node.map { }` stops being `Iterable.map`
+   over the node's children and becomes "apply this lambda to the node itself", returning one value
+   instead of a list. Same syntax, different meaning. Caught only because the enclosing function
+   declared `List<String>`; with a looser target type it would have compiled and been wrong. One
+   occurrence in the repo, now `.values().map { }`.
+
+**Annotations did NOT move** - Jackson 3 keeps them at
+`com.fasterxml.jackson.core:jackson-annotations` / `com.fasterxml.jackson.annotation`. Five files
+still match a grep for `com.fasterxml.jackson` and are **correct**: `TurnstileService`,
+`LocationService`, `AppUser`, `KitModels`, `DeviceRequestModels`.
+
+### Phase C — one item left
+
+- [x] **DGS codegen plugin deleted** (`5c9411d`). It generated exactly one file,
+  `DgsConstants.kt`, which nothing imports. Its real effect was the version constraint:
+  `graphql-dgs-platform:5.5.1` applied `strictly [19.0, 20[` to extended-scalars. Removing it left
+  the coordinate resolving purely from the Phase A pin (`19.0 (selected by rule)`) - which is why
+  that pin had to come first.
+- [x] **Envers `NOT_AUDITED` measured and pinned** (`9b0eba0`). See below; the prediction in this
+  note was wrong.
+- [ ] **`bootRun` + `/actuator/health` locally.** Still not done, and it is the only check that
+  proves the application *starts* rather than that its tests pass.
+
+### Envers NOT_AUDITED - measured, and not what this note predicted
+
+This note said the associations would "read **current** state instead of historic audit state".
+Measured on Hibernate 7.4.5, the two halves pull in opposite directions:
+
+- the **foreign key IS audited**, so each revision reports the donor assigned AT that revision -
+  reassignment is visible in the device history
+- the **target is NOT audited**, so the `Donor` is then loaded from the live table and its own
+  fields are present-day values
+
+So the trail answers "which donor was this assigned to at the time" **correctly**, and answers
+"what was that donor called at the time" with **today's** answer. `KitAuditDonorRelationTest` pins
+both halves.
+
+### OPEN: LazyInitializationException on an Envers-materialised proxy
+
+Not established, do not assume either way. The first version of `KitAuditDonorRelationTest` read
+`entity.donor?.name` **after** `kitAudits()` returned and threw:
+
+    org.hibernate.LazyInitializationException: Could not initialize proxy [cta.app.Donor#1]
+    - the owning session was closed
+
+The shipped config has `open-in-view: false` AND `hibernate.enable_lazy_load_no_trans: true` - the
+crutch that normally covers exactly this. `DeviceRequestLazyAssociationTest` and its
+`WithoutCrutch` sibling both pass, so the crutch works in general; this may be specific to proxies
+produced by the `AuditReader`. **Whether it is a Boot 4 regression or pre-existing is unknown** -
+answering it needs the same probe run against the pre-Boot-4 commit. It matters because GraphQL
+resolves `KitRevision.entity { donor { ... } }` after the `@Transactional` query method has
+returned.
 
 ## The four things the first note got wrong
 
@@ -279,15 +372,22 @@ maps the literal `/graphql`; no `AccessDecisionManager`/`AccessDecisionVoter`.
   establish whether these change the execution thread model. This is the one thing that could
   invalidate the security-propagation reasoning above.
 
-## Two live risks
+## Two live risks — BOTH RESOLVED, kept for the corrections
 
-- **Envers `NOT_AUDITED` changed semantics at Hibernate 7.3** — previously ignored, now respected,
-  so those associations read **current** state instead of historic audit state. **9 sites**:
-  `KitModels.kt` x4 (37, 71, 75, 163), `DonorModels.kt` x2 (28, 91), `OrganisationModels.kt` x2
-  (28, 91), `DeviceRequestModels.kt` x1 (99). Behavioural — it will not fail a compile. Re-baseline
-  `KitAuditNoOpRevisionTest`, `EnversSchemaContractTest`, `KitAuditTrailStatusConstraintTest` and
-  the audit-trail queries against real data.
-- **In Boot 4, missing `spring-boot-starter-flyway` means migrations silently stop auto-running.**
+- ~~**Envers `NOT_AUDITED` changed semantics at Hibernate 7.3** — previously ignored, now
+  respected, so those associations read **current** state instead of historic audit state.~~
+  **Wrong as stated.** The 9 sites are correctly listed (`KitModels.kt` 37/71/75/163,
+  `DonorModels.kt` 28/91, `OrganisationModels.kt` 28/91, `DeviceRequestModels.kt` 99), but the
+  measured behaviour splits: the **foreign key is audited** (revisions show the donor assigned at
+  the time) while the **target is not** (that donor's own fields are present-day). See
+  "Envers NOT_AUDITED — measured" above and `KitAuditDonorRelationTest`.
+- ~~**In Boot 4, missing `spring-boot-starter-flyway` means migrations silently stop
+  auto-running.**~~ True but only **half** the trap, and the missing half is what actually bit.
+  The starter ships **no database dialect**, and since Flyway 10 the dialects are separate modules,
+  so `flyway-core` alone rejects every PostgreSQL with `Unsupported Database: PostgreSQL <version>`.
+  You need the starter **and** `flyway-database-postgresql`. Symptom is every `@SpringBootTest`
+  failing at context startup, and the version named in the message is a red herring — it changes
+  with the server and is never the cause.
 
 ## Issue #222 — a live regression found on the way
 
