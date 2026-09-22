@@ -1,6 +1,5 @@
 package cta.app.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import cta.auth.AuthService
 import cta.auth.TokenAuthenticationFilter
 import mu.KotlinLogging
@@ -27,6 +26,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
+import tools.jackson.databind.ObjectMapper
 
 private val logger = KotlinLogging.logger {}
 

@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
@@ -17,6 +16,7 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import tools.jackson.databind.ObjectMapper
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CyclicBarrier

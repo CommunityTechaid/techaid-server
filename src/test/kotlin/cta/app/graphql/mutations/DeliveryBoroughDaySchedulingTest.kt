@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -18,6 +17,7 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -123,7 +123,14 @@ class DeliveryBoroughDaySchedulingTest {
                 .andExpect(status().isOk)
                 .andReturn()
                 .response.contentAsString
-        return mapper.readTree(body).at("/data/deliveryAvailabilityPublic").map { it.get("date").asText() }
+        // .values() rather than a bare .map: Jackson 3 added JsonNode.map(Function) as a
+        // MEMBER, which in Kotlin wins over the Iterable.map extension - so `.map { }` on a
+        // node silently stops iterating children and applies the lambda to the node itself.
+        return mapper
+            .readTree(body)
+            .at("/data/deliveryAvailabilityPublic")
+            .values()
+            .map { it.get("date").asText() }
     }
 
     private fun bookingMutation(

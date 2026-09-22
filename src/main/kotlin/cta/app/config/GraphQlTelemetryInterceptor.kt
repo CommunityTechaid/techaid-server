@@ -1,6 +1,5 @@
 package cta.app.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.opentelemetry.api.trace.Span
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -12,6 +11,7 @@ import org.springframework.graphql.server.WebGraphQlRequest
 import org.springframework.graphql.server.WebGraphQlResponse
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
+import tools.jackson.databind.ObjectMapper
 
 /**
  * Request attribute name used to surface the GraphQL operation name to the outer

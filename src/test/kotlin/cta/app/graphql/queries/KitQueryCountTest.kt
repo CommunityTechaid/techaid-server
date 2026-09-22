@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
-import com.fasterxml.jackson.databind.ObjectMapper
 import cta.app.Donor
 import cta.app.DonorRepository
 import cta.app.Kit
@@ -29,6 +28,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import tools.jackson.databind.ObjectMapper
 
 /**
  * Contrast case for [DeviceRequestQueryCountTest]: same instrumentation, same page size,

@@ -201,25 +201,15 @@ dependencies {
 
     /* Kotlin Dependencies */
     /*
-     * Boot 4 auto-configures Jackson 3 (`tools.jackson.*`) and there is no Jackson 2
-     * ObjectMapper bean by default. Three constructor-injection sites need one
-     * (SecurityConfig, TypeformService, TokenAuthenticationFilter), and
-     * GraphQlTelemetryInterceptor instantiates one directly.
+     * Jackson 3 only. The spring-boot-jackson2 bridge is gone: it was a one-release
+     * reprieve (auto-detection off in Framework 7.1, module removed in 7.2), and the four
+     * databind touch points now use tools.jackson directly.
      *
-     * spring-boot-jackson2 supplies it: Jackson2AutoConfiguration declares
-     * `com.fasterxml.jackson.databind.ObjectMapper jackson2ObjectMapper(..)` under
-     * @ConditionalOnClass(ObjectMapper.class), and brings jackson-databind plus the jdk8 /
-     * jsr310 / parameter-names modules. The BOM manages both lines side by side
-     * (jackson-2-bom 2.21.5, jackson-bom 3.1.5).
-     *
-     * This is a BRIDGE, not a destination: auto-detection is off in Spring Framework 7.1 and
-     * the module is removed in 7.2. The real migration moves the four databind touch points
-     * to tools.jackson. Annotations do NOT need to move - Jackson 3 keeps them at
-     * com.fasterxml.jackson.core:jackson-annotations / com.fasterxml.jackson.annotation.
+     * Note the annotations did NOT move - Jackson 3 keeps them at
+     * com.fasterxml.jackson.core:jackson-annotations / com.fasterxml.jackson.annotation,
+     * which is why @JsonProperty / @JsonIgnore / @JsonIgnoreProperties across the models
+     * are untouched. jackson-annotations arrives transitively with jackson-databind 3.x.
      */
-    implementation 'org.springframework.boot:spring-boot-jackson2'
-    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
-    // Kotlin support for the Jackson 3 mapper that Spring MVC now uses for HTTP bodies.
     implementation 'tools.jackson.module:jackson-module-kotlin'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
     //implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk17'

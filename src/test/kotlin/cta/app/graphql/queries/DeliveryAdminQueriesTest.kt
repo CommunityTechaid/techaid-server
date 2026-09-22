@@ -1,6 +1,5 @@
 package cta.app.graphql.queries
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import cta.app.DeliveryBooking
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
@@ -24,6 +23,7 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 import java.time.LocalDate
 
 /**

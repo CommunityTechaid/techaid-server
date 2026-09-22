@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
-import com.fasterxml.jackson.databind.ObjectMapper
 import cta.app.DeviceRequest
 import cta.app.DeviceRequestItems
 import cta.app.DeviceRequestNeeds
@@ -36,6 +35,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import tools.jackson.databind.ObjectMapper
 
 /**
  * Diagnostic instrumentation for the "18 SQL round trips per findAllDeviceRequests page"
