@@ -221,21 +221,34 @@ So the trail answers "which donor was this assigned to at the time" **correctly*
 "what was that donor called at the time" with **today's** answer. `KitAuditDonorRelationTest` pins
 both halves.
 
-### OPEN: LazyInitializationException on an Envers-materialised proxy
+### CLOSED: LazyInitializationException on an Envers-materialised proxy
 
-Not established, do not assume either way. The first version of `KitAuditDonorRelationTest` read
-`entity.donor?.name` **after** `kitAudits()` returned and threw:
+**Not a Boot 4 regression, and not currently reachable. Latent, not live.**
+
+Reading `entity.donor?.name` **after** the `@Transactional` `kitAudits()` has returned throws:
 
     org.hibernate.LazyInitializationException: Could not initialize proxy [cta.app.Donor#1]
     - the owning session was closed
 
-The shipped config has `open-in-view: false` AND `hibernate.enable_lazy_load_no_trans: true` - the
-crutch that normally covers exactly this. `DeviceRequestLazyAssociationTest` and its
-`WithoutCrutch` sibling both pass, so the crutch works in general; this may be specific to proxies
-produced by the `AuditReader`. **Whether it is a Boot 4 regression or pre-existing is unknown** -
-answering it needs the same probe run against the pre-Boot-4 commit. It matters because GraphQL
-resolves `KitRevision.entity { donor { ... } }` after the `@Transactional` query method has
-returned.
+despite the shipped config carrying both `open-in-view: false` and
+`hibernate.enable_lazy_load_no_trans: true`. The crutch does not cover proxies produced by the
+`AuditReader`.
+
+**Measured, not assumed.** The identical probe was run in a git worktree at `c407173` (the last
+pre-Boot-4 commit, Boot 3.4.4 / Hibernate 6.6) and fails exactly the same way. The upgrade did not
+cause this.
+
+**Why nothing has ever hit it:** both dashboard audit components select scalars only.
+`kit-audit-component.component.ts` asks for `model, status, serialNo, updatedAt, createdAt` plus
+`subStatus` (an `@Embedded`, not an association); `device-request-audit-component.component.ts`
+asks for `status, clientRef, details, borough, ...` plus `deviceRequestItems`. Neither requests
+`donor` or `deviceRequest`.
+
+**The trap for whoever touches this next:** adding `donor { ... }` or `deviceRequest { ... }` to
+either audit query would fail at runtime in production, with nothing in the test suite to warn
+them - and it would look like an upgrade regression when it is six years old. Note this is the
+same field list `KitAuditNoOpRevisionTest`'s KDoc already calls out as too narrow for the
+dashboard to do its own change detection.
 
 ## The four things the first note got wrong
 
