@@ -181,13 +181,13 @@ dependencies {
     implementation 'com.google.api-client:google-api-client:2.9.0'
     implementation 'com.google.apis:google-api-services-gmail:v1-rev20260112-2.0.0'
     implementation 'com.google.auth:google-auth-library-oauth2-http:1.43.0'
-    implementation 'com.sun.mail:jakarta.mail:2.0.1'
+    implementation 'com.sun.mail:jakarta.mail:2.0.2'
 
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
     implementation 'org.springframework.security:spring-security-config'
     implementation 'com.auth0:auth0:2.27.0'
-    implementation 'com.auth0:mvc-auth-commons:1.11.1'
+    implementation 'com.auth0:mvc-auth-commons:1.12.1'
     implementation 'com.auth0:java-jwt:4.5.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
@@ -196,7 +196,7 @@ dependencies {
     // consumed it - templates/ holds only email/*.html and there is not one `sec:` usage.
 
     implementation 'org.webjars:bootstrap:5.3.8'
-    implementation 'org.webjars:font-awesome:6.4.2'
+    implementation 'org.webjars:font-awesome:7.3.0'
 
     /* Kotlin Dependencies */
     /*
