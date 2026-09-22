@@ -17,7 +17,7 @@ Companion: `MAINTENANCE_PLAN.md` → "Tier 4 — Dependency currency, 2026-09" (
 | Feature flags | untouched |
 | Dependabot PRs | #212–#221 all still open; none merged or closed |
 | release-please PR #205 | untouched |
-| Suite | **318 tests, 0 failures, 0 skipped**, green at every commit. NOTE: earlier entries in this file and in commit messages said "2 skipped" - that was a miscount of Gradle TASK skips, not tests. There have never been skipped tests. |
+| Suite | **319 tests, 0 failures, 0 skipped**, green at every commit. NOTE: earlier entries in this file and in commit messages said "2 skipped" - that was a miscount of Gradle TASK skips, not tests. There have never been skipped tests. |
 
 **Hard constraint from Tony: nothing merges to `dev` yet.** A `dev` merge auto-deploys UAT and he
 wants to soak this later in the week.
@@ -204,8 +204,15 @@ still match a grep for `com.fasterxml.jackson` and are **correct**: `TurnstileSe
   that pin had to come first.
 - [x] **Envers `NOT_AUDITED` measured and pinned** (`9b0eba0`). See below; the prediction in this
   note was wrong.
-- [ ] **`bootRun` + `/actuator/health` locally.** Still not done, and it is the only check that
-  proves the application *starts* rather than that its tests pass.
+- [x] **A real servlet container is now proven to start** (`ApplicationStartupSmokeTest`). Every
+  other context-loading test in this suite uses `WebEnvironment.MOCK`, including
+  `ActuatorHealthDetailsTest` - MockMvc calls the MVC stack directly, starts no Tomcat and opens no
+  socket. Boot 4 renamed `spring-boot-starter-web` to `-webmvc` and split servlet from web-server
+  support, so "the MVC stack responds" and "the container starts and listens" are different claims
+  now. This one uses `RANDOM_PORT` and plain `java.net.http.HttpClient`.
+- [ ] **`bootRun` against a real database, and the packaged jar.** NOT done - Docker Desktop's
+  daemon was not running (the npipe problem) and there is no `.env`. Still unproven: the shipped
+  jar, the `Dockerfile` build, and the `production`/`local` profile config as opposed to `test`.
 
 ### Envers NOT_AUDITED - measured, and not what this note predicted
 
