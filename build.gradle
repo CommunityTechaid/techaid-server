@@ -305,6 +305,17 @@ dependencies {
     // Embedded Postgres binaries ("zonky" provider) so DB-backed tests run without Docker,
     // both locally (Docker Desktop npipe is unreliable with testcontainers) and in CI.
     testImplementation 'io.zonky.test:embedded-postgres:2.2.2'
+    /*
+     * Pin the embedded Postgres BINARIES to the same major version as production.
+     * techaid-pg-svr runs PostgreSQL 17; zonky otherwise defaults to a PostgreSQL 14
+     * build, so every DB-backed test - SchemaValidationTest, IndexMigrationTest, the
+     * GDPR and schema-drift suites - was proving things against a different major
+     * version than the server it describes.
+     *
+     * Check this against the live server when it is upgraded:
+     *   az postgres flexible-server list --query "[].{name:name, version:version}"
+     */
+    testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom:17.11.0')
     /* Providing In-Memory H2 database as the default spring data-source */
     testImplementation 'com.h2database:h2:2.5.250'
     /*
