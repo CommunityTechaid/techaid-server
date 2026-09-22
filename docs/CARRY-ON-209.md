@@ -225,224 +225,65 @@ still match a grep for `com.fasterxml.jackson` and are **correct**: `TurnstileSe
   So Hibernate 7 `validate` passes against a Flyway-built schema with `hypersistence-utils` gone,
   and introspection is refused by the *running server*, not just bound in config.
 
-### Trap found while doing that: a missing env var does not fail at startup
+### Two different failure modes for the two defaultless variables - do not conflate them
 
-`application.yml` has exactly **three** placeholders with no default: `TOKEN_ATTRIBUTE`,
-`AUTH_ADMIN_SECRET` and `HOSTNAME` (Docker supplies the last). Both of the first two are container
-app env/secretRefs, so UAT and prod are fine - but `spring.main.lazy-initialization: true` means
-`authService` is built on the **first request**, not at boot. A missing one therefore produces:
+`application.yml` has exactly three placeholders with no default: `TOKEN_ATTRIBUTE`,
+`AUTH_ADMIN_SECRET` and `HOSTNAME` (the platform supplies the last). Both of the first two are set
+on `api-testing` and `api-production`, so neither environment is at risk. **But they fail
+differently, and that difference is the whole point:**
 
-    Started ApplicationKt in 11.498 seconds     <- looks healthy
-    ...then every request 500s on PlaceholderResolutionException
+- **`TOKEN_ATTRIBUTE`** feeds `filterService` -> `userTelemetryFilter`, a **servlet filter**.
+  Filters are registered when Tomcat initialises, so it fails **eagerly**. The app never starts and
+  never reports healthy. Always safe.
+- **`AUTH_ADMIN_SECRET`** feeds `authService` in the security chain, which
+  `spring.main.lazy-initialization: true` defers to the **first request**. That produced the
+  dangerous shape:
 
-**"The container started" is not evidence the app is serving.** If a secretRef ever fails to
-resolve mid-deploy, that is the shape it takes, and only the `/actuator/health` probe catches it.
+      Started ApplicationKt in 11.498 seconds     <- container reports healthy
+      ...then every request 500s deep inside WebSecurityConfiguration
 
-### Envers NOT_AUDITED - measured, and not what this note predicted
+`RequiredConfigurationCheck` (`6e7db16`) closes the second case with `@Lazy(false)`. **Proven, not
+assumed** - the image was run with `AUTH_ADMIN_SECRET` omitted and now exits 1 during context
+refresh with zero `Started ApplicationKt` lines and a message naming the property, the variable and
+why it has no default. A first attempt asserted on environment VARIABLE names and broke all 48
+context-loading tests, because `application-test.yml` supplies the Spring properties directly; it
+asserts on resolved properties now, with a test pinning that distinction.
 
-This note said the associations would "read **current** state instead of historic audit state".
-Measured on Hibernate 7.4.5, the two halves pull in opposite directions:
+The defaults stay absent deliberately: `X-Auth-Admin-Secret` grants full authorities, so defaulting
+it - an empty default above all - would fail **open**.
 
-- the **foreign key IS audited**, so each revision reports the donor assigned AT that revision -
-  reassignment is visible in the device history
-- the **target is NOT audited**, so the `Donor` is then loaded from the live table and its own
-  fields are present-day values
+### GraphQL over HTTP: the 4xx flip is real but narrower than this note claimed
 
-So the trail answers "which donor was this assigned to at the time" **correctly**, and answers
-"what was that donor called at the time" with **today's** answer. `KitAuditDonorRelationTest` pins
-both halves.
+Measured against the running server. This note previously said `application/graphql-response+json`
+is "THE DEFAULT when the client expresses no Accept preference". **That is wrong** - a client
+sending no `Accept` header gets 200.
 
-### CLOSED: LazyInitializationException on an Envers-materialised proxy
+| | `Accept: application/json` | Apollo 4's real Accept | no Accept header |
+|---|---|---|---|
+| valid query | 200 | 200 | 200 |
+| **authz denial (execution error)** | **200** | **200** | **200** |
+| validation error | 200 | **400** | 200 |
 
-**Not a Boot 4 regression, and not currently reachable. Latent, not live.**
+The dashboard runs `@apollo/client ^4.1.7`, which *does* send
+`application/graphql-response+json, application/json;q=0.9`, so it **is** in scope - but only for
+validation errors, which need a query/schema mismatch to occur. **Authz denials stay 200 under
+every header**, so normal operation and the calendar-sync Apps Script's `'access denied'` retry are
+unaffected.
 
-Reading `entity.donor?.name` **after** the `@Transactional` `kitAudits()` has returned throws:
+### VERIFIED against a replica of UAT's real schema
 
-    org.hibernate.LazyInitializationException: Could not initialize proxy [cta.app.Donor#1]
-    - the owning session was closed
+The fresh-schema test was not enough: UAT predates Flyway and diverges from a clean build (#91),
+and both environments run `ddl-auto: validate`. A structure-only dump of UAT `public` plus the
+`flyway_schema_history` rows was restored into a local PostgreSQL 17 and the image booted against
+it:
 
-despite the shipped config carrying both `open-in-view: false` and
-`hibernate.enable_lazy_load_no_trans: true`. The crutch does not cover proxies produced by the
-`AuditReader`.
+    replica: 36 tables, history at 26.08.26.1000 (matches UAT)
+    Flyway:  Current version 26.08.26.1000 -> "Schema is up to date. No migration necessary."
+    health:  UP in 15s,  schema-validation errors: 0
 
-**Measured, not assumed.** The identical probe was run in a git worktree at `c407173` (the last
-pre-Boot-4 commit, Boot 3.4.4 / Hibernate 6.6) and fails exactly the same way. The upgrade did not
-cause this.
-
-**Why nothing has ever hit it:** both dashboard audit components select scalars only.
-`kit-audit-component.component.ts` asks for `model, status, serialNo, updatedAt, createdAt` plus
-`subStatus` (an `@Embedded`, not an association); `device-request-audit-component.component.ts`
-asks for `status, clientRef, details, borough, ...` plus `deviceRequestItems`. Neither requests
-`donor` or `deviceRequest`.
-
-**The trap for whoever touches this next:** adding `donor { ... }` or `deviceRequest { ... }` to
-either audit query would fail at runtime in production, with nothing in the test suite to warn
-them - and it would look like an upgrade regression when it is six years old. Note this is the
-same field list `KitAuditNoOpRevisionTest`'s KDoc already calls out as too narrow for the
-dashboard to do its own change detection.
-
-## The four things the first note got wrong
-
-1. **"Go to Flyway 12.x now on Boot 3.4.4 to isolate the Flyway risk (preferred)."** Impossible.
-   Boot 3.4.4's `FlywayAutoConfiguration:283-284` unconditionally calls
-   `FluentConfiguration.cleanOnValidationError(boolean)`, and Flyway 12.0.0 removed that method —
-   `NoSuchMethodError` at context startup. Found by diffing `FluentConfiguration.java` between the
-   `flyway-11.0.0` and `flyway-12.0.0` tags; Flyway's own release notes do not call it out. Boot
-   *does* guard `executeInTransaction()` with `catch (NoSuchMethodError)` at lines 330-338, and
-   deliberately did not guard this one. `spring.flyway.clean-on-validation-error` being unset is no
-   protection — it is a primitive `boolean`, so `PropertyMapper` always calls the setter.
-   Second, independent blocker: zonky added Flyway 11 support in 2.6.0, but **no zonky release
-   documents Flyway 12**, so the embedded-Postgres harness could not verify a 12.x move anyway.
-   → **Take 11.x as the waypoint; 12.x arrives with the Boot bump.**
-   *Unchecked:* whether a later 12.x patch (12.1–12.4) re-added the method. Does not change the
-   call, because the zonky constraint is independent.
-2. **Spring Security is 7.1.1, not 7.0.x.** The 7.0 migration guide is one release short, and no
-   7.1 migration guide was located. Still open.
-3. **spring-graphql is 1.3.4 → 2.0.5, a major**, not 1.3 → 1.5. There is no spring-graphql 1.5 at
-   all; the line is 1.3 → 1.4 → 2.0 → 2.1. Per the official compatibility table, 1.4.x supports
-   Boot **3.5 only**, so skipping 3.5 means 1.4 is a waypoint you never land on.
-4. **Jackson was never mentioned and is a blocker.** Boot 4 auto-configures a Jackson 3 `JsonMapper`
-   under `tools.jackson.*`; no Jackson 2 `ObjectMapper` bean exists. Four constructor-injection
-   sites fail at context startup: `SecurityConfig.kt`, `TokenAuthenticationFilter.kt`,
-   `TypeformService.kt`, `GraphQlTelemetryInterceptor.kt`. Ten files under `src/main` import
-   `com.fasterxml.jackson`. The deprecated `spring-boot-jackson2` module is published through 4.1.1
-   as a bridge, but auto-detection is off in Framework 7.1 and it is removed in 7.2 — a one-release
-   reprieve, not a resting place.
-
-## The extended-scalars trap — read before touching the DGS plugin
-
-`build.gradle:198` declares `com.graphql-java:graphql-java-extended-scalars` **with no version**.
-It resolves to **19.0**, and the version arrives via the *vestigial* DGS codegen plugin classpath
-(`graphql-dgs-codegen-shared-core-6.0.3` → `graphql-dgs-platform-dependencies:5.5.1`).
-
-**VERIFIED**: the Boot 4.1.1 BOM does **not** manage extended-scalars (grepped the POM — only
-`graphql-java` is there). So the Boot bump will not move it, and **Phase C's "delete the vestigial
-DGS plugin" removes its only version source, making the dependency unresolvable.**
-
-Pin it explicitly to the 25.0 line first. Note that is six majors in one hop: graphql-java 22.0
-made `String`/`Boolean`/`Int`/`Float` `parseValue` strict, and extended-scalars 24.0 "removes all
-the deprecated Coercing methods". The `GraphQLBigDecimal` / `GraphQLLong` coercion deltas
-(`GraphQlConfig.kt:48-49`, `root.graphqls:2-3`) are **undocumented** — red/green test: each fed a
-JSON string vs a number, before and after.
-
-Related runtime risk: spring-graphql issue #1405 — Boot 4 with a stale graphql-java throws
-`NoSuchMethodError: ExecutionInput.cancel()` **per request at runtime**, not at compile time. This
-repo has a second graphql-java on the graph (19.2, via DGS). Gradle picks highest so it *should*
-resolve to 25.0, but **a green build proves nothing here** — assert the resolved version with
-`dependencyInsight`.
-
-## GraphQL: smaller than feared, verified against v25.0 sources
-
-The things the plan called the riskiest migration are **clean**:
-
-- `GraphQlConfig.kt:70-101,123-156` already use the current **4-arg `Coercing`** signatures. v25
-  keeps the deprecated 1-arg defaults, and its nullability annotations are *wider* than the repo's
-  returns, so strict-JSpecify override checking passes.
-- `MaxQueryDepthInstrumentation(15)` (`GraphQlConfig.kt:39`) exists in v25.0, undeprecated, same
-  constructor.
-- graphql-java 23.0's strict RuntimeWiring redefinition fires only on a **duplicate** name;
-  `GraphQlConfig.kt:47-51` registers 4 distinct scalars and there are zero duplicate
-  `@QueryMapping`/`@MutationMapping` field names.
-- **The SDL survives.** 2,065 lines across 21 `.graphqls`, zero custom directives, interfaces,
-  unions, subscriptions, `@deprecated` or argument defaults.
-- **Security context propagation is low risk** — by mechanism, not by release note. Propagation
-  only matters across a thread switch; the GraphQL path has zero `Mono`/`Flux`/`CompletableFuture`/
-  `@Async`, no webflux, and no `ThreadLocalAccessor`. The 30 `@PreAuthorize` files read the
-  SecurityContext off the servlet thread as before. **This is inference** — no 2.0 note mentions
-  context propagation either way. Cheap proof is behavioural: `PublicSurfaceAuthorizationTest` plus
-  one authenticated mutation against the bumped branch. Do not accept a green compile as evidence.
-
-**`SchemaAssemblyTest.kt:20-53` is the canary** — assembles every `.graphqls` with the real scalar
-wiring, no Spring context, no DB. Run it first after any GraphQL bump; it catches parser and wiring
-regressions in seconds.
-
-**Behavioural change that needs a test**: spring-graphql **1.4** (inherited by 2.0) aligned with
-GraphQL-over-HTTP — `application/graphql-response+json`, **the default when the client expresses no
-Accept preference**, returns **4xx** for parse/validation failures. A depth-15 breach is
-validation-phase, so it flips 200 → 400 for any client not sending `Accept: application/json`.
-`GraphQlErrorLoggingTest.kt:66-74` pins only the `application/json` path. The calendar-sync Apps
-Script `'access denied'` retry is **safe** — authz denial is an execution error, still 200.
-
-## Spring Security / Framework 7: the config is nearly clean
-
-Checked and **clear**, stated so nobody re-derives it: `http.csrf{}`/`formLogin{}`/
-`authorizeHttpRequests{}` are already lambda-DSL (7.0 removed `.and()` and `apply(...)`);
-`anyRequest().permitAll()` uses no path matcher so the `AntPathRequestMatcher` → 
-`PathPatternRequestMatcher` move is a no-op; `jwtAuthenticationConverter(...)` is unchanged in the
-7.0.0 javadoc; `addFilterBefore`, `GenericFilterBean`, `OncePerRequestFilter`,
-`ContentCachingResponseWrapper` and `FilterRegistrationBean` are all unchanged; `@Secured` is used
-nowhere despite `securedEnabled = true`; all ~60 `@PreAuthorize` expressions are trivial
-`hasAnyAuthority('…')` so Framework 7's new 10,000-operation SpEL cap cannot bite; `CorsConfig.kt:38`
-maps the literal `/graphql`; no `AccessDecisionManager`/`AccessDecisionVoter`.
-
-**Behavioural, silent:**
-
-- `SecurityConfig.kt:49-54` — `NimbusJwtDecoder` default connect/read timeouts **500ms → 30s**. On
-  a scale-to-zero app a stalled Auth0 JWKS fetch now holds the request 30s instead of failing fast.
-- `SecurityConfig.kt:51` — `JwtValidators.createDefaultWithIssuer(...)` now automatically adds
-  `JwtTypeValidator.jwt()`; tokens whose `typ` header is not JWT are rejected where they previously
-  passed. **Check the Auth0 access token and the M2M client-credentials token `typ` before
-  promoting.**
-- `SecurityConfig.kt:106` — `JwtGrantedAuthoritiesConverter().convert(jwt)!!` then `.add(...)`
-  relies on the returned collection being mutable *and* on platform-type nullability, both now
-  JSpecify-annotated. Copy into an explicit `mutableListOf(...)`.
-
-**Also breaking:**
-
-- `build.gradle:184` `thymeleaf-extras-springsecurity6:3.1.3.RELEASE` — **no `…security7` exists**
-  on Central (listing stops at security6) and the upstream repo is archived. `templates/` contains
-  only `email/` with zero `sec:` usages → **delete it**, nothing consumes the dialect.
-- `build.gradle:91,98` `-Xjsr305=strict` — Framework 7 replaced JSR-305 with **JSpecify**; expect
-  Kotlin compile errors at Spring API call sites.
-- `spring-boot-starter-web` → renamed `spring-boot-starter-webmvc`; the old coordinate still
-  publishes at 4.1.1, so this is rename-when-convenient.
-- `LocationService.kt:8,32` `RestTemplate` deprecated in Framework 7 → `RestClient`. (Same class as
-  the known-broken `location()` proxy.)
-
-## Research gap — still open before Phase B
-
-- **Spring Security 7.1** specifically. Everything above came from the **7.0** migration guide; no
-  7.1 guide was located. There may be a second layer on top.
-- Whether `spring-boot-jackson2` genuinely restores an **injectable bean** vs just the classes.
-  Settle by reading that module's `Jackson2AutoConfiguration` source.
-- Whether `spring.graphql.schema.introspection.enabled` and **`inspection.enabled`** survive Boot 4
-  (`application.yml:164-172`). Not researched — **`GraphQlSchemaSwitchesTest` (`aad1d80`) guards it
-  with a test instead**, which is cheaper than settling the documentation question. Note its scope
-  limit: it catches a changed yml path, not an inspector that crashes at startup.
-- Whether spring-graphql 2.0 changed `DataFetcherExceptionResolverAdapter`, `RuntimeWiringConfigurer`
-  or `WebGraphQlInterceptor`. The 2.0 notes list **no removed APIs at all** — weak evidence, not
-  strong.
-- spring-graphql 1.4's "performance enhancements for Servlet-based applications" — could not
-  establish whether these change the execution thread model. This is the one thing that could
-  invalidate the security-propagation reasoning above.
-
-## Two live risks — BOTH RESOLVED, kept for the corrections
-
-- ~~**Envers `NOT_AUDITED` changed semantics at Hibernate 7.3** — previously ignored, now
-  respected, so those associations read **current** state instead of historic audit state.~~
-  **Wrong as stated.** The 9 sites are correctly listed (`KitModels.kt` 37/71/75/163,
-  `DonorModels.kt` 28/91, `OrganisationModels.kt` 28/91, `DeviceRequestModels.kt` 99), but the
-  measured behaviour splits: the **foreign key is audited** (revisions show the donor assigned at
-  the time) while the **target is not** (that donor's own fields are present-day). See
-  "Envers NOT_AUDITED — measured" above and `KitAuditDonorRelationTest`.
-- ~~**In Boot 4, missing `spring-boot-starter-flyway` means migrations silently stop
-  auto-running.**~~ True but only **half** the trap, and the missing half is what actually bit.
-  The starter ships **no database dialect**, and since Flyway 10 the dialects are separate modules,
-  so `flyway-core` alone rejects every PostgreSQL with `Unsupported Database: PostgreSQL <version>`.
-  You need the starter **and** `flyway-database-postgresql`. Symptom is every `@SpringBootTest`
-  failing at context startup, and the version named in the message is a red herring — it changes
-  with the server and is never the cause.
-
-## Issue #222 — a live regression found on the way
-
-**Kit free-text search has silently not matched `attributes.notes` since 2024-11-12** (~22 months).
-`KitFilters.kt:332-333` has `attributes?.let { null }` where every sibling reads
-`x?.let { builder.and(...) }`, so the input is accepted and dropped. Introduced by `6c2ced4`
-(Akhil) to bypass a Hibernate 6 breakage rather than fix it. The **dashboard still sends the
-filter** (`kit-index.component.ts:42`, the main kit-list search box), in an `OR` with `model` /
-`serialNo` / `id` — so results come back HTTP 200, just missing notes matches. No test covers the
-path, which is why it survived. Restoring it needs a `FunctionContributor` or a native jsonb
-predicate — a product decision, not an upgrade blocker.
+So on the real schema shape: Flyway checksum validation passes, **zero** migrations apply, and
+Hibernate 7 `validate` is clean. **Not covered:** the `gdpr` schema (dump was `-n public`), and any
+query against real rows.
 
 ## Dependabot - actioned 2026-09-22
 
