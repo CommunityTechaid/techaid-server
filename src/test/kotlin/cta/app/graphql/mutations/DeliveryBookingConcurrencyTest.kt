@@ -1,6 +1,5 @@
 package cta.app.graphql.mutations
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryWindowRepository
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
@@ -8,15 +7,16 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.test.context.TestPropertySource
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import tools.jackson.databind.ObjectMapper
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CyclicBarrier
@@ -72,7 +72,7 @@ import java.util.concurrent.TimeUnit
     properties = ["delivery-booking.rate-limit.max-requests=1000"],
 )
 class DeliveryBookingConcurrencyTest {
-    @MockBean
+    @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
     @Autowired

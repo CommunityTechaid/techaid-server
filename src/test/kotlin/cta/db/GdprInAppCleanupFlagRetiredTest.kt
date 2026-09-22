@@ -6,10 +6,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.ApplicationContext
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
  * Two halves of the same 2026-08-18 decision: the in-app GDPR job is no longer switchable, and
@@ -40,7 +40,7 @@ class GdprInAppCleanupFlagRetiredTest {
     @Autowired
     private lateinit var context: ApplicationContext
 
-    @MockBean
+    @MockitoBean
     private lateinit var jwtDecoder: JwtDecoder
 
     @Test

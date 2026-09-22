@@ -146,7 +146,11 @@ class GraphQLScalarConfig {
                         locale: Locale,
                     ): String =
                         when (input) {
-                            is StringValue -> input.value
+                            is StringValue ->
+                                input.value
+                                    ?: throw CoercingParseLiteralException(
+                                        "Expected a non-null string literal.",
+                                    )
                             is IntValue -> input.value.toString()
                             is FloatValue -> input.value.toString()
                             is BooleanValue -> input.isValue.toString()

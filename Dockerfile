@@ -1,5 +1,5 @@
 # NOTE: This is the production and uat version. Please use Dockerfile.dev for local development testing
-FROM gradle:8.12.1-jdk17 AS builder
+FROM gradle:8.14.5-jdk17 AS builder
 USER root
 ARG GIT_COMMIT=unknown
 COPY ./src /app/src
@@ -18,7 +18,7 @@ RUN apk add --no-cache --update \
 
 # Download Application Insights Java agent
 # Agent version: https://github.com/microsoft/ApplicationInsights-Java/releases
-ARG AI_AGENT_VERSION=3.7.8
+ARG AI_AGENT_VERSION=3.7.10
 RUN wget -q "https://github.com/microsoft/ApplicationInsights-Java/releases/download/${AI_AGENT_VERSION}/applicationinsights-agent-${AI_AGENT_VERSION}.jar" \
     -O /app/applicationinsights-agent.jar
 

@@ -17,9 +17,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.test.context.TestPropertySource
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
  * Database-backed regression coverage for the `OR`-swallows-scalars bug fixed in
@@ -45,7 +45,7 @@ import org.springframework.test.context.TestPropertySource
 // BoroughAvailabilityTest/DeliveryBookingProtectionTest/DeliveryBookingConcurrencyTest.
 @TestPropertySource(properties = ["spring.application.name=techaid-server-device-request-or-grouping-test"])
 class DeviceRequestOrGroupingTest {
-    @MockBean
+    @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
     @Autowired
