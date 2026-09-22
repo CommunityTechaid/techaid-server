@@ -52,7 +52,7 @@ class TokenAuthenticationFilterTest {
         assertNotNull(chain.request, "the filter chain must continue for a valid token")
         val authentication = SecurityContextHolder.getContext().authentication
         assertNotNull(authentication)
-        assertTrue(authentication.authorities.any { it.authority == "write:organisations" })
+        assertTrue(authentication!!.authorities.any { it.authority == "write:organisations" })
     }
 
     @Test

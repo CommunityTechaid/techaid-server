@@ -39,7 +39,8 @@ class EnversSchemaContractTest {
                 "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ?",
                 String::class.java,
                 table,
-            ).toSet()
+            ).filterNotNull()
+            .toSet()
 
     @Test
     fun `audit tables use Envers default revision columns, not the ones the removed config asked for`() {

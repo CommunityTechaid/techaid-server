@@ -58,8 +58,8 @@ class TokenAuthenticationFilter(
     }
 
     private fun loggedIn(): Boolean {
-        val context = SecurityContextHolder.getContext()
-        return context.authentication != null && context.authentication.isAuthenticated
+        val authentication = SecurityContextHolder.getContext().authentication
+        return authentication != null && authentication.isAuthenticated
     }
 
     private fun haltRequest(
