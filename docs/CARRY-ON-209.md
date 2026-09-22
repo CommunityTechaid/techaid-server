@@ -210,9 +210,33 @@ still match a grep for `com.fasterxml.jackson` and are **correct**: `TurnstileSe
   socket. Boot 4 renamed `spring-boot-starter-web` to `-webmvc` and split servlet from web-server
   support, so "the MVC stack responds" and "the container starts and listens" are different claims
   now. This one uses `RANDOM_PORT` and plain `java.net.http.HttpClient`.
-- [ ] **`bootRun` against a real database, and the packaged jar.** NOT done - Docker Desktop's
-  daemon was not running (the npipe problem) and there is no `.env`. Still unproven: the shipped
-  jar, the `Dockerfile` build, and the `production`/`local` profile config as opposed to `test`.
+- [x] **The shipped artefact is verified end to end** (2026-09-22). `docker build` succeeds - and
+  note `Dockerfile:7` runs `gradle build -x test`, so **ktlintCheck runs inside the container** and
+  the whole Boot 4 tree is resolved by bare `gradle` from the image, not the wrapper. The image was
+  then run against a fresh PostgreSQL 17 with the real `api-testing` environment
+  (`SPRING_PROFILES_ACTIVE=testing`, `DDL_AUTO` unset so `validate`):
+
+      Flyway: Successfully applied 47 migrations to schema "public", now at v26.08.26.1000
+      Started ApplicationKt in 11.498 seconds, Tomcat on 8080, restarts=0, 39 tables
+      /actuator/health  {"groups":["liveness","readiness"],"status":"UP"}
+      /actuator/info    version 3.3.0, commit 93b58dc
+      anonymous __schema -> "Introspection has been disabled for this request"
+
+  So Hibernate 7 `validate` passes against a Flyway-built schema with `hypersistence-utils` gone,
+  and introspection is refused by the *running server*, not just bound in config.
+
+### Trap found while doing that: a missing env var does not fail at startup
+
+`application.yml` has exactly **three** placeholders with no default: `TOKEN_ATTRIBUTE`,
+`AUTH_ADMIN_SECRET` and `HOSTNAME` (Docker supplies the last). Both of the first two are container
+app env/secretRefs, so UAT and prod are fine - but `spring.main.lazy-initialization: true` means
+`authService` is built on the **first request**, not at boot. A missing one therefore produces:
+
+    Started ApplicationKt in 11.498 seconds     <- looks healthy
+    ...then every request 500s on PlaceholderResolutionException
+
+**"The container started" is not evidence the app is serving.** If a secretRef ever fails to
+resolve mid-deploy, that is the shape it takes, and only the `/actuator/health` probe catches it.
 
 ### Envers NOT_AUDITED - measured, and not what this note predicted
 
@@ -420,21 +444,24 @@ filter** (`kit-index.component.ts:42`, the main kit-list search box), in an `OR`
 path, which is why it survived. Restoring it needs a `FunctionContributor` or a native jsonb
 predicate — a product decision, not an upgrade blocker.
 
-## Dependabot verdicts
+## Dependabot - actioned 2026-09-22
 
-- **Folded:** #218 (done in `fff0d49`) — can be closed.
-- **Fold in:** #219 font-awesome, #220 auth0 1.12.1, #221 jakarta.mail 2.0.2.
-- **Close, do not merge:** #216 (3.4.4 → 3.5.16).
-- **Close, do not merge:** #217 (gradle build image → `9.7.1-jdk17`). The wrapper and the image
-  were moved together to **8.14.5** in `fde2284`, which is what Boot 4.1 needs. Taking #217 now
-  would put the image on Gradle 9 while the wrapper stayed on 8.x. The build still reports
-  "Deprecated Gradle features ... incompatible with Gradle 9.0", and a Gradle 9 move also has to
-  clear the DGS codegen plugin, so 9.x is separate work.
-- **Hold:** #215 (temurin 17 → 25) — elective; 4.1 supports Java 17–26, and the AI agent has an
-  open Java 25 native-access issue (ApplicationInsights-Java#4851).
-- **Undecided:** #212/#213/#214 action majors. The inputs this repo passes are unaffected.
-  Recommendation: a separate small PR, not folded here. Only `upload-artifact` is exercised by
-  PR CI — the `build` job is guarded to push events, so the other two first run on a UAT deploy.
+**Closed** (comments on each PR record the reasoning):
+- **#218** test-infrastructure - superseded, those exact versions landed in `fff0d49`.
+- **#216** spring 3.5.16 - the 3.5 line is skipped; branch is on 4.1.1.
+- **#217** gradle 9.7.1 - image-only, would re-create the wrapper/image divergence `fde2284` closed.
+- **#219 / #220 / #221** - folded into `f9b70bd` (font-awesome 7.3.0, auth0 1.12.1,
+  jakarta.mail 2.0.2) rather than merged, since a branch cut from `dev` would conflict with the
+  upgrade.
+
+**Left open, deliberately out of this deploy:**
+- **#215** temurin 17 -> 25. Elective; App Insights has an open Java 25 native-access issue, and
+  stacking a JRE change on a Boot 4 UAT deploy makes any failure ambiguous.
+- **#212 / #213 / #214** action majors. CI-only, and only `upload-artifact` runs on PRs - the other
+  two first execute **during a UAT deploy**, so bundling them would make a broken deploy impossible
+  to attribute. Worth a separate small PR after this lands.
+- **#205** release-please. Note the `feat!:` commit means it will want a **major** once this
+  reaches `dev`.
 
 ## Working rules that bit these sessions
 
