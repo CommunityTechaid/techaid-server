@@ -170,7 +170,7 @@ dependencies {
 
     // OTel API at runtime so app code can enrich the current span. The
     // Application Insights Java agent instruments the calls via bytecode.
-    implementation 'io.opentelemetry:opentelemetry-api:1.46.0'
+    implementation 'io.opentelemetry:opentelemetry-api' // version from the Spring Boot BOM, matched to opentelemetry-context
 
      /* Security */
     implementation 'org.springframework.boot:spring-boot-starter-security'
