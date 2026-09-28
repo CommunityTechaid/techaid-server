@@ -6,7 +6,7 @@ buildscript {
          * More likely to be limited by the version of the all-open plugin @
          * https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-maven-allopen
          */
-        kotlinVersion = '2.1.20' //Updated Apr. 2026 (was 1.9.22)
+        kotlinVersion = '2.4.20' //Updated Apr. 2026 (was 1.9.22)
         // Versions @ https://github.com/spring-projects/spring-boot/releases
         springBootVersion = '3.4.4' //Updated Apr. 2026 (was 3.2.2)
 
