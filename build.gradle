@@ -8,7 +8,7 @@ buildscript {
          */
         kotlinVersion = '2.1.20' //Updated Apr. 2026 (was 1.9.22)
         // Versions @ https://github.com/spring-projects/spring-boot/releases
-        springBootVersion = '3.4.4' //Updated Apr. 2026 (was 3.2.2)
+        springBootVersion = '3.5.16' //Updated Apr. 2026 (was 3.2.2)
 
         graphQLVersion = '5.7.3'
     }
@@ -26,7 +26,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.springframework.boot' version '3.4.4'
+    id 'org.springframework.boot' version '3.5.16'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'com.netflix.dgs.codegen' version '6.0.3'
     id 'org.jetbrains.kotlin.jvm' version '2.1.20'
