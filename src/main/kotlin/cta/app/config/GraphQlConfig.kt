@@ -133,7 +133,9 @@ class GraphQLScalarConfig {
                     ): String =
                         when (input) {
                             is String -> input
+
                             is Number, is Boolean -> input.toString()
+
                             else -> throw CoercingParseValueException(
                                 "Expected a String, Number or Boolean but was '${input::class.simpleName}'.",
                             )
@@ -146,17 +148,30 @@ class GraphQLScalarConfig {
                         locale: Locale,
                     ): String =
                         when (input) {
-                            is StringValue ->
+                            is StringValue -> {
                                 input.value
                                     ?: throw CoercingParseLiteralException(
                                         "Expected a non-null string literal.",
                                     )
-                            is IntValue -> input.value.toString()
-                            is FloatValue -> input.value.toString()
-                            is BooleanValue -> input.isValue.toString()
-                            else -> throw CoercingParseLiteralException(
-                                "Expected a scalar literal but was '${input::class.simpleName}'.",
-                            )
+                            }
+
+                            is IntValue -> {
+                                input.value.toString()
+                            }
+
+                            is FloatValue -> {
+                                input.value.toString()
+                            }
+
+                            is BooleanValue -> {
+                                input.isValue.toString()
+                            }
+
+                            else -> {
+                                throw CoercingParseLiteralException(
+                                    "Expected a scalar literal but was '${input::class.simpleName}'.",
+                                )
+                            }
                         }
                 },
             ).build()

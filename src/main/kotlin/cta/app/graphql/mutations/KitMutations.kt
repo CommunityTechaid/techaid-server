@@ -145,7 +145,7 @@ class KitMutations(
     ): Kit {
         val entity = kits.findOne(filterService.kitFilter().and(QKit.kit.serialNo.eq(data.serialNo))).toNullable()
 
-        /**
+        /*
          * Create kit only if another Kit with the serial number does not exist. The philosophy is that as far as the
          * auto create script is concerned, the serial number is unique and if it is not, it is an edge case that falls
          * beyond the domain of it and requires manual intervention. We DO NOT want the script silently replacing Kit

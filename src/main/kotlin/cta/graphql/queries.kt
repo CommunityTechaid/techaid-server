@@ -64,17 +64,33 @@ class PaginationInput(
             target: Expression<T>,
         ): OrderSpecifier<T> =
             when (order) {
-                PageOrderBy.ASC -> OrderSpecifier(Order.ASC, target)
-                PageOrderBy.ASC_NULLS_FIRST -> OrderSpecifier(Order.ASC, target, OrderSpecifier.NullHandling.NullsFirst)
-                PageOrderBy.ASC_NULLS_LAST -> OrderSpecifier(Order.ASC, target, OrderSpecifier.NullHandling.NullsLast)
-                PageOrderBy.DESC -> OrderSpecifier(Order.DESC, target)
-                PageOrderBy.DESC_NULLS_FIRST ->
+                PageOrderBy.ASC -> {
+                    OrderSpecifier(Order.ASC, target)
+                }
+
+                PageOrderBy.ASC_NULLS_FIRST -> {
+                    OrderSpecifier(Order.ASC, target, OrderSpecifier.NullHandling.NullsFirst)
+                }
+
+                PageOrderBy.ASC_NULLS_LAST -> {
+                    OrderSpecifier(Order.ASC, target, OrderSpecifier.NullHandling.NullsLast)
+                }
+
+                PageOrderBy.DESC -> {
+                    OrderSpecifier(Order.DESC, target)
+                }
+
+                PageOrderBy.DESC_NULLS_FIRST -> {
                     OrderSpecifier(
                         Order.DESC,
                         target,
                         OrderSpecifier.NullHandling.NullsFirst,
                     )
-                PageOrderBy.DESC_NULLS_LAST -> OrderSpecifier(Order.DESC, target, OrderSpecifier.NullHandling.NullsLast)
+                }
+
+                PageOrderBy.DESC_NULLS_LAST -> {
+                    OrderSpecifier(Order.DESC, target, OrderSpecifier.NullHandling.NullsLast)
+                }
             }
     }
 
