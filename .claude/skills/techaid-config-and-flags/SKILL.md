@@ -1,6 +1,6 @@
 ---
 name: techaid-config-and-flags
-description: Catalog of every configuration axis in techaid-server — environment variables, Spring profiles, behavior flags, credential wiring, logging config, and test-config overrides. Load when adding or changing an env var / yml setting / profile, wiring a new credential, hunting where a config value comes from, or diagnosing "works locally, broken on UAT/production" (missing env var, wrong profile, wrong DDL_AUTO). Also covers which legacy config files (charts/, manifests/, Procfile) must NOT be trusted.
+description: Catalog of every configuration axis in techaid-server — environment variables, Spring profiles, behavior flags, credential wiring, logging config, and test-config overrides. Load when adding or changing an env var / yml setting / profile, wiring a new credential, hunting where a config value comes from, or diagnosing "works locally, broken on UAT/production" (missing env var, wrong profile, wrong DDL_AUTO). Also covers which legacy config files (manifests/, Procfile) must NOT be trusted.
 ---
 
 # TechAid Server — Configuration and Flags
@@ -180,7 +180,6 @@ Dokku/Kubernetes-era files, pending cleanup (roadmap item A6, `techaid-roadmap-a
 
 | File(s) | Was | Status |
 |---------|-----|--------|
-| `charts/` (Helm values, secrets.*.yaml) | K8s-era deploy config | Dead; values stale |
 | `manifests/` (config/database/ingress/web/snapshot yaml) | K8s manifests | Dead |
 | `Procfile` | Dokku process file | Dead (still `COPY`'d into the image by `Dockerfile`, but the image `CMD` overrides it) |
 | `app-cname-validate.sh`, `cf-proxy-on.sh`, `migrate-prod-db.sh`, `rollback-prod.sh` | One-shot migration scripts (2026-05 cutover) — **gitignored, maintainer-local; absent from fresh clones** | Historical; do not re-run |
@@ -200,5 +199,5 @@ Re-verify before trusting:
 - Consumers: `grep -rn '@Value' src/main/kotlin --include='*.kt'`
 - Deployed env (both apps): `az containerapp show -n api-production -g tada-2026 --query "properties.template.containers[0].env"` (repeat with `api-testing`)
 - Test overrides: `cat src/test/resources/application.yml`
-- Legacy files still unreferenced by CI: `grep -rn "charts\|manifests\|Procfile" .github/workflows/` (expect no output)
+- Legacy files still unreferenced by CI: `grep -rn "manifests\|Procfile" .github/workflows/` (expect no output)
 - Dead `DEV_APP` still dead: `grep -rn "DEV_APP" src/main/kotlin` (expect no output)
