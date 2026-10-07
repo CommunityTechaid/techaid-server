@@ -58,6 +58,16 @@ updates:
       - dependency-name: "com.querydsl*"
         update-types:
           - version-update:semver-major
+      # ktlint's embedded-compiler pin in build.gradle (dependencyManagement { ktlint { ... } })
+      # follows the ktlint ENGINE (1.8.0 is built on Kotlin 2.2.21), not the project compiler.
+      # Dependabot can only ignore by dependency name, not by where it is declared, so it reads
+      # this pin as an ordinary Kotlin bump (#235). Moving the pin to the compiler's version
+      # breaks ktlintCheck. The real compiler is declared through the Kotlin Gradle plugin and its
+      # plugin ids, so Dependabot still proposes those. Bump this pin by hand with ktlint.
+      - dependency-name: "org.jetbrains.kotlin:kotlin-compiler-embeddable"
+      - dependency-name: "org.jetbrains.kotlin:kotlin-stdlib"
+      - dependency-name: "org.jetbrains.kotlin:kotlin-reflect"
+      - dependency-name: "org.jetbrains.kotlin:kotlin-script-runtime"
 
   - package-ecosystem: github-actions
     directory: "/"
