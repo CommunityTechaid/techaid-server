@@ -257,7 +257,7 @@ dependencies {
 /*    implementation "com.graphql-java-kickstart:graphql-java-servlet:15.1.0"*/
 
     /* Logging / Monitoring Dependencies */
-    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+    implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
     // logback-classic version managed by Spring Boot BOM (1.5.x with Spring Boot 3.4+)
 
     /* Making use of JUnit 5 */
