@@ -124,7 +124,7 @@ The `local` profile (`application-local.yml`) exposes all actuator endpoints and
 | File | Purpose | State |
 |---|---|---|
 | `Dockerfile` | **Production/UAT image** (built by CI). Multi-stage: `gradle:8.14.5-jdk17` builder (`clean build -x test -PgitCommit=…`) → `eclipse-temurin:17-jre-alpine` + tini init + Application Insights Java agent (downloaded at build, `AI_AGENT_VERSION=3.7.10`) + `applicationinsights.json`. JVM: `-XX:MaxRAMPercentage=75.0`. | Current. **Trap:** the builder copies `src`, `build.gradle`, `settings.gradle`, **and `.editorconfig`** — ktlint config lives in `.editorconfig`; a past image build broke when it wasn't copied. If you add root-level files the build needs, add them to the `COPY` line. |
-| `Dockerfile.dev` | The docker-compose `web` service: pre-fetches deps via `getDeps`, then idles for interactive `bootRun`. | Works, but internally pins Gradle **8.6** (repo wrapper is 8.14.5) — a version skew nobody has fixed; expect the container to use 8.6. |
+| `Dockerfile.dev` | The docker-compose `web` service: pre-fetches deps via `getDeps`, then idles for interactive `bootRun`. | Uses the repo's own Gradle wrapper (strips CRLF from `gradlew` first, for Windows checkouts), so it builds with the same Gradle as CI. Before 2026-10-07 it generated its own Gradle 8.6 wrapper, which was out of step with the repo. |
 | `Dockerfile.local` | Wrap a locally built jar (`build/libs/*.jar`) in a minimal image. | **Stale/broken**: base is `adoptopenjdk/openjdk11` JRE but the app requires Java 17. Do not use without fixing the base image. |
 
 ## 6. Windows / tooling traps (as of 2026-07-03)
