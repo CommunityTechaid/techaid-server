@@ -6,8 +6,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
  * Proves the Flyway migrations alone build a schema that satisfies every JPA mapping.
@@ -23,7 +23,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder
 )
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class SchemaValidationTest {
-    @MockBean
+    @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
     @Autowired

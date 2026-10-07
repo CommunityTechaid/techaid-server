@@ -25,7 +25,7 @@ class AuthController {
     fun user(
         @RequestHeader httpHeaders: HttpHeaders,
     ): ResponseEntity<*> {
-        val authUser = SecurityContextHolder.getContext().authentication.principal
+        val authUser = SecurityContextHolder.getContext().authentication?.principal
         val responseBody = LinkedHashMap<String, Any?>()
         responseBody["status"] = HttpStatus.UNAUTHORIZED
         try {

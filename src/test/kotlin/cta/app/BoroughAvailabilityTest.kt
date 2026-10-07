@@ -16,10 +16,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.TestPropertySource
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
  * Database-backed coverage for the borough-availability config (#179): the Flyway seed, the
@@ -39,7 +39,7 @@ import org.springframework.test.context.TestPropertySource
 @TestPropertySource(properties = ["spring.application.name=techaid-server-borough-availability-test"])
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class BoroughAvailabilityTest {
-    @MockBean
+    @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
     @Autowired

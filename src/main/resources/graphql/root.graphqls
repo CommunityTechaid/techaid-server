@@ -106,8 +106,12 @@ type Query {
     buildInfo: BuildInfo
 }
 
-type Mutation {
-}
+# `type Mutation` is declared in adminConfig.graphqls, not here, because the GraphQL spec
+# requires a type to have at least one field and there is no root-level mutation to give it.
+# It used to sit here as an empty `type Mutation { }`, which is illegal per the spec's
+# FieldsDefinition rule and only parsed because graphql-java's grammar is permissive
+# (`fieldsDefinition : '{' fieldDefinition* '}'` - zero-or-more). The other 16 domain files
+# carry on using `extend type Mutation`; the assembled schema is identical either way.
 
 schema {
     query: Query

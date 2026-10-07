@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.boot.web.error.ErrorAttributeOptions
-import org.springframework.boot.web.servlet.error.ErrorAttributes
-import org.springframework.boot.web.servlet.error.ErrorController
+import org.springframework.boot.webmvc.error.ErrorAttributes
+import org.springframework.boot.webmvc.error.ErrorController
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
@@ -75,7 +75,7 @@ class CustomErrorController : ErrorController {
     private fun getErrorAttributes(
         request: HttpServletRequest,
         includeStackTrace: Boolean,
-    ): Map<String, Any> {
+    ): Map<String, Any?> {
         val requestAttributes = ServletWebRequest(request)
         val errorOptions =
             if (includeStackTrace) {
@@ -99,7 +99,7 @@ class CustomErrorModel {
         fun from(
             status: Int,
             application: String,
-            errorAttributes: Map<String, Any>,
+            errorAttributes: Map<String, Any?>,
         ): CustomErrorModel {
             val model = CustomErrorModel()
             model.status = status

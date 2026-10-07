@@ -1,6 +1,5 @@
 package cta.app.graphql.filters
 
-import com.github.alexliesenfeld.querydsl.jpa.hibernate.JsonPath
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.EnumPath
 import cta.app.KitStatus
@@ -212,36 +211,17 @@ class KitAttributesWhereInput(
     var OR: MutableList<KitAttributesWhereInput> = mutableListOf(),
     var NOT: MutableList<KitAttributesWhereInput> = mutableListOf(),
 ) {
-    fun build(entity: QKit = QKit.kit): BooleanBuilder {
-        val builder = BooleanBuilder()
-        val json = JsonPath.of(entity.attributes)
-
-        otherType?.let { builder.and(it.build(json.get("otherType").asText())) }
-        state?.let { builder.and(it.build(json.get("state").asText())) }
-        notes?.let { builder.and(it.build(json.get("notes").asText())) }
-        status?.let { builder.and(it.build(json.get("status").asText())) }
-        filters?.let { filter ->
-            filter.forEach { builder.and(it.build(json)) }
-        }
-        if (AND.isNotEmpty()) {
-            AND.forEach {
-                builder.and(it.build(entity))
-            }
-        }
-
-        if (OR.isNotEmpty()) {
-            OR.forEach {
-                builder.or(it.build(entity))
-            }
-        }
-
-        if (NOT.isNotEmpty()) {
-            NOT.forEach {
-                builder.andNot(it.build(entity))
-            }
-        }
-        return builder
-    }
+    /*
+     * This input deliberately has no `build()`. It used to compile a jsonb predicate via
+     * com.github.alexliesenfeld:querydsl-jpa-postgres-json, dropped for the Spring Boot 4.1 work:
+     * the library is abandoned at 0.0.7 and the method was already unreachable - KitWhereInput
+     * has bypassed it since 6c2ced4 (2024-11-12).
+     *
+     * See issue #222. Restoring the behaviour needs a Hibernate 6 FunctionContributor or a native
+     * jsonb predicate, not this library, so nothing is lost by removing the dead body.
+     *
+     * The class and its fields stay: the GraphQL schema declares them (kits.graphqls:241).
+     */
 }
 
 class KitSubStatusWhereInput(
@@ -329,7 +309,10 @@ class KitWhereInput(
         archived?.let { builder.and(it.build(entity.archived)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         statusUpdatedAt?.let { builder.and(it.build(entity.statusUpdatedAt)) }
-        // setting attributes to null to bypass it. KitAttributes is unused and will be removed soon.
+        // Accepted and silently dropped - this does NOT filter. 6c2ced4 (2024-11-12) bypassed
+        // the jsonb predicate rather than fixing it, and the dashboard still sends the filter
+        // (kit-index.component.ts:42), so kit free-text search misses notes matches. Tracked as
+        // issue #222; restoring it is a product decision, not an upgrade step.
         attributes?.let { null }
         deviceRequest?.let { builder.and(it.build(entity.deviceRequest)) }
         donor?.let { builder.and(it.build(entity.donor)) }

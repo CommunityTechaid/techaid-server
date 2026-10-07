@@ -10,9 +10,9 @@ import org.hibernate.SessionFactory
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
 
@@ -42,7 +42,7 @@ import org.springframework.transaction.support.TransactionTemplate
 )
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class KitTimestampIsolationTest {
-    @MockBean
+    @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
     @Autowired

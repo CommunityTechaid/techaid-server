@@ -5,9 +5,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
  * Pins the Envers naming and strategy the schema was actually built against.
@@ -27,7 +27,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class EnversSchemaContractTest {
-    @MockBean
+    @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
     @Autowired
@@ -39,7 +39,8 @@ class EnversSchemaContractTest {
                 "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ?",
                 String::class.java,
                 table,
-            ).toSet()
+            ).filterNotNull()
+            .toSet()
 
     @Test
     fun `audit tables use Envers default revision columns, not the ones the removed config asked for`() {

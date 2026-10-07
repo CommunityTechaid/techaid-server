@@ -70,6 +70,13 @@ updates:
       - dependencies
     commit-message:
       prefix: "chore(ci)"
+    ignore:
+      # Action majors are breaking by convention (changed inputs, changed runtime) and the
+      # workflows here deploy to UAT and gate production. A major arrives as a tracked change,
+      # not as a Monday-morning PR nobody reads.
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
 
   # The runtime image and the build image are both pinned in the Dockerfile, as is the
   # Application Insights agent version - but that last one is a plain ARG, so Dependabot cannot
@@ -85,3 +92,10 @@ updates:
       - dependencies
     commit-message:
       prefix: "chore(docker)"
+    ignore:
+      # A base-image major is a JDK or Gradle migration: the runtime image has to match the
+      # bytecode target in build.gradle, and the build image has to match the Gradle wrapper.
+      # Both are tracked work.
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major

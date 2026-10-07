@@ -6,8 +6,8 @@ import org.hibernate.Hibernate
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
  * Characterises the JPA session boundary under the REAL production configuration
@@ -28,7 +28,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class DeviceRequestLazyAssociationTest {
-    @MockBean
+    @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
     @Autowired

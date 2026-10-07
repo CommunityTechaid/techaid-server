@@ -45,7 +45,7 @@ class LocationService {
             // the wiser.
             val uri =
                 UriComponentsBuilder
-                    .fromHttpUrl(baseUrl)
+                    .fromUriString(baseUrl)
                     .queryParam("key", key)
                     .queryParam("address", address)
                     .encode()

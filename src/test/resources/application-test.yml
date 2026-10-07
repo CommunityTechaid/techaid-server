@@ -18,12 +18,11 @@ auth:
   admin-secret: password
 
 spring:
-  graphql:
-    schema:
-      inspection:
-        # SchemaMappingInspector fails after Kotlin 2.x upgrade due to null method reflection issue.
-        # TODO: find the specific mapping and fix it; re-enable when resolved.
-        enabled: false
+  # NOTE: spring.graphql.schema.inspection.enabled is deliberately NOT overridden here.
+  # It used to be, which was a leftover from before #105 - back then this file REPLACED
+  # application.yml rather than overlaying it, so every setting the tests needed had to be
+  # restated. Now that it overlays, restating it meant tests could never observe the shipped
+  # value, and GraphQlSchemaSwitchesTest was a tripwire that could not fire.
   security:
     oauth2:
       resourceserver:

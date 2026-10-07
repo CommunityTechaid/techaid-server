@@ -1,6 +1,5 @@
 package cta.auth
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletException
 import jakarta.servlet.ServletRequest
@@ -10,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.GenericFilterBean
+import tools.jackson.databind.ObjectMapper
 import java.io.IOException
 import java.util.LinkedHashMap
 
@@ -58,8 +58,8 @@ class TokenAuthenticationFilter(
     }
 
     private fun loggedIn(): Boolean {
-        val context = SecurityContextHolder.getContext()
-        return context.authentication != null && context.authentication.isAuthenticated
+        val authentication = SecurityContextHolder.getContext().authentication
+        return authentication != null && authentication.isAuthenticated
     }
 
     private fun haltRequest(

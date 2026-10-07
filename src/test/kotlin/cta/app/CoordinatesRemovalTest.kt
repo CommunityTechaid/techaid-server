@@ -14,10 +14,10 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.graphql.execution.GraphQlSource
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
  * `coordinates` is gone from donors and kits (#161).
@@ -39,10 +39,10 @@ import org.springframework.security.test.context.support.WithMockUser
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class CoordinatesRemovalTest {
-    @MockBean
+    @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
-    @MockBean
+    @MockitoBean
     lateinit var locationService: LocationService
 
     @Autowired

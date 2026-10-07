@@ -1,23 +1,23 @@
 package cta.app.graphql.mutations
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.test.context.TestPropertySource
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -39,7 +39,7 @@ import java.util.Locale
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 @TestPropertySource(properties = ["delivery-booking.rate-limit.max-requests=1000"])
 class DeliveryBoroughDaySchedulingTest {
-    @MockBean
+    @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
     @Autowired
@@ -123,7 +123,14 @@ class DeliveryBoroughDaySchedulingTest {
                 .andExpect(status().isOk)
                 .andReturn()
                 .response.contentAsString
-        return mapper.readTree(body).at("/data/deliveryAvailabilityPublic").map { it.get("date").asText() }
+        // .values() rather than a bare .map: Jackson 3 added JsonNode.map(Function) as a
+        // MEMBER, which in Kotlin wins over the Iterable.map extension - so `.map { }` on a
+        // node silently stops iterating children and applies the lambda to the node itself.
+        return mapper
+            .readTree(body)
+            .at("/data/deliveryAvailabilityPublic")
+            .values()
+            .map { it.get("date").asText() }
     }
 
     private fun bookingMutation(
