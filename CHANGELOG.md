@@ -1,5 +1,16 @@
 # Changelog
 
+## [5.0.0](https://github.com/CommunityTechaid/techaid-server/compare/v4.0.0...v5.0.0) (2026-10-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* the location(address:) query and the Coordinates type are removed from the GraphQL schema.
+
+### Features
+
+* remove unused location geocoding query ([#238](https://github.com/CommunityTechaid/techaid-server/issues/238)) ([9c37570](https://github.com/CommunityTechaid/techaid-server/commit/9c3757071bc5cc58363eb9248f594aa218b51dfe)), closes [#186](https://github.com/CommunityTechaid/techaid-server/issues/186)
+
 ## [4.0.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.3.0...v4.0.0) (2026-10-07)
 
 

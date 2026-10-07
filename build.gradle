@@ -60,7 +60,7 @@ springBoot {
 }
 
 group = 'cta'
-version = '4.0.0' // x-release-please-version
+version = '5.0.0' // x-release-please-version
 sourceCompatibility = '17'
 
 /*
