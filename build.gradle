@@ -61,7 +61,7 @@ springBoot {
 
 group = 'cta'
 version = '5.0.0' // x-release-please-version
-sourceCompatibility = '17'
+java { sourceCompatibility = JavaVersion.VERSION_17 }
 
 /*
  * The runtime Postgres driver is declared without a version (`runtimeOnly
