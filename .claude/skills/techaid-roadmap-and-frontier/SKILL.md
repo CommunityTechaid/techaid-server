@@ -219,10 +219,10 @@ Azure Container Apps migration (completed May 2026). They mislead newcomers
 about how the system deploys.
 
 **Current state (verified via `git ls-files`, 2026-07-05):** tracked
-leftovers: `Procfile` (Dokku), `charts/` (Helm), `manifests/` (K8s),
+leftovers: `Procfile` (Dokku), `manifests/` (K8s),
 `Dockerfile.local`, `start.sh`. **Trap:** `Dockerfile` still does
 `COPY ./Procfile /app` — deleting `Procfile` without editing `Dockerfile`
-breaks the image build. `cutover-prod.sh` is already gone. The `README.md`
+breaks the image build. `cutover-prod.sh` is already gone; `charts/` (Helm), `.sops.yaml` (AWS-KMS SOPS config) and `.lighthouse/` (Tekton CI) were deleted 2026-10-07 — AWS is no longer used. The `README.md`
 dev-environment section predates the migration (references a `setup_branch`
 and container-shell workflow) and says nothing about the actual CI → UAT →
 promote model. Also deferred: kotlin-logging is pinned at 3.0.5
@@ -230,7 +230,7 @@ promote model. Also deferred: kotlin-logging is pinned at 3.0.5
 files) was deliberately deferred during the 2026-04 dependency wave.
 
 **First three steps:** (1) remove `Procfile` + its `Dockerfile` COPY line,
-`charts/`, `manifests/`, `Dockerfile.local`, `start.sh` in one PR and confirm
+`manifests/`, `Dockerfile.local`, `start.sh` in one PR and confirm
 the Docker image still builds; (2) rewrite the README dev-setup section and
 walk it verbatim on a clean machine (see `techaid-build-and-env`); (3)
 optionally take the kotlin-logging 5.x migration as its own mechanical PR.
@@ -423,7 +423,7 @@ re-verify before acting:
 - A3 lazy-load flag still on: `grep -n "enable_lazy_load_no_trans" src/main/resources/application.yml`
 - A4 bypass still open: `grep -rn "DEVICE_REQUEST_LIMIT" src/test/kotlin/` (no hits = untested); confirm `createReferringOrganisationContact` still has no `@PreAuthorize`: `grep -n -B3 "fun createReferringOrganisationContact" src/main/kotlin/cta/app/graphql/mutations/ReferringOrganisationContactMutations.kt`
 - A5 cascade still untested: `grep -rln "REQUEST_COMPLETED" src/test/kotlin/` (no hits = still open)
-- A6 leftovers still present: `git ls-files Procfile charts manifests Dockerfile.local start.sh`; Procfile still COPY'd: `grep -n Procfile Dockerfile`; logging still 3.x: `grep -n "kotlin-logging" build.gradle`
+- A6 leftovers still present: `git ls-files Procfile manifests Dockerfile.local start.sh`; Procfile still COPY'd: `grep -n Procfile Dockerfile`; logging still 3.x: `grep -n "kotlin-logging" build.gradle`
 - A7 URL layer still permitAll: `grep -n "permitAll\|authenticated()" src/main/kotlin/cta/app/config/SecurityConfig.kt`
 - A8 still no smoke step: `grep -n "buildInfo\|health" .github/workflows/ci.yml .github/workflows/promote.yml` (no hits = still open)
 - B1 status_updated_at + audit config: `ls src/main/resources/db/migration | grep status_updated`; `grep -n "audit_table_suffix" src/main/resources/application.yml`
