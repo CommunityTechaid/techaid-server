@@ -6,7 +6,7 @@ buildscript {
          * More likely to be limited by the version of the all-open plugin @
          * https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-maven-allopen
          */
-        kotlinVersion = '2.3.21' //Updated Sep. 2026 (was 2.2.21). Matches the Boot 4.1 BOM
+        kotlinVersion = '2.4.20' //Updated Oct. 2026 (was 2.3.21). Ahead of the Boot 4.1 BOM (2.3.21) - see ext['kotlin.version']
         // Versions @ https://github.com/spring-projects/spring-boot/releases
         springBootVersion = '4.1.1' //Updated Sep. 2026 (was 3.4.4)
 
@@ -28,8 +28,8 @@ buildscript {
 plugins {
     id 'org.springframework.boot' version '4.1.1'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'org.jetbrains.kotlin.jvm' version '2.3.21'
-    id 'org.jetbrains.kotlin.plugin.spring' version '2.3.21'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.20'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.20'
     id 'org.jlleitschuh.gradle.ktlint' version '14.2.0'
 }
 
@@ -83,7 +83,7 @@ ext['postgresql.version'] = '42.7.13'
  * The Boot 4.1 BOM manages 2.3.21, so at the Boot bump this override and `kotlinVersion` move
  * together - or this line is removed and the BOM is allowed to win.
  */
-ext['kotlin.version'] = '2.3.21'
+ext['kotlin.version'] = '2.4.20'
 
 repositories {
     mavenCentral()
@@ -328,6 +328,28 @@ dependencies {
 // Kotlin 2.x, causing NoSuchFieldError at runtime. ktlint 1.5.0+ is compiled against Kotlin 2.x.
 ktlint {
     version = "1.8.0"
+}
+
+/*
+ * ktlint parses sources with its OWN embedded Kotlin compiler, and must get the Kotlin it was
+ * built against (2.2.21 for ktlint 1.8.0). io.spring.dependency-management applies
+ * ext['kotlin.version'] to EVERY configuration, ktlint's included, so with the compiler on 2.4.20
+ * ktlint's kotlin-compiler-embeddable was forced to 2.4.20 and every source set failed with
+ * "KtLint failed to parse file" (root cause: "Extensions storage is not registered").
+ * Configuration-specific management takes precedence over the global override. Move these with
+ * the ktlint version, never with kotlinVersion.
+ */
+dependencyManagement {
+    ktlint {
+        dependencies {
+            dependencySet(group: 'org.jetbrains.kotlin', version: '2.2.21') {
+                entry 'kotlin-compiler-embeddable'
+                entry 'kotlin-stdlib'
+                entry 'kotlin-reflect'
+                entry 'kotlin-script-runtime'
+            }
+        }
+    }
 }
 
 idea {
