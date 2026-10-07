@@ -34,7 +34,6 @@ Why this bar exists here specifically: the security model (`permitAll()` + per-m
 - `src/test/resources/application.yml` sets `zonky.test.database.provider: zonky` — the **binary** provider, not the default Docker provider. **Tests need no Docker daemon**, locally or in CI.
 - Any test annotated `@AutoConfigureEmbeddedDatabase(type = ...POSTGRES)` gets a fresh real Postgres; **Flyway runs all migrations against it on context start**. Every suite run is therefore also the first-line validation of `src/main/resources/db/migration/`.
 - Test-config tricks in `src/test/resources/application.yml` (read it before changing it):
-  - `google.places.url: http://127.0.0.1:1/geocode` — a closed port, so geocoding calls fail fast instead of hitting Google.
   - Dummy Auth0 issuer/token-attribute `https://test.example.com` — which is why Spring-context tests must `@MockBean` the `JwtDecoder` (a real decoder would try to fetch OIDC metadata from that fake issuer).
   - `gmail.enabled: false` — no real email sends.
   - `spring.graphql.schema.inspection.enabled: false` — inspection crashes after the Kotlin 2.x upgrade (open TODO in that file). Consequence: **schema↔resolver mismatches do not surface at startup**; that is what the wiring tests in §3 exist for.
@@ -59,7 +58,6 @@ Every test file under `src/test/kotlin`, what it pins, and when you MUST extend 
 | `cta/app/graphql/queries/ReferringOrganisationContactNotesResolverWiringTest` | `ReferringOrganisationContact.notes` bridges its entity/GraphQL name mismatch with `@SchemaMapping` — same silent-null class as above. | Renaming entity collections vs GraphQL fields. |
 | `cta/app/graphql/mutations/DeviceRequestMutationsTest` | `UpdateDeviceRequestInput.apply()` is full-replace: explicit null **clears** `collectionDate` (operators couldn't remove bookings — techaid-dashboard #42). | Changing update-input semantics. |
 | `cta/app/services/DeviceRequestServiceTest` | `formatDeviceRequests` item rendering; `markRequestStepsCompleted` status+correlationId; decline scheduler declines only >20-min-stale requests and **saves only mutated rows** (audit-churn guard from PR #48). | Touching `DeviceRequestService`. |
-| `cta/app/services/LocationServiceTimeoutTest` | A stalled geocoding endpoint (socket accepts, never responds) degrades to null instead of hanging a Tomcat thread — verifies the 2s connect / 5s read timeouts (PR #48; thread-pool exhaustion risk on the small container). | Touching `LocationService` or its RestTemplate. |
 | `cta/auth/AuthServiceTest` | Admin-secret matching: grants full authorities on match; rejects wrong/different-length/blank tokens and a blank configured secret (constant-time compare fix, PR #48). | Touching `AuthService`. |
 | `cta/auth/TokenAuthenticationFilterTest` | Invalid admin header ⇒ 401 `INVALID_ADMIN_TOKEN`, chain halted; valid ⇒ authenticated + chain continues; absent ⇒ anonymous pass-through. | Touching `TokenAuthenticationFilter`. |
 | `cta/app/KitHashCodeTest` | `Kit.hashCode()` varies by id (equals is id-based) — guards the constant-13 hashCode that made `MutableSet<Kit>` lookups O(n) (PR #48). | Touching Kit equality/hashing. |

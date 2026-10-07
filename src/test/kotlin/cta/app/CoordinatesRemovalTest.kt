@@ -1,22 +1,13 @@
 package cta.app
 
-import cta.app.graphql.mutations.CreateDonorInput
-import cta.app.graphql.mutations.DonorMutations
-import cta.app.graphql.mutations.KitMutations
-import cta.app.graphql.mutations.UpdateKitInput
-import cta.app.services.LocationService
 import graphql.schema.GraphQLObjectType
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.graphql.execution.GraphQlSource
 import org.springframework.security.oauth2.jwt.JwtDecoder
-import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
@@ -31,10 +22,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
  * Personal data with no consumer is worth removing rather than retaining, which is why the full
  * drop was chosen over leaving the GDPR scrub to handle it.
  *
- * WHAT STAYS, deliberately: the `Coordinates` GraphQL type and the ad-hoc
- * `location(address: String)` query, plus `LocationService` itself. Those are a live lookup
- * independent of the persisted columns — the last test pins that, so a later "finish the job"
- * pass does not take a working feature with it.
+ * The ad-hoc `location(address: String)` query, its `Coordinates` type and `LocationService`
+ * outlived the drop until 2026-10-07, when they were removed too: no dashboard caller, and the
+ * Google key behind them was revoked after third-party abuse. With no geocoder left in the
+ * codebase, donor and kit writes cannot geocode, so only the schema is pinned here.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
@@ -42,56 +33,8 @@ class CoordinatesRemovalTest {
     @MockitoBean
     lateinit var jwtDecoder: JwtDecoder
 
-    @MockitoBean
-    lateinit var locationService: LocationService
-
-    @Autowired
-    lateinit var donorMutations: DonorMutations
-
-    @Autowired
-    lateinit var kitMutations: KitMutations
-
-    @Autowired
-    lateinit var kits: KitRepository
-
     @Autowired
     lateinit var graphQlSource: GraphQlSource
-
-    @Test
-    @WithMockUser(authorities = ["write:donors"])
-    fun `creating a donor no longer geocodes their postcode`() {
-        donorMutations.createDonor(
-            CreateDonorInput(
-                name = "Geocode Me Not",
-                email = "nogeocode@example.com",
-                phoneNumber = "07000000000",
-                postCode = "SE1 1AA",
-                referral = "test",
-                isLeadContact = false,
-            ),
-        )
-
-        verify(locationService, never()).findCoordinates(anyString())
-    }
-
-    @Test
-    @WithMockUser(authorities = ["write:kits"])
-    fun `updating a kit no longer geocodes its location`() {
-        val kit = kits.save(Kit(model = "No geocode", age = 1))
-
-        kitMutations.updateKit(
-            UpdateKitInput(
-                id = kit.id,
-                type = KitType.OTHER,
-                status = KitStatus.DONATION_NEW,
-                model = "No geocode",
-                location = "Brixton",
-                age = 1,
-            ),
-        )
-
-        verify(locationService, never()).findCoordinates(anyString())
-    }
 
     @Test
     fun `the schema no longer exposes coordinates on Donor or Kit`() {
@@ -106,14 +49,14 @@ class CoordinatesRemovalTest {
     }
 
     @Test
-    fun `the live location lookup and its type survive`() {
+    fun `the location geocoding query and its type are gone`() {
         val schema = graphQlSource.schema()
 
         assertThat(schema.getType("Coordinates"))
-            .`as`("the Coordinates type backs the ad-hoc lookup and is not part of the drop")
-            .isNotNull()
+            .`as`("Coordinates only backed the removed location query")
+            .isNull()
         assertThat(schema.queryType.fieldDefinitions.map { it.name })
-            .`as`("location(address:) is a live geocode, independent of the removed columns")
-            .contains("location")
+            .`as`("location(address:) proxied a billed Google key and had no caller")
+            .doesNotContain("location")
     }
 }

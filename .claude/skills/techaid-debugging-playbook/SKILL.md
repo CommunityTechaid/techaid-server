@@ -218,7 +218,7 @@ and in `build.gradle` (`io.zonky.test:embedded-database-spring-test`, `embedded-
 
 - Errors about Docker ⇒ the provider override isn't being picked up (are you running tests with the right classpath/resources?).
 - Binary download/extraction errors on Windows ⇒ antivirus interference; run from Git Bash, and note BitDefender blocks PowerShell spawning (as of 2026-07-03).
-- A test needing external services: everything external is neutered in test config — Gmail disabled, Google Places pointed at closed port `http://127.0.0.1:1/geocode` so geocoding fails fast. A test hanging on an outbound call means new code bypassed those test settings.
+- A test needing external services: everything external is neutered in test config — Gmail disabled, Turnstile disabled. A test hanging on an outbound call means new code bypassed those test settings.
 
 Full environment setup: techaid-build-and-env. Test-writing conventions: techaid-validation-and-qa.
 

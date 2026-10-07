@@ -80,13 +80,6 @@ type AppError {
     context: [Map!]
 }
 
-type Coordinates {
-    lat: String,
-    lng: String,
-    address: String
-    input: String
-}
-
 "Build and version metadata for the running API instance"
 type BuildInfo {
     "Application version from build.gradle"
@@ -101,7 +94,6 @@ type BuildInfo {
 
 "Core type that holds all the queries for the api"
 type Query {
-    location(address: String) : Coordinates
     "Returns build and version information for the running API"
     buildInfo: BuildInfo
 }
