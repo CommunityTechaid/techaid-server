@@ -302,7 +302,7 @@ dependencies {
      */
     testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom:17.11.0')
     /* Providing In-Memory H2 database as the default spring data-source */
-    testImplementation 'com.h2database:h2:2.5.250'
+    testImplementation 'com.h2database:h2:2.5.252'
     /*
      * groupId is org.hibernate.orm, not org.hibernate. The old coordinate still publishes a
      * POM for 7.x but NO jar - it is a relocation stub - so `org.hibernate:hibernate-envers`
