@@ -1,15 +1,10 @@
 package cta.app.graphql.queries
 
-import com.auth0.client.mgmt.filter.PageFilter
-import com.auth0.client.mgmt.filter.RolesFilter
-import com.auth0.client.mgmt.filter.UserFilter
-import com.auth0.json.mgmt.permissions.Permission
-import com.auth0.json.mgmt.permissions.PermissionsPage
-import com.auth0.json.mgmt.roles.Role
-import com.auth0.json.mgmt.roles.RolesPage
-import com.auth0.json.mgmt.users.User
-import com.auth0.json.mgmt.users.UsersPage
+import cta.auth.Auth0Page
+import cta.auth.Auth0Permission
+import cta.auth.Auth0Role
 import cta.auth.Auth0Service
+import cta.auth.Auth0User
 import cta.graphql.PaginationInput
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -28,34 +23,23 @@ class UserQueries(
     fun users(
         @Argument page: PaginationInput,
         @Argument filter: String = "",
-    ): UsersPage {
-        val userFilter = page.userFilter()
-        if (filter.isNotBlank()) userFilter.withQuery(filter)
-        return users.findAllUsers(userFilter)
-    }
+    ): Auth0Page<Auth0User> = users.findAllUsers(page, filter)
 
     @QueryMapping
     fun user(
         @Argument id: String,
-    ): User = users.findById(id)
+    ): Auth0User = users.findById(id)
 
     @QueryMapping
     fun roles(
         @Argument page: PaginationInput,
         @Argument filter: String = "",
-    ): RolesPage {
-        val roleFilter =
-            RolesFilter()
-                .withPage(page.page, page.size)
-                .withTotals(true)
-        if (filter.isNotBlank()) roleFilter.withName(filter)
-        return users.findRoles(roleFilter)
-    }
+    ): Auth0Page<Auth0Role> = users.findRoles(page, filter)
 
     @QueryMapping
     fun role(
         @Argument id: String,
-    ): Role = users.findRoleById(id)
+    ): Auth0Role = users.findRoleById(id)
 }
 
 @Controller
@@ -68,13 +52,13 @@ class UserMutations(
     fun assignRoles(
         @Argument roleId: String,
         @Argument userIds: List<String>,
-    ): Role = users.assignRoles(roleId, userIds)
+    ): Auth0Role = users.assignRoles(roleId, userIds)
 
     @MutationMapping
     fun removeRoles(
         @Argument userId: String,
         @Argument roleIds: List<String>,
-    ): User = users.removeRoles(userId, roleIds)
+    ): Auth0User = users.removeRoles(userId, roleIds)
 
     @MutationMapping
     fun deleteUser(
@@ -88,13 +72,7 @@ class UserMutations(
     fun removePermissions(
         @Argument userId: String,
         @Argument permissions: List<PermissionInput>,
-    ): User {
-        users.mgmt
-            .users()
-            .removePermissions(userId, permissions.map { it.permission })
-            .execute()
-        return users.findById(userId)
-    }
+    ): Auth0User = users.removePermissions(userId, permissions.map { it.permission })
 }
 
 data class PermissionInput(
@@ -103,14 +81,7 @@ data class PermissionInput(
     val resourceServerId: String,
     val resourceServerName: String,
 ) {
-    val permission by lazy {
-        val permission = Permission()
-        permission.name = name
-        permission.description = description
-        permission.resourceServerId = resourceServerId
-        permission.resourceServerName = resourceServerName
-        permission
-    }
+    val permission get() = Auth0Permission(resourceServerId, resourceServerName, name, description)
 }
 
 @Controller
@@ -119,39 +90,15 @@ class RoleResolver(
 ) {
     @SchemaMapping(typeName = "Role", field = "permissions")
     fun permissions(
-        role: Role,
+        role: Auth0Role,
         @Argument page: PaginationInput?,
-    ): PermissionsPage {
-        val filter =
-            if (page == null) {
-                PageFilter()
-            } else {
-                PageFilter().withPage(page.page, page.size).withTotals(true)
-            }
-        return users.mgmt
-            .roles()
-            .listPermissions(role.id, filter)
-            .execute()
-            .body
-    }
+    ): Auth0Page<Auth0Permission> = users.findRolePermissions(role.id!!, page)
 
     @SchemaMapping(typeName = "Role", field = "users")
     fun users(
-        role: Role,
+        role: Auth0Role,
         @Argument page: PaginationInput?,
-    ): UsersPage {
-        val filter =
-            if (page == null) {
-                PageFilter()
-            } else {
-                PageFilter().withPage(page.page, page.size).withTotals(true)
-            }
-        return users.mgmt
-            .roles()
-            .listUsers(role.id, filter)
-            .execute()
-            .body
-    }
+    ): Auth0Page<Auth0User> = users.findRoleUsers(role.id!!, page)
 }
 
 @Controller
@@ -160,44 +107,13 @@ class UserResolver(
 ) {
     @SchemaMapping(typeName = "User", field = "roles")
     fun roles(
-        user: User,
+        user: Auth0User,
         @Argument page: PaginationInput?,
-    ): RolesPage {
-        val filter =
-            if (page == null) {
-                PageFilter()
-            } else {
-                PageFilter().withPage(page.page, page.size).withTotals(true)
-            }
-        return users.mgmt
-            .users()
-            .listRoles(user.id, filter)
-            .execute()
-            .body
-    }
+    ): Auth0Page<Auth0Role> = users.findUserRoles(user.userId!!, page)
 
     @SchemaMapping(typeName = "User", field = "permissions")
     fun permissions(
-        user: User,
+        user: Auth0User,
         @Argument page: PaginationInput?,
-    ): PermissionsPage {
-        val filter =
-            if (page == null) {
-                PageFilter()
-            } else {
-                PageFilter().withPage(page.page, page.size).withTotals(true)
-            }
-        return users.mgmt
-            .users()
-            .listPermissions(user.id, filter)
-            .execute()
-            .body
-    }
-}
-
-fun PaginationInput.userFilter(): UserFilter {
-    var filter = UserFilter().withPage(page, size).withTotals(true)
-    var sorted = sort?.map { "${it.key}:${it.value}" }?.joinToString(" ") ?: ""
-    if (sorted.isNotBlank()) filter.withSort(sorted)
-    return filter
+    ): Auth0Page<Auth0Permission> = users.findUserPermissions(user.userId!!, page)
 }
