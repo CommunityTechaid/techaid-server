@@ -23,7 +23,7 @@ Community TechAid is a London charity that collects donated devices ("**kits**")
 
 | Term | Entity / table | Meaning |
 |---|---|---|
-| Donor | `Donor` / `donors` | Individual or org giving devices. Fields: name, email, phone, postCode, referral, `isLeadContact`, geocoded `coordinates`. `kitCount` is a live `@Formula` count. |
+| Donor | `Donor` / `donors` | Individual or org giving devices. Fields: name, email, phone, postCode, referral, `isLeadContact`. `kitCount` is a live `@Formula` count. |
 | Donor parent | `DonorParent` / `donor_parents` | Umbrella over donors: `type` is `BUSINESS` (corporate donation drive — *inferred*) or `DROPPOINT` (physical drop-off location — *inferred*; default). `donorCount` is `@Formula`. |
 | Kit | `Kit` / `kits` | One physical device moving through refurbishment. See Kit domain. |
 | Referring organisation | `ReferringOrganisation` / `referring_organisations` | Body allowed to refer clients. |
@@ -34,7 +34,7 @@ Community TechAid is a London charity that collects donated devices ("**kits**")
 
 ## Kit domain (`KitModels.kt`)
 
-Key fields on `Kit`: `type`, `status`, `model`/`make`/`deviceVersion`, `serialNo`, `age`, spec fields (`storageCapacity` GB, `typeOfStorage`, `ramCapacity`, `cpuType`, `cpuCores`, `tpmVersion`, `batteryHealth` %), `location` (free text; geocoded into `coordinates` JSONB on create/update via Google Places), `lotId` + `locationCode` (bulk-import provenance from the Google-Sheet importer — often numeric in the sheet, hence the `LenientString` scalar, see below), `archived` (stored as `Y`/`N` char via `YesNoConverter`; set true when delivered/recycled — hides the kit from active work, *inferred*), `statusUpdatedAt` (bumped in mutation code whenever `status` changes — NOT automatic at the DB level), `donor` (nullable FK), `deviceRequest` (nullable FK = current allocation), `notes`, `subStatus` (embedded refurb flags: `installationOfOSFailed`, `wipeFailed`, `needsSparePart`, `needsFurtherInvestigation`, `network`, `installedOSName`, `lockedToUser`), `attributes` (legacy JSONB grab-bag: `otherType`, `state`, `credentials`, `status: List<String>`, `network`, `otherNetwork`).
+Key fields on `Kit`: `type`, `status`, `model`/`make`/`deviceVersion`, `serialNo`, `age`, spec fields (`storageCapacity` GB, `typeOfStorage`, `ramCapacity`, `cpuType`, `cpuCores`, `tpmVersion`, `batteryHealth` %), `location` (free text), `lotId` + `locationCode` (bulk-import provenance from the Google-Sheet importer — often numeric in the sheet, hence the `LenientString` scalar, see below), `archived` (stored as `Y`/`N` char via `YesNoConverter`; set true when delivered/recycled — hides the kit from active work, *inferred*), `statusUpdatedAt` (bumped in mutation code whenever `status` changes — NOT automatic at the DB level), `donor` (nullable FK), `deviceRequest` (nullable FK = current allocation), `notes`, `subStatus` (embedded refurb flags: `installationOfOSFailed`, `wipeFailed`, `needsSparePart`, `needsFurtherInvestigation`, `network`, `installedOSName`, `lockedToUser`), `attributes` (legacy JSONB grab-bag: `otherType`, `state`, `credentials`, `status: List<String>`, `network`, `otherNetwork`).
 
 **Enums:**
 
@@ -154,7 +154,7 @@ Security model: everything is `permitAll()` at the HTTP layer; authorization = p
 | `read:content` | `posts`, `postsConnection`; also unlocks `secured` posts on public `post` |
 | `write:content` | `createPost`, `updatePost`, `deletePost` |
 | `app:admin` | `updateAdminConfig`; also accepted wherever listed above |
-| any authenticated user | `location(address)` geocoding proxy (billed Google key — gated 2026-07); `requestCount` (returns null anonymously) |
+| any authenticated user | `requestCount` (returns null anonymously) |
 | `admin:kits`, `admin:donors` | Checked in `FilterService.kitFilter()/donorFilter()` but both branches currently return the same empty filter — **effectively no-ops today** (verified 2026-07-03) |
 
 ### Public (unauthenticated) surface — keep this list in your head
@@ -193,7 +193,6 @@ Endpoint `/graphql` (GraphiQL not exposed). Custom scalars in `root.graphqls`: `
 ## Minor models
 
 - **Blog** (`Post` / `posts` table, `BlogGraph.kt`): title/slug/content, `published`, `secured` (secured posts need `read:content` even on the public `post` query). Likely legacy CMS for site content; dashboard usage unconfirmed — treat as vestigial until proven otherwise (*uncertain*).
-- `Coordinates` (JSONB embeddable): geocoding result `{lat, lng, address, input}` from `LocationService` (Google Places; 2s/5s timeouts).
 
 ## Provenance and maintenance
 

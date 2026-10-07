@@ -99,27 +99,6 @@ class PublicSurfaceAuthorizationTest {
             .andExpect(jsonPath("$.data.createReferringOrganisation.name").value("Auth Probe Org"))
     }
 
-    // The location query proxies the billed Google geocoding key and is unused by the
-    // dashboard's public pages, so it must require authentication.
-    private val locationQuery = """query { location(address: \"SW9 8RR\") { lat lng } }"""
-
-    @Test
-    fun `location query rejects anonymous callers`() {
-        anonymousGraphQl(locationQuery)
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
-    }
-
-    @Test
-    fun `location query admits any authenticated user`() {
-        // google.places.url points at a closed port in tests, so the lookup degrades to
-        // null — the point is only that the gate lets an authenticated caller through.
-        authorizedGraphQl(locationQuery, "read:organisations")
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.errors").doesNotExist())
-            .andExpect(jsonPath("$.data.location").value(org.hamcrest.Matchers.nullValue()))
-    }
-
     // referringOrganisationsPublic stays anonymous (public referral form typeahead) but
     // must only accept the restricted filter surface the form actually uses.
     @Test

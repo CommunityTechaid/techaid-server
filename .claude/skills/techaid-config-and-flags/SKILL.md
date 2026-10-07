@@ -54,7 +54,6 @@ Resolution order: env `DATASOURCE_URL` → property `db-url` → localhost defau
 | `AUTH0_DOMAIN` | `''` | `auth0.domain` | `Auth0Service.kt:17` | User-management API calls |
 | `AUTH0_CLIENT_ID` | `''` | `auth0.client-id` | `Auth0Service.kt:20` | |
 | `AUTH0_CLIENT_SECRET` | `''` | `auth0.client-secret` | `Auth0Service.kt:23` | |
-| `GOOGLE_PLACES_KEY` | `''` | `google.places.key` | `LocationService.kt:23` | Geocoding; billed key. The `location` query is auth-gated (PR #48) |
 | `GMAIL_CLIENT_ID` | `''` | `gmail.client-id` | `MailService.kt:23` | |
 | `GMAIL_CLIENT_SECRET` | `''` | `gmail.client-secret` | `MailService.kt:26` | |
 | `GMAIL_REFRESH_TOKEN` | `''` | `gmail.refresh-token` | `MailService.kt:29` | |
@@ -71,7 +70,6 @@ Resolution order: env `DATASOURCE_URL` → property `db-url` → localhost defau
 | Property | Default | Consumer | Purpose |
 |----------|---------|----------|---------|
 | `auth.admin-header` | `X-Auth-Admin-Secret` | `AuthService.kt:10` | Header name carrying the admin token |
-| `google.places.url` | `https://maps.google.com/maps/api/geocode/json` | `LocationService.kt:26` | Overridden in test config to a closed port (§6) |
 | `errors.stack_trace` | `false` | `CustomErrorController.kt:30` | Include stack traces in error payloads — leave off outside local debugging |
 | `spring.application.name` fallback `${APP_NAME:}` | `techaid-api` (set in yml) | `CustomErrorController.kt:36` | |
 
@@ -133,7 +131,6 @@ Secret-typed values show as `secretRef`, not plaintext. Real credential values l
 | Auth0 management | `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` | User admin (list/create/update users via Auth0 API) |
 | Gmail API | `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN` (+ `GMAIL_ADDRESS`, `GMAIL_BCC_ADDRESS`, `GMAIL_ENABLED`) | Outbound notification email. README documents the OAuth code→refresh-token dance |
 | Typeform | `TYPEFORM_KEY` | HMAC verification of intake webhooks |
-| Google Places | `GOOGLE_PLACES_KEY` | Geocoding (`location` GraphQL query) — billed |
 | Admin token | `AUTH_ADMIN_SECRET` | Full-access shared secret via `X-Auth-Admin-Secret` header (constant-time compared). Rotation = update Container App secret + every caller |
 | Telemetry | `APPLICATIONINSIGHTS_CONNECTION_STRING` | App Insights agent |
 | Database | via datasource chain (§1) | Per-env logins (`api_uat`, `api_prod`) → `techaid-database-operations` |
@@ -154,7 +151,6 @@ Secret-typed values show as `secretRef`, not plaintext. Real credential values l
 | Override | Value | Why |
 |----------|-------|-----|
 | `zonky.test.database.provider` | `zonky` | Embedded Postgres **binaries**, not the default Docker provider — DB tests run without a Docker daemon, locally and in CI |
-| `google.places.url` | `http://127.0.0.1:1/geocode` | Closed port: any accidental geocode call fails fast instead of hitting Google |
 | `auth0.token-attribute` / issuer | `https://test.example.com` (+ `/`) | Dummy values so beans initialize without real Auth0 |
 | `auth.admin-secret` | `password` | Enables admin-token test paths |
 | `gmail.*` | empty / `enabled: false` | No email from tests |
