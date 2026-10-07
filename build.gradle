@@ -244,7 +244,7 @@ dependencies {
      * mismatched pair there is a runtime NoSuchMethodError that a green build will not catch, so
      * it needs the BigDecimal/Long coercion tests first.
      */
-    implementation 'com.graphql-java:graphql-java-extended-scalars:19.0'
+    implementation 'com.graphql-java:graphql-java-extended-scalars:24.0'
 
 
 
