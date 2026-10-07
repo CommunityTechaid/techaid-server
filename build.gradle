@@ -85,6 +85,15 @@ ext['postgresql.version'] = '42.7.13'
  */
 ext['kotlin.version'] = '2.4.20'
 
+/*
+ * Flyway: the Boot 4.1 BOM manages 12.4.0; this takes the newest 12.x, which is also what the
+ * Boot 4.2 milestones manage. Do NOT move to 13.x ahead of a Boot BOM that manages it - Boot's
+ * Flyway auto-configuration calls the Flyway API directly, and a major ahead of it is exactly
+ * how Flyway 12 broke Boot 3.4.4 (cleanOnValidationError removed). Covers flyway-core and
+ * flyway-database-postgresql together.
+ */
+ext['flyway.version'] = '12.11.0'
+
 repositories {
     mavenCentral()
     google()
@@ -275,7 +284,7 @@ dependencies {
     /*
      * In Boot 4 the Flyway auto-configuration lives behind this starter. Declaring
      * flyway-core directly is NOT equivalent: without the starter, migrations silently stop
-     * running at startup. The BOM manages 12.4.0 here.
+     * running at startup. Version: see ext['flyway.version'] above.
      */
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
     /*
