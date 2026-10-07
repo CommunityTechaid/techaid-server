@@ -68,6 +68,13 @@ updates:
       - dependency-name: "org.jetbrains.kotlin:kotlin-stdlib"
       - dependency-name: "org.jetbrains.kotlin:kotlin-reflect"
       - dependency-name: "org.jetbrains.kotlin:kotlin-script-runtime"
+      # The embedded test Postgres binaries are pinned to the live server's major (techaid-pg-svr is
+      # Postgres 17) so migrations are tested against the version production runs. A major bump is
+      # a server upgrade, not a routine PR (#233, #248). Closing a grouped PR does not stop
+      # Dependabot reproposing it, so ignore majors here; minors and patches still come through.
+      - dependency-name: "io.zonky.test.postgres:embedded-postgres-binaries-bom"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: "/"
