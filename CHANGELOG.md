@@ -1,5 +1,35 @@
 # Changelog
 
+## [5.0.0](https://github.com/CommunityTechaid/techaid-server/compare/v4.0.0...v5.0.0) (2026-10-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* the location(address:) query and the Coordinates type are removed from the GraphQL schema.
+
+### Features
+
+* remove unused location geocoding query ([#238](https://github.com/CommunityTechaid/techaid-server/issues/238)) ([9c37570](https://github.com/CommunityTechaid/techaid-server/commit/9c3757071bc5cc58363eb9248f594aa218b51dfe)), closes [#186](https://github.com/CommunityTechaid/techaid-server/issues/186)
+
+## [4.0.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.3.0...v4.0.0) (2026-10-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* Spring Boot 4.1.1 dependency currency ([#209](https://github.com/CommunityTechaid/techaid-server/issues/209)) (#223)
+
+### Features
+
+* **ci:** fast-forward master to the deployed commit after a prod promote ([#204](https://github.com/CommunityTechaid/techaid-server/issues/204)) ([4d1696b](https://github.com/CommunityTechaid/techaid-server/commit/4d1696bb4f2060bd192b0f86f477a733cbdd3206))
+* Spring Boot 4.1.1 dependency currency ([#209](https://github.com/CommunityTechaid/techaid-server/issues/209)) ([#223](https://github.com/CommunityTechaid/techaid-server/issues/223)) ([e024b7e](https://github.com/CommunityTechaid/techaid-server/commit/e024b7e5f7fc2289cb0a2d408c780723abc01fad))
+
+
+### Bug Fixes
+
+* **security:** close three unauthenticated surfaces ([#210](https://github.com/CommunityTechaid/techaid-server/issues/210)) ([eab3321](https://github.com/CommunityTechaid/techaid-server/commit/eab3321c050134a785c35f25bb24acc1ca36a204))
+* **security:** require an exact email on the anonymous referee lookup ([#206](https://github.com/CommunityTechaid/techaid-server/issues/206)) ([ac719a0](https://github.com/CommunityTechaid/techaid-server/commit/ac719a0b59cfe44f3c4cadee5764f5d97bbd1722))
+* **security:** stop echoing raw exception text to anonymous callers ([#207](https://github.com/CommunityTechaid/techaid-server/issues/207)) ([f4f05c8](https://github.com/CommunityTechaid/techaid-server/commit/f4f05c834aa9beed76acad49b25b5ae91b1f240d))
+
 ## [3.3.0](https://github.com/CommunityTechaid/techaid-server/compare/v3.2.0...v3.3.0) (2026-09-10)
 
 

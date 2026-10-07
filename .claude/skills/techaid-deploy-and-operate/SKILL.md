@@ -272,12 +272,11 @@ a technical one → route through **techaid-change-control**.
 
 The project migrated GKE/Helm → Dokku VM → Azure Container Apps (May 2026). Residue remains.
 Verified 2026-07-03 that no GitHub workflow references any file below; the only live consumers
-are noted. Their removal is roadmap item A6 (**techaid-roadmap-and-frontier**) — mention,
+are noted. `charts/` (Helm), `.sops.yaml` (AWS-KMS SOPS config) and `.lighthouse/` (Tekton CI) were deleted 2026-10-07 — AWS is no longer used. Removal of the rest is roadmap item A6 (**techaid-roadmap-and-frontier**) — mention,
 don't delete (per CLAUDE.md surgical-changes rule).
 
 | Path | Era | Still consumed? |
 |---|---|---|
-| `charts/` | GKE/Helm (pre-Dokku; `eu.gcr.io` images) | No |
 | `manifests/` | Kubernetes (header says unused) | No |
 | `Procfile` | Dokku process declaration | Copied into the image by `Dockerfile` but never executed (CMD supersedes it). Cosmetic only |
 | `start.sh` | Dokku/dev hot-reload helper | No |
@@ -302,4 +301,4 @@ Re-verify before trusting volatile facts:
 - Custom domains/ports: `az containerapp show -n api-production -g tada-2026 --query "properties.configuration.ingress.{fqdn:fqdn,port:targetPort,domains:customDomains[].name}" -o json`
 - Alert rule: `az monitor scheduled-query list -g tada-2026 -o table`
 - Version/changelog automation: `grep -n "x-release-please-version" build.gradle`
-- Legacy files still unreferenced by CI: `grep -rl "deploy-api\|cutover-prod\|Procfile\|charts/" .github/ || echo "none"`
+- Legacy files still unreferenced by CI: `grep -rl "deploy-api\|cutover-prod\|Procfile" .github/ || echo "none"`

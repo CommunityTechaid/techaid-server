@@ -137,7 +137,8 @@ status-only to anonymous callers (details are gated `when-authorized`).
 **1c. Security probes** — for any security-relevant change in the delta, prove the gate
 anonymously. Reference set (these gates are in current source: `write:organisations` on
 `synchronizeCollectionDataForDeviceRequest` and `createReferringOrganisation`,
-`isAuthenticated()` on `location`; the public typeahead stays anonymous):
+`app:admin`/`read:organisations` on the read-only `deliveryConfig` query; the public
+typeahead stays anonymous):
 
 ```bash
 # Gated mutation, anonymous → MUST be denied
@@ -145,6 +146,12 @@ curl -s -X POST https://api-testing.communitytechaid.org.uk/graphql \
   -H "Content-Type: application/json" \
   -d '{"query":"mutation { synchronizeCollectionDataForDeviceRequest(data:{id:1}) { id } }"}'
 # EXPECTED: {"errors":[{"message":"Access Denied", ...}], "data":null}   (verified 2026-07-05)
+
+# Gated read-only query, anonymous → MUST be denied (side-effect-free)
+curl -s -X POST https://api-testing.communitytechaid.org.uk/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"query { deliveryConfig { enabled } }"}'
+# EXPECTED: {"errors":[{"message":"Access Denied", ...}], ...}
 
 # Public typeahead, anonymous → MUST still work
 curl -s -X POST https://api-testing.communitytechaid.org.uk/graphql \
@@ -222,6 +229,8 @@ still resolve. It returned `null` — but it also returned null on prod *before*
 promote, and on UAT, because the Google key is referer-restricted (issue #186). A gate
 you have never seen green is not a gate; **capture the pre-promote value of every check
 you intend to gate on**, or you cannot tell a regression from a pre-existing fault.
+(`location(address:)` itself was removed on 2026-10-07 — no dashboard caller, and its Google
+key was revoked; Phase 1c now probes `deliveryConfig` instead.)
 
 ## PHASE 4 — Execute
 
@@ -286,7 +295,7 @@ revision; go back to the Phase 4c branch table.
 
 **5c. Security probes:** re-run the exact Phase 1c curl pair against
 `https://api.communitytechaid.org.uk/graphql`. Expected outputs identical: gated
-mutation → `Access Denied`; public typeahead → data, no errors.
+mutation and gated query → `Access Denied`; public typeahead → data, no errors.
 
 **5d. Telemetry watch:** over the first business-hours window, check `AppRequests`
 failure counts and `ContainerAppSystemLogs_CL` restart/probe events against the previous

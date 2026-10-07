@@ -34,8 +34,7 @@ class TurnstileService(
     @Value("\${turnstile.url:https://challenges.cloudflare.com/turnstile/v0/siteverify}") private val url: String,
 ) {
     // A stalled siteverify call must not pin a request thread indefinitely: on the small
-    // single-replica container a few stuck threads exhausts the Tomcat pool. Timeouts mirror
-    // the precedent in LocationService.kt.
+    // single-replica container a few stuck threads exhausts the Tomcat pool.
     private val restClient =
         RestClient
             .builder()

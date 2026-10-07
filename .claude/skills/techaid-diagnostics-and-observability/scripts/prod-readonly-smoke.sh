@@ -58,7 +58,7 @@ echo "=== 3. Auth gates enforced anonymously (the 17 new @PreAuthorize) ==="
 for op in \
   'mutation { synchronizeCollectionDataForDeviceRequest(data:{id:1}) { id } }' \
   'mutation { createReferringOrganisation(data:{name:"__smoke__"}) { id } }' \
-  'query { location(address:"London") { lat lng } }' \
+  'query { deliveryConfig { enabled } }' \
   'query { featureFlags { key enabled } }'
 do
   name=$(echo "$op" | sed 's/[^a-zA-Z]*\([a-zA-Z]*\).*/\1/;s/mutation//;s/query//')

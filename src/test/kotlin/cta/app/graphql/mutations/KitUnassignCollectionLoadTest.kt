@@ -101,8 +101,7 @@ class KitUnassignCollectionLoadTest {
     }
 
     /**
-     * A full-replace update that clears both associations. `location` is blank on purpose: a
-     * non-blank location makes `updateKit` call out to the geocoding service.
+     * A full-replace update that clears both associations.
      */
     private fun unassignInput(kitId: Long) =
         UpdateKitInput(

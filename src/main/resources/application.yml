@@ -38,9 +38,6 @@ management:
         application-key:
         enabled: false
         api-key:
-google:
-  places:
-    key: ${GOOGLE_PLACES_KEY:}
 gmail:
   client-id: ${GMAIL_CLIENT_ID:}
   client-secret: ${GMAIL_CLIENT_SECRET:}
