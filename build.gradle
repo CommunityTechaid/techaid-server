@@ -21,7 +21,7 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-noarg:${kotlinVersion}")
-        classpath("org.postgresql:postgresql:42.7.13")
+        classpath("org.postgresql:postgresql:42.7.14")
     }
 }
 
@@ -71,7 +71,7 @@ java { sourceCompatibility = JavaVersion.VERSION_17 }
  * change what ships; only overriding the managed version does. Keep this at or above 42.7.12 -
  * the Boot 3.5 and 4.x BOMs also manage versions inside the affected range.
  */
-ext['postgresql.version'] = '42.7.13'
+ext['postgresql.version'] = '42.7.14'
 
 /*
  * `kotlinVersion` above governs the COMPILER (the Gradle plugin and the allopen/noarg
