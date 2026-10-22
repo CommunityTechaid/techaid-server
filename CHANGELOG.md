@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/CommunityTechaid/techaid-server/compare/v5.0.0...v5.0.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* **docker:** build Dockerfile.dev with the repo's Gradle wrapper ([#243](https://github.com/CommunityTechaid/techaid-server/issues/243)) ([4949e44](https://github.com/CommunityTechaid/techaid-server/commit/4949e44fcc378c0ad713afe51b484223d42a967a))
+
 ## [5.0.0](https://github.com/CommunityTechaid/techaid-server/compare/v4.0.0...v5.0.0) (2026-10-07)
 
 
