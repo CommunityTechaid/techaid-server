@@ -8,6 +8,7 @@ Provides backing services for the dashboard site at https://app.communitytechaid
 build, deploy, database, debugging, config, and change control. Open
 [`.claude/skills/README.md`](.claude/skills/README.md) first.** A Claude Code session loads them
 automatically by description; a human should read them in the onboarding order that file lists.
+New developers (server or dashboard): follow [`ONBOARDING.md`](ONBOARDING.md) for access, setup and first steps.
 
 Quick reference (the skills have the full detail):
 
