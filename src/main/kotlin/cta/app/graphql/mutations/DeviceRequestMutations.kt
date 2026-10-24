@@ -16,6 +16,8 @@ import cta.app.services.BlockingFlagGuardService
 import cta.app.services.BlockingFlagSetException
 import cta.app.services.FilterService
 import cta.app.services.MailService
+import cta.app.services.PublicDeviceOfferException
+import cta.app.services.PublicDeviceOfferRules
 import cta.app.services.RefereeRequestLimitService
 import cta.app.services.WipeCertGuardService
 import cta.app.services.WipeCertMissingException
@@ -100,6 +102,16 @@ class ControllerExceptionHandler {
             .errorType(ErrorType.BAD_REQUEST)
             .message(ex.message)
             .build()
+
+    // Public device offer rejection: the referrer's own input is outside what the public form
+    // offers, so say so rather than returning the generic anonymous error.
+    @GraphQlExceptionHandler
+    fun handlePublicDeviceOffer(ex: PublicDeviceOfferException): GraphQLError =
+        GraphqlErrorBuilder
+            .newError()
+            .errorType(ErrorType.BAD_REQUEST)
+            .message(ex.message)
+            .build()
 }
 
 @Controller
@@ -115,11 +127,15 @@ class DeviceRequestMutations(
     private val wipeCertGuard: WipeCertGuardService,
     private val blockingFlagGuard: BlockingFlagGuardService,
     private val refereeRequestLimits: RefereeRequestLimitService,
+    private val publicDeviceOffer: PublicDeviceOfferRules,
 ) {
     @MutationMapping
     fun createDeviceRequest(
         @Argument @Valid data: CreateDeviceRequestInput,
     ): DeviceRequest {
+        // Anonymous callers get exactly the offer the public form shows; staff are unrestricted.
+        publicDeviceOffer.checkUnlessStaff(data.borough, data.deviceRequestItems.entity)
+
         val referringOrganisationContact =
             referringOrganisationContacts.findById(data.referringOrganisationContact).toNullable()
                 ?: throw EntityNotFoundException("No referring contact found with id: ${data.referringOrganisationContact}")
