@@ -23,14 +23,11 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 /**
- * The per-client-IP throttle on the two public create mutations the referral form uses
- * (createDeviceRequest, createReferringOrganisationContact).
+ * The per-client-IP throttle on the public createDeviceRequest mutation the referral form uses.
  *
- * Both were anonymous, and before this neither had any throttle, so a single caller could create
- * rows as fast as it could send requests. Staff create contacts (and occasionally requests)
- * through the same mutations from the dashboard, so callers holding app:admin or
- * write:organisations are exempt. createReferringOrganisationContact has since been gated to staff
- * (PublicSurfaceAuthorizationTest), so only its staff exemption is still exercised here.
+ * It was anonymous with no throttle, so a single caller could create rows as fast as it could send
+ * requests. Staff create requests through the same mutation from the dashboard, so callers holding
+ * app:admin or write:organisations are exempt.
  *
  * Budgets are lowered to 2 here so the N+1th call is cheap to reach. The limiters are real
  * singletons shared across methods in this context, so each method uses its own client IP.
@@ -41,7 +38,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @TestPropertySource(
     properties = [
         "public-create.rate-limit.device-request.max-requests=2",
-        "public-create.rate-limit.contact.max-requests=2",
     ],
 )
 class PublicCreateRateLimitTest {
@@ -99,13 +95,6 @@ class PublicCreateRateLimitTest {
         """mutation { createDeviceRequest(data: { referringOrganisationContact: \"${newContact().id}\", """ +
             """deviceRequestItems: { laptops: 1 }, clientRef: \"RL\", borough: \"Lambeth\", details: \"Needs a laptop\" }) { id } }"""
 
-    private fun createContact(): String {
-        val organisation = referringOrganisations.save(ReferringOrganisation(name = "Org rl ${System.nanoTime()}"))
-        val stamp = System.nanoTime()
-        return """mutation { createReferringOrganisationContact(data: { referringOrganisation: \"${organisation.id}\", """ +
-            """fullName: \"New Referee $stamp\", email: \"new-$stamp@example.com\", phoneNumber: \"0$stamp\" }) { id } }"""
-    }
-
     @Test
     fun `anonymous createDeviceRequest is throttled per client ip`() {
         val ip = "203.0.113.31"
@@ -132,7 +121,6 @@ class PublicCreateRateLimitTest {
             it.with(jwt().authorities(SimpleGrantedAuthority("write:organisations")))
         }
         repeat(4) {
-            graphQl(createContact(), ip, staff).andExpect(jsonPath("$.errors").doesNotExist())
             graphQl(createDeviceRequest(), ip, staff).andExpect(jsonPath("$.errors").doesNotExist())
         }
     }
@@ -144,7 +132,6 @@ class PublicCreateRateLimitTest {
             it.with(jwt().authorities(SimpleGrantedAuthority("app:admin")))
         }
         repeat(4) {
-            graphQl(createContact(), ip, admin).andExpect(jsonPath("$.errors").doesNotExist())
             graphQl(createDeviceRequest(), ip, admin).andExpect(jsonPath("$.errors").doesNotExist())
         }
     }

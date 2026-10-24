@@ -64,9 +64,8 @@ Resolution order: env `DATASOURCE_URL` → property `db-url` → localhost defau
 | `DDL_AUTO` | `validate` (via `${DDL_AUTO:${ddl-auto:validate}}`) | `spring.jpa.hibernate.ddl-auto` | Hibernate | Policy-guarded — see §3 |
 | `SHOW_SQL` | `false` (via `${SHOW_SQL:${show-sql:false}}`) | `hibernate.show_sql` | Hibernate | |
 | `HOSTNAME` | *(none — supplied by container runtime)* | metrics tag `instance` | Micrometer (application.yml:29) | Unset on bare-metal local runs → placeholder error only if metrics tag resolution occurs; docker/K8s always set it |
-| `PUBLIC_CREATE_RATE_LIMIT_ENABLED` | `true` | `public-create.rate-limit.enabled` | `PublicCreateRateLimiterConfig` | Per-client-IP throttle on anonymous `createDeviceRequest` / `createReferringOrganisationContact`; callers with `app:admin` or `write:organisations` are exempt. `false` removes the throttle silently — a security control |
+| `PUBLIC_CREATE_RATE_LIMIT_ENABLED` | `true` | `public-create.rate-limit.enabled` | `PublicCreateRateLimiterConfig` | Per-client-IP throttle on anonymous `createDeviceRequest`; callers with `app:admin` or `write:organisations` are exempt. `false` removes the throttle silently — a security control |
 | `PUBLIC_CREATE_RATE_LIMIT_DEVICE_REQUEST_MAX` / `_WINDOW_SECONDS` | `20` / `3600` | `public-create.rate-limit.device-request.*` | same | Sized from prod telemetry (busiest IP: 5/hour); see the config class KDoc |
-| `PUBLIC_CREATE_RATE_LIMIT_CONTACT_MAX` / `_WINDOW_SECONDS` | `10` / `3600` | `public-create.rate-limit.contact.*` | same | |
 
 ### Axes that exist only as `@Value` defaults (no yml entry, no env var today)
 

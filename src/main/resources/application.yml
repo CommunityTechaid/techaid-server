@@ -73,9 +73,6 @@ public-create:
     device-request:
       max-requests: ${PUBLIC_CREATE_RATE_LIMIT_DEVICE_REQUEST_MAX:20}
       window-seconds: ${PUBLIC_CREATE_RATE_LIMIT_DEVICE_REQUEST_WINDOW_SECONDS:3600}
-    contact:
-      max-requests: ${PUBLIC_CREATE_RATE_LIMIT_CONTACT_MAX:10}
-      window-seconds: ${PUBLIC_CREATE_RATE_LIMIT_CONTACT_WINDOW_SECONDS:3600}
 
 server:
   port: ${PORT:8080}
