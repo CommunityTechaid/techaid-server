@@ -1,10 +1,11 @@
 # Dependabot configuration.
 #
-# Alerts and automated security fixes are already enabled at the repository level, but before
-# this file existed GitHub's dependency graph contained ZERO Java/Kotlin packages for this repo -
-# only the GitHub Actions used by the workflows. That is why a High-severity Spring Boot advisory
-# affecting our pinned version produced no alert. Declaring the gradle ecosystem here is what
-# gives Dependabot a manifest to parse, so "no open alerts" starts meaning something.
+# This file drives version-update PRs only. Security ALERTS come from GitHub's dependency graph,
+# and GitHub cannot build that graph from build.gradle: declaring the gradle ecosystem here did
+# not put a single Java/Kotlin package into it (checked 2026-10-24: three manifests, all
+# workflow files, and zero alerts ever raised). The graph is now populated by
+# .github/workflows/dependency-submission.yml; without that workflow "no open alerts" means
+# nothing.
 #
 # Two settings matter more than the rest:
 #   target-branch: dev   - master is a record of what shipped, never a source. A PR opened
