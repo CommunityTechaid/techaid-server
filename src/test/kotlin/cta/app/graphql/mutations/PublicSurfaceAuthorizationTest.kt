@@ -1,5 +1,8 @@
 package cta.app.graphql.mutations
 
+import cta.app.ReferringOrganisation
+import cta.app.ReferringOrganisationContactRepository
+import cta.app.ReferringOrganisationRepository
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -39,6 +42,12 @@ class PublicSurfaceAuthorizationTest {
 
     @Autowired
     lateinit var mockMvc: MockMvc
+
+    @Autowired
+    lateinit var referringOrganisations: ReferringOrganisationRepository
+
+    @Autowired
+    lateinit var referringOrganisationContacts: ReferringOrganisationContactRepository
 
     private fun anonymousGraphQl(query: String): ResultActions =
         mockMvc.perform(
@@ -97,6 +106,53 @@ class PublicSurfaceAuthorizationTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.createReferringOrganisation.name").value("Auth Probe Org"))
+    }
+
+    // The public referral form no longer creates referees: an unknown email or organisation is
+    // sent to a Typeform instead, so creating a contact is a staff action from the referee pages.
+    private fun createContactMutation(email: String): String {
+        val organisation = referringOrganisations.save(ReferringOrganisation(name = "Contact Probe Org ${System.nanoTime()}"))
+        return """mutation { createReferringOrganisationContact(data: { referringOrganisation: \"${organisation.id}\", """ +
+            """fullName: \"Contact Probe\", email: \"$email\", phoneNumber: \"07000000000\" }) { id } }"""
+    }
+
+    private fun contactsWithEmail(email: String) = referringOrganisationContacts.findAll().count { it.email == email }
+
+    @Test
+    fun `createReferringOrganisationContact rejects anonymous callers and writes nothing`() {
+        val email = "anon-${System.nanoTime()}@example.com"
+        anonymousGraphQl(createContactMutation(email))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+            .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.nullValue()))
+        assertTrue(contactsWithEmail(email) == 0, "an anonymous call must not create a contact")
+    }
+
+    @Test
+    fun `createReferringOrganisationContact rejects a caller without a staff scope`() {
+        val email = "reader-${System.nanoTime()}@example.com"
+        authorizedGraphQl(createContactMutation(email), "read:organisations")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+        assertTrue(contactsWithEmail(email) == 0, "a read-only caller must not create a contact")
+    }
+
+    @Test
+    fun `createReferringOrganisationContact admits write-organisations scope`() {
+        val email = "staff-${System.nanoTime()}@example.com"
+        authorizedGraphQl(createContactMutation(email), "write:organisations")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.data.createReferringOrganisationContact.id").isNotEmpty)
+        assertTrue(contactsWithEmail(email) == 1, "staff creation must write the contact")
+    }
+
+    @Test
+    fun `createReferringOrganisationContact admits app-admin scope`() {
+        authorizedGraphQl(createContactMutation("admin-${System.nanoTime()}@example.com"), "app:admin")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors").doesNotExist())
+            .andExpect(jsonPath("$.data.createReferringOrganisationContact.id").isNotEmpty)
     }
 
     // referringOrganisationsPublic stays anonymous (public referral form typeahead) but

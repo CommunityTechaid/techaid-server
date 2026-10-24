@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * createReferringOrganisationContact is part of the PUBLIC (unauthenticated) surface, so whatever
- * the request form posts is what gets stored. A contact email carrying whitespace in the local part
+ * createReferringOrganisationContact was part of the PUBLIC (unauthenticated) surface (it is
+ * staff-only now), so whatever the request form posted was what got stored. A contact email carrying whitespace in the local part
  * was accepted verbatim and later made jakarta.mail's InternetAddress throw inside the stale-intake
  * sweeper, stalling the whole sweep (see DeviceRequestServiceTest). Bean validation is the boundary
  * that has to reject it.
