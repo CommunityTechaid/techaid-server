@@ -82,16 +82,30 @@ class DeliveryBookingProtectionTest {
         )
     }
 
+    /**
+     * [peer] is the address Tomcat reports as remoteAddr. It defaults to a Cloudflare edge IP so
+     * that [clientIp] (sent as CF-Connecting-IP) is honoured; pass a non-Cloudflare peer to model
+     * a request sent straight to the origin.
+     */
     private fun graphQl(
         query: String,
         clientIp: String? = null,
+        peer: String = CLOUDFLARE_EDGE,
     ): ResultActions {
         val request =
             post("/graphql")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"query":"$query"}""")
+                .with {
+                    it.remoteAddr = peer
+                    it
+                }
         if (clientIp != null) request.header("CF-Connecting-IP", clientIp)
         return mockMvc.perform(request)
+    }
+
+    companion object {
+        private const val CLOUDFLARE_EDGE = "172.69.10.20"
     }
 
     private fun eligibilityQuery(ctaReference: Long): String =
@@ -213,6 +227,24 @@ class DeliveryBookingProtectionTest {
         graphQl(eligibilityQuery(4298), clientIp = submitIp)
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
+    }
+
+    @Test
+    fun `a caller that bypasses Cloudflare cannot mint fresh buckets by rotating CF-Connecting-IP`() {
+        // Direct-to-origin peer: the header is not Cloudflare's, so every call must land in the
+        // peer's single bucket whatever the header says (eligibility max-requests=3 here).
+        val directPeer = "198.51.100.7"
+        repeat(3) { i ->
+            graphQl(eligibilityQuery(4298), clientIp = "203.0.113.${100 + i}", peer = directPeer)
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors").doesNotExist())
+        }
+        graphQl(eligibilityQuery(4298), clientIp = "203.0.113.200", peer = directPeer)
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath("$.errors[0].message")
+                    .value("Too many booking attempts. Please wait a few minutes and try again."),
+            )
     }
 
     @Test
