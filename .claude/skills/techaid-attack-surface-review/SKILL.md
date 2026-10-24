@@ -79,7 +79,7 @@ max 10; the old 2,387-name enumeration is fixed), `deliveryAvailabilityPublic`,
 
 | # | Sev | Finding | Status |
 |---|---|---|---|
-| A | Critical | `createReferringOrganisationContact` / `createDeviceRequest` return full entities, so a nested selection reaches `referringOrganisation.referringOrganisationContacts{fullName email phoneNumber address notes}` anonymously. The dashboard selects only `id` / `id, correlationId`. Gate: narrow public return types + nested-selection test. | STATIC |
+| A | Critical | Two public create mutations return over-broad types. Details held back until the fix is in production. | FIX IN PROGRESS |
 | B | High | Public write paths have no throttle; device-offer rules (adminConfig ∩ borough matrix) are enforced only in the browser; `borough` is client-chosen. | STATIC |
 | C | Medium | Booking rate limiter keys on `CF-Connecting-IP`, which is attacker-set at the origin FQDN; `BookingRateLimiter.hits` never pruned on the hot path. | STATIC |
 | D | Medium | No GraphQL complexity/alias limit (depth 15 only); `referringOrganisationsPublic` unpaginated with a per-org COUNT `@Formula`; `deliveryAvailabilityPublic` un-throttled. | STATIC |
