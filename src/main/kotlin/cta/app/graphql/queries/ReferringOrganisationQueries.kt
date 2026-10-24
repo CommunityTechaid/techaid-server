@@ -6,6 +6,7 @@ import cta.app.graphql.filters.ReferringOrganisationPublicWhereInput
 import cta.app.graphql.filters.ReferringOrganisationWhereInput
 import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
+import cta.graphql.sortOf
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Sort
 import org.springframework.graphql.data.method.annotation.Argument
@@ -50,7 +51,7 @@ class ReferringOrganisationQueries(
         @Argument orderBy: MutableList<KeyValuePair>?,
     ): List<ReferringOrganisationPublic> =
         if (orderBy != null) {
-            val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
+            val sort: Sort = sortOf(orderBy, PUBLIC_SORT_KEYS)
             referringOrganisations.findAll(where.build(), sort).map { ReferringOrganisationPublic(it.id, it.name) }.toList()
         } else {
             referringOrganisations.findAll(where.build()).map { ReferringOrganisationPublic(it.id, it.name) }.toList()
@@ -61,6 +62,11 @@ class ReferringOrganisationQueries(
     fun referringOrganisation(
         @Argument where: ReferringOrganisationWhereInput,
     ): Optional<ReferringOrganisation> = referringOrganisations.findOne(where.build())
+
+    companion object {
+        /** Anonymous callers may sort only by what ReferringOrganisationPublic shows. */
+        val PUBLIC_SORT_KEYS: Set<String> = setOf("id", "name")
+    }
 }
 
 data class ReferringOrganisationPublic(

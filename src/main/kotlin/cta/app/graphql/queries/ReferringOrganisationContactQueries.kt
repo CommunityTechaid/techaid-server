@@ -7,6 +7,7 @@ import cta.app.graphql.filters.ReferringOrganisationContactPublicWhereInput
 import cta.app.graphql.filters.ReferringOrganisationContactWhereInput
 import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
+import cta.graphql.sortOf
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -62,10 +63,7 @@ class ReferringOrganisationContactQueries(
         @Argument where: ReferringOrganisationContactPublicWhereInput,
         @Argument orderBy: MutableList<KeyValuePair>?,
     ): List<ReferringOrganisationContactPublic> {
-        val sort: Sort =
-            orderBy
-                ?.let { Sort.by(it.map { pair -> Sort.Order(Sort.Direction.fromString(pair.value), pair.key) }) }
-                ?: Sort.unsorted()
+        val sort: Sort = orderBy?.let { sortOf(it, PUBLIC_SORT_KEYS) } ?: Sort.unsorted()
         return referringOrganisationContacts
             .findAll(where.build(), PageRequest.of(0, MAX_PUBLIC_RESULTS, sort))
             .content
@@ -90,6 +88,9 @@ class ReferringOrganisationContactQueries(
          * Most rows an anonymous caller can get back from one lookup.
          */
         const val MAX_PUBLIC_RESULTS: Int = 10
+
+        /** Anonymous callers may sort only by what ReferringOrganisationContactPublic shows. */
+        val PUBLIC_SORT_KEYS: Set<String> = setOf("id", "fullName")
     }
 }
 
