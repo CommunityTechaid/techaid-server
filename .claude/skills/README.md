@@ -16,6 +16,7 @@ on them.
 | "Has this happened before?" — past incidents/reverts | `techaid-failure-archaeology` |
 | Writing/changing code or tests; what evidence is needed | `techaid-validation-and-qa` |
 | Designing a change; will it break an invariant? | `techaid-architecture-contract` |
+| Security review; what can an anonymous caller reach; is a CVE reachable? | `techaid-attack-surface-review` |
 | What a domain field/enum/scope means; business logic | `techaid-domain-reference` |
 | Env vars, profiles, yml config, credentials wiring | `techaid-config-and-flags` |
 | Flyway migrations, Postgres access, backups, DDL | `techaid-database-operations` |
@@ -33,6 +34,7 @@ on them.
 | `techaid-debugging-playbook` | Symptom → first check → trap → discriminating experiment, for every known failure mode |
 | `techaid-failure-archaeology` | The chronicle: every investigation, dead end, and revert, with commit evidence and status |
 | `techaid-architecture-contract` | Load-bearing design decisions, the invariants a diff must not break, known weak points |
+| `techaid-attack-surface-review` | Three-pass attack-surface method (default reach, pre-auth, config interaction) + the recorded baseline |
 | `techaid-domain-reference` | Kits, device requests, orgs, statuses, scopes, emails — the definitive domain reference |
 | `techaid-config-and-flags` | Every configuration axis: env vars, defaults, profiles, guards, how to add one |
 | `techaid-build-and-env` | From-scratch dev setup, build anatomy, local run, Windows traps |
