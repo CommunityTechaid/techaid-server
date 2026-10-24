@@ -1,20 +1,32 @@
 package cta.app.config
 
+import graphql.ExecutionResult
 import graphql.GraphQLContext
+import graphql.analysis.MaxQueryComplexityInstrumentation
 import graphql.analysis.MaxQueryDepthInstrumentation
+import graphql.analysis.QueryReducer
+import graphql.analysis.QueryTraverser
+import graphql.execution.AbortExecutionException
 import graphql.execution.CoercedVariables
 import graphql.execution.instrumentation.Instrumentation
+import graphql.execution.instrumentation.InstrumentationContext
+import graphql.execution.instrumentation.InstrumentationState
+import graphql.execution.instrumentation.SimplePerformantInstrumentation
+import graphql.execution.instrumentation.parameters.InstrumentationExecuteOperationParameters
 import graphql.language.BooleanValue
 import graphql.language.FloatValue
 import graphql.language.IntValue
 import graphql.language.StringValue
 import graphql.language.Value
+import graphql.parser.ParserOptions
 import graphql.scalars.ExtendedScalars
 import graphql.schema.*
 import graphql.schema.idl.RuntimeWiring
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.graphql.execution.RuntimeWiringConfigurer
+import org.springframework.graphql.server.WebGraphQlInterceptor
+import org.springframework.graphql.server.WebGraphQlRequest
 import java.time.Instant
 import java.time.format.DateTimeParseException
 import java.util.*
@@ -38,6 +50,49 @@ public class GraphQlConfig {
     @Bean
     fun maxQueryDepthInstrumentation(): Instrumentation = MaxQueryDepthInstrumentation(MAX_QUERY_DEPTH)
 
+    /*
+     * Depth does not bound cost. A small anonymous document can still repeat an expensive public
+     * root field under many aliases, or multiply a selection through fragments, so three more
+     * limits apply, all before any data fetcher runs (and so, like depth, to staff as well).
+     *
+     * Headroom was measured, not guessed: all 111 gql documents in techaid-dashboard/src (plus the
+     * hand-written public ones, which are smaller), counted as Apollo sends them, i.e. with
+     * __typename added to every selection set, on 2026-10-24:
+     *   - most root fields:  5    (dashboard-index findAll)       -> MAX_ROOT_FIELDS 20        (4x)
+     *   - most fields:       64   (kit-info findKit)              -> MAX_QUERY_COMPLEXITY 300  (~4.7x)
+     *   - most parse tokens: 204  (device-request-component)      -> MAX_QUERY_TOKENS 1000     (~4.9x)
+     *   - most aliases: 10, deepest: 6 - aliases are bounded by the root-field and complexity caps.
+     * Re-measure before tightening any of these; GraphQlQueryCostLimitTest replays the two largest.
+     */
+
+    /**
+     * Total selected fields - each field (including __typename) costs 1. Note graphql-java counts a
+     * named fragment's fields once however often it is spread, so this is not a fragment-expansion
+     * bound; the root-field cap is what bounds repeated root resolvers.
+     */
+    @Bean
+    fun maxQueryComplexityInstrumentation(): Instrumentation = MaxQueryComplexityInstrumentation(MAX_QUERY_COMPLEXITY)
+
+    /** Each root field is its own repository call, so the fan-out of one request is capped directly. */
+    @Bean
+    fun maxRootFieldsInstrumentation(): Instrumentation = MaxRootFieldsInstrumentation(MAX_ROOT_FIELDS)
+
+    /**
+     * graphql-java's default parser limit is 15,000 tokens, which is room for thousands of aliased
+     * fields before validation or the instrumentations above even see the document.
+     */
+    @Bean
+    fun parserLimitsInterceptor(): WebGraphQlInterceptor {
+        val parserOptions = ParserOptions.getDefaultOperationParserOptions().transform { it.maxTokens(MAX_QUERY_TOKENS) }
+        return WebGraphQlInterceptor { request: WebGraphQlRequest, chain: WebGraphQlInterceptor.Chain ->
+            request.configureExecutionInput { input, _ ->
+                input.graphQLContext.put(ParserOptions::class.java, parserOptions)
+                input
+            }
+            chain.next(request)
+        }
+    }
+
     @Bean
     fun runtimeWiringConfigurer(
         instantScalar: GraphQLScalarType,
@@ -54,6 +109,40 @@ public class GraphQlConfig {
     companion object {
         /** Maximum field-selection depth accepted on any document. Deepest real query is 6. */
         const val MAX_QUERY_DEPTH: Int = 15
+
+        /** Maximum root fields per operation, fragments expanded. Most in a real query is 5. */
+        const val MAX_ROOT_FIELDS: Int = 20
+
+        /** Maximum total fields per operation, fragments expanded. Most in a real query is 64. */
+        const val MAX_QUERY_COMPLEXITY: Int = 300
+
+        /** Maximum parser tokens per document. Most in a real query is 204. */
+        const val MAX_QUERY_TOKENS: Int = 1000
+    }
+}
+
+/** Refuses an operation whose root selection (fragments and @skip/@include resolved) has more than [maxRootFields] fields. */
+class MaxRootFieldsInstrumentation(
+    private val maxRootFields: Int,
+) : SimplePerformantInstrumentation() {
+    override fun beginExecuteOperation(
+        parameters: InstrumentationExecuteOperationParameters,
+        state: InstrumentationState?,
+    ): InstrumentationContext<ExecutionResult>? {
+        val context = parameters.executionContext
+        val rootFields =
+            QueryTraverser
+                .newQueryTraverser()
+                .schema(context.graphQLSchema)
+                .document(context.document)
+                .operationName(context.operationDefinition.name)
+                .coercedVariables(context.coercedVariables)
+                .build()
+                .reducePreOrder(QueryReducer<Int> { field, count -> if (field.parentEnvironment == null) count + 1 else count }, 0)
+        if (rootFields > maxRootFields) {
+            throw AbortExecutionException("Query has $rootFields root fields, more than the maximum of $maxRootFields root fields")
+        }
+        return super.beginExecuteOperation(parameters, state)
     }
 }
 
