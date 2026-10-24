@@ -14,8 +14,10 @@ import cta.app.QKit
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.services.BlockingFlagGuardService
 import cta.app.services.BlockingFlagSetException
+import cta.app.services.BookingRateLimiter
 import cta.app.services.FilterService
 import cta.app.services.MailService
+import cta.app.services.PublicCreateThrottle
 import cta.app.services.RefereeRequestLimitService
 import cta.app.services.WipeCertGuardService
 import cta.app.services.WipeCertMissingException
@@ -25,6 +27,7 @@ import graphql.GraphqlErrorBuilder
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -115,11 +118,16 @@ class DeviceRequestMutations(
     private val wipeCertGuard: WipeCertGuardService,
     private val blockingFlagGuard: BlockingFlagGuardService,
     private val refereeRequestLimits: RefereeRequestLimitService,
+    private val publicCreateThrottle: PublicCreateThrottle,
+    @Qualifier("publicDeviceRequestRateLimiter") private val publicCreateRateLimiter: BookingRateLimiter,
 ) {
     @MutationMapping
     fun createDeviceRequest(
         @Argument @Valid data: CreateDeviceRequestInput,
     ): DeviceRequest {
+        // Public and unauthenticated: throttle per client IP before any DB work. Staff exempt.
+        publicCreateThrottle.acquireOrThrow(publicCreateRateLimiter)
+
         val referringOrganisationContact =
             referringOrganisationContacts.findById(data.referringOrganisationContact).toNullable()
                 ?: throw EntityNotFoundException("No referring contact found with id: ${data.referringOrganisationContact}")

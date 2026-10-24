@@ -4,13 +4,16 @@ import cta.app.ReferringOrganisationContact
 import cta.app.ReferringOrganisationContactNote
 import cta.app.ReferringOrganisationContactRepository
 import cta.app.ReferringOrganisationRepository
+import cta.app.services.BookingRateLimiter
 import cta.app.services.FilterService
+import cta.app.services.PublicCreateThrottle
 import cta.toNullable
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
@@ -25,11 +28,16 @@ class ReferringOrganisationContactMutations(
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
     private val referringOrganisations: ReferringOrganisationRepository,
     private val filterService: FilterService,
+    private val publicCreateThrottle: PublicCreateThrottle,
+    @Qualifier("publicContactRateLimiter") private val publicCreateRateLimiter: BookingRateLimiter,
 ) {
     @MutationMapping
     fun createReferringOrganisationContact(
         @Argument @Valid data: CreateReferringOrganisationContactInput,
     ): ReferringOrganisationContact {
+        // Public and unauthenticated: throttle per client IP before any DB work. Staff exempt.
+        publicCreateThrottle.acquireOrThrow(publicCreateRateLimiter)
+
         val referringOrganisation =
             referringOrganisations.findById(data.referringOrganisation).toNullable()
                 ?: throw EntityNotFoundException("No referring organisation was found with id {$data.referringOrganisation}")
