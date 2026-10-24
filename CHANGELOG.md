@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.0.2](https://github.com/CommunityTechaid/techaid-server/compare/v5.0.1...v5.0.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** bump Spring Boot to 4.1.2 for Tomcat and Jackson CVEs ([#288](https://github.com/CommunityTechaid/techaid-server/issues/288)) ([caccafe](https://github.com/CommunityTechaid/techaid-server/commit/caccafe1fbf9e3fe43c19a5aab6b1b7a025499cd))
+* **security:** narrow the return types of the public create mutations ([#290](https://github.com/CommunityTechaid/techaid-server/issues/290)) ([b370a75](https://github.com/CommunityTechaid/techaid-server/commit/b370a756dcca79cc44aa834fb3c13797d861231d))
+
 ## [5.0.1](https://github.com/CommunityTechaid/techaid-server/compare/v5.0.0...v5.0.1) (2026-10-07)
 
 
