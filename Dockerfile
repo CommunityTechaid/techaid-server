@@ -20,10 +20,10 @@ RUN wget -q "https://github.com/microsoft/ApplicationInsights-Java/releases/down
 FROM eclipse-temurin:17-jre-alpine
 COPY --from=builder /app/build/libs/*.jar /app/app.jar
 COPY --from=agent /applicationinsights-agent.jar /app/applicationinsights-agent.jar
+# Only what the container runs: tini as PID 1, tzdata for /etc/localtime below. openssl, curl
+# and bash were Dokku-era leftovers that nothing invokes at runtime (checked 2026-10-24), so they
+# were removed to shrink what has to be patched. `az containerapp exec` still gets busybox sh.
 RUN apk add --no-cache --update \
-    openssl \
-    curl \
-    bash \
     tini \
     tzdata
 
