@@ -1,5 +1,6 @@
 package cta.app.services
 
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -96,5 +97,39 @@ class BookingRateLimiterTest {
         limiter.prune()
         // After pruning the expired key, its budget is available again.
         assertTrue(limiter.tryAcquire("ip"))
+    }
+
+    @Test
+    fun `idle keys are pruned on the write path without an explicit prune call`() {
+        val clock = MutableClock(start)
+        val limiter = limiter(clock, maxRequests = 1, windowSeconds = 60)
+
+        repeat(100) { assertTrue(limiter.tryAcquire("ip-$it")) }
+        assertEquals(100, limiter.trackedKeys())
+
+        // Once every one of those windows has expired, the next write reclaims them.
+        clock.advanceSeconds(61)
+        assertTrue(limiter.tryAcquire("fresh"))
+        assertEquals(1, limiter.trackedKeys())
+    }
+
+    @Test
+    fun `refuses new keys once the hard key cap is reached with live windows`() {
+        val clock = MutableClock(start)
+        val limiter = BookingRateLimiter(clock, enabled = true, maxRequests = 5, windowSeconds = 60, maxKeys = 3)
+
+        assertTrue(limiter.tryAcquire("a"))
+        assertTrue(limiter.tryAcquire("b"))
+        assertTrue(limiter.tryAcquire("c"))
+        // Map is full of keys still inside their window: a new key fails closed rather than
+        // growing the map without bound.
+        assertFalse(limiter.tryAcquire("d"))
+        assertEquals(3, limiter.trackedKeys())
+        // Keys already tracked keep their own budget.
+        assertTrue(limiter.tryAcquire("a"))
+
+        // When the windows expire, room is reclaimed and new keys are admitted again.
+        clock.advanceSeconds(61)
+        assertTrue(limiter.tryAcquire("d"))
     }
 }
