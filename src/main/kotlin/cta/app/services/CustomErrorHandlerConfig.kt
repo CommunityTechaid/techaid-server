@@ -1,5 +1,6 @@
 package cta.app.services
 
+import cta.graphql.InvalidSortException
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.schema.DataFetchingEnvironment
@@ -80,6 +81,7 @@ class CustomErrorHandlerConfig : DataFetcherExceptionResolverAdapter() {
      */
     private fun isSafeToEcho(ex: Throwable): Boolean =
         ex is ConstraintViolationException ||
+            ex is InvalidSortException ||
             ex is AccessDeniedException ||
             ex is AuthenticationException
 

@@ -107,6 +107,38 @@ class PaginationInput(
 }
 
 /**
+ * A client asked to sort by a key or in a direction that the query does not allow. The message
+ * describes only the caller's own input, so it is safe to return to anonymous callers.
+ */
+class InvalidSortException(
+    message: String,
+) : IllegalArgumentException(message)
+
+/**
+ * Turns client-supplied `orderBy` pairs into a [Sort], accepting only [allowedKeys] and ASC/DESC.
+ *
+ * Spring Data resolves any real entity property path, including ones through associations, so
+ * without this a caller can order results by data the response type does not expose. Use it for
+ * every orderBy that an untrusted caller can reach, with the keys the return type actually shows.
+ */
+fun sortOf(
+    orderBy: List<KeyValuePair>,
+    allowedKeys: Set<String>,
+): Sort =
+    Sort.by(
+        orderBy.map {
+            if (it.key !in allowedKeys) {
+                throw InvalidSortException("Unsupported sort key. Allowed sort keys: ${allowedKeys.sorted().joinToString()}")
+            }
+            val direction =
+                Sort.Direction
+                    .fromOptionalString(it.value)
+                    .orElseThrow { InvalidSortException("Unsupported sort direction. Allowed: ASC, DESC") }
+            Sort.Order(direction, it.key)
+        },
+    )
+
+/**
  * Representation of a key value pair for graphQL
  */
 class KeyValuePair(
