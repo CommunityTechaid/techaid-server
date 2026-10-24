@@ -93,6 +93,14 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
+    # Merges close together start overlapping runs. Without this, each deploy races the others:
+    # on 2026-10-24 three ran at once, one failed with ContainerAppOperationInProgress and an
+    # older image could have finished last. One deploy at a time; GitHub keeps only the newest
+    # pending run, so the latest commit always wins. Not cancel-in-progress: an az update cut
+    # off half-way is worse than one that finishes and is superseded.
+    concurrency:
+      group: deploy-testing
+      cancel-in-progress: false
     permissions:
       id-token: write
       contents: read
