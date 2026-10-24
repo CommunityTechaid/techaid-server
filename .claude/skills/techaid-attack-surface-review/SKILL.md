@@ -79,7 +79,7 @@ max 10; the old 2,387-name enumeration is fixed), `deliveryAvailabilityPublic`,
 
 | # | Sev | Finding | Status |
 |---|---|---|---|
-| A | Critical | Two public create mutations return over-broad types. Details held back until the fix is in production. | FIX IN PROGRESS |
+| A | Critical | Public create mutations returned full entities, so nested selection reached other referees' PII and staff notes anonymously. Fixed by narrow return types (`ReferringOrganisationContactPublic`, `DeviceRequestPublic`) and an auth gate on `ReferringOrganisationContact.notes`; pinned by `PublicMutationReturnShapeTest`. **Lesson:** a top-level auth test cannot see nested reach; every public root needs a nested-selection test. | FIXED in prod 5.0.2 (#290), 2026-10-24 |
 | B | High | Public write paths have no throttle; device-offer rules (adminConfig ∩ borough matrix) are enforced only in the browser; `borough` is client-chosen. | STATIC |
 | C | Medium | Booking rate limiter keys on `CF-Connecting-IP`, which is attacker-set at the origin FQDN; `BookingRateLimiter.hits` never pruned on the hot path. | STATIC |
 | D | Medium | No GraphQL complexity/alias limit (depth 15 only); `referringOrganisationsPublic` unpaginated with a per-org COUNT `@Formula`; `deliveryAvailabilityPublic` un-throttled. | STATIC |
