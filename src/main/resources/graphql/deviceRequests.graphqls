@@ -70,6 +70,18 @@ input DeviceRequestItemsInput {
 }
 
 
+"""
+What an anonymous caller gets back from createDeviceRequest. Deliberately flat: no object-typed
+fields, so nothing here can lead to other people's records. Fields are what the dashboard
+selects (org-request.ts: id, correlationId; the E2E lifecycle fixture: id, status).
+"""
+type DeviceRequestPublic {
+    id: ID
+    "We use string instead of long because JS truncates Long value"
+    correlationId: String
+    status: DeviceRequestStatus
+}
+
 type DeviceRequestNeeds{
     hasInternet: Boolean
     hasMobilityIssues: Boolean
@@ -240,8 +252,11 @@ extend type Mutation {
     referrer's response carried both the real message and a spec-violation about a non-null type
     returning null, and the latter is what got reported to us. A mutation that can fail a business
     rule has to be nullable for its own error to be the only thing in the payload.
+
+    Returns DeviceRequestPublic, not DeviceRequest: this mutation is anonymous, and the full type
+    links through to records the caller has no right to read.
     """
-    createDeviceRequest(data: CreateDeviceRequestInput!) : DeviceRequest
+    createDeviceRequest(data: CreateDeviceRequestInput!) : DeviceRequestPublic
     updateDeviceRequest(data: UpdateDeviceRequestInput!): DeviceRequest!
     deleteDeviceRequest(id: ID!): Boolean
     synchronizeCollectionDataForDeviceRequest(data: SynchronizeCollectionDataForDeviceRequestInput!): DeviceRequest!
