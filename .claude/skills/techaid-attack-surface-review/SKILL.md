@@ -64,7 +64,7 @@ A finding is **CONFIRMED** only when a failing test shows it (see `techaid-valid
 schema-shape issues need a GraphQL-level test, not a controller-method test). Otherwise it is
 **STATIC**. Gates that change non-default or intended behaviour go to Tony; do not merge them.
 
-## Baseline: 2026-10-24 (static, server 5.0.1 on dev)
+## Baseline: 2026-10-24 (static; statuses updated end of day, dev at 5.0.3-pre; prod 5.0.2 has only A + Tomcat/Jackson)
 
 Re-runs should report changes against this table, then update it.
 
@@ -72,18 +72,20 @@ Re-runs should report changes against this table, then update it.
 flags), `boroughAvailabilityPublic`, `requestCount` (null unless authenticated),
 `referringOrganisationsPublic` (unpaginated), `referringOrganisationContactsPublic` (exact email,
 max 10; the old 2,387-name enumeration is fixed), `deliveryAvailabilityPublic`,
-`deliveryBookingEligibilityPublic`, `submitDeliveryBookingPublic`, `createDeviceRequest`,
-`createReferringOrganisationContact`, `post`; HTTP `/`, `/actuator/health|info`, `/typeform/hook`
+`deliveryBookingEligibilityPublic`, `submitDeliveryBookingPublic`, `createDeviceRequest`
+(returns `DeviceRequestPublic`, per-IP throttled), `post` (published only for callers without
+`read:content`); `createReferringOrganisationContact` is STAFF-ONLY since #303 (the public form
+routes unknown referees to Typeform); HTTP `/`, `/actuator/health|info`, `/typeform/hook`
 (HMAC, constant-time), `/login` (vestigial formLogin, no template). Introspection is off
 (`GraphQlIntrospectionDisabledTest`).
 
 | # | Sev | Finding | Status |
 |---|---|---|---|
 | A | Critical | Public create mutations returned full entities, so nested selection reached other referees' PII and staff notes anonymously. Fixed by narrow return types (`ReferringOrganisationContactPublic`, `DeviceRequestPublic`) and an auth gate on `ReferringOrganisationContact.notes`; pinned by `PublicMutationReturnShapeTest`. **Lesson:** a top-level auth test cannot see nested reach; every public root needs a nested-selection test. | FIXED in prod 5.0.2 (#290), 2026-10-24 |
-| B | High | Public write paths have no throttle; device-offer rules (adminConfig ∩ borough matrix) are enforced only in the browser; `borough` is client-chosen. | STATIC |
-| C | Medium | Booking rate limiter keys on `CF-Connecting-IP`, which is attacker-set at the origin FQDN; `BookingRateLimiter.hits` never pruned on the hot path. | STATIC |
-| D | Medium | No GraphQL complexity/alias limit (depth 15 only); `referringOrganisationsPublic` unpaginated with a per-org COUNT `@Formula`; `deliveryAvailabilityPublic` un-throttled. | STATIC |
-| E | Low | `post` serves unpublished drafts; public `orderBy` accepts any property path; `GraphQlTelemetryInterceptor` logs all variables (PII) on error; Turnstile fails open on network error. | STATIC |
+| B | High | Public write paths had no throttle; device-offer rules (adminConfig ∩ borough matrix) are enforced only in the browser; `borough` is client-chosen. | Throttle FIXED on dev (#300: 20 device requests / 10 contacts per IP per hour, staff exempt). Server-side offer rules: ACCEPTED RISK, decided 2026-10-24 (#302 closed): out-of-offer requests are caught at fulfilment and the referee is known; no second copy of the borough list. Do not re-raise. |
+| C | Medium | Booking rate limiter keyed on `CF-Connecting-IP`, attacker-set at the origin FQDN; limiter map unbounded. | FIXED on dev (#295): header trusted only from Cloudflare peer ranges, map pruned and capped. Residual: unverified whether ACA ingress appends or replaces a client `X-Forwarded-For`; restricting ingress to Cloudflare ranges would close it and the origin bypass. |
+| D | Medium | No GraphQL cost limit (depth 15 only): aliasing an expensive public field = targeted DoS. | FIXED on dev (#297): ≤20 root fields, complexity ≤300, parser maxTokens 1000, sized at 4-5x the largest real dashboard document. Note: complexity counts a named fragment once however often it is spread; the root-field cap is what bounds repeated resolvers. `deliveryAvailabilityPublic` still un-throttled. |
+| E | Low | `post` served drafts; public `orderBy` accepted any property path (QueryDSL CVE-2024-49203 was NOT reachable: Spring Data validates sort paths); `GraphQlTelemetryInterceptor` logs all variables (PII) on error; Turnstile fails open on network error. | Drafts FIXED (#301), public orderBy allow-listed (#299). OPEN: variable logging, Turnstile fail-open, authenticated orderBy not allow-listed (low value: injection unreachable). |
 | F | Low | `server.max-http-header-size: 50MB` is inert under Boot 4.1 (deprecated name). Renaming it would make 50MB live; don't. | STATIC |
 
 **Config interactions:** `DELIVERY_BOOKING_ENFORCE_FLAG=false` (default) makes the
