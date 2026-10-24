@@ -56,14 +56,28 @@ class BlogQueries(
             posts.findAll(where.build()).toList()
         }
 
+    /**
+     * Public on purpose: the anonymous referral form and the catch-all content page read posts by
+     * slug. Without `read:content` a caller sees published, non-secured posts only - drafts are
+     * filtered in the query itself, so the text filters cannot be used to probe a draft either.
+     */
     @QueryMapping
     fun post(
         @Argument where: PostWhereInput,
     ): Post? {
-        val post = posts.findOne(where.build()).toNullable() ?: return null
-        if (post.secured) {
-            val auth = SecurityContextHolder.getContext().authentication ?: return null
-            auth.authorities.firstOrNull { it.authority == "read:content" } ?: return null
+        val canReadContent =
+            SecurityContextHolder
+                .getContext()
+                .authentication
+                ?.authorities
+                ?.any { it.authority == "read:content" } == true
+        val predicate = where.build()
+        if (!canReadContent) {
+            predicate.and(QPost.post.published.isTrue)
+        }
+        val post = posts.findOne(predicate).toNullable() ?: return null
+        if (post.secured && !canReadContent) {
+            return null
         }
         return post
     }
