@@ -7,7 +7,7 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 ## Project operational docs
 
 This file is generic behavioural guidance. **Project-specific operational knowledge lives in
-[`.claude/skills/`](.claude/skills/README.md)** (14 skills — build, deploy, database, debugging,
+[`.claude/skills/`](.claude/skills/README.md)** (15 skills — build, deploy, database, debugging,
 config, change control). Start there. For incident response, see
 [`SITE-IS-DOWN.md`](SITE-IS-DOWN.md); for onboarding, [`README.md`](README.md) → "START HERE".
 

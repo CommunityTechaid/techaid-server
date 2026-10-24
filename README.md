@@ -4,7 +4,7 @@ Provides backing services for the dashboard site at https://app.communitytechaid
 
 ## START HERE (new maintainer / new session)
 
-**The operational knowledge for this project lives in `.claude/skills/` — 14 skills covering
+**The operational knowledge for this project lives in `.claude/skills/` — 15 skills covering
 build, deploy, database, debugging, config, and change control. Open
 [`.claude/skills/README.md`](.claude/skills/README.md) first.** A Claude Code session loads them
 automatically by description; a human should read them in the onboarding order that file lists.
