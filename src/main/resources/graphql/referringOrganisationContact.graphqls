@@ -101,7 +101,8 @@ extend type Query {
 
 extend type Mutation {
     """
-    Anonymous (the public referral form). Returns the narrow public type, not
+    Staff only (app:admin or write:organisations); the public referral form sends unknown
+    referees to a Typeform instead. Returns the narrow public type, not
     ReferringOrganisationContact: the full type links to the organisation and from there to every
     other contact in it, and the name+email dedupe can hand back an existing row.
     """

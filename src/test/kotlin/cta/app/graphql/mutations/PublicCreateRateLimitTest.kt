@@ -26,10 +26,11 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
  * The per-client-IP throttle on the two public create mutations the referral form uses
  * (createDeviceRequest, createReferringOrganisationContact).
  *
- * Both are deliberately anonymous, and before this neither had any throttle, so a single caller
- * could create rows as fast as it could send requests. Staff create contacts (and occasionally
- * requests) through the same mutations from the dashboard, so callers holding app:admin or
- * write:organisations are exempt.
+ * Both were anonymous, and before this neither had any throttle, so a single caller could create
+ * rows as fast as it could send requests. Staff create contacts (and occasionally requests)
+ * through the same mutations from the dashboard, so callers holding app:admin or
+ * write:organisations are exempt. createReferringOrganisationContact has since been gated to staff
+ * (PublicSurfaceAuthorizationTest), so only its staff exemption is still exercised here.
  *
  * Budgets are lowered to 2 here so the N+1th call is cheap to reach. The limiters are real
  * singletons shared across methods in this context, so each method uses its own client IP.
@@ -125,30 +126,6 @@ class PublicCreateRateLimitTest {
     }
 
     @Test
-    fun `anonymous createReferringOrganisationContact is throttled per client ip`() {
-        val ip = "203.0.113.41"
-        repeat(2) {
-            graphQl(createContact(), ip)
-                .andExpect(status().isOk)
-                .andExpect(jsonPath("$.errors").doesNotExist())
-                .andExpect(jsonPath("$.data.createReferringOrganisationContact.id").isNotEmpty)
-        }
-        graphQl(createContact(), ip)
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.errors[0].message").value(rateLimitMessage))
-            .andExpect(jsonPath("$.errors[0].extensions.classification").value("BAD_REQUEST"))
-    }
-
-    @Test
-    fun `the two creates have independent budgets`() {
-        val ip = "203.0.113.51"
-        repeat(2) { graphQl(createContact(), ip).andExpect(jsonPath("$.errors").doesNotExist()) }
-        graphQl(createContact(), ip).andExpect(jsonPath("$.errors[0].message").value(rateLimitMessage))
-        // Exhausting the contact budget must not block the request that follows it in the form.
-        graphQl(createDeviceRequest(), ip).andExpect(jsonPath("$.errors").doesNotExist())
-    }
-
-    @Test
     fun `staff with write-organisations are exempt`() {
         val ip = "203.0.113.61"
         val staff: (MockHttpServletRequestBuilder) -> MockHttpServletRequestBuilder = {
@@ -178,7 +155,7 @@ class PublicCreateRateLimitTest {
         val reader: (MockHttpServletRequestBuilder) -> MockHttpServletRequestBuilder = {
             it.with(jwt().authorities(SimpleGrantedAuthority("read:organisations")))
         }
-        repeat(2) { graphQl(createContact(), ip, reader).andExpect(jsonPath("$.errors").doesNotExist()) }
-        graphQl(createContact(), ip, reader).andExpect(jsonPath("$.errors[0].message").value(rateLimitMessage))
+        repeat(2) { graphQl(createDeviceRequest(), ip, reader).andExpect(jsonPath("$.errors").doesNotExist()) }
+        graphQl(createDeviceRequest(), ip, reader).andExpect(jsonPath("$.errors[0].message").value(rateLimitMessage))
     }
 }

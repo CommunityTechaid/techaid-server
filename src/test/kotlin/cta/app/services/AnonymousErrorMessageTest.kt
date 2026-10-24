@@ -64,23 +64,32 @@ class AnonymousErrorMessageTest {
             .response.contentAsString
 
     /**
-     * createReferringOrganisationContact is anonymous, and an unknown organisation id makes it
-     * throw EntityNotFoundException - which no controller handles, so it lands on the fallback.
+     * createDeviceRequest is anonymous, and an unknown contact id makes it throw
+     * EntityNotFoundException - which no controller handles, so it lands on the fallback.
      */
-    private fun createContactAgainstMissingOrg(email: String): String {
+    private fun createRequestAgainstMissingContact(): String {
         val document =
-            "mutation { createReferringOrganisationContact(data: {" +
-                "fullName: \\\"Referee\\\", email: \\\"$email\\\", phoneNumber: \\\"02034887742\\\", " +
-                "address: \\\"1 Test Street\\\", referringOrganisation: 999999}) { id } }"
+            "mutation { createDeviceRequest(data: {" +
+                "referringOrganisationContact: 999999, deviceRequestItems: { laptops: 1 }, " +
+                "clientRef: \\\"ERR\\\", borough: \\\"Lambeth\\\", details: \\\"Needs a laptop\\\"}) { id } }"
+        return graphQl("""{"query":"$document"}""")
+    }
+
+    /** The public delivery-booking submit is anonymous and bean-validates its input. */
+    private fun submitBookingWithEmail(email: String): String {
+        val document =
+            "mutation { submitDeliveryBookingPublic(input: {" +
+                "date: \\\"1970-01-01\\\", windowId: \\\"1\\\", firstName: \\\"A\\\", surname: \\\"B\\\", " +
+                "email: \\\"$email\\\", phone: \\\"0700000000\\\", address: \\\"1 Road\\\", ctaReference: 1}) { id } }"
         return graphQl("""{"query":"$document"}""")
     }
 
     @Test
     fun `an anonymous caller gets a generic message, not the exception text`() {
-        val content = createContactAgainstMissingOrg("referee@example.org")
+        val content = createRequestAgainstMissingContact()
 
         assertFalse(
-            content.contains("No referring organisation was found"),
+            content.contains("No referring contact found"),
             "the raw exception text must not reach an anonymous caller: $content",
         )
         assertTrue(
@@ -95,7 +104,7 @@ class AnonymousErrorMessageTest {
 
     @Test
     fun `an anonymous caller still gets field validation feedback`() {
-        val content = createContactAgainstMissingOrg("not-an-email")
+        val content = submitBookingWithEmail("not-an-email")
 
         assertTrue(
             content.contains("email"),

@@ -31,11 +31,15 @@ class ReferringOrganisationContactMutations(
     private val publicCreateThrottle: PublicCreateThrottle,
     @Qualifier("publicContactRateLimiter") private val publicCreateRateLimiter: BookingRateLimiter,
 ) {
+    // Staff only. The public referral form sends an unknown referee or organisation to a Typeform,
+    // so anonymous creation is no longer offered.
+    @PreAuthorize("hasAnyAuthority('app:admin', 'write:organisations')")
     @MutationMapping
     fun createReferringOrganisationContact(
         @Argument @Valid data: CreateReferringOrganisationContactInput,
     ): ReferringOrganisationContact {
-        // Public and unauthenticated: throttle per client IP before any DB work. Staff exempt.
+        // Staff are exempt from this throttle and only staff pass the gate above, so it no longer
+        // limits anything; left in place until the contact budget is retired separately.
         publicCreateThrottle.acquireOrThrow(publicCreateRateLimiter)
 
         val referringOrganisation =

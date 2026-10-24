@@ -15,9 +15,11 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.test.context.support.WithAnonymousUser
 import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -25,16 +27,18 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 /**
- * What an ANONYMOUS caller can read back through the return value of the two public mutations
- * the referral form uses.
+ * What an ANONYMOUS caller can read back through the return value of the create mutations the
+ * referral form used.
  *
  * PublicSurfaceAuthorizationTest pins which top-level operations reject anonymous callers; it
- * cannot see this. Both mutations are deliberately public, but they used to return the full
- * entity, and the full entity links to its organisation, whose `referringOrganisationContacts`
+ * cannot see this. Both mutations were public, and they used to return the full entity, and the full entity links to its organisation, whose `referringOrganisationContacts`
  * lists every referee in it — name, email, phone, address, notes. So an unauthenticated caller
  * could create (or, via the name+email dedupe, re-fetch) a contact against any organisation id and
  * walk back down to everybody else's PII. That is a schema-shape defect, so it is tested at the
  * GraphQL layer with a real document over HTTP, not by calling the controller method.
+ *
+ * createReferringOrganisationContact has since been gated to staff (the form sends unknown referees
+ * to a Typeform), so it now also has a denial case; the narrow return type stays.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
@@ -93,6 +97,24 @@ class PublicMutationReturnShapeTest {
     }
 
     @Test
+    fun `createReferringOrganisationContact denies an anonymous caller and writes nothing`() {
+        val organisation = referringOrganisations.save(ReferringOrganisation(name = "Org anon ${System.nanoTime()}"))
+        val email = "anon-${System.nanoTime()}@example.com"
+
+        val content =
+            anonymousGraphQl(
+                "mutation (\$data: CreateReferringOrganisationContactInput!) { createReferringOrganisationContact(data: \$data) { id } }",
+                """{"data":{"fullName":"Anon Referee","email":"$email","phoneNumber":"07000000000","referringOrganisation":"${organisation.id}"}}""",
+            )
+
+        assertTrue(content.contains("Access Denied"), "anonymous contact creation must be denied: $content")
+        assertFalse(
+            referringOrganisationContacts.findAll().any { it.email == email },
+            "a denied anonymous call must not write a contact",
+        )
+    }
+
+    @Test
     fun `createDeviceRequest cannot reach other referees in the organisation`() {
         val victim = victimInNewOrganisation()
         val requester = contact(victim.referringOrganisation, "Requester")
@@ -120,7 +142,7 @@ class PublicMutationReturnShapeTest {
         assertTrue(content.contains("Validation error"), "the nested field must not exist on the public return type: $content")
     }
 
-    // The exact selection the referral form (org-request.ts) and the admin referee components send.
+    // The exact selection the admin referee components send; staff only since the gate.
     @Test
     fun `createReferringOrganisationContact still returns the id the dashboard selects`() {
         val organisation = referringOrganisations.save(ReferringOrganisation(name = "Org happy ${System.nanoTime()}"))
@@ -128,6 +150,7 @@ class PublicMutationReturnShapeTest {
         mockMvc
             .perform(
                 post("/graphql")
+                    .with(jwt().authorities(SimpleGrantedAuthority("write:organisations")))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         """{"query":${quote(
