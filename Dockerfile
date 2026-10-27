@@ -23,7 +23,10 @@ COPY --from=agent /applicationinsights-agent.jar /app/applicationinsights-agent.
 # Only what the container runs: tini as PID 1, tzdata for /etc/localtime below. openssl, curl
 # and bash were Dokku-era leftovers that nothing invokes at runtime (checked 2026-10-24), so they
 # were removed to shrink what has to be patched. `az containerapp exec` still gets busybox sh.
-RUN apk add --no-cache --update \
+# `apk upgrade` pulls in Alpine security fixes for the base image's own packages, which
+# otherwise wait for the next eclipse-temurin image rebuild.
+RUN apk upgrade --no-cache \
+    && apk add --no-cache \
     tini \
     tzdata
 
