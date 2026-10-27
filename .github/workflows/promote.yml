@@ -17,7 +17,7 @@ jobs:
     environment: production
     permissions:
       id-token: write
-      # write, not read: the final step fast-forwards master to the deployed commit.
+      # write, not read: the final step fast-forwards main to the deployed commit.
       contents: write
 
     steps:
@@ -60,7 +60,7 @@ jobs:
             --resource-group tada-2026 \
             --image ${{ steps.image.outputs.image }}
 
-      # Bookkeeping: master records what production runs. Runs only after a
+      # Bookkeeping: main records what production runs. Runs only after a
       # successful deploy. Mirrors techaid-dashboard's deploy-prod.yml, which has
       # advanced master this way for months. techaid-server previously needed a
       # hand-opened dev->master PR that only its author could merge, and only by
@@ -68,7 +68,7 @@ jobs:
       #
       # The commit comes from the IMAGE TAG, never from the checkout: the checkout
       # is dev HEAD, which may already be ahead of what was just promoted.
-      - name: Fast-forward master to the deployed commit
+      - name: Fast-forward main to the deployed commit
         run: |
           IMAGE='${{ steps.image.outputs.image }}'
           TAG="${IMAGE##*:}"
@@ -78,27 +78,27 @@ jobs:
           case "$TAG" in
             dev-*) SHORT="${TAG#dev-}" ;;
             *)
-              echo "::notice::Image tag '$TAG' is not a dev-<sha> tag; master left unchanged."
+              echo "::notice::Image tag '$TAG' is not a dev-<sha> tag; main left unchanged."
               exit 0 ;;
           esac
 
           if ! SHA=$(git rev-parse --verify "${SHORT}^{commit}" 2>/dev/null); then
-            echo "::warning::Commit $SHORT not found in dev history; master left unchanged."
+            echo "::warning::Commit $SHORT not found in dev history; main left unchanged."
             exit 0
           fi
 
-          git fetch origin master
-          if git merge-base --is-ancestor "$SHA" origin/master; then
-            echo "::notice::master already contains $SHA; nothing to do."
+          git fetch origin main
+          if git merge-base --is-ancestor "$SHA" origin/main; then
+            echo "::notice::main already contains $SHA; nothing to do."
             exit 0
           fi
 
           # No --force, deliberately. A rollback promotes an OLDER image, which is
-          # not a fast-forward, so this fails rather than rewriting master. That is
+          # not a fast-forward, so this fails rather than rewriting main. That is
           # the intended outcome: production moved backwards and a human should
           # decide what the record says. The deploy itself has already succeeded.
-          if ! git push origin "$SHA:refs/heads/master"; then
-            echo "::error::Could not fast-forward master to $SHA (likely a rollback, so master is now AHEAD of production). The deploy SUCCEEDED; master needs manual attention."
+          if ! git push origin "$SHA:refs/heads/main"; then
+            echo "::error::Could not fast-forward main to $SHA (likely a rollback, so main is now AHEAD of production). The deploy SUCCEEDED; main needs manual attention."
             exit 1
           fi
-          echo "master fast-forwarded to $SHA"
+          echo "main fast-forwarded to $SHA"
