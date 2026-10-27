@@ -64,8 +64,9 @@ jobs:
             # main = production-ready; tag as :latest, :<sha> and :v<version>
             echo "tags=${IMAGE}:${SHA},${IMAGE}:latest,${IMAGE}:v${VERSION}" >> "$GITHUB_OUTPUT"
           else
-            # dev / maintenance branches = UAT; tag as :dev, :dev-<sha> and :v<version>
-            echo "tags=${IMAGE}:dev-${SHA},${IMAGE}:dev,${IMAGE}:v${VERSION}" >> "$GITHUB_OUTPUT"
+            # dev / maintenance branches = UAT; tag as :dev-<sha> and :v<version>. :dev itself is
+            # moved by deploy-testing, so it always names what api-testing runs.
+            echo "tags=${IMAGE}:dev-${SHA},${IMAGE}:v${VERSION}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up Docker Buildx
@@ -95,15 +96,18 @@ jobs:
     runs-on: ubuntu-latest
     # Merges close together start overlapping runs. Without this, each deploy races the others:
     # on 2026-10-24 three ran at once, one failed with ContainerAppOperationInProgress and an
-    # older image could have finished last. One deploy at a time; GitHub keeps only the newest
-    # pending run, so the latest commit always wins. Not cancel-in-progress: an az update cut
-    # off half-way is worse than one that finishes and is superseded.
+    # older image could have finished last. One deploy at a time. Not cancel-in-progress: an az
+    # update cut off half-way is worse than one that finishes and is superseded.
+    # Serialising is not ordering: builds finish in any order, so on 2026-10-27 the older of two
+    # merges deployed last and rolled UAT back. The order check below skips a deploy when
+    # api-testing already runs a newer commit.
     concurrency:
       group: deploy-testing
       cancel-in-progress: false
     permissions:
       id-token: write
       contents: read
+      packages: write
 
     steps:
       - name: Azure login
@@ -113,9 +117,46 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Skip if api-testing already runs a newer commit
+        id: order
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CURRENT=$(az containerapp show --name api-testing --resource-group tada-2026 \
+            --query "properties.template.containers[0].image" -o tsv)
+          DEPLOYED="${CURRENT##*:dev-}"
+          REL=unknown
+          # Only compare when api-testing runs a dev-<sha> image; anything else gets replaced.
+          if [ "$DEPLOYED" != "$CURRENT" ]; then
+            REL=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${DEPLOYED}...${GITHUB_SHA}" --jq .status || echo unknown)
+          fi
+          if [ "$REL" = "behind" ]; then
+            echo "::notice::api-testing already runs ${DEPLOYED}, which is newer than ${GITHUB_SHA::7}; not deploying."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy to api-testing
+        if: steps.order.outputs.deploy == 'true'
         run: |
           az containerapp update \
             --name api-testing \
             --resource-group tada-2026 \
             --image ghcr.io/communitytechaid/techaid-server:dev-${GITHUB_SHA::7}
+
+      - name: Log in to GitHub Container Registry
+        if: steps.order.outputs.deploy == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The daily image scan reads :dev as "what UAT runs".
+      - name: Point :dev at the deployed image
+        if: steps.order.outputs.deploy == 'true'
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/communitytechaid/techaid-server:dev \
+            ghcr.io/communitytechaid/techaid-server:dev-${GITHUB_SHA::7}
