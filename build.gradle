@@ -405,3 +405,11 @@ task getDeps(type: Copy) {
 }
 
 kapt { correctErrorTypes = true }
+// Downloads every dependency without compiling. The Dockerfile runs this in its own layer, before
+// the sources are copied in, so the CI layer cache keeps the downloads across source-only commits.
+tasks.register('resolveDependencies') {
+    notCompatibleWithConfigurationCache('resolves configurations at execution time')
+    doLast {
+        project.configurations.findAll { it.canBeResolved }.each { it.resolve() }
+    }
+}

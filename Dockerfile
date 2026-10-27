@@ -1,9 +1,13 @@
 # NOTE: This is the production and uat version. Please use Dockerfile.dev for local development testing
 FROM gradle:9.8.1-jdk17 AS builder
 USER root
+# Dependencies go in their own layer, before the sources. The GHA layer cache (cache-to mode=max in
+# ci.yml) then reuses them for every commit that leaves the build files alone, instead of
+# re-downloading everything from Maven Central, which rate-limits shared runner IPs (HTTP 429).
+COPY ./build.gradle settings.gradle .editorconfig /app/
+RUN gradle -p /app resolveDependencies
 ARG GIT_COMMIT=unknown
 COPY ./src /app/src
-COPY ./build.gradle settings.gradle .editorconfig /app/
 RUN gradle -p /app clean build -x test -PgitCommit=${GIT_COMMIT}
 
 # Download the Application Insights Java agent in a throwaway stage so the runtime image needs no
