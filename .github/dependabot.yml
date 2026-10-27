@@ -8,8 +8,8 @@
 # nothing.
 #
 # Two settings matter more than the rest:
-#   target-branch: dev   - master is a record of what shipped, never a source. A PR opened
-#                          against master would be pointing the wrong way.
+#   target-branch: dev   - main is a record of what shipped, never a source. A PR opened
+#                          against main would be pointing the wrong way.
 #   commit-message       - release-please reads conventional commits. `chore(deps)` keeps
 #                          dependency bumps out of the release notes' feature list while still
 #                          riding along in the next release.
