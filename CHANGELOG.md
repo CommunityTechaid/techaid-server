@@ -1,5 +1,20 @@
 # Changelog
 
+## [5.0.3](https://github.com/CommunityTechaid/techaid-server/compare/v5.0.2...v5.0.3) (2026-10-27)
+
+
+### Bug Fixes
+
+* **docker:** apply Alpine package updates in the runtime image ([#306](https://github.com/CommunityTechaid/techaid-server/issues/306)) ([543047e](https://github.com/CommunityTechaid/techaid-server/commit/543047e06b44bb0765df8083c8a00cfd01457981))
+* **docker:** drop unused curl and bash from the runtime image ([#298](https://github.com/CommunityTechaid/techaid-server/issues/298)) ([bf73c49](https://github.com/CommunityTechaid/techaid-server/commit/bf73c49732cc90aa8d70cde305ef35675d61282e))
+* **docker:** drop wget from the runtime image and verify the agent jar ([#294](https://github.com/CommunityTechaid/techaid-server/issues/294)) ([bb1b12d](https://github.com/CommunityTechaid/techaid-server/commit/bb1b12d6c2089099ec84d6c8942a84b729b8b506))
+* **security:** cap GraphQL query cost before execution ([#297](https://github.com/CommunityTechaid/techaid-server/issues/297)) ([f19e30b](https://github.com/CommunityTechaid/techaid-server/commit/f19e30b19b0e44428e202791b82950cee33582d0))
+* **security:** require staff authority to create referee contacts ([#303](https://github.com/CommunityTechaid/techaid-server/issues/303)) ([5093b9a](https://github.com/CommunityTechaid/techaid-server/commit/5093b9a326a771d3d33f3984f63ed11bc164f91c))
+* **security:** restrict sort fields on public list queries ([#299](https://github.com/CommunityTechaid/techaid-server/issues/299)) ([96c7238](https://github.com/CommunityTechaid/techaid-server/commit/96c723837f807e0725aaf4e131256a2b70e95ec9))
+* **security:** serve only published posts to callers without read:content ([#301](https://github.com/CommunityTechaid/techaid-server/issues/301)) ([21ffb49](https://github.com/CommunityTechaid/techaid-server/commit/21ffb49ed8f0f1c6f047f4a400e8e57f78df331c))
+* **security:** throttle the public referral-form creates per client IP ([#300](https://github.com/CommunityTechaid/techaid-server/issues/300)) ([1f5d622](https://github.com/CommunityTechaid/techaid-server/commit/1f5d622e28df89e70f9ca981e7cd74bea0f96dde))
+* **security:** trust CF-Connecting-IP only from Cloudflare peers and bound the limiter map ([#295](https://github.com/CommunityTechaid/techaid-server/issues/295)) ([829f581](https://github.com/CommunityTechaid/techaid-server/commit/829f58199f6a523c0cf0e0cfffec794eebca8b32))
+
 ## [5.0.2](https://github.com/CommunityTechaid/techaid-server/compare/v5.0.1...v5.0.2) (2026-10-24)
 
 
