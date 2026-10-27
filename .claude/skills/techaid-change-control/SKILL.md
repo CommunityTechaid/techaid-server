@@ -4,7 +4,7 @@ description: >-
   Load BEFORE committing, opening a PR, merging, releasing, promoting to
   production, editing docs of record, or making any change a dashboard user or
   the production database could see. Covers the techaid-server branch model
-  (dev → UAT → manual promote → master), the five non-negotiable gates and the
+  (dev → UAT → manual promote → main), the five non-negotiable gates and the
   incidents behind them, conventional commits + release-please versioning, CI
   gates (ktlint + tests), change classification, and docs-of-record house
   style. If you are unsure whether a change needs permission, load this skill.
@@ -36,7 +36,7 @@ this skill needs fixing.
 
 ## When NOT to use this skill
 
-- Executing the actual dev→master production promotion → use
+- Executing the actual dev→main production promotion → use
   **techaid-prod-promotion-campaign** (it routes back here for the gates).
 - Deploy mechanics, Azure Container App operations, rollback commands → use
   **techaid-deploy-and-operate**.
@@ -61,11 +61,11 @@ feature branch ──PR──▶ dev ──(push: CI auto-deploys)──▶ UAT 
               Production (api-production)
                         │
                         ▼
-     merge dev → master  (ONLY with explicit permission — see gate 1)
+     merge dev → main  (ONLY with explicit permission — see gate 1)
 ```
 
 - All work happens on `dev` or a feature branch. **PRs target `dev`**, never
-  `master`.
+  `main`.
 - Push to `dev` runs CI (`.github/workflows/ci.yml`): `ktlintCheck` → `test` →
   Docker build pushed to GHCR as `:dev`, `:dev-<sha7>`, `:v<version>` → auto
   `az containerapp update` on `api-testing`. Branches matching
@@ -75,12 +75,12 @@ feature branch ──PR──▶ dev ──(push: CI auto-deploys)──▶ UAT 
   reviewer approval). By default it promotes **the image currently running on
   UAT** — so a `dev-<sha>` tag on production is normal and expected. An
   optional `image_tag` input pins/rolls back to a specific GHCR tag.
-- Push to `master` builds and tags `:latest`, `:<sha7>`, `:v<version>` — a
+- Push to `main` builds and tags `:latest`, `:<sha7>`, `:v<version>` — a
   production-ready image — but does **not** auto-deploy.
-- `master`'s intended meaning (maintainer's branch-model decision from the
+- `main`'s intended meaning (maintainer's branch-model decision from the
   2026-05 migration, embedded here as of 2026-07-03): the source of truth for
   "what is currently in production". The sequence is *promote first, then
-  merge dev into master*, not the other way round.
+  merge dev into main*, not the other way round.
 
 ## 2. The five non-negotiables
 
@@ -89,7 +89,7 @@ if a task seems to require it, stop and ask the user.
 
 | # | Rule | Why / incident behind it |
 |---|------|--------------------------|
-| 1 | **Never push or merge to `master` without explicit user permission in the current conversation.** Approval in a past session does not carry over. | `CLAUDE.md` §5. A master merge builds a production-ready image and signals "this is what prod runs"; an unintended one desynchronizes the branch model and risks an accidental production deploy. |
+| 1 | **Never push or merge to `main` without explicit user permission in the current conversation.** Approval in a past session does not carry over. | `CLAUDE.md` §5. A main merge builds a production-ready image and signals "this is what prod runs"; an unintended one desynchronizes the branch model and risks an accidental production deploy. |
 | 2 | **Red/green TDD on every backend change**: write a failing test that reproduces the bug or specifies the feature, make it pass, keep the test in the suite. | Norm set by the user on 2026-07-02 during the code-review remediation (PRs #48, merged 2026-07-02, and #49, merged 2026-07-03, each shipped with failing-first tests). The 2026-06 lenient-scalar revert (#42→#43) showed that changes without an assembly-level test can pass unit tests and still break the schema — see techaid-failure-archaeology. |
 | 3 | **Dashboard audit before touching the GraphQL surface.** Any change to a schema type, filter shape, resolver visibility, or auth gate that the dashboard could consume requires checking actual usage in the `CommunityTechaid/techaid-dashboard` repo FIRST. | Precedent (2026-07-02, as of that date): the auth-gap fixes in PR #48 audited dashboard usage before restricting `referringOrganisationsPublic` to the exact public-typeahead filter shape (name+archived) — the audit is what made a breaking-looking change safe with zero dashboard changes. |
 | 4 | **The production database is sacred.** No direct writes or DDL on `techaid_prod` without explicit user instruction, and confirm a point-in-time-restore-safe backup exists before any risky operation. | May/July 2026 (unverified in repo, date-stamped 2026-07-03): a database restore left every table owned by the admin role, which later crashed a Flyway migration on deploy ("must be owner of table kits") and needed one-off ownership surgery. Also: Azure Burstable-tier Postgres keeps NO backups of a deleted server — data on a deleted server is gone. |
@@ -108,7 +108,7 @@ rule 1 is written in `CLAUDE.md` §5. None of them is optional.
 | Infra | `az` mutations, workflow files that deploy, scale rules, DNS | User sign-off per change (rule 5); workflow-file changes also ride a normal PR to `dev` |
 | Production data | any write/DDL on `techaid_prod` | Explicit user instruction + backup check (rule 4) + **techaid-database-operations** |
 | Docs-only | README, MAINTENANCE_PLAN, this skill library | PR to `dev`; no test required; never hand-edit `CHANGELOG.md` (§5) |
-| Release / promote | merging the release PR, dev→master, prod deploy | Rule 1 + **techaid-prod-promotion-campaign** |
+| Release / promote | merging the release PR, dev→main, prod deploy | Rule 1 + **techaid-prod-promotion-campaign** |
 
 ## 4. Commit and CI mechanics
 
@@ -132,7 +132,7 @@ gh pr create --base dev --title "fix: <what>" --body "<why + test evidence>"
 ```
 
 - CI (`.github/workflows/ci.yml`) runs on **pull requests** targeting `dev` or
-  `master`, and on **pushes** to `dev` / `master` / `maintenance/**`:
+  `main`, and on **pushes** to `dev` / `main` / `maintenance/**`:
   - On a PR: `ktlintCheck` + `test` only. The `build` job is guarded by
     `if: github.event_name == 'push'` — on a PR its tags would resolve to
     `:dev` / `:dev-<sha>`, publishing unmerged code to the tag UAT deploys

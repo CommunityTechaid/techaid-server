@@ -21,7 +21,7 @@ on them.
 | Env vars, profiles, yml config, credentials wiring | `techaid-config-and-flags` |
 | Flyway migrations, Postgres access, backups, DDL | `techaid-database-operations` |
 | CI, images, UAT deploys, revisions, scaling, day-2 ops | `techaid-deploy-and-operate` |
-| Promoting to production / rollback / master merge | `techaid-prod-promotion-campaign` |
+| Promoting to production / rollback / main merge | `techaid-prod-promotion-campaign` |
 | Committing, PRs, releasing, approval gates | `techaid-change-control` |
 | Fresh machine setup, build failures, running locally | `techaid-build-and-env` |
 | "What should we work on next?" — vetted open candidates | `techaid-roadmap-and-frontier` |

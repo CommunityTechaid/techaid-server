@@ -81,7 +81,7 @@ Every test file under `src/test/kotlin`, what it pins, and when you MUST extend 
 ./gradlew ktlintCheck test                              # what CI actually gates on
 ```
 
-- CI (`.github/workflows/ci.yml`) runs `ktlintCheck` then `test` on every push to `dev`, `master`, and `maintenance/**`; the build/deploy jobs only run if tests pass. Test reports upload as the `test-reports` artifact from `build/reports/tests/`.
+- CI (`.github/workflows/ci.yml`) runs `ktlintCheck` then `test` on every push to `dev`, `main`, and `maintenance/**`; the build/deploy jobs only run if tests pass. Test reports upload as the `test-reports` artifact from `build/reports/tests/`.
 - Locally, HTML results land in `build/reports/tests/test/index.html`.
 - Calibration point (full suite on a Windows dev machine, 2026-07-04): **48 tests across 19 classes, 0 failures/0 skipped, `BUILD SUCCESSFUL in 1m 57s`** (warm Gradle daemon; first-ever run also downloads the embedded Postgres binaries and takes longer). Re-run and compare if the suite feels broken or slow.
 - Format violations: `./gradlew ktlintFormat` fixes most of them.

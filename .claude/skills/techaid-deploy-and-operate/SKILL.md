@@ -16,7 +16,7 @@ Reference for how code gets from a `dev` commit to production and how to operate
 system. Written 2026-07-03; live-verified facts are marked. Commands are Bash (`az` CLI).
 
 **When NOT to use this skill:**
-- Executing a production promotion (dev → master → prod) end-to-end → use
+- Executing a production promotion (dev → main → prod) end-to-end → use
   **techaid-prod-promotion-campaign** (the gated runbook; this skill only explains the machinery).
 - Approval rules for what you may change and when → **techaid-change-control**. Every command
   below marked **[sign-off]** mutates shared infrastructure and requires explicit maintainer
@@ -42,7 +42,7 @@ system. Written 2026-07-03; live-verified facts are marked. Commands are Bash (`
 Three workflows in `.github/workflows/` (verified 2026-07-03):
 
 ```
-push to dev / master / maintenance/**
+push to dev / main / maintenance/**
         │
         ▼
   ci.yml: test job        ./gradlew ktlintCheck  +  ./gradlew test   (zonky embedded Postgres, no Docker)
@@ -65,7 +65,7 @@ push to dev / master / maintenance/**
 | Branch pushed | Tags published |
 |---------------|----------------|
 | `dev`, `maintenance/**` | `:dev-<sha7>`, `:dev`, `:v<version>` |
-| `master` | `:<sha7>`, `:latest`, `:v<version>` |
+| `main` | `:<sha7>`, `:latest`, `:v<version>` |
 
 Key facts:
 
@@ -77,7 +77,7 @@ Key facts:
   instead — **this is the rollback mechanism** (e.g. `image_tag: dev-1a2b3c4` or `v2.1.0`).
 - Consequence, **by design**: production normally runs a `dev-<sha7>` tag. Live-verified
   2026-07-03: `api-production` ran `ghcr.io/communitytechaid/techaid-server:dev-3e076d8`.
-  Do NOT "fix" this by pushing `:latest` to prod; `:latest` (master) images exist but the
+  Do NOT "fix" this by pushing `:latest` to prod; `:latest` (main) images exist but the
   promote flow deliberately ships the exact bits verified on UAT.
 - The `production` GitHub environment requires a named reviewer's approval before the promote
   job runs. That approval gate is part of change control — never route around it.
