@@ -1,6 +1,6 @@
 ---
 name: techaid-prod-promotion-campaign
-description: Executable, decision-gated campaign for promoting techaid-server to production. Load whenever asked to promote UAT to production, deploy to prod, merge dev into master, roll back a production deploy, pin a production image, or verify that a prod deploy succeeded. Covers pre-promote UAT verification, the promote.yml workflow, post-promote measured verification, rollback, and dev→master bookkeeping.
+description: Executable, decision-gated campaign for promoting techaid-server to production. Load whenever asked to promote UAT to production, deploy to prod, merge dev into main, roll back a production deploy, pin a production image, or verify that a prod deploy succeeded. Covers pre-promote UAT verification, the promote.yml workflow, post-promote measured verification, rollback, and dev→main bookkeeping.
 ---
 
 # Production Promotion Campaign
@@ -23,11 +23,11 @@ work → `techaid-database-operations`. Approval/gating rules in general →
   input it deploys to `api-production` the image **currently running on `api-testing`
   (UAT)** — normally a `dev-<sha>` tag. With the optional `image_tag` input it pins prod
   to a specific GHCR tag (that is also the rollback mechanism).
-- A **dev→master merge is NOT a deploy.** It is bookkeeping (master ≈ "what production
-  runs") and it triggers a master image build (`:latest`, `:<sha>`, `:v<version>` tags)
+- A **dev→main merge is NOT a deploy.** It is bookkeeping (main ≈ "what production
+  runs") and it triggers a main image build (`:latest`, `:<sha>`, `:v<version>` tags)
   which nothing auto-deploys. A `dev-<sha>` image running on `api-production` is
   **normal and by design.**
-- Pushing to master to "release" is therefore both forbidden (CLAUDE.md §5) and useless —
+- Pushing to main to "release" is therefore both forbidden (CLAUDE.md §5) and useless —
   it would not deploy anything.
 
 Glossary: **UAT** = user acceptance testing environment = the `api-testing` Container App
@@ -43,7 +43,7 @@ Container App (resource group `tada-2026`) serving https://api.communitytechaid.
 ## PHASE 0 — Authorization gate (HARD STOP)
 
 Explicit user permission **in the current conversation** is required for any production
-promote or any merge/push to master (CLAUDE.md §5). Permission in a previous session,
+promote or any merge/push to main (CLAUDE.md §5). Permission in a previous session,
 a memory note, or "it was approved last week" does NOT count. If you do not have it:
 stop, present the Phase 0 evidence below, and ask.
 
@@ -51,7 +51,7 @@ Enumerate exactly what would ship:
 
 ```bash
 git fetch origin
-git log origin/master..origin/dev --oneline        # the delta that goes live
+git log origin/main..origin/dev --oneline        # the delta that goes live
 gh pr list --state open                            # an open release-please PR? -> PHASE 0b
 ```
 
@@ -97,7 +97,7 @@ Say that plainly rather than performing a fake waiting period.
 
 **If you promote ahead of the release anyway** (urgent fix, deliberate call): it is
 functionally fine — prod gets exactly dev HEAD — but `/actuator/info` will report the
-PREVIOUS version while holding the next version's content, and a later dev→master merge
+PREVIOUS version while holding the next version's content, and a later dev→main merge
 builds a `:v<old-version>` tag over content that is not that version. Record the decision
 and correct it at the next opportunity.
 
@@ -330,14 +330,14 @@ rolling back (additive `IF NOT EXISTS` changes usually are; drops/renames are no
 
 ## PHASE 7 — Bookkeeping
 
-- **`master` fast-forwards itself.** Since 2026-09-15 `promote.yml`'s last step pushes the
-  deployed commit to `master`, so there is normally nothing to do here — check the step
-  passed and move on. It is a plain push: it succeeds only if `master` is strictly behind,
-  which is what keeps `master` from ever diverging.
+- **`main` fast-forwards itself.** Since 2026-09-15 `promote.yml`'s last step pushes the
+  deployed commit to `main`, so there is normally nothing to do here — check the step
+  passed and move on. It is a plain push: it succeeds only if `main` is strictly behind,
+  which is what keeps `main` from ever diverging.
   - **Step failed?** Almost always a rollback: prod went backwards, so the deployed commit
-    is not a descendant of `master` and the push is correctly refused. The deploy itself
+    is not a descendant of `main` and the push is correctly refused. The deploy itself
     already succeeded. Decide deliberately what the record should say — do not force-push.
-  - A **manual** dev→master merge is still occasionally wanted (e.g. to record docs
+  - A **manual** dev→main merge is still occasionally wanted (e.g. to record docs
     commits that never shipped). That needs explicit user permission, same CLAUDE.md §5
     gate, and a PR for it cannot be approved by its own author.
 - Release-please is **not** a Phase 7 step — it is a Phase 0b precondition. If you reach
@@ -349,7 +349,7 @@ rolling back (additive `IF NOT EXISTS` changes usually are; drops/renames are no
 
 ## Fenced-off wrong paths
 
-- **Never push/merge to master to deploy** — forbidden without permission, and it does
+- **Never push/merge to main to deploy** — forbidden without permission, and it does
   not deploy anything anyway.
 - **Never restart a wedged (crash-looping, 0-replica) revision** — deploy a fresh
   revision or roll back.

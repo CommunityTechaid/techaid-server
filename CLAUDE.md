@@ -69,28 +69,30 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. Git — Branch Rules
 
-**Never push or merge to `master` without explicit permission in the current conversation.**
+**Never push or merge to `main` without explicit permission in the current conversation.**
 
-- All work goes to `dev` (or a feature branch). PRs target `dev`, not `master`.
-- **The deploy direction is `dev` → production → `master`. `master` is a record, never a source.**
+`master` was renamed to `main` on 2026-10-27.
+
+- All work goes to `dev` (or a feature branch). PRs target `dev`, not `main`.
+- **The deploy direction is `dev` → production → `main`. `main` is a record, never a source.**
   Production is deployed FROM the UAT-verified image: `promote.yml` (manual dispatch, gated on the
   `production` environment) points `api-production` at whatever image `api-testing` is already
   running. What ships to prod is the artefact UAT exercised — that is the whole point of the
-  pipeline, so never route a prod deploy through `master`.
-- **`master` advances by itself.** `promote.yml`'s final step fast-forwards `master` to the commit
-  it just deployed, so the record keeps itself and there is normally no `dev` → `master` merge to
+  pipeline, so never route a prod deploy through `main`.
+- **`main` advances by itself.** `promote.yml`'s final step fast-forwards `main` to the commit
+  it just deployed, so the record keeps itself and there is normally no `dev` → `main` merge to
   ask for. The permission you already gave for the promote covers it. The push is a plain
-  fast-forward: on a rollback (an older image) it fails rather than rewriting `master`, leaving
-  `master` ahead of production for a human to resolve deliberately.
-- A **manual** `dev` → `master` merge still **records what already shipped**, and still needs
-  explicit permission — see the rule above. It builds a `master`-tagged image that no job deploys
+  fast-forward: on a rollback (an older image) it fails rather than rewriting `main`, leaving
+  `main` ahead of production for a human to resolve deliberately.
+- A **manual** `dev` → `main` merge still **records what already shipped**, and still needs
+  explicit permission — see the rule above. It builds a `main`-tagged image that no job deploys
   (`deploy-testing` is guarded to `dev`; there is no deploy-production job), so it cannot reach
   production. You should rarely need one now.
 - The dashboard repo works the same way: `deploy-prod.yml` refuses to run unless dispatched from
-  `dev`, and fast-forwards `master` to the deployed commit as its final step. Both repos have
+  `dev`, and fast-forwards `main` to the deployed commit as its final step. Both repos have
   behaved this way since 2026-09-15; before that only the dashboard did.
 - To answer "what is running in production?", read the running image
-  (`az containerapp show -n api-production ...`) or `/actuator/info`. Never infer it from `master`.
+  (`az containerapp show -n api-production ...`) or `/actuator/info`. Never infer it from `main`.
 - "commit/push/PR" means commit to the current branch and open a PR targeting `dev` unless the user says otherwise.
 - If in doubt, ask. The cost of asking is lower than an unintended production change.
 

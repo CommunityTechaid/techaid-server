@@ -43,7 +43,7 @@ These files are always loaded into Claude's context. Read them yourself once too
 
 | File | What it covers |
 |---|---|
-| `techaid-server/CLAUDE.md` | Behavioural rules (think first, keep it simple, make surgical changes) and the **Git branch rules**: `dev` → prod → `master` |
+| `techaid-server/CLAUDE.md` | Behavioural rules (think first, keep it simple, make surgical changes) and the **Git branch rules**: `dev` → prod → `main` |
 | `techaid-server/README.md` → "START HERE" | Quick reference: tests, the UAT deploy check, cold starts, Windows tips |
 | `techaid-server/SITE-IS-DOWN.md` | The first 10 minutes of an incident. It is usually a 40–90 s cold start |
 | `techaid-dashboard/CLAUDE.md` | Build and run, architecture map, release workflow, testing and tokens, **issue-triage workflow** |
@@ -90,7 +90,7 @@ The live UAT suite (`npx playwright test`) needs a bearer token. See "Testing" i
 
 ## 7. Rules that matter
 
-- Branch from `dev` and open PRs against **`dev`**. Never push to `dev` or `master` directly, and never create `v*` tags; release-please and the workflows own them.
+- Branch from `dev` and open PRs against **`dev`**. Never push to `dev` or `main` directly, and never create `v*` tags; release-please and the workflows own them.
 - Give PRs conventional-commit titles (`fix:`, `feat:`, `chore:`, `docs:`). release-please uses them to pick the version bump and build the changelog.
 - Every bug fix comes with a test that **fails before the fix and passes after**.
 - Keep each PR to the issue in hand. Flag the same problem elsewhere instead of fixing it in the same PR.

@@ -19,7 +19,7 @@ and GDPR machinery.
 
 **When NOT to use this skill:**
 - Deploying/restarting the app, Container Apps revisions, KEDA scaling → **techaid-deploy-and-operate**
-- Promoting dev → master / production releases → **techaid-prod-promotion-campaign**
+- Promoting dev → main / production releases → **techaid-prod-promotion-campaign**
 - Non-DB build/test environment problems → **techaid-build-and-env**
 - App-level config that isn't `DDL_AUTO`/datasource → **techaid-config-and-flags**
 - Querying logs/metrics (App Insights, Log Analytics) → **techaid-diagnostics-and-observability**
@@ -257,7 +257,7 @@ Also: when adding a NOT NULL column to a table that has rows, supply a `default`
    `SchemaValidationTest` then boots Hibernate in `validate` mode against the
    Flyway-only schema — if your entity needs something no migration provides, it fails,
    and the fix is a migration, not ddl-auto.
-7. PR to `dev` (never master — **techaid-change-control**). The push to `dev`
+7. PR to `dev` (never main — **techaid-change-control**). The push to `dev`
    auto-deploys to UAT, where the migration actually applies to `techaid_uat`. Verify
    the deploy log shows `Successfully applied N migration(s)` and the revision is
    healthy before considering it done.

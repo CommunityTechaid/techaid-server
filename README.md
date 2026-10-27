@@ -20,7 +20,7 @@ Quick reference (the skills have the full detail):
   SHA and the latest revision is Healthy. Full detail: `techaid-deploy-and-operate`.
 - **Deploy to production:** manual only — Actions → "Promote UAT → Production" (requires
   `production` environment approval). Rollback = same workflow with an `image_tag` input. Gated
-  runbook: `techaid-prod-promotion-campaign`. **Never merge to `master` or create `v*` tags by
+  runbook: `techaid-prod-promotion-campaign`. **Never merge to `main` or create `v*` tags by
   hand** — release-please owns those.
 - **"The site is down":** see [`SITE-IS-DOWN.md`](SITE-IS-DOWN.md) — first check is almost always
   a 40–90 s cold start, not an outage.

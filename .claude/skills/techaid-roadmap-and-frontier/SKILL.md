@@ -397,7 +397,7 @@ No item on this list self-authorises. The route is always:
    `techaid-diagnostics-and-observability`, hypothesis discipline per
    `techaid-investigation-methodology`.
 3. **Gate it** — classification, approval, and the non-negotiables live in
-   `techaid-change-control` (PRs target `dev`; never promote to master
+   `techaid-change-control` (PRs target `dev`; never promote to main
    without explicit maintainer instruction; behaviour-visible changes need a
    dashboard audit).
 4. **Red/green it** — every behaviour change ships failing-first tests per

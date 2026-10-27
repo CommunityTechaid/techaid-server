@@ -8,7 +8,7 @@ description: How to MEASURE the techaid-server system instead of eyeballing it. 
 This skill maps every diagnostic surface of the TechAid API (`techaid-server`, running as Azure Container Apps `api-testing` and `api-production`) and gives you copy-paste queries with interpretation guides, plus four tested scripts. The rule of this project: **never claim "it's slow", "it's fixed", or "it's down" without a number or a log line from one of these surfaces.**
 
 **When NOT to use this skill:**
-- Deploying, promoting, rolling back, or restarting apps → `techaid-deploy-and-operate` (and `techaid-prod-promotion-campaign` for dev→master).
+- Deploying, promoting, rolling back, or restarting apps → `techaid-deploy-and-operate` (and `techaid-prod-promotion-campaign` for dev→main).
 - A symptom you want triaged to a cause → `techaid-debugging-playbook` (it will send you back here for the measurement steps).
 - Database-level investigation (slow queries inside Postgres, migrations, ownership) → `techaid-database-operations`.
 - Understanding why telemetry code in the repo looks the way it does (past incidents) → `techaid-failure-archaeology`.

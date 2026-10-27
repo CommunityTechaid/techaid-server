@@ -281,7 +281,7 @@ that; watch Flyway's own log lines on first start.
   substrings of `oauth2`). Dead weight since the zonky switch; a candidate for removal
 - `org.webjars:font-awesome` is likewise unreferenced
 - This file's header still says "PR to `master` when each tier or group is done", which
-  contradicts CLAUDE.md §5 — PRs target `dev`, and `master` only ever records what shipped
+  contradicts CLAUDE.md §5 — PRs target `dev`, and `main` only ever records what shipped
 
 
 ---
