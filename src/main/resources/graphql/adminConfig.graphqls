@@ -8,6 +8,10 @@ type AdminConfig {
     canPublicRequestDesktop: Boolean
     createdAt: String
     updatedAt: String
+    "What happens to a request once an organisation's membership allowance is used up. Readable anonymously."
+    membershipOverLimitMode: MembershipOverLimitMode
+    "Requests accepted past the cap in GRACE mode. Readable anonymously."
+    membershipGraceRequests: Int
 }
 
 input UpdateAdminConfigInput {
@@ -17,6 +21,10 @@ input UpdateAdminConfigInput {
     canPublicRequestBroadbandHub: Boolean
     canPublicRequestTablet: Boolean
     canPublicRequestDesktop: Boolean
+    "Null or absent leaves the value unchanged"
+    membershipOverLimitMode: MembershipOverLimitMode
+    "Null or absent leaves the value unchanged. Must be 0 or more"
+    membershipGraceRequests: Int
 }
 
 extend type Query {

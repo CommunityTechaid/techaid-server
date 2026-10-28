@@ -8,6 +8,13 @@ type ReferringOrganisation {
     createdAt: String
     updatedAt: String
     referringOrganisationContacts: [ReferringOrganisationContact]
+    membershipTier: MembershipTier!
+    "Plain YYYY-MM-DD date the membership year is anchored to (a London calendar date)"
+    membershipStartDate: String!
+    "The current membership year and how much of the allowance is used (see membership.graphqls)"
+    membership: Membership!
+    "Non-archived referees flagged as membership contacts"
+    membershipContacts: [ReferringOrganisationContact!]!
 }
 
 "A representation of a page result from a query"
@@ -53,6 +60,10 @@ input UpdateReferringOrganisationInput {
     website: String
     phoneNumber: String
     archived: Boolean
+    "Null or absent leaves the tier unchanged"
+    membershipTier: MembershipTier
+    "YYYY-MM-DD. Null or absent leaves the start date unchanged"
+    membershipStartDate: String
 }
 
 input ReferringOrganisationWhereInput {
@@ -60,6 +71,7 @@ input ReferringOrganisationWhereInput {
     name: TextComparison
     website: TextComparison
     archived: BooleanComparison
+    membershipTier: MembershipTierComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
     AND: [ReferringOrganisationWhereInput!]

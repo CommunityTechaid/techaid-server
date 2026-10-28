@@ -1,5 +1,7 @@
 package cta.app.graphql.mutations
 
+import cta.app.MembershipPeriods
+import cta.app.MembershipTier
 import cta.app.ReferringOrganisation
 import cta.app.ReferringOrganisationRepository
 import cta.toNullable
@@ -75,14 +77,22 @@ data class UpdateReferringOrganisationInput(
     var website: String? = null,
     var phoneNumber: String? = null,
     val archived: Boolean? = null,
+    // Null or absent = unchanged. Several dashboard callers update organisations without knowing
+    // about membership; full-replace semantics would silently reset the tier and start date.
+    val membershipTier: MembershipTier? = null,
+    val membershipStartDate: String? = null,
 ) {
     fun apply(entity: ReferringOrganisation): ReferringOrganisation {
         val self = this
+        // Parsed before any field is assigned so a bad date leaves the entity untouched.
+        val newStartDate = self.membershipStartDate?.let { MembershipPeriods.parseDate("membershipStartDate", it) }
         return entity.apply {
             name = self.name
             website = self.website
             phoneNumber = self.phoneNumber ?: phoneNumber
             archived = self.archived ?: archived
+            membershipTier = self.membershipTier ?: membershipTier
+            membershipStartDate = newStartDate ?: membershipStartDate
         }
     }
 }

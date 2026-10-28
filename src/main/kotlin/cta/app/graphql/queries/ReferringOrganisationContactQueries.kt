@@ -67,7 +67,7 @@ class ReferringOrganisationContactQueries(
         return referringOrganisationContacts
             .findAll(where.build(), PageRequest.of(0, MAX_PUBLIC_RESULTS, sort))
             .content
-            .map { ReferringOrganisationContactPublic(it.id, it.fullName) }
+            .map { ReferringOrganisationContactPublic(it.id, it.fullName, it.referringOrganisation.id) }
     }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
@@ -97,4 +97,6 @@ class ReferringOrganisationContactQueries(
 data class ReferringOrganisationContactPublic(
     val id: Long,
     val fullName: String? = null,
+    // Not in the SDL: carried only so membershipAllowance can find the organisation.
+    val referringOrganisationId: Long,
 )

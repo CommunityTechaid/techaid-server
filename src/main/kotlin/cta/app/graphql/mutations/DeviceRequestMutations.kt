@@ -17,6 +17,8 @@ import cta.app.services.BlockingFlagSetException
 import cta.app.services.BookingRateLimiter
 import cta.app.services.FilterService
 import cta.app.services.MailService
+import cta.app.services.MembershipAllowanceService
+import cta.app.services.MembershipLimitReachedException
 import cta.app.services.PublicCreateThrottle
 import cta.app.services.RefereeRequestLimitService
 import cta.app.services.WipeCertGuardService
@@ -82,6 +84,19 @@ class ControllerExceptionHandler {
             .newError()
             .errorType(ErrorType.BAD_REQUEST)
             .message(ex.message)
+            // Machine-readable so clients need not match wording. Additive: message and type are unchanged.
+            .extensions(mapOf("code" to "REFEREE_LIMIT_REACHED"))
+            .build()
+
+    // Membership allowance used up (#311). Distinct from the referee cap above: stable message
+    // prefix AND extensions.code, so the dashboard never has to tell the two apart by wording.
+    @GraphQlExceptionHandler
+    fun handleMembershipLimitReached(ex: MembershipLimitReachedException): GraphQLError =
+        GraphqlErrorBuilder
+            .newError()
+            .errorType(ErrorType.BAD_REQUEST)
+            .message(ex.message)
+            .extensions(mapOf("code" to MembershipLimitReachedException.CODE))
             .build()
 
     // Wipe-cert guard rejection (#68): surface the reason (kit id + missing cert) so the
@@ -118,6 +133,7 @@ class DeviceRequestMutations(
     private val wipeCertGuard: WipeCertGuardService,
     private val blockingFlagGuard: BlockingFlagGuardService,
     private val refereeRequestLimits: RefereeRequestLimitService,
+    private val membershipAllowance: MembershipAllowanceService,
     private val publicCreateThrottle: PublicCreateThrottle,
     @Qualifier("publicDeviceRequestRateLimiter") private val publicCreateRateLimiter: BookingRateLimiter,
 ) {
@@ -143,8 +159,14 @@ class DeviceRequestMutations(
             )
         }
 
+        // Then the organisation's yearly membership allowance (#311). Runs second so the referee
+        // cap's behaviour and message are unchanged when both would fail. Returns the grace index
+        // when this request is accepted past the cap; throws MembershipLimitReachedException to refuse.
+        val graceIndex = membershipAllowance.checkNewRequest(referringOrganisationContact.referringOrganisation)
+
         val deviceRequest =
             DeviceRequest(
+                membershipGraceIndex = graceIndex,
                 deviceRequestItems = data.deviceRequestItems.entity,
                 referringOrganisationContact = referringOrganisationContact,
                 isSales = data.isSales ?: false,

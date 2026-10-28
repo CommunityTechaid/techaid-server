@@ -21,6 +21,12 @@ interface DonorParentRepository :
     JpaRepository<DonorParent, Long>,
     QuerydslPredicateExecutor<DonorParent>
 
+/** One row of [DeviceRequestRepository.countMembershipUsage]. */
+interface MembershipUsageCount {
+    val organisationId: Long
+    val used: Long
+}
+
 interface KitStatusCount {
     val status: KitStatus
     val count: Long
@@ -127,6 +133,32 @@ interface DeviceRequestRepository :
         closedStatuses: Collection<DeviceRequestStatus>,
         boroughs: Collection<String>,
     ): Long
+
+    /**
+     * Requests that count towards membership allowances, grouped by organisation, for one membership
+     * period (#311). One grouped query serves every organisation on a page that shares the period.
+     *
+     * Deliberately NOT filtered on `archived`: a request made by a referee who has since been
+     * archived still used the organisation's allowance. `createdAt` is compared against
+     * London-midnight bounds (see [MembershipPeriod]); `excluded` is
+     * [MEMBERSHIP_NON_COUNTING_STATUSES].
+     */
+    @Query(
+        """
+        SELECT c.referringOrganisation.id AS organisationId, COUNT(d) AS used
+        FROM DeviceRequest d JOIN d.referringOrganisationContact c
+        WHERE c.referringOrganisation.id IN :organisationIds
+          AND d.status NOT IN :excluded
+          AND d.createdAt >= :from AND d.createdAt < :to
+        GROUP BY c.referringOrganisation.id
+    """,
+    )
+    fun countMembershipUsage(
+        organisationIds: Collection<Long>,
+        excluded: Collection<DeviceRequestStatus>,
+        from: java.time.Instant,
+        to: java.time.Instant,
+    ): List<MembershipUsageCount>
 
     @Query(
         """

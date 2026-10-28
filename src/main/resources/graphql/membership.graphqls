@@ -1,0 +1,75 @@
+"Membership tier. FREE is the default for every organisation; TIER_3 is uncapped."
+enum MembershipTier {
+    "1-10 requests per membership year (cap 10)"
+    FREE
+    "11-20 requests per year (cap 20)"
+    TIER_1
+    "21-40 requests per year (cap 40)"
+    TIER_2
+    "41+ requests per year (no cap)"
+    TIER_3
+}
+
+enum MembershipState {
+    OK
+    "remaining == 1"
+    LAST_REQUEST
+    "remaining <= 0"
+    LIMIT_REACHED
+}
+
+"What happens to a request made once the allowance is used up."
+enum MembershipOverLimitMode {
+    "Accept up to membershipGraceRequests requests past the cap, then behave like BLOCK"
+    GRACE
+    "Refuse createDeviceRequest with a 'Membership allowance reached:' error"
+    BLOCK
+}
+
+"""
+An organisation's membership allowance for the current membership year. All dates are plain
+YYYY-MM-DD London calendar dates. The period rolls forward automatically; nothing is scheduled.
+"""
+type Membership {
+    tier: MembershipTier!
+    periodStart: String!
+    "Computed: periodStart + 1 year - 1 day"
+    periodEnd: String!
+    "Null for TIER_3 (uncapped)"
+    cap: Int
+    used: Int!
+    "Null for TIER_3. Never negative"
+    remaining: Int
+    state: MembershipState!
+    "Requests accepted past the cap this period; 0 unless the over-limit mode is GRACE"
+    graceUsed: Int!
+}
+
+"""
+The anonymous view of an allowance, on ReferringOrganisationContactPublic. Deliberately small:
+no contact names, no organisation id.
+"""
+type MembershipPublic {
+    tier: MembershipTier!
+    state: MembershipState!
+    cap: Int
+    used: Int!
+    remaining: Int
+    periodEnd: String!
+    graceUsed: Int!
+    "Grace requests still available; 0 in BLOCK mode and for TIER_3"
+    graceRemaining: Int!
+}
+
+input MembershipTierComparison {
+    "Matches values that are equal to"
+    _eq: MembershipTier
+    "Matches values contained in the collection"
+    _in: [MembershipTier]
+    "Matches values that are null/not null"
+    _is_null: Boolean
+    "Matches values that are not equal to"
+    _neq: MembershipTier
+    "Matches values that are not contained in the collection"
+    _nin: [MembershipTier]
+}

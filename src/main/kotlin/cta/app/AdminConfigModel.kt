@@ -1,6 +1,8 @@
 package cta.app
 
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
@@ -26,6 +28,12 @@ class AdminConfig(
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp
     var updatedAt: Instant = Instant.now(),
+    // What happens to a request made after an organisation's membership allowance is used up
+    // (#311). Staff-editable, anonymously readable (the public form picks its wording from it).
+    @Enumerated(EnumType.STRING)
+    var membershipOverLimitMode: MembershipOverLimitMode = MembershipOverLimitMode.GRACE,
+    // How many requests past the cap GRACE mode accepts; unused in BLOCK mode.
+    var membershipGraceRequests: Int = 2,
 )
 
 interface AdminConfigRepository :
@@ -40,6 +48,9 @@ interface AdminConfigRepository :
     )
     fun getAdminConfig(): AdminConfig
 
+    // Not called by the updateAdminConfig mutation (which edits the managed entity). It sets the
+    // can_public_request* columns only and deliberately does NOT touch the membership columns, so
+    // it can never reset them. Keep it that way if it is ever wired up.
     @Modifying
     @Query(
         "UPDATE Admin_Config c " +

@@ -19,6 +19,8 @@ type DeviceRequest {
     collectionMethod: CollectionMethod
     collectionContactName: String
     isPrepped: Boolean
+    "1-based position among the grace requests accepted past the membership cap; null otherwise"
+    membershipGraceIndex: Int
 }
 
 "A representation of a page result from a query"
@@ -80,6 +82,8 @@ type DeviceRequestPublic {
     "We use string instead of long because JS truncates Long value"
     correlationId: String
     status: DeviceRequestStatus
+    "1-based grace position when this request was accepted past the membership cap; null otherwise"
+    membershipGraceIndex: Int
 }
 
 type DeviceRequestNeeds{

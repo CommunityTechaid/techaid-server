@@ -10,6 +10,7 @@ type ReferringOrganisationContact {
     referringOrganisation: ReferringOrganisation
     requestCount: Int
     notes: [ReferringOrganisationContactNotes]
+    isMembershipContact: Boolean!
 }
 
 "A representation of a page result from a query"
@@ -44,6 +45,8 @@ input CreateReferringOrganisationContactInput {
     email: String!
     phoneNumber: String
     referringOrganisation: ID!
+    "Optional; defaults to false"
+    isMembershipContact: Boolean
 }
 
 input UpdateReferringOrganisationContactInput {
@@ -55,6 +58,8 @@ input UpdateReferringOrganisationContactInput {
     referringOrganisationId: ID
     archived: Boolean
     note: ReferringOrganisationContactNoteInput
+    "Null or absent leaves the flag unchanged"
+    isMembershipContact: Boolean
 }
 
 input ReferringOrganisationContactWhereInput {
@@ -65,6 +70,7 @@ input ReferringOrganisationContactWhereInput {
     phoneNumber: TextComparison
     referringOrganisation: ReferringOrganisationWhereInput
     archived: BooleanComparison
+    isMembershipContact: BooleanComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
     AND: [ReferringOrganisationContactWhereInput!]
@@ -88,6 +94,12 @@ input ReferringOrganisationContactPublicWhereInput{
 type ReferringOrganisationContactPublic{
     id: ID!
     fullName: String
+    """
+    The contact's organisation's membership allowance. Reachable only through this lookup, which
+    already requires an exact referee email, so an organisation's usage is never readable without
+    knowing one of its referees' addresses. No contact names are exposed.
+    """
+    membershipAllowance: MembershipPublic
 }
 
 

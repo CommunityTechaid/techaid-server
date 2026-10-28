@@ -66,4 +66,70 @@ class SchemaAssemblyTest {
             assertEquals("LenientString", (field.type as graphql.schema.GraphQLNamedType).name)
         }
     }
+
+    // Membership (#311): the contract the dashboard is built against, by exact name.
+    @Test
+    fun `membership types and fields match the contract the dashboard builds against`() {
+        val schema = assembleSchema()
+
+        fun fields(type: String) = (schema.getType(type) as graphql.schema.GraphQLFieldsContainer).fieldDefinitions.map { it.name }.toSet()
+
+        fun enumValues(type: String) = (schema.getType(type) as graphql.schema.GraphQLEnumType).values.map { it.name }.toSet()
+
+        assertEquals(
+            setOf("tier", "periodStart", "periodEnd", "cap", "used", "remaining", "state", "graceUsed"),
+            fields("Membership"),
+        )
+        assertEquals(
+            setOf("tier", "state", "cap", "used", "remaining", "periodEnd", "graceUsed", "graceRemaining"),
+            fields("MembershipPublic"),
+        )
+        assertEquals(setOf("FREE", "TIER_1", "TIER_2", "TIER_3"), enumValues("MembershipTier"))
+        assertEquals(setOf("OK", "LAST_REQUEST", "LIMIT_REACHED"), enumValues("MembershipState"))
+        assertEquals(setOf("GRACE", "BLOCK"), enumValues("MembershipOverLimitMode"))
+
+        assertEquals(true, "membershipAllowance" in fields("ReferringOrganisationContactPublic"))
+        assertEquals(true, "membershipGraceIndex" in fields("DeviceRequestPublic"))
+        assertEquals(true, "membershipGraceIndex" in fields("DeviceRequest"))
+        assertEquals(true, "isMembershipContact" in fields("ReferringOrganisationContact"))
+        assertEquals(
+            setOf("membershipTier", "membershipStartDate", "membership", "membershipContacts"),
+            fields("ReferringOrganisation").filter { it.startsWith("membership") }.toSet(),
+        )
+        assertEquals(true, fields("AdminConfig").containsAll(setOf("membershipOverLimitMode", "membershipGraceRequests")))
+    }
+
+    // Dates are plain strings (YYYY-MM-DD), never the Instant scalar, and every new update-input
+    // field is nullable so that null or absent can mean "unchanged".
+    @Test
+    fun `membership dates are plain strings and new input fields are nullable`() {
+        val schema = assembleSchema()
+
+        fun input(
+            type: String,
+            field: String,
+        ) = (schema.getType(type) as graphql.schema.GraphQLInputObjectType).getField(field).type
+
+        assertEquals("String", (input("UpdateReferringOrganisationInput", "membershipStartDate") as graphql.schema.GraphQLNamedType).name)
+        listOf(
+            "UpdateReferringOrganisationInput" to "membershipTier",
+            "UpdateReferringOrganisationContactInput" to "isMembershipContact",
+            "CreateReferringOrganisationContactInput" to "isMembershipContact",
+            "UpdateAdminConfigInput" to "membershipOverLimitMode",
+            "UpdateAdminConfigInput" to "membershipGraceRequests",
+        ).forEach { (type, field) ->
+            assertEquals(false, input(type, field) is graphql.schema.GraphQLNonNull, "$type.$field must be nullable")
+        }
+
+        val membership = schema.getType("Membership") as graphql.schema.GraphQLObjectType
+        listOf("periodStart", "periodEnd").forEach {
+            val type = membership.getFieldDefinition(it).type as graphql.schema.GraphQLNonNull
+            assertEquals("String", (type.wrappedType as graphql.schema.GraphQLNamedType).name)
+        }
+
+        val where = schema.getType("ReferringOrganisationWhereInput") as graphql.schema.GraphQLInputObjectType
+        assertEquals("MembershipTierComparison", (where.getField("membershipTier").type as graphql.schema.GraphQLNamedType).name)
+        val contactWhere = schema.getType("ReferringOrganisationContactWhereInput") as graphql.schema.GraphQLInputObjectType
+        assertEquals("BooleanComparison", (contactWhere.getField("isMembershipContact").type as graphql.schema.GraphQLNamedType).name)
+    }
 }
