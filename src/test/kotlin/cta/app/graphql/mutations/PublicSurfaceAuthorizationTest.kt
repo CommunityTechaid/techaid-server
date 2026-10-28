@@ -44,6 +44,9 @@ class PublicSurfaceAuthorizationTest {
     lateinit var mockMvc: MockMvc
 
     @Autowired
+    lateinit var jdbc: org.springframework.jdbc.core.JdbcTemplate
+
+    @Autowired
     lateinit var referringOrganisations: ReferringOrganisationRepository
 
     @Autowired
@@ -251,6 +254,63 @@ class PublicSurfaceAuthorizationTest {
         authorizedGraphQl(setExemptionMutation, "app:admin")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors[0].message").value(notAccessDenied))
+    }
+
+    // Membership (#311). The tier decides who is capped, so changing it is staff-only like every
+    // other organisation edit; the allowance itself is only ever served through gated queries or
+    // the public referee lookup (pinned in MembershipGraphQlTest).
+    @Test
+    fun `updateReferringOrganisation with a membership tier rejects anonymous and read-only callers`() {
+        val organisation = referringOrganisations.save(ReferringOrganisation(name = "Tier Probe Org ${System.nanoTime()}"))
+        val mutation =
+            """mutation { updateReferringOrganisation(data: { id: \"${organisation.id}\", name: \"Tier Probe\", """ +
+                """membershipTier: TIER_3 }) { id } }"""
+
+        anonymousGraphQl(mutation)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+        authorizedGraphQl(mutation, "read:organisations")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+        assertTrue(
+            referringOrganisations.findById(organisation.id).get().membershipTier == cta.app.MembershipTier.FREE,
+            "a refused call must not change the tier",
+        )
+    }
+
+    @Test
+    fun `an organisation's membership cannot be read anonymously`() {
+        anonymousGraphQl(
+            """query { referringOrganisations(where: {}) { id membership { used } } }""",
+        ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+    }
+
+    @Test
+    fun `adminConfig stays anonymous with the over-limit settings but updateAdminConfig stays gated`() {
+        // Nothing in Flyway seeds the singleton admin_config row, so give the test database one
+        // (and take it away again if this test is the one that made it).
+        val created =
+            jdbc.update(
+                "insert into admin_config (id, can_public_request_broadband_hub, can_public_request_desktop, " +
+                    "can_public_request_laptop, can_public_request_phone, can_public_request_tablet, can_public_requestsimcard) " +
+                    "values (1, true, true, true, true, true, true) on conflict (id) do nothing",
+            ) == 1
+        try {
+            anonymousGraphQl("""query { adminConfig { membershipOverLimitMode membershipGraceRequests } }""")
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.adminConfig.membershipOverLimitMode").isNotEmpty)
+        } finally {
+            if (created) jdbc.update("delete from admin_config where id = 1")
+        }
+
+        anonymousGraphQl(
+            """mutation { updateAdminConfig(data: { canPublicRequestSIMCard: true, canPublicRequestLaptop: true, """ +
+                """canPublicRequestPhone: true, canPublicRequestBroadbandHub: true, canPublicRequestTablet: true, """ +
+                """canPublicRequestDesktop: true, membershipOverLimitMode: BLOCK }) { id } }""",
+        ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
     }
 
     companion object {
