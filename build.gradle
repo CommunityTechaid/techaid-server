@@ -190,6 +190,14 @@ dependencies {
     implementation 'com.google.api-client:google-api-client:2.9.1'
     implementation 'com.google.apis:google-api-services-gmail:v1-rev20260112-2.0.0'
     implementation 'com.google.auth:google-auth-library-oauth2-http:1.54.0'
+    constraints {
+        /*
+         * Guava comes in only through the Google clients above, which ask for 33.1.0 or older.
+         * Raise the floor here; Dependabot cannot open a PR for a transitive Gradle dependency.
+         * GuavaVersionTest fails if this is lost. Drop it once the clients require 33.7.2+.
+         */
+        implementation('com.google.guava:guava:33.7.2-jre')
+    }
     implementation 'com.sun.mail:jakarta.mail:2.0.2'
 
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
