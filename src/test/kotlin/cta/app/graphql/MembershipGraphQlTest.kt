@@ -160,11 +160,13 @@ class MembershipGraphQlTest {
     private fun org(
         tier: MembershipTier = MembershipTier.FREE,
         start: String? = null,
+        end: String? = null,
     ) = organisations.save(
         ReferringOrganisation(
             name = "GraphQL membership org ${System.nanoTime()}",
             membershipTier = tier,
             membershipStartDate = start?.let { java.time.LocalDate.parse(it) } ?: MembershipPeriods.defaultStartDate(),
+            membershipEndDate = end?.let { java.time.LocalDate.parse(it) },
         ),
     )
 
@@ -428,23 +430,84 @@ class MembershipGraphQlTest {
     }
 
     @Test
-    fun `staff can set the tier and a plain-date start`() {
+    fun `staff can set the tier and a plain-date start, and the end defaults to a year less a day`() {
         val org = org()
+        val start = MembershipPeriods.today().minusMonths(2)
 
         val body =
             gql(
                 "mutation(\$id: ID!) { updateReferringOrganisation(data: { id: \$id name: \"Upgraded\" " +
-                    "membershipTier: TIER_2 membershipStartDate: \"2026-06-15\" }) " +
-                    "{ membershipTier membershipStartDate membership { tier periodStart periodEnd cap } } }",
+                    "membershipTier: TIER_2 membershipStartDate: \"$start\" }) " +
+                    "{ membershipTier membershipStartDate membershipEndDate membership { tier periodStart periodEnd cap } } }",
                 mapOf("id" to org.id),
             )
 
         val updated = body["data"]["updateReferringOrganisation"]
         assertThat(updated["membershipTier"].asString()).isEqualTo("TIER_2")
-        assertThat(updated["membershipStartDate"].asString()).isEqualTo("2026-06-15")
-        assertThat(updated["membership"]["periodStart"].asString()).isEqualTo("2026-06-15")
-        assertThat(updated["membership"]["periodEnd"].asString()).isEqualTo("2027-06-14")
+        val end = MembershipPeriods.defaultEndFor(start).toString()
+        assertThat(updated["membershipStartDate"].asString()).isEqualTo(start.toString())
+        assertThat(updated["membershipEndDate"].asString()).isEqualTo(end)
+        assertThat(updated["membership"]["periodStart"].asString()).isEqualTo(start.toString())
+        assertThat(updated["membership"]["periodEnd"].asString()).isEqualTo(end)
         assertThat(updated["membership"]["cap"].asInt()).isEqualTo(40)
+    }
+
+    @Test
+    fun `a partial update leaves the end date unchanged`() {
+        val org = org(MembershipTier.TIER_2, "2026-06-15", "2027-03-31")
+
+        gql(UPDATE_ORG_WITHOUT_MEMBERSHIP, mapOf("id" to org.id))
+
+        assertThat(
+            organisations
+                .findById(org.id)
+                .orElseThrow()
+                .membershipEndDate
+                .toString(),
+        ).isEqualTo("2027-03-31")
+    }
+
+    @Test
+    fun `an end date before the start date is refused with a clear error and nothing changes`() {
+        val org = org(MembershipTier.TIER_2, "2026-06-15", "2027-06-14")
+
+        val body =
+            gql(
+                "mutation(\$id: ID!) { updateReferringOrganisation(data: { id: \$id name: \"X\" " +
+                    "membershipEndDate: \"2026-06-01\" }) { id } }",
+                mapOf("id" to org.id),
+            )
+
+        assertThat(body["errors"].single()["message"].asString()).contains("membershipEndDate").contains("before")
+        assertThat(
+            organisations
+                .findById(org.id)
+                .orElseThrow()
+                .membershipEndDate
+                .toString(),
+        ).isEqualTo("2027-06-14")
+    }
+
+    @Test
+    fun `an expired membership reports the lapse in the staff view and keeps the stored tier`() {
+        val org = org(MembershipTier.TIER_2, "2025-03-01", "2026-02-28")
+
+        val body =
+            gql(
+                "query(\$id: Long) { referringOrganisations(where: { id: { _eq: \$id } }) { membershipTier membershipEndDate " +
+                    "membership { tier expired lapsedTier lapsedOn cap } } }",
+                mapOf("id" to org.id),
+            )
+
+        val row = body["data"]["referringOrganisations"].single()
+        assertThat(body.has("errors")).`as`(body.toString()).isFalse()
+        assertThat(row["membershipTier"].asString()).isEqualTo("TIER_2")
+        assertThat(row["membershipEndDate"].asString()).isEqualTo("2026-02-28")
+        assertThat(row["membership"]["tier"].asString()).isEqualTo("FREE")
+        assertThat(row["membership"]["expired"].asBoolean()).isTrue()
+        assertThat(row["membership"]["lapsedTier"].asString()).isEqualTo("TIER_2")
+        assertThat(row["membership"]["lapsedOn"].asString()).isEqualTo("2026-02-28")
+        assertThat(row["membership"]["cap"].asInt()).isEqualTo(10)
     }
 
     @Test

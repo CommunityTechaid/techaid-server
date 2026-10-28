@@ -81,18 +81,46 @@ data class UpdateReferringOrganisationInput(
     // about membership; full-replace semantics would silently reset the tier and start date.
     val membershipTier: MembershipTier? = null,
     val membershipStartDate: String? = null,
+    val membershipEndDate: String? = null,
 ) {
-    fun apply(entity: ReferringOrganisation): ReferringOrganisation {
+    fun apply(
+        entity: ReferringOrganisation,
+        today: java.time.LocalDate = MembershipPeriods.today(),
+    ): ReferringOrganisation {
         val self = this
-        // Parsed before any field is assigned so a bad date leaves the entity untouched.
+        // Parsed and validated before any field is assigned so a bad date leaves the entity untouched.
         val newStartDate = self.membershipStartDate?.let { MembershipPeriods.parseDate("membershipStartDate", it) }
+        val newEndDate = self.membershipEndDate?.let { MembershipPeriods.parseDate("membershipEndDate", it) }
+        val movesToPaid =
+            self.membershipTier != null && self.membershipTier != MembershipTier.FREE &&
+                self.membershipTier != entity.membershipTier
+        val storedEnd = entity.membershipEndDate
+        val periodOver = storedEnd == null || storedEnd.isBefore(today)
+
+        var start = newStartDate ?: entity.membershipStartDate
+        var end = newEndDate ?: storedEnd
+        var datesChanged = newStartDate != null || newEndDate != null
+        if (newEndDate == null) {
+            if (movesToPaid && periodOver) {
+                // Starting (or restarting) a paid membership: with no start given it begins today.
+                if (newStartDate == null) start = today
+                end = MembershipPeriods.defaultEndFor(start)
+                datesChanged = true
+            } else if (newStartDate != null) {
+                end = MembershipPeriods.defaultEndFor(newStartDate)
+            }
+        }
+        if (datesChanged && end != null && end.isBefore(start)) {
+            throw IllegalArgumentException("membershipEndDate ($end) must not be before membershipStartDate ($start)")
+        }
         return entity.apply {
             name = self.name
             website = self.website
             phoneNumber = self.phoneNumber ?: phoneNumber
             archived = self.archived ?: archived
             membershipTier = self.membershipTier ?: membershipTier
-            membershipStartDate = newStartDate ?: membershipStartDate
+            membershipStartDate = start
+            membershipEndDate = end
         }
     }
 }

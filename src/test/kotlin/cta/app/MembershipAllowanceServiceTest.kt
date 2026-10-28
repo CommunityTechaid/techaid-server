@@ -100,8 +100,14 @@ class MembershipAllowanceServiceTest {
     private fun org(
         tier: MembershipTier = MembershipTier.FREE,
         start: LocalDate = MembershipPeriods.defaultStartDate(),
+        end: LocalDate? = null,
     ) = organisations.save(
-        ReferringOrganisation(name = "Membership org ${System.nanoTime()}", membershipTier = tier, membershipStartDate = start),
+        ReferringOrganisation(
+            name = "Membership org ${System.nanoTime()}",
+            membershipTier = tier,
+            membershipStartDate = start,
+            membershipEndDate = end,
+        ),
     )
 
     private fun referee(
@@ -224,8 +230,8 @@ class MembershipAllowanceServiceTest {
     }
 
     @Test
-    fun `only requests created inside the current period count and the allowance resets on roll-forward`() {
-        val org = org(start = d("2025-02-01"))
+    fun `FREE only counts requests inside the 1 February default year, whatever start is stored`() {
+        val org = org(start = d("2025-06-15")) // ignored for FREE
         val referee = referee(org)
         request(referee, createdAt = Instant.parse("2025-06-01T12:00:00Z"))
         request(referee, createdAt = Instant.parse("2026-01-31T12:00:00Z"))
@@ -243,8 +249,8 @@ class MembershipAllowanceServiceTest {
     }
 
     @Test
-    fun `a mid-year start only counts requests from that day`() {
-        val org = org(start = d("2026-06-15"))
+    fun `an active paid tier counts only requests inside its own start and end dates`() {
+        val org = org(MembershipTier.TIER_1, start = d("2026-06-15"), end = d("2027-06-14"))
         val referee = referee(org)
         request(referee, createdAt = Instant.parse("2026-06-14T10:00:00Z"))
         request(referee, createdAt = Instant.parse("2026-06-16T10:00:00Z"))
@@ -252,12 +258,64 @@ class MembershipAllowanceServiceTest {
         val membership = service.membershipFor(org, today = d("2026-10-28"))
 
         assertThat(membership.used).isEqualTo(1)
+        assertThat(membership.tier).isEqualTo(MembershipTier.TIER_1)
         assertThat(membership.periodStart).isEqualTo(d("2026-06-15"))
+        assertThat(membership.periodEnd).isEqualTo(d("2027-06-14"))
+        assertThat(membership.expired).isFalse()
+    }
+
+    @Test
+    fun `an expired paid tier is counted as FREE over the default year and reports the lapse`() {
+        val org = org(MembershipTier.TIER_2, start = d("2025-03-01"), end = d("2026-02-28"))
+        val referee = referee(org)
+        request(referee, createdAt = Instant.parse("2025-06-01T12:00:00Z")) // inside the lapsed term only
+        request(referee, createdAt = Instant.parse("2026-05-01T12:00:00Z")) // inside the default year
+
+        val membership = service.membershipFor(org, today = d("2026-10-28"))
+
+        assertThat(membership.tier).isEqualTo(MembershipTier.FREE)
+        assertThat(membership.cap).isEqualTo(10)
+        assertThat(membership.periodStart).isEqualTo(d("2026-02-01"))
+        assertThat(membership.periodEnd).isEqualTo(d("2027-01-31"))
+        assertThat(membership.used).isEqualTo(1)
+        assertThat(membership.expired).isTrue()
+        assertThat(membership.lapsedTier).isEqualTo(MembershipTier.TIER_2)
+        assertThat(membership.lapsedOn).isEqualTo(d("2026-02-28"))
+        assertThat(organisations.findById(org.id).orElseThrow().membershipTier).isEqualTo(MembershipTier.TIER_2)
+        assertThat(service.publicView(membership).expired).isTrue()
+        assertThat(service.publicView(membership).tier).isEqualTo(MembershipTier.FREE)
+    }
+
+    @Test
+    fun `a paid tier that has not started is FREE and not expired`() {
+        val org = org(MembershipTier.TIER_3, start = d("2026-12-01"), end = d("2027-11-30"))
+
+        val membership = service.membershipFor(org, today = d("2026-10-28"))
+
+        assertThat(membership.tier).isEqualTo(MembershipTier.FREE)
+        assertThat(membership.cap).isEqualTo(10)
+        assertThat(membership.expired).isFalse()
+        assertThat(membership.lapsedTier).isNull()
+        assertThat(membership.periodStart).isEqualTo(d("2026-02-01"))
+    }
+
+    @Test
+    fun `enforcement uses the effective tier, so an expired TIER_3 is capped at 10`() {
+        enforce(MembershipOverLimitMode.BLOCK)
+        val expired =
+            org(MembershipTier.TIER_3, start = MembershipPeriods.today().minusYears(2), end = MembershipPeriods.today().minusYears(1))
+        requests(referee(expired), 10)
+        assertThatThrownBy { service.checkNewRequest(expired) }.isInstanceOf(MembershipLimitReachedException::class.java)
+
+        val active =
+            org(MembershipTier.TIER_3, start = MembershipPeriods.today().minusMonths(1), end = MembershipPeriods.today().plusMonths(11))
+        requests(referee(active), 12)
+        assertThat(service.checkNewRequest(active)).isNull()
     }
 
     @Test
     fun `period boundaries are London midnights, so BST shifts them an hour against UTC`() {
-        val org = org(start = d("2025-04-01"))
+        val org = org(MembershipTier.TIER_1, start = d("2025-04-01"), end = d("2026-03-31"))
         val referee = referee(org)
         // BST began on 29 Mar 2026, so London is UTC+1 on these dates:
         // 22:30Z = 23:30 BST on 31 Mar (still the old year); 23:30Z = 00:30 BST on 1 Apr (new year).
@@ -267,8 +325,12 @@ class MembershipAllowanceServiceTest {
         val oldYear = service.membershipFor(org, today = d("2026-03-31"))
         assertThat(oldYear.used).`as`("old year holds only the 23:30 BST request").isEqualTo(1)
 
-        val newYear = service.membershipFor(org, today = d("2026-04-01"))
-        assertThat(newYear.used).`as`("new year holds only the 00:30 BST request").isEqualTo(1)
+        val renewed = org(MembershipTier.TIER_1, start = d("2026-04-01"), end = d("2027-03-31"))
+        val renewedReferee = referee(renewed)
+        request(renewedReferee, createdAt = Instant.parse("2026-03-31T22:30:00Z"))
+        request(renewedReferee, createdAt = Instant.parse("2026-03-31T23:30:00Z"))
+        val newYear = service.membershipFor(renewed, today = d("2026-04-01"))
+        assertThat(newYear.used).`as`("new term holds only the 00:30 BST request").isEqualTo(1)
     }
 
     @Test

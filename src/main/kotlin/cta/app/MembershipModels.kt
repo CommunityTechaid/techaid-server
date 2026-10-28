@@ -73,8 +73,18 @@ object MembershipPeriods {
         return LocalDate.of(year, DEFAULT_START_MONTH, 1)
     }
 
+    /** The rolling 1 February year containing [today]: what FREE (and a lapsed or unstarted paid tier) uses. */
+    fun defaultPeriod(today: LocalDate = today()): MembershipPeriod {
+        val start = defaultStartDate(today)
+        return MembershipPeriod(start, defaultEndFor(start))
+    }
+
+    /** The default end of a paid membership starting on [start]: one year later, less a day. */
+    fun defaultEndFor(start: LocalDate): LocalDate = start.plusYears(1).minusDays(1)
+
     /**
-     * The period containing [today], for an organisation whose membership is anchored at [start].
+     * The period containing [today], for a membership anchored at [start] that rolls forward.
+     * No longer used for effective membership (paid periods are explicit, FREE uses [defaultPeriod]).
      * The period rolls forward by whole years from [start]; nothing is stored, so there is no
      * renewal job. A [start] in the future yields the first period (nothing has been used in it).
      *

@@ -18,11 +18,30 @@ import java.time.LocalDate
 
 private val logger = KotlinLogging.logger {}
 
-/** Staff-facing allowance for one organisation: the GraphQL `Membership` type. */
+/**
+ * The tier and usage period that actually apply to an organisation today. A paid tier counts only
+ * inside its own [start, end] dates; FREE, and a paid tier that has lapsed or not yet started,
+ * falls back to the rolling 1 February year. The stored tier is never changed by a lapse.
+ */
+data class EffectiveMembership(
+    val tier: MembershipTier,
+    val period: MembershipPeriod,
+    val expired: Boolean = false,
+    val lapsedTier: MembershipTier? = null,
+    val lapsedOn: LocalDate? = null,
+)
+
+/** Staff-facing allowance for one organisation: the GraphQL `Membership` type (EFFECTIVE tier). */
 data class Membership(
     val tier: MembershipTier,
     val periodStart: LocalDate,
     val periodEnd: LocalDate,
+    /** True when a paid membership's end date has passed; [tier] is then FREE. */
+    val expired: Boolean,
+    /** The stored paid tier that lapsed; null unless [expired]. */
+    val lapsedTier: MembershipTier?,
+    /** The end date of the lapsed membership; null unless [expired]. */
+    val lapsedOn: LocalDate?,
     /** Null for an uncapped tier. */
     val cap: Int?,
     val used: Int,
@@ -39,6 +58,7 @@ data class Membership(
  */
 data class MembershipPublic(
     val tier: MembershipTier,
+    val expired: Boolean,
     val state: MembershipState,
     val cap: Int?,
     val used: Int,
@@ -72,9 +92,11 @@ class MembershipLimitReachedException(
  * requests one person has in flight; this bounds how many requests an organisation may make in a
  * membership year, however many referees it has.
  *
- * Nothing is stored beyond the tier and the period's start date. The current period and the usage
- * are computed on read, so renewal needs no job (the app is scaled to zero outside office hours,
- * and a missed job would silently leave an organisation capped).
+ * A paid tier is stored with explicit start and end dates and counts only while today is inside
+ * them. FREE, and a lapsed or not-yet-started paid tier, uses the rolling 1 February year. The
+ * effective tier, period and usage are computed on read, so renewal and lapse need no job (the app
+ * is scaled to zero outside office hours, and a missed job would silently leave an organisation
+ * on the wrong tier).
  *
  * **Enforcement is gated by the `membership-support` feature flag.** Every existing organisation
  * was defaulted to FREE (cap 10) by the migration; enforcing before staff have reviewed tiers
@@ -111,7 +133,8 @@ class MembershipAllowanceService(
     /**
      * Allowances for many organisations at once, keyed by organisation id. Costs one grouped count
      * per DISTINCT period among the organisations (nearly all share the 1 February default), not
-     * one per organisation — this is what keeps the three paged lists cheap.
+     * one per organisation — this is what keeps the three paged lists cheap. Paid organisations
+     * with their own dates add their own periods; everyone on the default year shares one.
      */
     fun membershipsFor(
         organisations: Collection<ReferringOrganisation>,
@@ -120,8 +143,10 @@ class MembershipAllowanceService(
     ): Map<Long, Membership> {
         if (organisations.isEmpty()) return emptyMap()
 
+        val effective: Map<Long, EffectiveMembership> =
+            organisations.distinctBy { it.id }.associate { it.id to effectiveMembership(it, today) }
         val byPeriod: Map<MembershipPeriod, List<ReferringOrganisation>> =
-            organisations.distinctBy { it.id }.groupBy { MembershipPeriods.periodFor(it.membershipStartDate, today) }
+            organisations.distinctBy { it.id }.groupBy { effective.getValue(it.id).period }
 
         val result = HashMap<Long, Membership>()
         byPeriod.forEach { (period, orgs) ->
@@ -134,7 +159,7 @@ class MembershipAllowanceService(
                         to = period.endExclusiveInstant,
                     ).associate { it.organisationId to it.used.toInt() }
             orgs.forEach { org ->
-                result[org.id] = compute(org.membershipTier, period, used[org.id] ?: 0, config.membershipOverLimitMode)
+                result[org.id] = compute(effective.getValue(org.id), used[org.id] ?: 0, config.membershipOverLimitMode)
             }
         }
         return result
@@ -153,6 +178,7 @@ class MembershipAllowanceService(
     ): MembershipPublic =
         MembershipPublic(
             tier = membership.tier,
+            expired = membership.expired,
             state = membership.state,
             cap = membership.cap,
             used = membership.used,
@@ -190,7 +216,7 @@ class MembershipAllowanceService(
 
         throw MembershipLimitReachedException(
             "${MembershipLimitReachedException.MESSAGE_PREFIX} your organisation has used all $cap requests " +
-                "for the membership year ending ${membership.periodEnd}. " +
+                "for the membership period ending ${membership.periodEnd}. " +
                 "Please contact Community TechAid about upgrading your membership.",
         )
     }
@@ -207,16 +233,50 @@ class MembershipAllowanceService(
         const val FLAG_KEY = "membership-support"
 
         /**
+         * The tier and period that apply to [organisation] on [today] (a London date):
+         * - FREE: FREE on the default 1 February year; the stored start/end are ignored.
+         * - paid, start <= today <= end: the stored tier on exactly [start, end].
+         * - paid, today > end: FREE on the default year, flagged expired with the lapsed tier/date.
+         * - paid, today < start: FREE on the default year, not expired.
+         * A paid organisation with no end date is treated as ending at start + 1 year - 1 day.
+         */
+        fun effectiveMembership(
+            organisation: ReferringOrganisation,
+            today: LocalDate,
+        ): EffectiveMembership {
+            val stored = organisation.membershipTier
+            val default = MembershipPeriods.defaultPeriod(today)
+            if (stored == MembershipTier.FREE) return EffectiveMembership(MembershipTier.FREE, default)
+
+            val start = organisation.membershipStartDate
+            val end = organisation.membershipEndDate ?: MembershipPeriods.defaultEndFor(start)
+            return when {
+                today.isAfter(end) -> {
+                    EffectiveMembership(MembershipTier.FREE, default, expired = true, lapsedTier = stored, lapsedOn = end)
+                }
+
+                today.isBefore(start) -> {
+                    EffectiveMembership(MembershipTier.FREE, default)
+                }
+
+                else -> {
+                    EffectiveMembership(stored, MembershipPeriod(start, end))
+                }
+            }
+        }
+
+        /**
          * Pure derivation of an allowance from its inputs. `graceUsed` is derived (requests beyond
          * the cap) rather than counted from `membership_grace_index`, so it cannot drift: a declined
          * grace request frees its slot and the next one reuses the same index.
          */
         fun compute(
-            tier: MembershipTier,
-            period: MembershipPeriod,
+            effective: EffectiveMembership,
             used: Int,
             mode: MembershipOverLimitMode,
         ): Membership {
+            val tier = effective.tier
+            val period = effective.period
             val cap = tier.cap
             val remaining = cap?.let { it - used }
             val state =
@@ -231,6 +291,9 @@ class MembershipAllowanceService(
                 tier = tier,
                 periodStart = period.start,
                 periodEnd = period.end,
+                expired = effective.expired,
+                lapsedTier = effective.lapsedTier,
+                lapsedOn = effective.lapsedOn,
                 cap = cap,
                 used = used,
                 remaining = remaining?.coerceAtLeast(0),

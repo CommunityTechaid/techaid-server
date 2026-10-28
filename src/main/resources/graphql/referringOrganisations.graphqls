@@ -9,8 +9,10 @@ type ReferringOrganisation {
     updatedAt: String
     referringOrganisationContacts: [ReferringOrganisationContact]
     membershipTier: MembershipTier!
-    "Plain YYYY-MM-DD date the membership year is anchored to (a London calendar date)"
+    "Plain YYYY-MM-DD start of a paid membership (a London calendar date). Ignored for FREE"
     membershipStartDate: String!
+    "Plain YYYY-MM-DD last day of a paid membership; null when unset. A FREE organisation may hold a stale value: ignore it"
+    membershipEndDate: String
     "The current membership year and how much of the allowance is used (see membership.graphqls)"
     membership: Membership!
     "Non-archived referees flagged as membership contacts"
@@ -64,6 +66,8 @@ input UpdateReferringOrganisationInput {
     membershipTier: MembershipTier
     "YYYY-MM-DD. Null or absent leaves the start date unchanged"
     membershipStartDate: String
+    "YYYY-MM-DD. Null or absent leaves the end date unchanged. Defaults to start + 1 year - 1 day when the start is set or a paid tier begins"
+    membershipEndDate: String
 }
 
 input ReferringOrganisationWhereInput {
