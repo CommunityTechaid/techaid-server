@@ -29,14 +29,16 @@ class AdminConfigMutations(
 }
 
 data class UpdateAdminConfigInput(
-    var canPublicRequestSIMCard: Boolean,
-    var canPublicRequestLaptop: Boolean,
-    var canPublicRequestPhone: Boolean,
-    var canPublicRequestBroadbandHub: Boolean,
-    var canPublicRequestTablet: Boolean,
-    var canPublicRequestDesktop: Boolean,
-    // Null or absent = unchanged. The borough-availability screen sends only the six
-    // canPublicRequest* flags above and must not reset these.
+    // Every field: null or absent = unchanged. The borough-availability screen sends only the six
+    // canPublicRequest* flags and the dashboard's membership settings only the two membership
+    // fields, so neither may reset the other's. The schema already declared the six nullable; the
+    // Kotlin types didn't, so a partial input failed to bind.
+    var canPublicRequestSIMCard: Boolean? = null,
+    var canPublicRequestLaptop: Boolean? = null,
+    var canPublicRequestPhone: Boolean? = null,
+    var canPublicRequestBroadbandHub: Boolean? = null,
+    var canPublicRequestTablet: Boolean? = null,
+    var canPublicRequestDesktop: Boolean? = null,
     val membershipOverLimitMode: MembershipOverLimitMode? = null,
     @get:Min(0)
     val membershipGraceRequests: Int? = null,
@@ -44,12 +46,12 @@ data class UpdateAdminConfigInput(
     fun apply(entity: AdminConfig): AdminConfig {
         val self = this
         return entity.apply {
-            canPublicRequestSIMCard = self.canPublicRequestSIMCard
-            canPublicRequestLaptop = self.canPublicRequestLaptop
-            canPublicRequestPhone = self.canPublicRequestPhone
-            canPublicRequestBroadbandHub = self.canPublicRequestBroadbandHub
-            canPublicRequestTablet = self.canPublicRequestTablet
-            canPublicRequestDesktop = self.canPublicRequestDesktop
+            canPublicRequestSIMCard = self.canPublicRequestSIMCard ?: canPublicRequestSIMCard
+            canPublicRequestLaptop = self.canPublicRequestLaptop ?: canPublicRequestLaptop
+            canPublicRequestPhone = self.canPublicRequestPhone ?: canPublicRequestPhone
+            canPublicRequestBroadbandHub = self.canPublicRequestBroadbandHub ?: canPublicRequestBroadbandHub
+            canPublicRequestTablet = self.canPublicRequestTablet ?: canPublicRequestTablet
+            canPublicRequestDesktop = self.canPublicRequestDesktop ?: canPublicRequestDesktop
             membershipOverLimitMode = self.membershipOverLimitMode ?: membershipOverLimitMode
             membershipGraceRequests = self.membershipGraceRequests ?: membershipGraceRequests
         }
