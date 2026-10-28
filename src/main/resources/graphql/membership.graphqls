@@ -27,14 +27,23 @@ enum MembershipOverLimitMode {
 }
 
 """
-An organisation's membership allowance for the current membership year. All dates are plain
-YYYY-MM-DD London calendar dates. The period rolls forward automatically; nothing is scheduled.
+An organisation's EFFECTIVE membership allowance today. All dates are plain YYYY-MM-DD London
+calendar dates. A paid tier counts only between its start and end dates; FREE, and a paid tier that
+has lapsed or not yet started, uses the rolling 1 February year. Nothing is scheduled.
 """
 type Membership {
+    "The effective tier: FREE when a paid membership has lapsed or not started"
     tier: MembershipTier!
+    "Start of the usage period: the paid start date, or the 1 February default year for FREE"
     periodStart: String!
-    "Computed: periodStart + 1 year - 1 day"
+    "End of the usage period: the paid end date, or the end of the 1 February default year for FREE"
     periodEnd: String!
+    "True when a paid membership's end date has passed (the stored tier is unchanged)"
+    expired: Boolean!
+    "The stored paid tier that lapsed; null unless expired"
+    lapsedTier: MembershipTier
+    "YYYY-MM-DD end date of the lapsed membership; null unless expired"
+    lapsedOn: String
     "Null for TIER_3 (uncapped)"
     cap: Int
     used: Int!
@@ -50,7 +59,10 @@ The anonymous view of an allowance, on ReferringOrganisationContactPublic. Delib
 no contact names, no organisation id.
 """
 type MembershipPublic {
+    "The effective tier"
     tier: MembershipTier!
+    "True when a paid membership has lapsed (tier and cap are then the FREE values)"
+    expired: Boolean!
     state: MembershipState!
     cap: Int
     used: Int!

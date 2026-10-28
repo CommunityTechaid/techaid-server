@@ -1,5 +1,6 @@
 package cta.app
 
+import cta.app.services.EffectiveMembership
 import cta.app.services.MembershipAllowanceService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -144,7 +145,7 @@ class MembershipPeriodsTest {
         tier: MembershipTier,
         used: Int,
         mode: MembershipOverLimitMode = MembershipOverLimitMode.GRACE,
-    ) = MembershipAllowanceService.compute(tier, period, used, mode)
+    ) = MembershipAllowanceService.compute(EffectiveMembership(tier, period), used, mode)
 
     @Test
     fun `the tier caps are 10 20 40 and uncapped`() {

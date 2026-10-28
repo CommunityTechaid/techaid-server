@@ -77,11 +77,23 @@ class SchemaAssemblyTest {
         fun enumValues(type: String) = (schema.getType(type) as graphql.schema.GraphQLEnumType).values.map { it.name }.toSet()
 
         assertEquals(
-            setOf("tier", "periodStart", "periodEnd", "cap", "used", "remaining", "state", "graceUsed"),
+            setOf(
+                "tier",
+                "periodStart",
+                "periodEnd",
+                "expired",
+                "lapsedTier",
+                "lapsedOn",
+                "cap",
+                "used",
+                "remaining",
+                "state",
+                "graceUsed",
+            ),
             fields("Membership"),
         )
         assertEquals(
-            setOf("tier", "state", "cap", "used", "remaining", "periodEnd", "graceUsed", "graceRemaining"),
+            setOf("tier", "expired", "state", "cap", "used", "remaining", "periodEnd", "graceUsed", "graceRemaining"),
             fields("MembershipPublic"),
         )
         assertEquals(setOf("FREE", "TIER_1", "TIER_2", "TIER_3"), enumValues("MembershipTier"))
@@ -93,7 +105,7 @@ class SchemaAssemblyTest {
         assertEquals(true, "membershipGraceIndex" in fields("DeviceRequest"))
         assertEquals(true, "isMembershipContact" in fields("ReferringOrganisationContact"))
         assertEquals(
-            setOf("membershipTier", "membershipStartDate", "membership", "membershipContacts"),
+            setOf("membershipTier", "membershipStartDate", "membershipEndDate", "membership", "membershipContacts"),
             fields("ReferringOrganisation").filter { it.startsWith("membership") }.toSet(),
         )
         assertEquals(true, fields("AdminConfig").containsAll(setOf("membershipOverLimitMode", "membershipGraceRequests")))
@@ -111,8 +123,10 @@ class SchemaAssemblyTest {
         ) = (schema.getType(type) as graphql.schema.GraphQLInputObjectType).getField(field).type
 
         assertEquals("String", (input("UpdateReferringOrganisationInput", "membershipStartDate") as graphql.schema.GraphQLNamedType).name)
+        assertEquals("String", (input("UpdateReferringOrganisationInput", "membershipEndDate") as graphql.schema.GraphQLNamedType).name)
         listOf(
             "UpdateReferringOrganisationInput" to "membershipTier",
+            "UpdateReferringOrganisationInput" to "membershipEndDate",
             "UpdateReferringOrganisationContactInput" to "isMembershipContact",
             "CreateReferringOrganisationContactInput" to "isMembershipContact",
             "UpdateAdminConfigInput" to "membershipOverLimitMode",

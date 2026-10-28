@@ -85,10 +85,14 @@ class ReferringOrganisation(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var membershipTier: MembershipTier = MembershipTier.FREE,
-    // The date the membership year is anchored to; the end and the current period are computed on
-    // read (MembershipAllowanceService), never stored.
+    // Start of a paid membership. The effective tier and period are computed on read
+    // (MembershipAllowanceService); ignored for FREE.
     @Column(nullable = false)
     var membershipStartDate: LocalDate = MembershipPeriods.defaultStartDate(),
+    // Paid tiers only: the last day of the paid membership. Null = unset (treated as start + 1 year
+    // - 1 day). Ignored for FREE, which always uses the rolling 1 February year.
+    @Column(nullable = true)
+    var membershipEndDate: LocalDate? = null,
 ) {
     fun addContact(contact: ReferringOrganisationContact) {
         referringOrganisationContacts.add(contact)
