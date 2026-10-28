@@ -2,7 +2,9 @@ package cta.app.graphql.mutations
 
 import cta.app.AdminConfig
 import cta.app.AdminConfigRepository
+import cta.app.MembershipOverLimitMode
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Min
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
@@ -33,6 +35,11 @@ data class UpdateAdminConfigInput(
     var canPublicRequestBroadbandHub: Boolean,
     var canPublicRequestTablet: Boolean,
     var canPublicRequestDesktop: Boolean,
+    // Null or absent = unchanged. The borough-availability screen sends only the six
+    // canPublicRequest* flags above and must not reset these.
+    val membershipOverLimitMode: MembershipOverLimitMode? = null,
+    @get:Min(0)
+    val membershipGraceRequests: Int? = null,
 ) {
     fun apply(entity: AdminConfig): AdminConfig {
         val self = this
@@ -43,6 +50,8 @@ data class UpdateAdminConfigInput(
             canPublicRequestBroadbandHub = self.canPublicRequestBroadbandHub
             canPublicRequestTablet = self.canPublicRequestTablet
             canPublicRequestDesktop = self.canPublicRequestDesktop
+            membershipOverLimitMode = self.membershipOverLimitMode ?: membershipOverLimitMode
+            membershipGraceRequests = self.membershipGraceRequests ?: membershipGraceRequests
         }
     }
 }

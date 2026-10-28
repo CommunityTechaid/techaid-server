@@ -63,6 +63,7 @@ class ReferringOrganisationContactMutations(
                 email = data.email,
                 phoneNumber = data.phoneNumber,
                 referringOrganisation = referringOrganisation,
+                isMembershipContact = data.isMembershipContact ?: false,
             )
 
         return referringOrganisationContacts.save(referringOrganisationContact)
@@ -127,6 +128,8 @@ data class CreateReferringOrganisationContactInput(
     var phoneNumber: String,
     @get:NotNull
     var referringOrganisation: Long,
+    // Optional; absent means false.
+    var isMembershipContact: Boolean? = null,
 )
 
 data class UpdateReferringOrganisationContactInput(
@@ -143,6 +146,8 @@ data class UpdateReferringOrganisationContactInput(
     var referringOrganisationId: Long,
     val archived: Boolean? = null,
     val note: ReferringOrganisationContactNoteInput? = null,
+    // Null or absent = unchanged (the referee detail form predates membership).
+    val isMembershipContact: Boolean? = null,
 ) {
     fun apply(entity: ReferringOrganisationContact): ReferringOrganisationContact {
         val self = this
@@ -152,6 +157,7 @@ data class UpdateReferringOrganisationContactInput(
             email = self.email
             phoneNumber = self.phoneNumber
             archived = self.archived ?: archived
+            isMembershipContact = self.isMembershipContact ?: isMembershipContact
         }
     }
 }
