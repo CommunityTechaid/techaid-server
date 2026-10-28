@@ -4,6 +4,8 @@ import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -22,6 +24,7 @@ import org.hibernate.envers.NotAudited
 import org.hibernate.envers.RelationTargetAuditMode
 import org.hibernate.type.YesNoConverter
 import java.time.Instant
+import java.time.LocalDate
 
 @Entity
 @Table(name = "referring_organisations")
@@ -79,6 +82,13 @@ class ReferringOrganisation(
     )
     @SQLOrder("updatedAt DESC")
     var referringOrganisationNotes: MutableSet<ReferringOrganisationNote> = mutableSetOf(),
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var membershipTier: MembershipTier = MembershipTier.FREE,
+    // The date the membership year is anchored to; the end and the current period are computed on
+    // read (MembershipAllowanceService), never stored.
+    @Column(nullable = false)
+    var membershipStartDate: LocalDate = MembershipPeriods.defaultStartDate(),
 ) {
     fun addContact(contact: ReferringOrganisationContact) {
         referringOrganisationContacts.add(contact)
@@ -135,6 +145,8 @@ class ReferringOrganisationContact(
     )
     @SQLOrder("updatedAt DESC")
     var referringOrganisationContactNotes: MutableSet<ReferringOrganisationContactNote> = mutableSetOf(),
+    @Convert(converter = org.hibernate.type.YesNoConverter::class)
+    var isMembershipContact: Boolean = false,
 ) {
     companion object {
         const val STATUS = "FINISHED"

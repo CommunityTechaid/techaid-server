@@ -67,6 +67,21 @@ val CLOSED_REQUEST_STATUSES: Set<DeviceRequestStatus> =
  */
 const val CLOSED_REQUEST_STATUSES_SQL = "'REQUEST_COMPLETED','REQUEST_DECLINED','REQUEST_CANCELLED'"
 
+/**
+ * The statuses that do NOT count towards a membership allowance (#311). Every other status
+ * counts, including `REQUEST_COMPLETED`.
+ *
+ * This is deliberately a different predicate from [CLOSED_REQUEST_STATUSES]. That set asks "is
+ * this request still open?", so a completed request drops out of it. Membership asks "did this
+ * organisation use a request this year?", so a completed request still counts and only requests
+ * that never went ahead (declined, cancelled) are handed back. Do not "reconcile" the two sets.
+ */
+val MEMBERSHIP_NON_COUNTING_STATUSES: Set<DeviceRequestStatus> =
+    setOf(
+        DeviceRequestStatus.REQUEST_DECLINED,
+        DeviceRequestStatus.REQUEST_CANCELLED,
+    )
+
 enum class CollectionMethod {
     COLLECTION,
     DELIVERY,
@@ -156,6 +171,9 @@ class DeviceRequest(
     var collectionMethod: CollectionMethod? = null,
     var collectionContactName: String? = null,
     var isPrepped: Boolean = false,
+    // 1-based position among the grace requests accepted past the membership cap; null for every
+    // request that was within the allowance (or created while membership-support was off).
+    var membershipGraceIndex: Int? = null,
 ) {
     fun addKit(kit: Kit) {
         kits.add(kit)
