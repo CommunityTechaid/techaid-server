@@ -21,11 +21,15 @@ services:
       GMAIL_CLIENT_ID:
       GMAIL_CLIENT_SECRET:
       GMAIL_REFRESH_TOKEN:
-      DDL_AUTO: update
+      # validate, as in UAT/production: Flyway owns the schema, Hibernate only checks it.
+      DDL_AUTO: ${DDL_AUTO:-validate}
       SHOW_SQL: "${SHOW_SQL:-true}"
       TOKEN_ATTRIBUTE: ${TOKEN_ATTRIBUTE}
       DEV_APP: "https://app-testing.communitytechaid.org.uk/"
       TYPEFORM_KEY: ${TYPEFORM_KEY}
+      # Required: the app refuses to start without it (RequiredConfigurationCheck). It grants full
+      # authorities via the X-Auth-Admin-Secret header, so use a long random local-only value.
+      AUTH_ADMIN_SECRET: ${AUTH_ADMIN_SECRET:?set AUTH_ADMIN_SECRET in .env}
     command: []
     volumes:
       - ./src/main/resources/application-local.yml:/app/config/application-local.yml:ro
@@ -35,7 +39,8 @@ services:
     depends_on:
       - postgres
     ports:
-      - ${PORT:-8080}:8080
+      # Bound to localhost only: never expose a dev API (or the admin secret) to the LAN.
+      - 127.0.0.1:${PORT:-8080}:8080
 #  proxy:
 #    image: nginx:1.16-alpine
 #    depends_on:
@@ -52,16 +57,15 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
     ports:
-      - 5423:5432
+      - 127.0.0.1:5423:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
   adminer:
     image: adminer
-    restart: always
     environment:
       ADMINER_DEFAULT_SERVER: postgres
     ports:
-      - 8900:8080
+      - 127.0.0.1:8900:8080
 
 volumes:
   pgdata: {}
