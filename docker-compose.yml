@@ -5,7 +5,7 @@ services:
       context: ./
       dockerfile: Dockerfile.dev
     image: techaid-api:1.0.0
-    # name is explicitly defined as the other containers like dashboard depends on this name
+    # Fixed name: the README's `docker exec -it techaid-server-web-1 bash` step uses it.
     container_name: techaid-server-web-1
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
@@ -71,6 +71,7 @@ volumes:
   pgdata: {}
 
 networks:
-  # explicitly defining name because dashboard depends on this name to connect to the same network
+  # Explicit name, kept for stability. Nothing outside this file joins it any more: the dashboard
+  # reaches the API via localhost:8080.
   default:
     name: techaid-server_default
