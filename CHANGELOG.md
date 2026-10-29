@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.1.0](https://github.com/CommunityTechaid/techaid-server/compare/v5.0.3...v5.1.0) (2026-10-29)
+
+
+### Features
+
+* membership end date; lapsed and free tiers use the 1 February default year ([#315](https://github.com/CommunityTechaid/techaid-server/issues/315)) ([b68079f](https://github.com/CommunityTechaid/techaid-server/commit/b68079fbe49164faa433248f6a58a74b12ecbdc4)), closes [#311](https://github.com/CommunityTechaid/techaid-server/issues/311)
+* membership tiers, yearly request allowance and API ([#311](https://github.com/CommunityTechaid/techaid-server/issues/311)) ([c2c807f](https://github.com/CommunityTechaid/techaid-server/commit/c2c807fe4cfb8d5fd014c16ba8a591127c052f2c))
+
+
+### Bug Fixes
+
+* **db:** give kits.archived the 'N' default ([#319](https://github.com/CommunityTechaid/techaid-server/issues/319)) ([02131e9](https://github.com/CommunityTechaid/techaid-server/commit/02131e970a12043db812536af152174ac1d9a787))
+
 ## [5.0.3](https://github.com/CommunityTechaid/techaid-server/compare/v5.0.2...v5.0.3) (2026-10-27)
 
 
