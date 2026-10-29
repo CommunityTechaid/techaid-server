@@ -28,14 +28,7 @@ Quick reference (the skills have the full detail):
   the maintainer's machine). Prefix `az` commands taking `/subscriptions/...` IDs with
   `MSYS_NO_PATHCONV=1`.
 
-```bash
-# It's best to run with docker 
-# To build the codebase and start the service locally on http://localhost:8080
-# Copy the sample config file first 
-cp .env.sample .env
-# Start the app
-./gradlew ktlintFormat build -x test && docker-compose up 
-```
+To run the API locally against a Docker Postgres, see [Local development](#local-development) below.
 
 ## Generating Gmail Credentials 
 ```bash
@@ -57,38 +50,49 @@ curl -X POST \
   https://www.googleapis.com/oauth2/v4/token
 ```
 
-## Setting up for the dev environment
+## Local development
 
-The `setup_branch` contains the docker files necessary for the dev environment. This might be moved into a submodule later. Do the following. 
+Runs the API and Postgres in Docker on your machine, for use with the dashboard's `npx ng serve`
+(see the dashboard README, "Option A"). All ports are bound to `127.0.0.1` only.
 
-- Copy the `.env.sample` file to a `.env` (create if one does not already exist)
-- Run `docker compose up -d` to run the containers (`-d` option runs it in the background)
-- Execute the following command to obtain a bash shell of the container running the server api:
-    `docker exec -it techaid-server-web-1 bash`
-- Once in the container, execute the following command to run the application:
-    `./gradlew bootRun -PskipDownload=true`
-- The server should now be running and accessible at [http://localhost:8080](http://localhost:8080). 
+1. Copy the sample config and set a local admin secret:
+   ```bash
+   cp .env.sample .env
+   # then set AUTH_ADMIN_SECRET in .env to a long random value, e.g. `openssl rand -hex 32`
+   ```
+   The app refuses to start without `AUTH_ADMIN_SECRET`. It grants full access via the
+   `X-Auth-Admin-Secret` header, so never reuse the UAT/production value.
+2. Start the containers (`-d` runs them in the background):
+   ```bash
+   docker compose up -d --build
+   ```
+3. Start the API inside the `web` container (it idles until you do):
+   ```bash
+   docker exec -it techaid-server-web-1 bash
+   ./gradlew bootRun -PskipDownload=true
+   ```
+4. Check it: `curl -s localhost:8080/actuator/health` returns `UP`. The API is on
+   http://localhost:8080.
 
-You can now use PostMan or other similar clients to test the api. Or you can follow the instructions in the dashboard repo for running the frontend application on the local machine.
+> After editing any source files, press Ctrl+C and rerun `./gradlew bootRun -PskipDownload=true`
+> to reload. If you change dependencies, rebuild the container (`docker compose up -d --build`).
 
+Login uses the shared Auth0 tenant, so a token from the local dashboard is accepted as normal; what
+you can do is governed by your Auth0 user's permissions. `AUTH0_CLIENT_ID`/`AUTH0_CLIENT_SECRET`
+(Auth0 Management API) are deliberately left unset locally, so user-management features will not
+work. Email (Gmail) and Typeform are off.
 
-> After editing any source files, press Crtl+C and rerun the last command (`./gradlew bootRun -PskipDownload=true`) to reload. If you update libraries or change dependencies you might have to restart the container entirely (include `--build` option while running `docker compose up`)
+### Database
 
+Flyway builds the schema on first start. With the `local` profile it also loads synthetic test
+data from `src/main/resources/db/local/R__local_seed.sql` (a few donors, kits, referring
+organisations and device requests). Add to that file if you need more; it re-runs whenever it
+changes, so keep every insert idempotent.
 
-### Further steps
-#### Database
-- You might need to do a pg_restore to populate the database with dummy data. You might also need to execute an SQL update to update some statuses in the kits table (this would depend on the data you are restoring).
-pg_restore is preinstalled in the postgres container. 
- 
-You can copy the sql dump to the home directory of the postgres container and run the pg_restore using the following commands:
+**Never restore a production or UAT dump onto a laptop** — they contain personal data.
 
+To start again from an empty database: `docker compose down -v` (deletes the `pgdata` volume).
 
-``` bash
-#copy dump file to the home directory of the postgres container 
-docker cp dump_file.sql.tar techaid-server-postgres-1:/home/
-#execute the pg_restore 
-docker exec --workdir /home techaid-server-postgres-1 bash -c 'pg_restore -d $POSTGRES_DB dump_file.sql.tar -U $POSTGRES_USER'
-```
 #### Adminer
 Adminer is a lightweight convenient tool to browse the database in your web-browser. It is available at `localhost:8900`
 Select PostGreSQL in the Systems dropdown, type `postgres` in the server field, enter the database username and password (specified in the docker compose file) and type the name of the database in database field (optional)

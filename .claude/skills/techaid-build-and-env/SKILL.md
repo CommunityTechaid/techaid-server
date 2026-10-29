@@ -82,8 +82,8 @@ Two supported ways. Both need a `.env`-style secret set — see `techaid-config-
 ### 4a. docker-compose (the README-documented way)
 
 ```bash
-cp .env.sample .env      # then fill in the <value> placeholders you need
-docker compose up -d
+cp .env.sample .env      # then set AUTH_ADMIN_SECRET (required; compose refuses to start without it)
+docker compose up -d --build
 docker exec -it techaid-server-web-1 bash
 ./gradlew bootRun -PskipDownload=true    # inside the container
 ```
@@ -92,16 +92,15 @@ Services (from `docker-compose.yml`):
 
 | Service | Image | Host port | Notes |
 |---|---|---|---|
-| `web` | built from `Dockerfile.dev`, container name **`techaid-server-web-1`** (fixed — the dashboard's local setup depends on this name and on the network name `techaid-server_default`) | `${PORT:-8080}` → 8080 | Idles (`tail -f /dev/null`) until you exec in and run `bootRun`. Mounts `./src` so edits are visible; Ctrl-C and rerun `bootRun` to reload. Runs with `DDL_AUTO: update` and `SHOW_SQL: true`. |
-| `postgres` | `postgres:16` | **5423** → 5432 | ⚠ Non-standard host port 5423. DB `techaid_api`, user `postgres`, password `password` (compose-internal only). Data persists in the `pgdata` volume. |
-| `adminer` | `adminer` | 8900 | DB browser at http://localhost:8900 — server `postgres`, credentials as above. |
+| `web` | built from `Dockerfile.dev`, container name **`techaid-server-web-1`** (fixed — the README's `docker exec` commands use it) | `127.0.0.1:${PORT:-8080}` → 8080 | Idles (`tail -f /dev/null`) until you exec in and run `bootRun`. Mounts `./src` so edits are visible; Ctrl-C and rerun `bootRun` to reload. Runs with `DDL_AUTO: validate` (as UAT/prod; override via `.env`) and `SHOW_SQL: true`. |
+| `postgres` | `postgres:16` | **127.0.0.1:5423** → 5432 | ⚠ Non-standard host port 5423. DB `techaid_api`, user `postgres`, password `password` (compose-internal only). Data persists in the `pgdata` volume. |
+| `adminer` | `adminer` | 127.0.0.1:8900 | DB browser at http://localhost:8900 — server `postgres`, credentials as above. |
 
 **Stale-README flags (verified 2026-07-03):**
 - `-PskipDownload=true` (README and `start.sh`) is **not defined anywhere in `build.gradle`** — Gradle silently ignores unknown `-P` properties, so it is a harmless no-op. Don't waste time looking for what it does.
-- README mentions a `setup_branch` "containing the docker files" — the docker files are on the main branches; ignore that paragraph.
 - The compose Postgres is 16 while UAT/production run Postgres 17 (see `techaid-deploy-and-operate`). Fine for dev; don't infer version-specific behavior from it.
 
-To seed data, `pg_restore` a dump into the postgres container exactly as the README shows (commands there are correct).
+Seed data: the `local` profile loads synthetic records from `src/main/resources/db/local/R__local_seed.sql` (repeatable Flyway migration). Never restore a production or UAT dump onto a laptop — they contain personal data.
 
 ### 4b. Bare-metal `./gradlew bootRun`
 
@@ -117,7 +116,7 @@ export JWT_ISSUER=https://techaid-auth.eu.auth0.com/   # needed for real logins;
 ./gradlew bootRun
 ```
 
-The `local` profile (`application-local.yml`) exposes all actuator endpoints and adds a second Flyway location `classpath:db/local` — **that directory does not exist in the repo**; Flyway tolerates missing locations by default, so this is inert. Full variable catalog: `techaid-config-and-flags`.
+The `local` profile (`application-local.yml`) exposes all actuator endpoints and adds a second Flyway location `classpath:db/local`, which holds the synthetic seed `R__local_seed.sql`. A failing seed statement aborts startup, so keep it valid and idempotent. Full variable catalog: `techaid-config-and-flags`.
 
 ## 5. Dockerfile matrix
 
