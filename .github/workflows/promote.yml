@@ -10,9 +10,36 @@ on:
         description: 'Specific image tag to deploy (leave blank to promote current UAT image)'
         required: false
         default: ''
+      confirm_db_changes:
+        description: 'I have reviewed the database changes (needed when the promotion includes Flyway migrations)'
+        type: boolean
+        default: false
 
 jobs:
+  # Runs BEFORE the production approval gate, so its summary (the migrations this promotion would
+  # apply, flagged loudly) is on the run page while the deploy waits for approval. Stops the run
+  # when migrations changed and confirm_db_changes was not ticked.
+  db-change-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      target_sha: ${{ steps.check.outputs.target_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: List database migrations this promotion would apply
+        id: check
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          CONFIRMED: ${{ inputs.confirm_db_changes }}
+        run: bash .github/scripts/db-change-check.sh
+
   promote:
+    needs: db-change-check
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -52,6 +79,29 @@ jobs:
             echo "Promoting current UAT image: $IMAGE"
           fi
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      # The database check read UAT's commit before the approval wait. If UAT was redeployed in
+      # between, the image resolved above is not the one that was checked: stop rather than ship
+      # unreviewed migrations.
+      - name: Confirm the image is the one the database check examined
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          CHECKED: ${{ needs.db-change-check.outputs.target_sha }}
+        run: |
+          TAG="${IMAGE##*:}"
+          case "$TAG" in
+            dev-*) SHORT="${TAG#dev-}" ;;
+            *) echo "Tag '$TAG' is not a dev-<sha> tag; the check required confirmation for it."; exit 0 ;;
+          esac
+          if [ -z "$CHECKED" ]; then
+            echo "The check could not resolve a commit and required confirmation; nothing to compare."
+            exit 0
+          fi
+          if [ "${CHECKED#"$SHORT"}" = "$CHECKED" ]; then
+            echo "::error::UAT now runs $SHORT, but the database check examined ${CHECKED::7}. UAT changed while this run waited for approval. Start the promotion again."
+            exit 1
+          fi
+          echo "Image $TAG matches the checked commit ${CHECKED::7}."
 
       - name: Deploy to api-production
         run: |
