@@ -6,8 +6,6 @@
 --
 -- Repeatable migration: it re-runs whenever this file changes, so every insert is idempotent.
 -- IDs start at 900001 to stay clear of the sequences the application allocates from.
--- kits.archived is set explicitly: its column default is the string 'false', which does not fit
--- its char(1) type, so an insert that relies on the default fails.
 
 insert into donor_parents (id, name, type, address, website, created_at, updated_at)
 values
@@ -42,10 +40,10 @@ values
     (900002, 900002, 'PROCESSING_ON_HOLD', 0, 1, 1, 0, 0, 0, 0, 0, false, false, 'Southwark', 'TEST-002', 'COLLECTION', 'Synthetic request', now(), now())
 on conflict (id) do nothing;
 
-insert into kits (id, type, status, model, make, age, location, donor_id, attributes, archived, created_at, updated_at)
+insert into kits (id, type, status, model, make, age, location, donor_id, attributes, created_at, updated_at)
 values
-    (900001, 'LAPTOP', 'DONATION_NEW', 'ThinkPad T480', 'Lenovo', 5, 'Test location', 900001, '{}'::jsonb, 'N', now(), now()),
-    (900002, 'LAPTOP', 'PROCESSING_WIPED', 'Latitude 7490', 'Dell', 6, 'Test location', 900001, '{}'::jsonb, 'N', now(), now()),
-    (900003, 'TABLET', 'ALLOCATION_READY', 'iPad 7th gen', 'Apple', 4, 'Test location', 900002, '{}'::jsonb, 'N', now(), now()),
-    (900004, 'SMARTPHONE', 'DONATION_NEW', 'Pixel 6', 'Google', 3, 'Test location', 900003, '{}'::jsonb, 'N', now(), now())
+    (900001, 'LAPTOP', 'DONATION_NEW', 'ThinkPad T480', 'Lenovo', 5, 'Test location', 900001, '{}'::jsonb, now(), now()),
+    (900002, 'LAPTOP', 'PROCESSING_WIPED', 'Latitude 7490', 'Dell', 6, 'Test location', 900001, '{}'::jsonb, now(), now()),
+    (900003, 'TABLET', 'ALLOCATION_READY', 'iPad 7th gen', 'Apple', 4, 'Test location', 900002, '{}'::jsonb, now(), now()),
+    (900004, 'SMARTPHONE', 'DONATION_NEW', 'Pixel 6', 'Google', 3, 'Test location', 900003, '{}'::jsonb, now(), now())
 on conflict (id) do nothing;
