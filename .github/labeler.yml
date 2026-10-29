@@ -1,0 +1,9 @@
+# Labels applied automatically to pull requests by .github/workflows/labeler.yml.
+
+# Anything that changes the database schema or what Hibernate expects of it. Flyway applies
+# migrations on startup, so these reach UAT on merge to dev and production on promote.
+database-change:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/resources/db/migration/**
+          - src/main/kotlin/cta/app/*Models.kt
