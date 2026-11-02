@@ -19,8 +19,9 @@
 --     - kit attributes: notes, credentials, pickupAvailability
 --     - donors / donor parents still attached to kept devices: replaced with synthetic values
 --   Kept as-is: the 4 CTA staff referees (Stephanie Charbine, Cat Smith, Steve Woolnough,
---   Tony Anzelmo - agreed 2026-11-02) and the 21 referees already erased by GDPR retention; the
---   `volunteer` author field on notes (CTA staff/volunteers). Config tables are not touched.
+--   Tony Anzelmo - agreed 2026-11-02) and the `volunteer` author field on notes (CTA staff and
+--   volunteers). The other 21 referees at CTA orgs, already blanked by GDPR retention, are deleted
+--   with their requests and devices (decided 2026-11-02). Config tables are not touched.
 --
 --   Step 2 is the synthetic seed: src/main/resources/db/local/R__local_seed.sql, run with psql.
 --
@@ -50,6 +51,8 @@
 --     Leftover check PASSED (766 real values searched). Negative control - the same script with
 --     the client_ref scrub removed - FAILED as it should: device_requests.client_ref=5.
 --     The 10 donors on kept devices were already blanked by GDPR retention.
+--   Re-run after dropping the 21 GDPR-erased CTA referees: kept 6 orgs / 4 referees / 47 requests /
+--     8 devices, 4 donors, 4 donor parents; leftover check PASSED.
 
 \set ON_ERROR_STOP 1
 begin;
@@ -70,8 +73,15 @@ create temp table keep_org on commit drop as
 do $$ begin
   if (select count(*) from keep_org) <> 6 then raise exception 'ABORT: expected 6 CTA orgs, found %', (select count(*) from keep_org); end if;
 end $$;
+-- Only the CTA staff referees. The 21 others at CTA orgs were already blanked by GDPR retention
+-- ("Contact - Erased due to GDPR policy"); they go, with their requests and the devices on them.
 create temp table keep_contact on commit drop as
-  select id from referring_organisation_contacts where referring_organisation_id in (select id from keep_org);
+  select id from referring_organisation_contacts
+  where referring_organisation_id in (select id from keep_org)
+    and full_name !~* 'erased due to gdpr';
+do $$ begin
+  if (select count(*) from keep_contact) <> 4 then raise exception 'ABORT: expected 4 CTA staff referees, found %', (select count(*) from keep_contact); end if;
+end $$;
 create temp table keep_req on commit drop as
   select id from device_requests where referring_organisation_contact_id in (select id from keep_contact);
 create temp table keep_kit on commit drop as
