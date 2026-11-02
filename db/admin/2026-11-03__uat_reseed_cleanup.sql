@@ -45,7 +45,10 @@
 --   Take `pg_dump -Fc -n public` of techaid_uat first.
 --
 -- APPLIED TO
---   techaid_uat - not yet. Dry runs on 2026-11-02 (rolled back):
+--   techaid_uat - APPLIED 2026-11-02 ~16:35 GMT (-v commit=1), after pg_dump -Fc -n public.
+--     Leftover check PASSED; verified in a fresh session: 6 orgs, 4 referees, 47 requests, 8 kits,
+--     4 donors, 0 bookings, 0 audit/rev rows, backup table gone; UAT API health UP.
+--   Dry runs on 2026-11-02 before that (rolled back):
 --     kept 6 orgs / 25 referees / 69 requests / 48 devices; after: 10 donors, 9 donor parents,
 --     53 device notes, 30 request notes, all audit tables 0, delivery_bookings 0.
 --     Leftover check PASSED (766 real values searched). Negative control - the same script with
