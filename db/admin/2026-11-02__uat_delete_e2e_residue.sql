@@ -22,7 +22,10 @@
 --   Real run:                       psql ... -X -v commit=1 -f this.sql
 --
 -- APPLIED TO
---   techaid_uat - see the commit history of this file.
+--   techaid_uat - 2026-11-02 ~18:00 GMT, after the first E2E run on the synthetic data: removed
+--                 2 orgs, 2 referees, 1 request, 3 kits (one from 2026-10-07 on a kept CTA request),
+--                 2 donors, their audit rows and 25 orphaned revisions; residue check all 0.
+--                 Later runs are routine and are not logged here.
 
 \set ON_ERROR_STOP 1
 begin;
