@@ -85,9 +85,13 @@ work. Email (Gmail) and Typeform are off.
 ### Database
 
 Flyway builds the schema on first start. With the `local` profile it also loads synthetic test
-data from `src/main/resources/db/local/R__local_seed.sql` (a few donors, kits, referring
-organisations and device requests). Add to that file if you need more; it re-runs whenever it
-changes, so keep every insert idempotent.
+data from `src/main/resources/db/local/R__local_seed.sql`: about 36 each of organisations, referees,
+device requests, donors, donor parents, devices and notes, 10 of each smaller table, the admin
+config row, and sample audit history, covering every status. `.env.sample` sets
+`SPRING_PROFILES_ACTIVE=local`, so this happens on the first `bootRun` with no extra step. Add to
+that file if you need more; it re-runs whenever it changes, so keep every insert idempotent. It
+skips IDs that already exist, so after a seed change run `docker compose down -v` to get the
+whole new set. The same file is applied to UAT by hand (see `db/admin/2026-11-03__uat_reseed_cleanup.sql`).
 
 **Never restore a production or UAT dump onto a laptop** — they contain personal data.
 

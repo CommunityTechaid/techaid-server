@@ -21,7 +21,7 @@
 --   DonorParentType value appears at least once, and 'Y'/'N' archived flags are mixed.
 --
 -- NOT seeded (configuration or logs that a versioned migration or the app already owns):
---   feature_flags, admin_config, delivery_config, borough_groups, borough_group_boroughs,
+--   feature_flags, delivery_config, borough_groups, borough_group_boroughs,
 --   borough_availability, delivery_windows (V26.07.08.1000 seeds windows 1 and 2, which the
 --   bookings below use), gdpr_cleanup_runs, flyway_schema_history, kit_updated_at_backup_20260818.
 --
@@ -34,6 +34,15 @@
 --   referring_organisation_contacts 900012, 900024, 900036 (no activity in 12 months)
 --
 -- Hand-run caveat: an id from 900001 that already exists is skipped, so a clean database is expected.
+
+-- Admin config singleton (id 1). No migration creates it and AdminConfigRepository.getAdminConfig()
+-- cannot return null, so without it the public request form's adminConfig query fails locally.
+-- Values mirror UAT on 2026-11-02. UAT and production already have their row, which this never touches.
+insert into admin_config (id, can_public_request_laptop, can_public_request_phone, can_public_requestsimcard,
+                          can_public_request_tablet, can_public_request_desktop, can_public_request_broadband_hub,
+                          membership_over_limit_mode, membership_grace_requests, created_at, updated_at)
+values (1, true, true, true, true, true, false, 'GRACE', 2, now(), now())
+on conflict (id) do nothing;
 
 -- Donor parents: BUSINESS on even ids, DROPPOINT on odd; every 8th archived.
 insert into donor_parents (id, name, type, address, website, archived, created_at, updated_at)

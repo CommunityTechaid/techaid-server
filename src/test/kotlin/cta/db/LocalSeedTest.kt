@@ -1,5 +1,6 @@
 package cta.db
 
+import cta.app.AdminConfigRepository
 import cta.app.DeviceRequestRepository
 import cta.app.DonorParentRepository
 import cta.app.DonorRepository
@@ -37,6 +38,8 @@ class LocalSeedTest {
     @Autowired lateinit var jdbc: JdbcTemplate
 
     @Autowired lateinit var kits: KitRepository
+
+    @Autowired lateinit var adminConfig: AdminConfigRepository
 
     @Autowired lateinit var deviceRequests: DeviceRequestRepository
 
@@ -86,6 +89,15 @@ class LocalSeedTest {
         minimumRows.forEach { (table, min) ->
             assertThat(seededCount(table)).describedAs(table).isGreaterThanOrEqualTo(min)
         }
+    }
+
+    // No migration creates the admin_config singleton, and getAdminConfig() cannot return null, so a
+    // local database without the row fails the adminConfig query the public request form depends on.
+    @Test
+    fun `seed provides the admin config singleton`() {
+        val config = adminConfig.getAdminConfig()
+        assertThat(config.id).isEqualTo(1L)
+        assertThat(config.canPublicRequestLaptop).isTrue()
     }
 
     @Test
