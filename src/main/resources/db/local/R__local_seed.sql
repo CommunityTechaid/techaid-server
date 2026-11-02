@@ -1,5 +1,6 @@
--- Synthetic data for local development only. This folder is on the Flyway path for the `local`
--- profile alone (application-local.yml); UAT and production never see it.
+-- Synthetic data for local development and UAT. This folder is on the Flyway path for the `local`
+-- profile alone (application-local.yml), so Flyway applies it only locally. UAT gets it by hand with
+-- psql, after db/admin/2026-11-03__uat_reseed_cleanup.sql. Production never sees it.
 --
 -- Every record is invented: example.org addresses, Ofcom drama-range phone numbers (07700 900xxx),
 -- "Test ..." names. Never replace this with a production or UAT dump - those contain personal data.
