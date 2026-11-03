@@ -35,23 +35,12 @@ class FilterService {
         return OAuthUser("", "")
     }
 
-    fun kitFilter(): BooleanBuilder {
-        val filter = BooleanBuilder()
-        currentUser ?: return filter
-        if (hasAuthority("admin:kits")) {
-            return filter
-        }
-        return filter
-    }
+    // Both return an empty filter: no row-level restriction applies to kits or donors. They used
+    // to check `admin:kits` / `admin:donors` first, but every branch returned the same empty
+    // filter, and `admin:donors` is not even defined in Auth0. Kept as seams for the callers.
+    fun kitFilter(): BooleanBuilder = BooleanBuilder()
 
-    fun donorFilter(): BooleanBuilder {
-        val filter = BooleanBuilder()
-        currentUser ?: return filter
-        if (hasAuthority("admin:donors")) {
-            return filter
-        }
-        return filter
-    }
+    fun donorFilter(): BooleanBuilder = BooleanBuilder()
 
     fun hasAuthority(permission: String): Boolean {
         val user = currentUser ?: return false
