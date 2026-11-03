@@ -340,6 +340,27 @@ Configured in `application.yml` (`audit_table_suffix: _AUD`, revision field
 - These tables grow forever by design (that's the audit trail). Don't "clean them up"
   without change-control sign-off.
 
+## Admin-setting history (`admin_setting_history`, #327)
+
+Append-only change log for admin-panel settings — feature flags, borough groups / per-device-type
+modes / referrer limit exceptions, and `admin_config` — created by
+`V26.11.03.1000__admin_setting_history.sql`. **Not Envers** (migrations change flags with raw
+SQL, which Envers never sees). One row per changed field: `setting_type`, `setting_key`, `field`,
+`change_type` (`CREATED`/`UPDATED`/`DELETED`), `old_value`/`new_value` as text, `source`
+(`USER`/`MIGRATION`/`SYSTEM`), `changed_by_email`/`changed_by_name` (null unless `USER`),
+`subject_id`/`subject_label` snapshots. The three admin mutations write it through
+`AdminSettingAuditService` in the same transaction; read via the admin-only `settingChanges`
+query. Never store secrets here.
+
+**Any new migration that inserts, flips or deletes a `feature_flags` row must also record it**
+(`id` and `changed_at` default; booleans as `'true'`/`'false'`; old_value null for a new flag,
+new_value null for a deleted one):
+
+```sql
+insert into admin_setting_history (source, setting_type, setting_key, subject_label, field, change_type, old_value, new_value)
+values ('MIGRATION', 'FEATURE_FLAG', 'my-flag', 'my-flag', 'enabled', 'UPDATED', 'false', 'true');
+```
+
 ## GDPR machinery (in-schema, easy to miss)
 
 `V22.20.13.1517__gdpr.sql` created a `gdpr` schema: retention views

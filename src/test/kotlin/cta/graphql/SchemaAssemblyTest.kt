@@ -146,4 +146,39 @@ class SchemaAssemblyTest {
         val contactWhere = schema.getType("ReferringOrganisationContactWhereInput") as graphql.schema.GraphQLInputObjectType
         assertEquals("BooleanComparison", (contactWhere.getField("isMembershipContact").type as graphql.schema.GraphQLNamedType).name)
     }
+
+    // Admin-setting history (#327): the contract the dashboard's history UI is built against.
+    @Test
+    fun `settingChanges matches the dashboard contract`() {
+        val schema = assembleSchema()
+
+        fun fields(type: String) = (schema.getType(type) as graphql.schema.GraphQLFieldsContainer).fieldDefinitions.map { it.name }.toSet()
+
+        assertEquals(
+            setOf(
+                "id",
+                "changedAt",
+                "source",
+                "changedByEmail",
+                "changedByName",
+                "settingType",
+                "settingKey",
+                "subjectId",
+                "subjectLabel",
+                "field",
+                "changeType",
+                "oldValue",
+                "newValue",
+            ),
+            fields("SettingChange"),
+        )
+        assertEquals(setOf("content", "totalElements", "totalPages", "number", "size"), fields("SettingChangePage"))
+        assertEquals(
+            setOf("USER", "MIGRATION", "SYSTEM"),
+            (schema.getType("SettingChangeSource") as graphql.schema.GraphQLEnumType).values.map { it.name }.toSet(),
+        )
+        val query = schema.queryType.getFieldDefinition("settingChanges")
+        assertEquals(setOf("settingType", "settingKey", "page", "size"), query.arguments.map { it.name }.toSet())
+        assertEquals(true, query.type is graphql.schema.GraphQLNonNull)
+    }
 }

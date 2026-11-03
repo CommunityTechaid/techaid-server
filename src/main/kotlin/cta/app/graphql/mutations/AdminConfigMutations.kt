@@ -3,6 +3,7 @@ package cta.app.graphql.mutations
 import cta.app.AdminConfig
 import cta.app.AdminConfigRepository
 import cta.app.MembershipOverLimitMode
+import cta.app.services.AdminSettingAuditService
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
 import org.springframework.graphql.data.method.annotation.Argument
@@ -17,6 +18,7 @@ import org.springframework.validation.annotation.Validated
 @Transactional
 class AdminConfigMutations(
     private val adminConfig: AdminConfigRepository,
+    private val audit: AdminSettingAuditService,
 ) {
     @PreAuthorize("hasAnyAuthority('app:admin')")
     @MutationMapping
@@ -24,7 +26,12 @@ class AdminConfigMutations(
         @Argument @Valid data: UpdateAdminConfigInput,
     ): AdminConfig {
         val entity = adminConfig.getAdminConfig()
-        return data.apply(entity)
+        // Snapshot before apply: null input fields leave the entity unchanged, so only fields the
+        // caller actually changed differ and get recorded.
+        val before = AdminSettingAuditService.adminConfig(entity)
+        data.apply(entity)
+        audit.record(before, AdminSettingAuditService.adminConfig(entity))
+        return entity
     }
 }
 
