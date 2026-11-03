@@ -13,6 +13,7 @@ auth0:
   domain: ''
   client-id: ''
   client-secret: ''
+  allowed-clients: test-dashboard-client
 
 auth:
   admin-secret: password

@@ -31,6 +31,7 @@ Source of truth: `src/main/resources/application.yml`. Consumers verified by gre
 |-----|----------|----------|--------------|
 | `TOKEN_ATTRIBUTE` | `auth0.token-attribute` | `FilterService.kt:11` | Placeholder resolution fails when the bean initializes. Because `spring.main.lazy-initialization: true`, this can surface at **first request** rather than boot — a deploy can look healthy and then 500. Value in real envs is the Auth0 custom-claim namespace (e.g. `https://communitytechaid.org.uk` per `.env.sample`). |
 | `AUTH_ADMIN_SECRET` | `auth.admin-secret` | `AuthService.kt:13` | Same failure mode. This is the shared admin token accepted by `AuthService` (header `X-Auth-Admin-Secret`, overridable via property `auth.admin-header` — `AuthService.kt:10`). Blank string disables the token path (checked in `adminForToken`), but *unset* crashes bean init. |
+| `AUTH0_ALLOWED_CLIENTS` | `auth0.allowed-clients` | `SecurityConfig.kt` (`AuthorisedPartyValidator`) | Comma-separated Auth0 client IDs whose tokens this environment accepts (the token's `azp`). Blank fails startup by name (`RequiredConfigurationCheck`). This is what stops UAT tokens working on production and vice versa: the tenant, issuer and audience are shared. Prod = Production dashboard + Calendar Sync + ShredOS + Bulk Insert; UAT/local = Dev & UAT dashboard. |
 
 Test runs don't hit this: `src/test/resources/application.yml` pins both (`token-attribute: https://test.example.com`, `admin-secret: password`).
 
@@ -54,6 +55,7 @@ Resolution order: env `DATASOURCE_URL` → property `db-url` → localhost defau
 | `AUTH0_DOMAIN` | `''` | `auth0.domain` | `Auth0Service.kt:17` | User-management API calls |
 | `AUTH0_CLIENT_ID` | `''` | `auth0.client-id` | `Auth0Service.kt:20` | |
 | `AUTH0_CLIENT_SECRET` | `''` | `auth0.client-secret` | `Auth0Service.kt:23` | |
+| `AUTH_DEV_TECH_WILDCARD` | `false` | `auth.dev-tech-wildcard` | `SecurityConfig.kt` (`DevTechWildcard`) | `true` makes the `dev:tech` permission grant every app authority except `read/write/delete:users`. Startup fails if on outside the `local`/`testing` profiles. Never set on api-production. |
 | `GMAIL_CLIENT_ID` | `''` | `gmail.client-id` | `MailService.kt:23` | |
 | `GMAIL_CLIENT_SECRET` | `''` | `gmail.client-secret` | `MailService.kt:26` | |
 | `GMAIL_REFRESH_TOKEN` | `''` | `gmail.refresh-token` | `MailService.kt:29` | |

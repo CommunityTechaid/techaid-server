@@ -42,6 +42,13 @@ class FakeAuth0Server {
 
     val calls: MutableList<Call> = Collections.synchronizedList(mutableListOf())
 
+    /**
+     * Plays a read-only Management API grant (UAT's): every Management API write is refused with
+     * Auth0's 403 insufficient_scope; reads still work.
+     */
+    @Volatile
+    var rejectWrites: Boolean = false
+
     val url: String get() = "http://127.0.0.1:${server.address.port}"
 
     init {
@@ -72,6 +79,10 @@ class FakeAuth0Server {
         calls += Call(method, path, query, body, exchange.requestHeaders.getFirst("Authorization"))
 
         val segments = path.trim('/').split('/')
+        if (rejectWrites && path.startsWith("/api/v2/") && method != "GET") {
+            respond(exchange, 403, INSUFFICIENT_SCOPE)
+            return
+        }
         when {
             method == "POST" && path == "/oauth/token" -> {
                 respond(exchange, 200, """{"access_token":"$MGMT_TOKEN","expires_in":86400,"token_type":"Bearer"}""")
@@ -212,6 +223,9 @@ class FakeAuth0Server {
         val MAPPER: JsonMapper = JsonMapper.builder().build()
 
         const val MGMT_TOKEN = "fake-management-token"
+        private const val INSUFFICIENT_SCOPE =
+            "{\"statusCode\":403,\"error\":\"Forbidden\",\"message\":\"Insufficient scope, " +
+                "expected any of: create:role_members\",\"errorCode\":\"insufficient_scope\"}"
         private const val NOT_FOUND = """{"statusCode":404,"error":"Not Found","message":"The user does not exist."}"""
 
         /** A fully populated user, shaped like a GET /api/v2/users item from Auth0. */
