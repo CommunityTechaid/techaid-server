@@ -6,12 +6,19 @@ import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import mu.KotlinLogging
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.GenericFilterBean
 import tools.jackson.databind.ObjectMapper
 import java.io.IOException
 import java.util.LinkedHashMap
+
+/**
+ * Its own logger name, so admin-secret use can be found in AppTraces without matching on text:
+ * `AppTraces | where Properties.LoggerName == "cta.auth.admin-secret"`.
+ */
+private val adminSecretLogger = KotlinLogging.logger("cta.auth.admin-secret")
 
 /**
  * Filter to intercept JWT Tokens from the header and create a user session
@@ -51,6 +58,10 @@ class TokenAuthenticationFilter(
                     admin.authorities,
                 )
             SecurityContextHolder.getContext().authentication = authentication
+            // Measurement (2026-11): the admin secret looks like a legacy artefact with no
+            // automated caller. Logging every use (never the value) is how production proves
+            // whether anything still depends on it before it is removed.
+            adminSecretLogger.warn { "Request authenticated with the admin secret: ${httpRequest.method} ${httpRequest.requestURI}" }
             chain.doFilter(request, response)
             return
         }

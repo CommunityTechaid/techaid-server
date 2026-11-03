@@ -1,5 +1,7 @@
 package cta.app.services
 
+import com.auth0.client.mgmt.core.ManagementApiException
+import cta.auth.Auth0Service
 import cta.graphql.InvalidSortException
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
@@ -61,6 +63,12 @@ class CustomErrorHandlerConfig : DataFetcherExceptionResolverAdapter() {
                 .newError()
                 .path(env.getExecutionStepInfo().getPath())
                 .location(env.getField().getSourceLocation())
+
+        // A read-only Management API grant (UAT) makes Auth0 refuse writes with 403
+        // insufficient_scope; the SDK's own message is just a status code.
+        if (ex is ManagementApiException && ex.statusCode() == 403) {
+            return builder.message(Auth0Service.READ_ONLY).build()
+        }
 
         if (isAuthenticated() || isSafeToEcho(ex)) {
             return builder.message(ex.message).build()

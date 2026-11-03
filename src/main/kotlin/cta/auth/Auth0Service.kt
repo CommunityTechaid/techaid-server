@@ -25,6 +25,7 @@ import com.auth0.client.mgmt.users.types.DeleteUserPermissionsRequestContent
 import com.auth0.client.mgmt.users.types.DeleteUserRolesRequestContent
 import com.auth0.client.mgmt.users.types.ListUserPermissionsRequestParameters
 import com.auth0.client.mgmt.users.types.ListUserRolesRequestParameters
+import com.auth0.exception.APIException
 import cta.graphql.PaginationInput
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -60,7 +61,17 @@ class Auth0Service {
 
     private var mgmtApiExpires: Long = 0
 
-    private val auth by lazy {
+    private val auth: AuthAPI
+        get() {
+            // Local and dev machines deliberately have no server credentials (they are a key to the
+            // shared Auth0 tenant), so say so instead of failing inside the SDK.
+            if (clientId.isBlank() || clientSecret.isBlank()) {
+                throw UserManagementUnavailableException(NOT_CONFIGURED)
+            }
+            return lazyAuth
+        }
+
+    private val lazyAuth by lazy {
         AuthAPI.newBuilder(domain, clientId, clientSecret).build()
     }
 
@@ -70,7 +81,17 @@ class Auth0Service {
                 return cachedMgmt!!
             }
             val request = auth.requestToken("https://$domain/api/v2/")
-            val holder = request.execute().body
+            val holder =
+                try {
+                    request.execute().body
+                } catch (e: APIException) {
+                    // 401/403 here means Auth0 refused the credentials or the app has no
+                    // Management API grant - an environment setup matter, not a user error.
+                    if (e.statusCode == 401 || e.statusCode == 403) {
+                        throw UserManagementUnavailableException(NOT_CONFIGURED, e)
+                    }
+                    throw e
+                }
             mgmtApiExpires = Instant.now().epochSecond + holder.expiresIn
             cachedMgmt =
                 ManagementApi
@@ -259,10 +280,21 @@ class Auth0Service {
         return findById(userId)
     }
 
-    private companion object {
-        const val MGMT_CALL_TIMEOUT_SECONDS = 20
+    companion object {
+        private const val MGMT_CALL_TIMEOUT_SECONDS = 20
+        const val NOT_CONFIGURED = "User management isn't configured in this environment"
+        const val READ_ONLY = "User management is read-only in this environment"
     }
 }
+
+/**
+ * User management cannot be used in this environment: no server credentials, or Auth0 refused
+ * them. Its message is shown to the (authenticated) caller as-is.
+ */
+class UserManagementUnavailableException(
+    message: String,
+    cause: Throwable? = null,
+) : RuntimeException(message, cause)
 
 /** The parsed response body behind one page of an auto-paging list. */
 private fun <R> SyncPagingIterable<*>.response(): R? = getResponse<R>().orElse(null)

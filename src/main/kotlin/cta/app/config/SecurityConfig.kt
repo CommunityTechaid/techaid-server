@@ -43,14 +43,17 @@ class SecurityConfig(
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     var issuer: String = ""
 
+    @Value("\${auth0.allowed-clients:}")
+    private var allowedClients: String = ""
+
+    @Value("\${auth.dev-tech-wildcard:false}")
+    private var devTechWildcard: Boolean = false
+
     @Bean
     @Lazy
     fun jwtDecoder(): JwtDecoder {
         val jwtDecoder = JwtDecoders.fromOidcIssuerLocation(issuer) as NimbusJwtDecoder
-        val audienceValidator = AudienceValidator(audience)
-        val withIssuer = JwtValidators.createDefaultWithIssuer(issuer)
-        val withAudience = DelegatingOAuth2TokenValidator(withIssuer, audienceValidator)
-        jwtDecoder.setJwtValidator(withAudience)
+        jwtDecoder.setJwtValidator(tokenValidator(issuer, audience, AuthorisedPartyValidator.parse(allowedClients)))
         return jwtDecoder
     }
 
@@ -74,7 +77,7 @@ class SecurityConfig(
     public fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http.csrf { it.disable() }
         http.addFilterBefore(TokenAuthenticationFilter(authService, objectMapper), BasicAuthenticationFilter::class.java)
-        http.oauth2ResourceServer { it.jwt { jwt -> jwt.jwtAuthenticationConverter(Auth0TokenConverter()) } }
+        http.oauth2ResourceServer { it.jwt { jwt -> jwt.jwtAuthenticationConverter(Auth0TokenConverter(devTechWildcard)) } }
         http.authorizeHttpRequests { it.anyRequest().permitAll() }
         http.formLogin { form ->
             form
@@ -83,6 +86,62 @@ class SecurityConfig(
                 .failureUrl("/login?error")
         }
         return http.build()
+    }
+}
+
+/**
+ * Every check an Auth0 access token must pass, in one place so tests can exercise exactly what
+ * production runs: signature-independent claims only (the decoder verifies the signature).
+ *
+ * UAT and production share one Auth0 tenant (same issuer) and one API (same audience), so issuer
+ * and audience alone cannot tell a UAT token from a production one. [AuthorisedPartyValidator]
+ * does: each environment lists the Auth0 applications whose tokens it accepts.
+ */
+fun tokenValidator(
+    issuer: String,
+    audience: String,
+    allowedClients: Set<String>,
+): OAuth2TokenValidator<Jwt> =
+    DelegatingOAuth2TokenValidator(
+        JwtValidators.createDefaultWithIssuer(issuer),
+        AudienceValidator(audience),
+        AuthorisedPartyValidator(allowedClients),
+    )
+
+/**
+ * Accepts a token only when its `azp` (authorised party: the Auth0 application that requested it)
+ * is on this environment's allow-list, `AUTH0_ALLOWED_CLIENTS`.
+ *
+ * This is what stops a token minted for UAT (by the "Dev & UAT" dashboard app) being replayed
+ * against production, and production's machine-to-machine keys being used against UAT. Auth0 puts
+ * `azp` on both user tokens and client-credentials tokens (checked against real tokens of each
+ * kind, 2026-11-03).
+ *
+ * Fails closed: an empty list accepts nothing. `RequiredConfigurationCheck` refuses to start
+ * without one, so an empty list is a misconfiguration that is reported at startup rather than a
+ * silent outage.
+ */
+class AuthorisedPartyValidator(
+    private val allowedClients: Set<String>,
+) : OAuth2TokenValidator<Jwt> {
+    override fun validate(jwt: Jwt): OAuth2TokenValidatorResult {
+        val azp = jwt.getClaimAsString("azp")
+        if (azp != null && azp in allowedClients) {
+            return OAuth2TokenValidatorResult.success()
+        }
+        logger.warn { "Rejected a token from Auth0 application '$azp': not in AUTH0_ALLOWED_CLIENTS for this environment" }
+        return OAuth2TokenValidatorResult.failure(
+            OAuth2Error("invalid_token", "The token was not issued to an application this environment accepts", null),
+        )
+    }
+
+    companion object {
+        fun parse(csv: String): Set<String> =
+            csv
+                .split(',')
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .toSet()
     }
 }
 
@@ -99,19 +158,65 @@ class AudienceValidator(
     }
 }
 
-class Auth0TokenConverter : Converter<Jwt, AbstractAuthenticationToken> {
+/**
+ * Maps the token's `permissions` claim to authorities.
+ *
+ * With [devTechWildcard] on, a token carrying [DevTechWildcard.PERMISSION] is also granted every
+ * authority in [DevTechWildcard.AUTHORITIES]. The flag is `AUTH_DEV_TECH_WILDCARD`, and
+ * `RequiredConfigurationCheck` refuses to start with it on outside the `local` and `testing`
+ * profiles, so production always uses the explicit, per-permission checks.
+ */
+class Auth0TokenConverter(
+    private val devTechWildcard: Boolean = false,
+) : Converter<Jwt, AbstractAuthenticationToken> {
     private val converter = JwtGrantedAuthoritiesConverter()
 
     override fun convert(jwt: Jwt): AbstractAuthenticationToken {
         val authorities = converter.convert(jwt)!!
-        val permissions = jwt.claims["permissions"]
-        if (permissions is List<*>) {
-            permissions.forEach {
-                if (it is String) {
-                    authorities.add(SimpleGrantedAuthority(it))
-                }
-            }
+        val permissions = (jwt.claims["permissions"] as? List<*>).orEmpty().filterIsInstance<String>()
+        permissions.forEach { authorities.add(SimpleGrantedAuthority(it)) }
+        if (devTechWildcard && DevTechWildcard.PERMISSION in permissions) {
+            DevTechWildcard.AUTHORITIES.forEach { authorities.add(SimpleGrantedAuthority(it)) }
         }
-        return JwtAuthenticationToken(jwt, authorities)
+        return JwtAuthenticationToken(jwt, authorities.distinct())
     }
+}
+
+/**
+ * The "dev:tech" permission: developers' full access in local and UAT, without any extra access
+ * in production.
+ */
+object DevTechWildcard {
+    const val PERMISSION = "dev:tech"
+
+    /** The only profiles in which the wildcard may be switched on. */
+    val ALLOWED_PROFILES = setOf("local", "testing")
+
+    /**
+     * Every authority the application checks, EXCEPT user management. The tenant is shared by
+     * every environment, so `write:users` in UAT can assign a production role; the wildcard must
+     * never grant it. DevTechWildcardCoverageTest fails if an authority is checked in code but
+     * missing here, so the wildcard cannot silently fall behind.
+     */
+    val AUTHORITIES =
+        setOf(
+            "app:admin",
+            "read:content",
+            "write:content",
+            "read:donorParents",
+            "write:donorParents",
+            "delete:donorParents",
+            "read:donors",
+            "write:donors",
+            "delete:donors",
+            "read:kits",
+            "write:kits",
+            "delete:kits",
+            "read:organisations",
+            "write:organisations",
+            "delete:organisations",
+        )
+
+    /** Deliberately excluded from [AUTHORITIES]: they reach the shared Auth0 tenant. */
+    val EXCLUDED = setOf("read:users", "write:users", "delete:users")
 }

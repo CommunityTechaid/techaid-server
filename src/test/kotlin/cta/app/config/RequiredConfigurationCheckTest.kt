@@ -15,16 +15,63 @@ import org.springframework.mock.env.MockEnvironment
  * properties anyway.
  */
 class RequiredConfigurationCheckTest {
-    private fun check(vararg present: Pair<String, String>) =
-        RequiredConfigurationCheck(
-            MockEnvironment().apply { present.forEach { (k, v) -> setProperty(k, v) } },
-        )
+    private fun check(
+        vararg present: Pair<String, String>,
+        profiles: List<String> = emptyList(),
+    ) = RequiredConfigurationCheck(
+        MockEnvironment().apply {
+            present.forEach { (k, v) -> setProperty(k, v) }
+            setActiveProfiles(*profiles.toTypedArray())
+        },
+    )
 
-    private fun fullyConfigured() =
-        check(
+    private val complete =
+        arrayOf(
             "auth0.token-attribute" to "https://communitytechaid.org.uk",
             "auth.admin-secret" to "a-secret",
+            "auth0.allowed-clients" to "a-client",
         )
+
+    private fun fullyConfigured() = check(*complete)
+
+    private fun withWildcard(vararg profiles: String) = check(*complete, "auth.dev-tech-wildcard" to "true", profiles = profiles.toList())
+
+    @Test
+    fun `a missing azp allow-list is named at startup`() {
+        val withoutAllowList = complete.filter { it.first != "auth0.allowed-clients" }.toTypedArray()
+        assertThatIllegalStateException()
+            .isThrownBy { check(*withoutAllowList).afterPropertiesSet() }
+            .withMessageContaining("auth0.allowed-clients")
+            .withMessageContaining("AUTH0_ALLOWED_CLIENTS")
+    }
+
+    @Test
+    fun `the dev-tech wildcard is allowed in the local and testing profiles`() {
+        assertThatCode { withWildcard("local").afterPropertiesSet() }.doesNotThrowAnyException()
+        assertThatCode { withWildcard("testing").afterPropertiesSet() }.doesNotThrowAnyException()
+    }
+
+    @Test
+    fun `the dev-tech wildcard refuses to start in production`() {
+        assertThatIllegalStateException()
+            .isThrownBy { withWildcard("production").afterPropertiesSet() }
+            .withMessageContaining("AUTH_DEV_TECH_WILDCARD")
+        assertThatIllegalStateException()
+            .isThrownBy { withWildcard("testing", "production").afterPropertiesSet() }
+    }
+
+    @Test
+    fun `the dev-tech wildcard refuses to start with no or an unknown profile`() {
+        // Allow-list, not deny-list: a missing or misspelt profile must not leave it live.
+        assertThatIllegalStateException().isThrownBy { withWildcard().afterPropertiesSet() }
+        assertThatIllegalStateException().isThrownBy { withWildcard("prod").afterPropertiesSet() }
+    }
+
+    @Test
+    fun `the wildcard off is fine in any profile`() {
+        assertThatCode { check(*complete, profiles = listOf("production")).afterPropertiesSet() }
+            .doesNotThrowAnyException()
+    }
 
     @Test
     fun `a fully configured environment starts`() {
@@ -49,6 +96,7 @@ class RequiredConfigurationCheckTest {
                 check(
                     "auth0.token-attribute" to "https://communitytechaid.org.uk",
                     "auth.admin-secret" to "   ",
+                    "auth0.allowed-clients" to "a-client",
                 ).afterPropertiesSet()
             }.withMessageContaining("auth.admin-secret")
     }
@@ -71,6 +119,7 @@ class RequiredConfigurationCheckTest {
             check(
                 "auth0.token-attribute" to "https://test.example.com",
                 "auth.admin-secret" to "password",
+                "auth0.allowed-clients" to "test-dashboard-client",
             ).afterPropertiesSet()
         }.doesNotThrowAnyException()
 

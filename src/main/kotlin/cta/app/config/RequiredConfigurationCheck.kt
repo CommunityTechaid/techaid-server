@@ -55,6 +55,25 @@ class RequiredConfigurationCheck(
                 "grants full authorities via X-Auth-Admin-Secret, so defaulting it would fail open. " +
                 "Set them on the container app rather than adding defaults here."
         }
+
+        checkDevTechWildcard()
+    }
+
+    /**
+     * `AUTH_DEV_TECH_WILDCARD` turns the `dev:tech` permission into near-full access, so it may
+     * only be on in the `local` and `testing` (UAT) profiles. The check allow-lists those
+     * profiles rather than deny-listing `production`: a misspelt or missing profile must not
+     * leave the wildcard live.
+     */
+    private fun checkDevTechWildcard() {
+        val enabled = environment.getProperty("auth.dev-tech-wildcard", Boolean::class.java, false)
+        if (!enabled) return
+        val profiles = environment.activeProfiles.toSet()
+        check(profiles.any { it in DevTechWildcard.ALLOWED_PROFILES } && "production" !in profiles) {
+            "AUTH_DEV_TECH_WILDCARD is on, but the active profiles are $profiles. The dev:tech " +
+                "wildcard may only be enabled with the ${DevTechWildcard.ALLOWED_PROFILES} profiles, " +
+                "never in production. Unset AUTH_DEV_TECH_WILDCARD on this container app."
+        }
     }
 
     companion object {
@@ -68,6 +87,9 @@ class RequiredConfigurationCheck(
             mapOf(
                 "auth0.token-attribute" to "TOKEN_ATTRIBUTE",
                 "auth.admin-secret" to "AUTH_ADMIN_SECRET",
+                // The azp allow-list (SecurityConfig.AuthorisedPartyValidator). Empty would
+                // reject every token, so name it at startup instead of serving 401s.
+                "auth0.allowed-clients" to "AUTH0_ALLOWED_CLIENTS",
             )
     }
 }
