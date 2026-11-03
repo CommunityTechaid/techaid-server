@@ -11,6 +11,7 @@ import cta.app.ReferrerLimitExceptionRepository
 import cta.app.ReferringOrganisationRepository
 import cta.app.graphql.queries.BoroughGroupGql
 import cta.app.graphql.queries.toGql
+import cta.app.services.AdminSettingAuditService
 import cta.toNullable
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
@@ -29,6 +30,7 @@ class BoroughAvailabilityMutations(
     private val boroughGroups: BoroughGroupRepository,
     private val limitExceptions: ReferrerLimitExceptionRepository,
     private val referringOrganisations: ReferringOrganisationRepository,
+    private val audit: AdminSettingAuditService,
 ) {
     /**
      * Replace the whole configuration in one transaction.
@@ -53,6 +55,9 @@ class BoroughAvailabilityMutations(
 
         val existing = boroughGroups.findAll().associateBy { it.id }
         val keptIds = data.groups.mapNotNull { it.id }.toSet()
+        // History is a diff of the whole config before and after, so the delete-and-reinsert below
+        // records nothing for unchanged rows. Taken now, while deleted groups still have their names.
+        val before = AdminSettingAuditService.boroughs(existing.values, limitExceptions.findAll())
 
         // Exceptions first: they hold a foreign key onto the groups, so deleting a group with an
         // exception still attached would fail on the constraint rather than on our own validation.
@@ -75,21 +80,23 @@ class BoroughAvailabilityMutations(
         boroughGroups.flush()
 
         val groupsById = saved.associateBy { it.id }
-        data.exceptions.forEach { input ->
-            val organisation =
-                referringOrganisations.findById(input.organisationId).toNullable()
-                    ?: throw IllegalArgumentException("Unknown referring organisation ${input.organisationId}")
-            val group =
-                groupsById[input.boroughGroupId]
-                    ?: throw IllegalArgumentException("Unknown borough group ${input.boroughGroupId}")
-            limitExceptions.save(
-                ReferrerLimitException(
-                    referringOrganisation = organisation,
-                    group = group,
-                    maxPerReferee = input.maxPerReferee,
-                ),
-            )
-        }
+        val exceptions =
+            data.exceptions.map { input ->
+                val organisation =
+                    referringOrganisations.findById(input.organisationId).toNullable()
+                        ?: throw IllegalArgumentException("Unknown referring organisation ${input.organisationId}")
+                val group =
+                    groupsById[input.boroughGroupId]
+                        ?: throw IllegalArgumentException("Unknown borough group ${input.boroughGroupId}")
+                limitExceptions.save(
+                    ReferrerLimitException(
+                        referringOrganisation = organisation,
+                        group = group,
+                        maxPerReferee = input.maxPerReferee,
+                    ),
+                )
+            }
+        audit.record(before, AdminSettingAuditService.boroughs(saved, exceptions))
 
         return saved.map { it.toGql() }
     }

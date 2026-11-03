@@ -4,6 +4,7 @@ import cta.app.FeatureFlag
 import cta.app.FeatureFlagRepository
 import cta.app.graphql.queries.FeatureFlagGql
 import cta.app.graphql.queries.toGql
+import cta.app.services.AdminSettingAuditService
 import cta.toNullable
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
@@ -19,16 +20,18 @@ import org.springframework.validation.annotation.Validated
 @Transactional
 class FeatureFlagMutations(
     private val featureFlags: FeatureFlagRepository,
+    private val audit: AdminSettingAuditService,
 ) {
     @PreAuthorize("hasAnyAuthority('app:admin')")
     @MutationMapping
     fun updateFeatureFlag(
         @Argument @Valid data: UpdateFeatureFlagInput,
     ): FeatureFlagGql {
-        val entity =
-            featureFlags.findById(data.key).toNullable()
-                ?: FeatureFlag(key = data.key)
+        val existing = featureFlags.findById(data.key).toNullable()
+        val before = AdminSettingAuditService.featureFlag(data.key, existing?.enabled)
+        val entity = existing ?: FeatureFlag(key = data.key)
         entity.enabled = data.enabled
+        audit.record(before, AdminSettingAuditService.featureFlag(data.key, data.enabled))
         return featureFlags.save(entity).toGql()
     }
 }

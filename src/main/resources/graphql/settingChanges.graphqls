@@ -1,0 +1,35 @@
+enum SettingChangeSource { USER MIGRATION SYSTEM }
+
+"One field of one admin-panel setting changing value (#327)."
+type SettingChange {
+    id: ID!
+    "ISO-8601 instant"
+    changedAt: String!
+    source: SettingChangeSource!
+    "Null unless source is USER"
+    changedByEmail: String
+    changedByName: String
+    "FEATURE_FLAG | BOROUGH_GROUP | BOROUGH_AVAILABILITY | LIMIT_EXCEPTION | ADMIN_CONFIG"
+    settingType: String!
+    settingKey: String!
+    subjectId: ID
+    subjectLabel: String
+    field: String!
+    "CREATED | UPDATED | DELETED"
+    changeType: String!
+    oldValue: String
+    newValue: String
+}
+
+type SettingChangePage {
+    content: [SettingChange!]!
+    totalElements: Int!
+    totalPages: Int!
+    number: Int!
+    size: Int!
+}
+
+extend type Query {
+    "Admin-only change history, newest first. Filter by type and/or key."
+    settingChanges(settingType: String, settingKey: String, page: Int = 0, size: Int = 50): SettingChangePage!
+}
