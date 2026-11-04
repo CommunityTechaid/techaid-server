@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
  * an old-only token are allowed and an unrelated token is denied. Denials come back as HTTP 200
  * with a GraphQL errors array, so assertions are on the response body.
  *
- * The last two tests pin what a read:requests-only token sees in nested referee/organisation fields.
+ * #341: nested notes / membershipContacts accept read:referees; read:requests alone is denied them.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
@@ -51,12 +51,12 @@ class SplitReadDeletePermissionsTest {
 
     private fun graphQl(
         query: String,
-        authority: String,
+        vararg authorities: String,
     ): String =
         mockMvc
             .perform(
                 post("/graphql")
-                    .with(jwt().authorities(SimpleGrantedAuthority(authority)))
+                    .with(jwt().authorities(authorities.map { SimpleGrantedAuthority(it) }))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"query":"$query"}"""),
             ).andReturn()
@@ -183,7 +183,7 @@ class SplitReadDeletePermissionsTest {
         )
     }
 
-    // Nested-field behaviour of a read:requests-only token. Pinned as current behaviour, not a decision.
+    // Nested-field behaviour by token.
 
     @Test
     fun `read requests alone returns nested referee and organisation scalars`() {
@@ -199,16 +199,39 @@ class SplitReadDeletePermissionsTest {
     }
 
     @Test
-    fun `read requests alone is denied the separately guarded nested fields`() {
+    fun `read requests alone is denied referee notes but a read referees token is not`() {
         val ids = seed()
-        val where = "where: {id: {_eq: ${ids.request}}}"
-        val notes = graphQl("{ deviceRequests($where) { id referringOrganisationContact { id notes { id } } } }", "read:requests")
-        assertTrue(notes.contains("\"errors\""), notes)
-        val membershipContacts =
+        val query = "{ deviceRequests(where: {id: {_eq: ${ids.request}}}) { id referringOrganisationContact { id notes { id } } } }"
+        // Decision: referee notes are referee data, so read:requests alone must NOT see them.
+        assertTrue(graphQl(query, "read:requests").contains("\"errors\""))
+        assertAllowed(graphQl(query, "read:requests", "read:referees"), "\"id\"")
+        assertAllowed(graphQl(query, oldRead), "\"id\"")
+        assertDenied(graphQl(query, unrelated), "\"id\"")
+    }
+
+    @Test
+    fun `membershipContacts accepts read referees or read organisations and denies read requests alone`() {
+        val ids = seed()
+        val query =
+            "{ deviceRequests(where: {id: {_eq: ${ids.request}}}) { id referringOrganisationContact { " +
+                "referringOrganisation { id membershipContacts { id } } } } }"
+        assertTrue(graphQl(query, "read:requests").contains("\"errors\""))
+        assertAllowed(graphQl(query, "read:requests", "read:referees"), "\"membershipContacts\"")
+        assertAllowed(graphQl(query, oldRead), "\"membershipContacts\"")
+        assertDenied(graphQl(query, unrelated), "\"membershipContacts\"")
+    }
+
+    @Test
+    fun `read requests plus read referees returns both nested fields with no errors`() {
+        val ids = seed()
+        val body =
             graphQl(
-                "{ deviceRequests($where) { id referringOrganisationContact { referringOrganisation { membershipContacts { id } } } } }",
+                "{ deviceRequests(where: {id: {_eq: ${ids.request}}}) { id referringOrganisationContact { id notes { id } " +
+                    "referringOrganisation { id membershipContacts { id } } } } }",
                 "read:requests",
+                "read:referees",
             )
-        assertTrue(membershipContacts.contains("\"errors\""), membershipContacts)
+        assertFalse(body.contains("\"errors\""), body)
+        assertTrue(body.contains("\"notes\"") && body.contains("\"membershipContacts\""), body)
     }
 }
