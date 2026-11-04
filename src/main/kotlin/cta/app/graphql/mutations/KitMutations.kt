@@ -6,6 +6,7 @@ import cta.app.Kit
 import cta.app.KitRepository
 import cta.app.Note
 import cta.app.QKit
+import cta.app.services.BatteryHealthGuardService
 import cta.app.services.BlockingFlagGuardService
 import cta.app.services.FilterService
 import cta.app.services.KitService
@@ -35,6 +36,7 @@ class KitMutations(
     private val kitService: KitService,
     private val wipeCertGuard: WipeCertGuardService,
     private val blockingFlagGuard: BlockingFlagGuardService,
+    private val batteryHealthGuard: BatteryHealthGuardService,
 ) {
     @MutationMapping
     fun createKit(
@@ -95,6 +97,7 @@ class KitMutations(
             // and so clearing a blocking flag while advancing the status still works (#90).
             wipeCertGuard.checkStatusChange(this, previousStatus, status, "updateKit")
             blockingFlagGuard.checkStatusChange(this, previousStatus, status, "updateKit")
+            batteryHealthGuard.checkStatusChange(this, previousStatus, status, "updateKit")
 
             // Update statusUpdatedAt if status has changed
             if (previousStatus != status) {
@@ -179,6 +182,7 @@ class KitMutations(
         return data.apply(entity).also {
             wipeCertGuard.checkStatusChange(it, previousStatus, it.status, "autoUpdateKit")
             blockingFlagGuard.checkStatusChange(it, previousStatus, it.status, "autoUpdateKit")
+            batteryHealthGuard.checkStatusChange(it, previousStatus, it.status, "autoUpdateKit")
         }
     }
 
@@ -208,6 +212,7 @@ class KitMutations(
             }
             wipeCertGuard.checkStatusChange(it, previousStatus, it.status, "updateKits")
             blockingFlagGuard.checkStatusChange(it, previousStatus, it.status, "updateKits")
+            batteryHealthGuard.checkStatusChange(it, previousStatus, it.status, "updateKits")
         }
         return kits.saveAll(entities)
     }
