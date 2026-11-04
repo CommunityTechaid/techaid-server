@@ -79,7 +79,7 @@ class ReferringOrganisationContactQueries(
     // Gated on its own (defence in depth) so a public path that ever reaches a contact cannot read
     // the internal notes. write:organisations is included because updateReferringOrganisationContact
     // returns notes and the dashboard's contact editor selects them.
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'write:organisations')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'write:organisations', 'write:referees')")
     @SchemaMapping(typeName = "ReferringOrganisationContact", field = "notes")
     fun notes(contact: ReferringOrganisationContact): Set<ReferringOrganisationContactNote> = contact.referringOrganisationContactNotes
 

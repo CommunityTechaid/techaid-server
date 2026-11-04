@@ -42,6 +42,8 @@ class AuthService {
                         "delete:users",
                         "read:organisations",
                         "write:organisations",
+                        "write:requests",
+                        "write:referees",
                         "delete:organisations",
                     ).map { SimpleGrantedAuthority("$it") }
                         .toMutableList(),

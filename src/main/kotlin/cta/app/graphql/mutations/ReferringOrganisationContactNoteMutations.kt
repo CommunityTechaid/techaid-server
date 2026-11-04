@@ -14,7 +14,7 @@ import org.springframework.validation.annotation.Validated
 
 @Controller
 @Validated
-@PreAuthorize("hasAnyAuthority('write:organisations')")
+@PreAuthorize("hasAnyAuthority('write:organisations', 'write:referees')")
 @Transactional
 class ReferringOrganisationContactNoteMutations(
     private val filterService: FilterService,
