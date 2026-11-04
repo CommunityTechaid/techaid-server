@@ -11,6 +11,7 @@ import cta.app.FeatureFlagRepository
 import cta.app.services.BoroughAvailabilityRules
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -120,6 +121,16 @@ class DeliveryMutationsTest {
             .andExpect(jsonPath("$.data.submitDeliveryBookingPublic.id").isNotEmpty)
     }
 
+    /**
+     * A rejection is exactly one BAD_REQUEST error (issue #230). While the field was declared
+     * non-null, graphql-java appended a NullValueInNonNullableField error to every rejection,
+     * and the dashboard shows only errors[0] — so the spurious one could replace the real
+     * message with a generic "try again".
+     */
+    private fun ResultActions.andExpectSingleBadRequest(): ResultActions =
+        andExpect(jsonPath("$.errors", hasSize<Any>(1)))
+            .andExpect(jsonPath("$.errors[0].extensions.classification").value("BAD_REQUEST"))
+
     @Test
     fun `rejects a day beyond the advance window`() {
         var farFuture = LocalDate.now().plusYears(1)
@@ -127,6 +138,7 @@ class DeliveryMutationsTest {
 
         graphQl(bookingMutation(farFuture.toString()))
             .andExpect(status().isOk)
+            .andExpectSingleBadRequest()
             .andExpect(jsonPath("$.errors[0].message").value("Deliveries aren't available on that date"))
     }
 
@@ -134,6 +146,7 @@ class DeliveryMutationsTest {
     fun `rejects an oversized address`() {
         graphQl(bookingMutation(offeredDates(1)[0].toString(), address = "x".repeat(1001)))
             .andExpect(status().isOk)
+            .andExpectSingleBadRequest()
             .andExpect(jsonPath("$.errors[0].message").value(containsString("address")))
     }
 
@@ -141,6 +154,7 @@ class DeliveryMutationsTest {
     fun `rejects an invalid email`() {
         graphQl(bookingMutation(offeredDates(1)[0].toString(), email = "not-an-email"))
             .andExpect(status().isOk)
+            .andExpectSingleBadRequest()
             .andExpect(jsonPath("$.errors[0].message").value(containsString("email")))
     }
 
@@ -159,7 +173,11 @@ class DeliveryMutationsTest {
 
         graphQl(bookingMutation(date))
             .andExpect(status().isOk)
+            .andExpectSingleBadRequest()
             .andExpect(jsonPath("$.errors[0].message").value("That delivery window is fully booked"))
+            // Stable code so the dashboard can send the visitor back to pick another window
+            // without matching on message text (issue #230).
+            .andExpect(jsonPath("$.errors[0].extensions.code").value("WINDOW_FULL"))
     }
 
     /**

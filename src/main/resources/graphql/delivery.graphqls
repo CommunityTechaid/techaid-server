@@ -76,6 +76,11 @@ extend type Query {
 }
 
 extend type Mutation {
-    "Public: book a delivery slot. No auth required."
-    submitDeliveryBookingPublic(input: DeliveryBookingInput!): DeliveryBookingConfirmation!
+    """
+    Public: book a delivery slot. No auth required.
+    Nullable on purpose (issue #230): a rejected booking returns null plus exactly one BAD_REQUEST
+    error. Non-null made graphql-java append a second, spurious NullValueInNonNullableField error.
+    A full window carries extensions.code = WINDOW_FULL.
+    """
+    submitDeliveryBookingPublic(input: DeliveryBookingInput!): DeliveryBookingConfirmation
 }
