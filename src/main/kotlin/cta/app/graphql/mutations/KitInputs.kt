@@ -42,6 +42,12 @@ data class CreateKitInput(
     val model: String = "",
     val location: String?,
     val age: Int,
+    /**
+     * Deprecated and ignored (#151). Still bound so older callers that send it (the Bulk Insert
+     * Apps Script made 295 createKit calls in prod in Sep–Oct 2026) don't start failing. Remove it
+     * once that script stops sending it.
+     */
+    val attributes: Map<String, Any?>? = null,
     val donorId: Long? = null,
     val note: CreateNoteInput? = null,
     val make: String? = null,

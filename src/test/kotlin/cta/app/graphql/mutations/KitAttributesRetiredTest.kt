@@ -105,4 +105,25 @@ class KitAttributesRetiredTest {
         assertFalse(response.contains("errors"), response)
         assertTrue(response.contains("\"model\":\"Created\""), response)
     }
+
+    /**
+     * Compatibility shim (Tony, 2026-11-04). An external tool (most likely the Bulk Insert Apps Script)
+     * made 295 createKit calls in prod between 2026-09-23 and 2026-10-13. Because the field used to be
+     * required, it must send `attributes`. createKit still ACCEPTS the old block, marked deprecated,
+     * so that tool keeps working. It is still ignored, exactly as before #346, and never stored.
+     */
+    @Test
+    fun `createKit still accepts the legacy attributes block, and ignores it`() {
+        val response =
+            graphQl(
+                """mutation { createKit(data: { type: LAPTOP, model: \"Legacy Bulk\", age: 0, attributes: { """ +
+                    """notes: \"from bulk\", state: \"s\", otherType: \"o\", credentials: \"c\", status: [\"x\"], """ +
+                    """network: \"WIFI\", otherNetwork: \"n\" } }) { id model } }""",
+            )
+        assertFalse(response.contains("errors"), response)
+
+        val created = kits.findAll().single { it.model == "Legacy Bulk" }
+        assertEquals("", created.attributes.notes, "the legacy block must not be stored")
+        assertEquals(emptyList<String>(), created.attributes.status)
+    }
 }
