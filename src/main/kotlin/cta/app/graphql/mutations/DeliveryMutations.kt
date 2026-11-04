@@ -36,9 +36,13 @@ import java.time.format.DateTimeParseException
 
 private val logger = KotlinLogging.logger {}
 
-/** Raised when a booking can't be accepted; surfaced to the client as a BAD_REQUEST error. */
+/**
+ * Raised when a booking can't be accepted; surfaced to the client as a BAD_REQUEST error.
+ * [code], when set, becomes extensions.code so the client can act on it without matching text.
+ */
 class DeliveryBookingException(
     message: String,
+    val code: String? = null,
 ) : RuntimeException(message)
 
 /**
@@ -120,7 +124,7 @@ class DeliveryMutations(
         }
 
         val booked = bookings.countByDeliveryDateAndWindowId(date, window.id)
-        if (booked >= window.capacity) throw DeliveryBookingException("That delivery window is fully booked")
+        if (booked >= window.capacity) throw DeliveryBookingException("That delivery window is fully booked", code = "WINDOW_FULL")
 
         // Borough gate (dashboard #180 / sheet row 18): only enforced while the flag is on, and
         // always fails open — we already accepted the linked request, so refusing a delivery to
@@ -201,6 +205,7 @@ class DeliveryMutations(
             .newError()
             .errorType(ErrorType.BAD_REQUEST)
             .message(ex.message)
+            .apply { ex.code?.let { extensions(mapOf("code" to it)) } }
             .build()
 
     @GraphQlExceptionHandler
