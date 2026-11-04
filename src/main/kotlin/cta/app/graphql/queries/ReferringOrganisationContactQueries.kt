@@ -22,7 +22,7 @@ import java.util.Optional
 class ReferringOrganisationContactQueries(
     private val referringOrganisationContacts: ReferringOrganisationContactRepository,
 ) {
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'read:referees')")
     @QueryMapping
     fun referringOrganisationContacts(
         @Argument where: ReferringOrganisationContactWhereInput,
@@ -35,7 +35,7 @@ class ReferringOrganisationContactQueries(
             referringOrganisationContacts.findAll(where.build()).toList()
         }
 
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'read:referees')")
     @QueryMapping
     fun referringOrganisationContactsConnection(
         @Argument page: PaginationInput?,
@@ -70,7 +70,7 @@ class ReferringOrganisationContactQueries(
             .map { ReferringOrganisationContactPublic(it.id, it.fullName, it.referringOrganisation.id) }
     }
 
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'read:referees')")
     @QueryMapping
     fun referringOrganisationContact(
         @Argument where: ReferringOrganisationContactWhereInput,
@@ -79,7 +79,7 @@ class ReferringOrganisationContactQueries(
     // Gated on its own (defence in depth) so a public path that ever reaches a contact cannot read
     // the internal notes. write:organisations is included because updateReferringOrganisationContact
     // returns notes and the dashboard's contact editor selects them.
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'write:organisations', 'write:referees')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'write:organisations', 'write:referees', 'read:referees')")
     @SchemaMapping(typeName = "ReferringOrganisationContact", field = "notes")
     fun notes(contact: ReferringOrganisationContact): Set<ReferringOrganisationContactNote> = contact.referringOrganisationContactNotes
 

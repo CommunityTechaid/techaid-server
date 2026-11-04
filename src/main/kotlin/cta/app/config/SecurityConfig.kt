@@ -216,6 +216,10 @@ object DevTechWildcard {
             "write:organisations",
             "write:requests",
             "write:referees",
+            "read:requests",
+            "read:referees",
+            "delete:requests",
+            "delete:referees",
             "delete:organisations",
         )
 

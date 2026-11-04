@@ -28,7 +28,7 @@ class DeviceRequestQueries(
         return null
     }
 
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'read:requests')")
     @QueryMapping
     fun deviceRequests(
         @Argument where: DeviceRequestWhereInput,
@@ -41,7 +41,7 @@ class DeviceRequestQueries(
             deviceRequests.findAll(where.build()).toList()
         }
 
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'read:requests')")
     @QueryMapping
     fun deviceRequestConnection(
         @Argument page: PaginationInput?,
@@ -54,7 +54,7 @@ class DeviceRequestQueries(
         return deviceRequests.findAll(where.build(), f.create())
     }
 
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'read:requests')")
     @QueryMapping
     fun deviceRequest(
         @Argument where: DeviceRequestWhereInput,
