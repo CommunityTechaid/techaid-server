@@ -213,7 +213,7 @@ class DeliveryBookingConcurrencyTest {
         // No submit failed for any *other* reason (e.g. a lock timeout or dedup misfire).
         assertThat(messages.filter { it != null }).allMatch { it == "That delivery window is fully booked" }
         // The durable truth: exactly N rows persisted for that window/day.
-        assertThat(bookingRepository.countByDeliveryDateAndWindowId(date, 1L)).isEqualTo(capacity.toLong())
+        assertThat(bookingRepository.countByDeliveryDateAndWindowIdAndAdminExceptionFalse(date, 1L)).isEqualTo(capacity.toLong())
     }
 
     /**

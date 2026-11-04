@@ -123,7 +123,7 @@ class DeliveryMutations(
             )
         }
 
-        val booked = bookings.countByDeliveryDateAndWindowId(date, window.id)
+        val booked = bookings.countByDeliveryDateAndWindowIdAndAdminExceptionFalse(date, window.id)
         if (booked >= window.capacity) throw DeliveryBookingException("That delivery window is fully booked", code = "WINDOW_FULL")
 
         // Borough gate (dashboard #180 / sheet row 18): only enforced while the flag is on, and

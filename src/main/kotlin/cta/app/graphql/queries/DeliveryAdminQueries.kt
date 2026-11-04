@@ -143,6 +143,9 @@ data class DeliveryBookingAdminGql(
     val matchedRequestId: String?,
     val matchedRequestStatus: String?,
     val matchedRequestOpen: Boolean?,
+    val adminException: Boolean,
+    val bookedBy: String?,
+    val exceptionReason: String?,
 )
 
 fun DeliveryConfig.toGql(): DeliveryConfigGql =
@@ -192,5 +195,8 @@ fun DeliveryBooking.toAdminGql(
         matchedRequestId = matchedRequest?.id?.toString(),
         matchedRequestStatus = matchedRequest?.status?.name,
         matchedRequestOpen = matchedRequest?.let { it.status !in CLOSED_REQUEST_STATUSES },
+        adminException = adminException,
+        bookedBy = bookedBy,
+        exceptionReason = exceptionReason,
     )
 }

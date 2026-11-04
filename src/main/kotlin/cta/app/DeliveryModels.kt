@@ -115,6 +115,15 @@ class DeliveryBooking(
     var ctaReference: Long = 0,
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
+    /**
+     * An admin exception booking (#73): made by an admin outside the public rules, and NOT
+     * counted against the window's capacity. See V26.11.04.1100.
+     */
+    var adminException: Boolean = false,
+    /** Email of the admin who made an exception booking; null for public bookings. */
+    var bookedBy: String? = null,
+    @Column(columnDefinition = "TEXT")
+    var exceptionReason: String? = null,
 )
 
 /**
@@ -171,7 +180,11 @@ interface DeliveryBlockedDateRepository : JpaRepository<DeliveryBlockedDate, Lon
 interface DeliveryBookingRepository :
     JpaRepository<DeliveryBooking, Long>,
     QuerydslPredicateExecutor<DeliveryBooking> {
-    fun countByDeliveryDateAndWindowId(
+    /**
+     * Bookings that take a slot: everything except admin exception bookings (#73), which by
+     * policy don't count against a window's capacity.
+     */
+    fun countByDeliveryDateAndWindowIdAndAdminExceptionFalse(
         deliveryDate: LocalDate,
         windowId: Long,
     ): Long

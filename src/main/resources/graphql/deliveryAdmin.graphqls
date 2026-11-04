@@ -60,6 +60,29 @@ type DeliveryBookingAdmin {
     matchedRequestStatus: String
     "True when the matched request is in an open status; null when unmatched."
     matchedRequestOpen: Boolean
+    "True for an admin exception booking (#73), which doesn't count against the window's capacity."
+    adminException: Boolean
+    "Email of the admin who made an exception booking; null for public bookings."
+    bookedBy: String
+    exceptionReason: String
+}
+
+"An admin exception booking (#73). Same contact fields as the public booking, without Turnstile."
+input DeliveryBookingAdminInput {
+    "ISO date. Any day from today on, including days the public page doesn't offer."
+    date: String!
+    "Any existing window, active or not."
+    windowId: ID!
+    firstName: String!
+    surname: String!
+    email: String!
+    phone: String!
+    address: String!
+    accessNotes: String
+    "Must match an existing device request. Its status is not checked."
+    ctaReference: Long!
+    "Why the exception was made, e.g. a missed delivery that the referee called to rebook."
+    exceptionReason: String
 }
 
 input UpdateDeliveryConfigInput {
@@ -113,6 +136,14 @@ extend type Mutation {
     status rolled back before the booking is deleted.
     """
     deleteDeliveryBooking(id: ID!, clearRequestDelivery: Boolean): Boolean!
+    """
+    Admins only (#73): book a delivery outside the public rules. It ignores capacity, the offered
+    days, borough restrictions and the request-status gate, and doesn't count against the window's
+    capacity. Sends the normal confirmation email and marks the request as arranged, like a
+    public booking. Recorded with adminException = true and the admin's email.
+    Nullable so a rejection is exactly one BAD_REQUEST error (same reason as #230).
+    """
+    submitDeliveryBookingAdmin(input: DeliveryBookingAdminInput!): DeliveryBookingAdmin
     "Replaces the whole set of allowed boroughs for the given weekday. An empty list clears the restriction."
     setDeliveryDayBoroughs(dayOfWeek: Int!, boroughs: [String!]!): DeliveryDayBoroughs!
 }
