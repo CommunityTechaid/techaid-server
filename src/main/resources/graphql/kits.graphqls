@@ -114,7 +114,6 @@ type Kit {
     statusUpdatedAt: String
     archived: Boolean
     age: Int
-    attributes: KitAttributes!
     donor: Donor
     deviceRequest: DeviceRequest
     notes: [Note]!,
@@ -138,26 +137,6 @@ type Kit {
 "Admin-declared reason a kit legitimately has no wipe certificate"
 enum WipeCertExemption {
     NO_DRIVE
-}
-
-type KitAttributes {
-    state: String
-    otherType: String
-    notes: String
-    credentials: String
-    status: [String]
-    network: String
-    otherNetwork: String
-}
-
-input KitAttributesInput {
-    state: String
-    otherType: String
-    credentials: String
-    notes: String
-    status: [String]
-    network: String
-    otherNetwork: String
 }
 
 type KitSubStatus {
@@ -218,7 +197,6 @@ input KitWhereInput {
     updatedAt: TimeComparison
     statusUpdatedAt: TimeComparison
     archived: BooleanComparison
-    attributes: KitAttributesWhereInput
     donor: DonorWhereInput
     deviceRequest: DeviceRequestWhereInput
     make: TextComparison
@@ -236,15 +214,6 @@ input KitWhereInput {
     AND: [KitWhereInput!]
     OR: [KitWhereInput!]
     NOT: [KitWhereInput!]
-}
-
-input KitAttributesWhereInput {
-    otherType: TextComparison
-    state: TextComparison
-    filters: [JsonComparison!]
-    AND: [KitAttributesWhereInput!]
-    OR: [KitAttributesWhereInput!]
-    NOT: [KitAttributesWhereInput!]
 }
 
 input KitSubStatusWhereInput {
@@ -267,7 +236,6 @@ input CreateKitInput {
     model: String!
     location: String
     age: Int
-    attributes: KitAttributesInput
     donorId: ID
     note: CreateNoteInput
     make: String
@@ -343,7 +311,6 @@ input UpdateKitInput {
     age: Int
     archived: Boolean
     location: String
-    attributes: KitAttributesInput
     donorId: ID
     deviceRequestId: ID
     note: CreateNoteInput,
