@@ -214,6 +214,8 @@ object DevTechWildcard {
             "delete:kits",
             "read:organisations",
             "write:organisations",
+            "write:requests",
+            "write:referees",
             "delete:organisations",
         )
 

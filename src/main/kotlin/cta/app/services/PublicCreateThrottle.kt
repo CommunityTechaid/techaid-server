@@ -38,7 +38,7 @@ class PublicCreateThrottle(
     }
 
     companion object {
-        private val STAFF_AUTHORITIES = setOf("app:admin", "write:organisations")
+        private val STAFF_AUTHORITIES = setOf("app:admin", "write:organisations", "write:requests")
     }
 }
 
