@@ -36,7 +36,7 @@ class MembershipResolvers(
         return organisations.associateWith { byId.getValue(it.id) }
     }
 
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'write:organisations')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'write:organisations', 'read:referees')")
     @SchemaMapping(typeName = "ReferringOrganisation", field = "membershipContacts")
     fun membershipContacts(organisation: ReferringOrganisation): List<ReferringOrganisationContact> =
         organisation.referringOrganisationContacts.filter { it.isMembershipContact && !it.archived }.sortedBy { it.id }
