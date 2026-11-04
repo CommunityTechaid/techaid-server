@@ -43,9 +43,12 @@ class ReferringOrganisationContactWhereInput(
         }
 
         if (OR.isNotEmpty()) {
-            OR.forEach {
-                builder.or(it.build(entity))
-            }
+            // Group the alternatives, then AND the group in (#169, same fix as #168 in
+            // DeviceRequestFilters). builder.or(...) disjoins against everything already on the
+            // builder, so {x: ..., OR: [y]} used to build "x OR y" instead of "x AND (y)".
+            val alternatives = BooleanBuilder()
+            OR.forEach { alternatives.or(it.build(entity)) }
+            builder.and(alternatives)
         }
 
         if (NOT.isNotEmpty()) {
