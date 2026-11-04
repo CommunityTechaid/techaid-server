@@ -1,7 +1,6 @@
 package cta.app.graphql.mutations
 
 import cta.app.Kit
-import cta.app.KitAttributes
 import cta.app.KitStatus
 import cta.app.KitStorageType
 import cta.app.KitSubStatus
@@ -43,7 +42,6 @@ data class CreateKitInput(
     val model: String = "",
     val location: String?,
     val age: Int,
-    val attributes: KitAttributesInput,
     val donorId: Long? = null,
     val note: CreateNoteInput? = null,
     val make: String? = null,
@@ -79,31 +77,7 @@ data class CreateKitInput(
                 lotId = lotId,
                 locationCode = locationCode,
             )
-        // kit.attributes = attributes.apply(kit)
         kit
-    }
-}
-
-data class KitAttributesInput(
-    val otherType: String? = null,
-    val state: String? = null,
-    val notes: String? = null,
-    val credentials: String? = null,
-    val status: List<String>? = null,
-    val network: String? = null,
-    val otherNetwork: String? = null,
-) {
-    fun apply(entity: Kit): KitAttributes {
-        val self = this
-
-        return entity.attributes.apply {
-            otherType = self.otherType
-            state = self.state
-            status = self.status ?: status
-            credentials = self.credentials
-            notes = self.notes ?: notes
-            network = self.network ?: "UNKNOWN"
-        }
     }
 }
 
@@ -116,7 +90,6 @@ data class UpdateKitInput(
     val model: String = "",
     val location: String?,
     val age: Int? = null,
-    val attributes: KitAttributesInput = KitAttributesInput(),
     val donorId: Long? = null,
     val deviceRequestId: Long? = null,
     val archived: Boolean? = null,
@@ -143,7 +116,6 @@ data class UpdateKitInput(
             status = self.status
             model = self.model
             age = self.age ?: age
-            attributes = attributes
             archived = self.archived ?: archived
             make = self.make ?: make
             deviceVersion = self.deviceVersion ?: deviceVersion

@@ -1,7 +1,6 @@
 package cta.app.graphql.queries
 
 import cta.app.Kit
-import cta.app.KitAttributes
 import cta.app.KitRepository
 import cta.app.KitStatusCount
 import cta.app.KitTypeCount
@@ -60,16 +59,4 @@ class KitQueries(
     fun kit(
         @Argument where: KitWhereInput,
     ): Optional<Kit> = kits.findOne(filterService.kitFilter().and(where.build()))
-}
-
-@Controller
-class KitResolver {
-    @QueryMapping
-    fun getAttributes(
-        @Argument kit: Kit,
-    ): KitAttributes {
-        val attr = kit.attributes
-        attr.kit = kit
-        return attr
-    }
 }

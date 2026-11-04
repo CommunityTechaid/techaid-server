@@ -130,7 +130,6 @@ class GraphQlQueryCostLimitTest {
                       referringOrganisationContact { id referringOrganisation { id name __typename } __typename }
                       __typename
                     }
-                    attributes { credentials status notes network state otherType __typename }
                     notes { id content volunteer createdAt updatedAt __typename }
                     subStatus {
                       installationOfOSFailed wipeFailed needsSparePart needsFurtherInvestigation network

@@ -1,6 +1,5 @@
 package cta.app
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -120,9 +119,6 @@ data class KitSubStatus(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class KitAttributes(
-    @JsonIgnore
-    @NotAudited
-    var kit: Kit? = null,
     var otherType: String? = null,
     var state: String? = null,
     var notes: String? = "",
@@ -139,9 +135,8 @@ class KitAttributes(
      * value, and so every kit loaded into a read-write transaction was reported dirty — rewriting the
      * row and bumping `updated_at` for kits nobody had touched. [KitTimestampIsolationTest] pins it.
      *
-     * [kit] is deliberately excluded. It is a read-time back-reference set by `KitResolver`, and it is
-     * `@JsonIgnore`, so it never survives the JSON round-trip Hibernate uses to snapshot this value.
-     * Including it would leave the property permanently dirty — exactly the bug being fixed.
+     * No longer exposed through GraphQL (#151). The column keeps legacy data, which is why this
+     * class and the mapping stay.
      */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -9,7 +9,6 @@ import cta.app.QKit
 import cta.app.QKitSubStatus
 import cta.graphql.BooleanComparison
 import cta.graphql.IntegerComparison
-import cta.graphql.JsonComparison
 import cta.graphql.LongComparison
 import cta.graphql.TextComparison
 import cta.graphql.TimeComparison
@@ -201,29 +200,6 @@ class KitStorageTypeComparison(
     }
 }
 
-class KitAttributesWhereInput(
-    var otherType: TextComparison? = null,
-    var state: TextComparison? = null,
-    var notes: TextComparison? = null,
-    var status: TextComparison? = null,
-    var filters: List<JsonComparison>? = null,
-    var AND: MutableList<KitAttributesWhereInput> = mutableListOf(),
-    var OR: MutableList<KitAttributesWhereInput> = mutableListOf(),
-    var NOT: MutableList<KitAttributesWhereInput> = mutableListOf(),
-) {
-    /*
-     * This input deliberately has no `build()`. It used to compile a jsonb predicate via
-     * com.github.alexliesenfeld:querydsl-jpa-postgres-json, dropped for the Spring Boot 4.1 work:
-     * the library is abandoned at 0.0.7 and the method was already unreachable - KitWhereInput
-     * has bypassed it since 6c2ced4 (2024-11-12).
-     *
-     * See issue #222. Restoring the behaviour needs a Hibernate 6 FunctionContributor or a native
-     * jsonb predicate, not this library, so nothing is lost by removing the dead body.
-     *
-     * The class and its fields stay: the GraphQL schema declares them (kits.graphqls:241).
-     */
-}
-
 class KitSubStatusWhereInput(
     var installationOfOSFailed: BooleanComparison? = null,
     var wipeFailed: BooleanComparison? = null,
@@ -278,7 +254,6 @@ class KitWhereInput(
     var createdAt: TimeComparison<Instant>? = null,
     var updatedAt: TimeComparison<Instant>? = null,
     var statusUpdatedAt: TimeComparison<Instant>? = null,
-    var attributes: KitAttributesWhereInput? = null,
     var deviceRequest: DeviceRequestWhereInput? = null,
     var donor: DonorWhereInput? = null,
     var make: TextComparison? = null,
@@ -309,11 +284,6 @@ class KitWhereInput(
         archived?.let { builder.and(it.build(entity.archived)) }
         updatedAt?.let { builder.and(it.build(entity.updatedAt)) }
         statusUpdatedAt?.let { builder.and(it.build(entity.statusUpdatedAt)) }
-        // Accepted and silently dropped - this does NOT filter. 6c2ced4 (2024-11-12) bypassed
-        // the jsonb predicate rather than fixing it, and the dashboard still sends the filter
-        // (kit-index.component.ts:42), so kit free-text search misses notes matches. Tracked as
-        // issue #222; restoring it is a product decision, not an upgrade step.
-        attributes?.let { null }
         deviceRequest?.let { builder.and(it.build(entity.deviceRequest)) }
         donor?.let { builder.and(it.build(entity.donor)) }
         make?.let { builder.and(it.build(entity.make)) }

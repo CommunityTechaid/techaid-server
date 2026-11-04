@@ -485,6 +485,7 @@ class JsonComparison(
      * which nothing has called since 6c2ced4 (2024-11-12). See issue #222.
      *
      * The class and its fields stay: the GraphQL schema declares `input JsonComparison`
-     * (filters.graphqls:215) and two inputs reference it.
+     * (filters.graphqls:215) and DeviceRequestItemsWhereInput.filters references it. The kit
+     * attributes filter that also used it was removed from the schema in #151.
      */
 }
