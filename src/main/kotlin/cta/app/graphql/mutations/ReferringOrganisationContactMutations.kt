@@ -105,7 +105,7 @@ class ReferringOrganisationContactMutations(
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('delete:organisations')")
+    @PreAuthorize("hasAnyAuthority('delete:organisations', 'delete:referees')")
     @MutationMapping
     fun deleteReferringOrganisationContact(
         @Argument id: Long,

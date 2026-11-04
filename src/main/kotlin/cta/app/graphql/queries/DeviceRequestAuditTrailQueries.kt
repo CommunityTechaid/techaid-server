@@ -15,7 +15,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 
 @Controller
-@PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+@PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'read:requests')")
 class DeviceRequestAuditTrailQueries(
     @PersistenceContext
     private val em: EntityManager,

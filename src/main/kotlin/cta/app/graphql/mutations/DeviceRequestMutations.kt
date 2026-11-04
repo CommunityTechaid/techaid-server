@@ -281,7 +281,7 @@ class DeviceRequestMutations(
         return deviceRequests.save(deviceRequest)
     }
 
-    @PreAuthorize("hasAnyAuthority('delete:organisations')")
+    @PreAuthorize("hasAnyAuthority('delete:organisations', 'delete:requests')")
     @MutationMapping
     fun deleteDeviceRequest(
         @Argument id: Long,
