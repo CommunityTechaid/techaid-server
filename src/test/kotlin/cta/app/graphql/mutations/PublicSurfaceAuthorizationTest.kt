@@ -227,6 +227,34 @@ class PublicSurfaceAuthorizationTest {
         assertFalse(content.contains("Access Denied"), content)
     }
 
+    // Admin exception bookings bypass capacity and every public gate, so they are app:admin only,
+    // not write:organisations like the rest of the delivery admin surface (#73).
+    private val adminBookingMutation =
+        """mutation { submitDeliveryBookingAdmin(input: { date: \"2999-01-01\", windowId: \"999999\", firstName: \"A\", """ +
+            """surname: \"B\", email: \"a@b.com\", phone: \"0700000000\", address: \"1 Road\", ctaReference: 999999 }) { id } }"""
+
+    @Test
+    fun `submitDeliveryBookingAdmin rejects anonymous callers`() {
+        anonymousGraphQl(adminBookingMutation)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+    }
+
+    @Test
+    fun `submitDeliveryBookingAdmin rejects the delivery-admin scope`() {
+        authorizedGraphQl(adminBookingMutation, "write:organisations")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+    }
+
+    @Test
+    fun `submitDeliveryBookingAdmin admits app-admin scope`() {
+        // Window 999999 doesn't exist: the not-found error after the gate proves authorization passed.
+        authorizedGraphQl(adminBookingMutation, "app:admin")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value(notAccessDenied))
+    }
+
     // The wipe-cert exemption is a compliance override ("no drive present"), so it is
     // gated tighter than ordinary kit edits: app:admin only, not write:kits (#68).
     private val setExemptionMutation =

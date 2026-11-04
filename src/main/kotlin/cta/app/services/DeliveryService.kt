@@ -119,7 +119,7 @@ class DeliveryService(
             .map { date ->
                 val windowAvailability =
                     activeWindows.map { window ->
-                        val booked = bookings.countByDeliveryDateAndWindowId(date, window.id)
+                        val booked = bookings.countByDeliveryDateAndWindowIdAndAdminExceptionFalse(date, window.id)
                         WindowAvailability(window, (window.capacity - booked).toInt().coerceAtLeast(0))
                     }
                 DayAvailability(date, windowAvailability)

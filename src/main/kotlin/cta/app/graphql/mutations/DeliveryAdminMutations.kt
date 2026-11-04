@@ -2,6 +2,7 @@ package cta.app.graphql.mutations
 
 import cta.app.DeliveryBlockedDate
 import cta.app.DeliveryBlockedDateRepository
+import cta.app.DeliveryBooking
 import cta.app.DeliveryBookingRepository
 import cta.app.DeliveryConfigRepository
 import cta.app.DeliveryDayBorough
@@ -11,16 +12,22 @@ import cta.app.DeliveryWindowRepository
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
 import cta.app.graphql.queries.DeliveryBlockedDateGql
+import cta.app.graphql.queries.DeliveryBookingAdminGql
 import cta.app.graphql.queries.DeliveryConfigGql
 import cta.app.graphql.queries.DeliveryDayBoroughsGql
 import cta.app.graphql.queries.DeliveryWindowAdminGql
 import cta.app.graphql.queries.toAdminGql
 import cta.app.graphql.queries.toGql
+import cta.app.services.DeliveryService
+import cta.app.services.FilterService
 import cta.toNullable
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
+import jakarta.validation.constraints.Size
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -30,6 +37,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 import java.time.LocalDate
+import java.time.format.DateTimeParseException
 
 /** Raised for admin-side delivery edits that can't be applied; surfaced as a BAD_REQUEST error. */
 class DeliveryAdminException(
@@ -51,6 +59,8 @@ class DeliveryAdminMutations(
     private val deviceRequests: DeviceRequestRepository,
     private val bookings: DeliveryBookingRepository,
     private val dayBoroughs: DeliveryDayBoroughRepository,
+    private val delivery: DeliveryService,
+    private val filterService: FilterService,
 ) {
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
@@ -196,6 +206,57 @@ class DeliveryAdminMutations(
         return true
     }
 
+    /**
+     * Admin exception booking (#73). Policy (Tony, 2026-11-04): admins only; any day and any
+     * existing window; NOT counted against capacity, so the public page's slots are untouched;
+     * the normal confirmation email and request update; recorded as an exception with the admin's
+     * email. The public gates (capacity, offered days, borough schedule, request status, Turnstile,
+     * rate limit, feature flag) deliberately don't apply. The only checks are the ones that stop
+     * a typo producing a booking that links to nothing.
+     */
+    @PreAuthorize("hasAuthority('app:admin')")
+    @MutationMapping
+    fun submitDeliveryBookingAdmin(
+        @Argument @Valid input: DeliveryBookingAdminInput,
+    ): DeliveryBookingAdminGql {
+        val date =
+            try {
+                LocalDate.parse(input.date)
+            } catch (e: DateTimeParseException) {
+                throw DeliveryAdminException("Invalid delivery date: ${input.date}")
+            }
+        if (date.isBefore(LocalDate.now())) throw DeliveryAdminException("A delivery can't be booked in the past ($date).")
+        val window =
+            input.windowId.toLongOrNull()?.let { windows.findById(it).toNullable() }
+                ?: throw DeliveryAdminException("Unknown delivery window: ${input.windowId}")
+        if (!deviceRequests.existsById(input.ctaReference)) {
+            throw DeliveryAdminException("No device request has the ID ${input.ctaReference}.")
+        }
+        val admin = filterService.userDetails()
+
+        val saved =
+            bookings.save(
+                DeliveryBooking(
+                    deliveryDate = date,
+                    window = window,
+                    firstName = input.firstName,
+                    surname = input.surname,
+                    email = input.email,
+                    phone = input.phone,
+                    address = input.address,
+                    accessNotes = input.accessNotes,
+                    ctaReference = input.ctaReference,
+                    adminException = true,
+                    bookedBy = admin.email.ifBlank { admin.name }.ifBlank { null },
+                    exceptionReason = input.exceptionReason?.trim()?.ifBlank { null },
+                ),
+            )
+        delivery.markCollectionDeliveryArranged(saved, window, date)
+        delivery.sendConfirmationEmail(saved, window, date)
+        val matched = deviceRequests.findAllById(listOf(saved.ctaReference)).associateBy { it.id }
+        return saved.toAdminGql(delivery.dayLabel(date), matched)
+    }
+
     @GraphQlExceptionHandler
     fun handleDeliveryAdminError(ex: DeliveryAdminException): GraphQLError =
         GraphqlErrorBuilder
@@ -233,6 +294,19 @@ data class DeliveryWindowInput(
     var capacity: Int = 0,
     var sortOrder: Int? = null,
     var active: Boolean? = null,
+)
+
+data class DeliveryBookingAdminInput(
+    @get:NotBlank @get:Size(max = 32) var date: String = "",
+    @get:NotBlank @get:Size(max = 32) var windowId: String = "",
+    @get:NotBlank @get:Size(max = 100) var firstName: String = "",
+    @get:NotBlank @get:Size(max = 100) var surname: String = "",
+    @get:NotBlank @get:Email @get:Size(max = 254) var email: String = "",
+    @get:NotBlank @get:Size(max = 32) var phone: String = "",
+    @get:NotBlank @get:Size(max = 1000) var address: String = "",
+    @get:Size(max = 2000) var accessNotes: String? = null,
+    @get:Positive var ctaReference: Long = 0,
+    @get:Size(max = 1000) var exceptionReason: String? = null,
 )
 
 data class DeliveryBlockedDateInput(
