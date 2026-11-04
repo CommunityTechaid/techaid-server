@@ -100,6 +100,18 @@ type ReferringOrganisationContactPublic{
     knowing one of its referees' addresses. No contact names are exposed.
     """
     membershipAllowance: MembershipPublic
+    """
+    Whether this referee is at their open-request cap for [borough], so the request form can say so
+    before they fill it in. Computed by the same service the createDeviceRequest check uses. Only
+    the verdict and the limit are exposed, deliberately not the open count. Null when the contact
+    cannot be found.
+    """
+    requestLimitStatus(borough: String): RequestLimitStatus
+}
+
+type RequestLimitStatus{
+    atLimit: Boolean!
+    limit: Int!
 }
 
 
