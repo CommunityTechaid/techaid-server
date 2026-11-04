@@ -101,6 +101,8 @@ class SchemaAssemblyTest {
         assertEquals(setOf("GRACE", "BLOCK"), enumValues("MembershipOverLimitMode"))
 
         assertEquals(true, "membershipAllowance" in fields("ReferringOrganisationContactPublic"))
+        assertEquals(true, "requestLimitStatus" in fields("ReferringOrganisationContactPublic"))
+        assertEquals(setOf("atLimit", "limit"), fields("RequestLimitStatus"))
         assertEquals(true, "membershipGraceIndex" in fields("DeviceRequestPublic"))
         assertEquals(true, "membershipGraceIndex" in fields("DeviceRequest"))
         assertEquals(true, "isMembershipContact" in fields("ReferringOrganisationContact"))
