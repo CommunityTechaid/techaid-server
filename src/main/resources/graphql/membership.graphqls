@@ -85,3 +85,25 @@ input MembershipTierComparison {
     "Matches values that are not contained in the collection"
     _nin: [MembershipTier]
 }
+
+"""
+The slice of an organisation the staff request form needs for its allowance hint (#345): name, the
+effective allowance and the membership contacts' names. Deliberately flat: no website, phone,
+referees list or request counts, so `write:requests` does not need `read:organisations`.
+"""
+type ReferringOrganisationMembershipHint {
+    id: ID!
+    name: String!
+    membership: Membership!
+    membershipContacts: [MembershipContactHint!]!
+}
+
+type MembershipContactHint {
+    id: ID!
+    fullName: String!
+}
+
+extend type Query {
+    "Allowance hint for one organisation; null when it does not exist"
+    referringOrganisationMembershipHint(id: ID!): ReferringOrganisationMembershipHint
+}

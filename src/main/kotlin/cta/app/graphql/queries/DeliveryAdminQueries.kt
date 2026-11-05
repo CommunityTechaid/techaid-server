@@ -69,7 +69,7 @@ class DeliveryAdminQueries(
      * deleted. `REQUEST_DECLINED` and `REQUEST_COLLECTION_DELIVERY_FAILED` stay visible. A
      * booking with no resolvable request stays visible too (fails open).
      */
-    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations', 'read:requests')")
     @QueryMapping
     fun deliveryBookingsAdmin(
         @Argument from: String?,
