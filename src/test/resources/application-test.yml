@@ -54,6 +54,12 @@ delivery-booking:
     # High cap so the existing DeliveryMutationsTest (9+ submits from one IP) isn't throttled.
     max-requests: 1000
 
+public-lookup:
+  rate-limit:
+    organisations:
+      # High cap so the anonymous typeahead tests (all from one local IP) aren't throttled.
+      max-requests: 1000
+
 zonky:
   test:
     database:

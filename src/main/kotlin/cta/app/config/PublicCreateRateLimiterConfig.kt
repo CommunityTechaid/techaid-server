@@ -24,4 +24,17 @@ class PublicCreateRateLimiterConfig {
         @Value("\${public-create.rate-limit.device-request.max-requests:20}") maxRequests: Int,
         @Value("\${public-create.rate-limit.device-request.window-seconds:3600}") windowSeconds: Long,
     ): BookingRateLimiter = BookingRateLimiter(Clock.systemUTC(), enabled, maxRequests, windowSeconds)
+
+    /**
+     * The anonymous organisation typeahead on the public request form (#352): 60 lookups per 10
+     * minutes per client IP. The form sends one lookup per debounced search of 3+ characters, so
+     * one referrer finding their organisation uses a handful; 60 leaves room for several referrers
+     * sharing an office IP while making a full name enumeration slow. Staff are exempt.
+     */
+    @Bean
+    fun publicOrganisationLookupRateLimiter(
+        @Value("\${public-lookup.rate-limit.enabled:true}") enabled: Boolean,
+        @Value("\${public-lookup.rate-limit.organisations.max-requests:60}") maxRequests: Int,
+        @Value("\${public-lookup.rate-limit.organisations.window-seconds:600}") windowSeconds: Long,
+    ): BookingRateLimiter = BookingRateLimiter(Clock.systemUTC(), enabled, maxRequests, windowSeconds)
 }

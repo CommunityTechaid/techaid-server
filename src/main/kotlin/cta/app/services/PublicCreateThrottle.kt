@@ -32,20 +32,46 @@ class PublicCreateThrottle(
         if (!limiter.tryAcquire(clientIpResolver.resolve())) throw PublicCreateRateLimitException()
     }
 
-    private fun isStaff(): Boolean {
+    /**
+     * The anonymous organisation lookup (#352). Any staff read or write scope that reaches the
+     * dashboard's organisation picker is exempt; everyone else spends the per-IP budget.
+     */
+    fun acquireLookupOrThrow(limiter: BookingRateLimiter) {
+        if (isStaffReader()) return
+        if (!limiter.tryAcquire(clientIpResolver.resolve())) throw PublicLookupRateLimitException()
+    }
+
+    fun isStaffReader(): Boolean = hasAny(STAFF_READ_AUTHORITIES)
+
+    private fun isStaff(): Boolean = hasAny(STAFF_AUTHORITIES)
+
+    private fun hasAny(scopes: Set<String>): Boolean {
         val authorities = SecurityContextHolder.getContext().authentication?.authorities ?: return false
-        return authorities.any { it.authority in STAFF_AUTHORITIES }
+        return authorities.any { it.authority in scopes }
     }
 
     companion object {
         private val STAFF_AUTHORITIES = setOf("app:admin", "write:organisations", "write:requests")
+        private val STAFF_READ_AUTHORITIES =
+            STAFF_AUTHORITIES + setOf("read:organisations", "read:requests", "read:referees", "write:referees")
     }
 }
+
+/** Raised when an anonymous organisation lookup is over its per-client budget (#352). */
+class PublicLookupRateLimitException : RuntimeException("Too many searches from your network. Please wait a few minutes and try again.")
 
 @ControllerAdvice
 class PublicCreateRateLimitExceptionHandler {
     @GraphQlExceptionHandler
     fun handle(ex: PublicCreateRateLimitException): GraphQLError =
+        GraphqlErrorBuilder
+            .newError()
+            .errorType(ErrorType.BAD_REQUEST)
+            .message(ex.message)
+            .build()
+
+    @GraphQlExceptionHandler
+    fun handle(ex: PublicLookupRateLimitException): GraphQLError =
         GraphqlErrorBuilder
             .newError()
             .errorType(ErrorType.BAD_REQUEST)

@@ -74,6 +74,15 @@ public-create:
       max-requests: ${PUBLIC_CREATE_RATE_LIMIT_DEVICE_REQUEST_MAX:20}
       window-seconds: ${PUBLIC_CREATE_RATE_LIMIT_DEVICE_REQUEST_WINDOW_SECONDS:3600}
 
+# Per-client-IP throttle on the anonymous organisation typeahead (#352, see
+# PublicCreateRateLimiterConfig). Staff are exempt. No env var needs setting: the defaults apply.
+public-lookup:
+  rate-limit:
+    enabled: ${PUBLIC_LOOKUP_RATE_LIMIT_ENABLED:true}
+    organisations:
+      max-requests: ${PUBLIC_LOOKUP_RATE_LIMIT_ORGANISATIONS_MAX:60}
+      window-seconds: ${PUBLIC_LOOKUP_RATE_LIMIT_ORGANISATIONS_WINDOW_SECONDS:600}
+
 server:
   port: ${PORT:8080}
   max-http-header-size: 50MB
