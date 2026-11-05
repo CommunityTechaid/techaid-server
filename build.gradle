@@ -94,6 +94,14 @@ ext['kotlin.version'] = '2.4.20'
  */
 ext['flyway.version'] = '12.11.0'
 
+/*
+ * OpenTelemetry: the Boot 4.1 BOM manages 1.62.0, inside the range of a published advisory
+ * (fixed in 1.67.0). Overriding the BOM property moves opentelemetry-api and
+ * opentelemetry-context together. OpenTelemetryVersionTest fails if this is lost. Remove it once
+ * the Boot BOM manages 1.67.0 or newer.
+ */
+ext['opentelemetry.version'] = '1.67.0'
+
 repositories {
     mavenCentral()
     google()
@@ -179,7 +187,7 @@ dependencies {
 
     // OTel API at runtime so app code can enrich the current span. The
     // Application Insights Java agent instruments the calls via bytecode.
-    implementation 'io.opentelemetry:opentelemetry-api' // version from the Spring Boot BOM, matched to opentelemetry-context
+    implementation 'io.opentelemetry:opentelemetry-api' // version from ext['opentelemetry.version'] above, matched to opentelemetry-context
 
      /* Security */
     implementation 'org.springframework.boot:spring-boot-starter-security'
