@@ -156,8 +156,9 @@ curl -s -X POST https://api-testing.communitytechaid.org.uk/graphql \
 # Public typeahead, anonymous → MUST still work
 curl -s -X POST https://api-testing.communitytechaid.org.uk/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"query { referringOrganisationsPublic(where:{ name:{ _contains: \"a\" } }) { id name } }"}'
+  -d '{"query":"query { referringOrganisationsPublic(where:{ name:{ _contains: \"ity\" } }) { id name } }"}'
 # EXPECTED: {"data":{"referringOrganisationsPublic":[ ... ]}} — a list, no errors
+# (since #352 an anonymous term under 3 characters always returns [], so use 3+)
 ```
 
 **If a gated call succeeds anonymously →** SECURITY STOP. Do not promote. File the gap,

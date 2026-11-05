@@ -39,7 +39,7 @@ echo "$health" | grep -q '"components"' \
 
 echo
 echo "=== 2. Public GraphQL surface still serves anonymously ==="
-r=$(gql '{"query":"query { referringOrganisationsPublic(where:{name:{_contains:\"a\"}}) { id name } }"}')
+r=$(gql '{"query":"query { referringOrganisationsPublic(where:{name:{_contains:\"ity\"}}) { id name } }"}')
 echo "$r" | grep -q '"referringOrganisationsPublic":\[' \
   && ok "referringOrganisationsPublic returns data" \
   || bad "referringOrganisationsPublic returns data" "$r"

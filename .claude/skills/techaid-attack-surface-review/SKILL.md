@@ -70,7 +70,8 @@ Re-runs should report changes against this table, then update it.
 
 **Public roots (intended):** `buildInfo`, `adminConfig`, `featureFlagsPublic` (returns *all*
 flags), `boroughAvailabilityPublic`, `requestCount` (null unless authenticated),
-`referringOrganisationsPublic` (unpaginated), `referringOrganisationContactsPublic` (exact email,
+`referringOrganisationsPublic` (anonymous: name `_contains` of 3+ chars only, max 50 results,
+per-IP throttled 60/10 min; staff exempt, #352), `referringOrganisationContactsPublic` (exact email,
 max 10; the old 2,387-name enumeration is fixed), `deliveryAvailabilityPublic`,
 `deliveryBookingEligibilityPublic`, `submitDeliveryBookingPublic`, `createDeviceRequest`
 (returns `DeviceRequestPublic`, per-IP throttled), `post` (published only for callers without
