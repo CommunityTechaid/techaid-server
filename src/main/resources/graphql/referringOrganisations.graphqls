@@ -76,11 +76,41 @@ input ReferringOrganisationWhereInput {
     website: TextComparison
     archived: BooleanComparison
     membershipTier: MembershipTierComparison
+    """
+    Near or at the allowance (see MembershipUsageBand). Honoured by referringOrganisations and
+    referringOrganisationsConnection only; anywhere else this input is nested it is an error.
+    """
+    membershipUsage: MembershipUsageBandComparison
     createdAt: TimeComparison
     updatedAt: TimeComparison
     AND: [ReferringOrganisationWhereInput!]
     OR: [ReferringOrganisationWhereInput!]
     NOT: [ReferringOrganisationWhereInput!]
+}
+
+"""
+An organisation as it stood at one audit revision. Deliberately flat: no referees, notes, request
+counts or live allowance, so reading history cannot reach anything but the organisation's own
+audited columns. The membership fields are null on revisions written before membership existed
+(2026-10-28) and on a DEL revision.
+"""
+type ReferringOrganisationSnapshot {
+    id: ID
+    name: String
+    website: String
+    phoneNumber: String
+    archived: Boolean
+    "The STORED tier at that revision (not the effective one)"
+    membershipTier: MembershipTier
+    membershipStartDate: String
+    membershipEndDate: String
+}
+
+type ReferringOrganisationRevision {
+    entity: ReferringOrganisationSnapshot
+    revision: CustomRevisionInfo
+    "ADD, MOD or DEL"
+    type: String
 }
 
 "Restricted filter surface for the anonymous referringOrganisationsPublic query"
@@ -95,6 +125,8 @@ extend type Query {
     referringOrganisationsPublic(where: ReferringOrganisationPublicWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisationPublic]
     referringOrganisations(where: ReferringOrganisationWhereInput!, orderBy: [KeyValuePair!]): [ReferringOrganisation!]!
     referringOrganisation(where: ReferringOrganisationWhereInput!): ReferringOrganisation
+    "Audit history of one organisation, oldest first. Needs app:admin or admin:organisations (#266)"
+    referringOrganisationAudits(where: Long!): [ReferringOrganisationRevision!]
 }
 
 extend type Mutation {

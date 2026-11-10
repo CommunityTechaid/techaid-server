@@ -314,6 +314,32 @@ class PublicSurfaceAuthorizationTest {
             .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
     }
 
+    // Organisation audit history (#266): the admin permission is checked on the server, unlike
+    // kitAudits / deviceRequestAudits where only the dashboard hides the tab.
+    private val organisationAudits = """query { referringOrganisationAudits(where: 999999) { type } }"""
+
+    @Test
+    fun `referringOrganisationAudits rejects anonymous callers and ordinary organisation readers`() {
+        anonymousGraphQl(organisationAudits)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+        listOf("read:organisations", "write:organisations").forEach { authority ->
+            authorizedGraphQl(organisationAudits, authority)
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+        }
+    }
+
+    @Test
+    fun `referringOrganisationAudits admits the admin scopes`() {
+        listOf("app:admin", "admin:organisations").forEach { authority ->
+            authorizedGraphQl(organisationAudits, authority)
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.referringOrganisationAudits").isArray)
+        }
+    }
+
     @Test
     fun `adminConfig stays anonymous with the over-limit settings but updateAdminConfig stays gated`() {
         // Nothing in Flyway seeds the singleton admin_config row, so give the test database one

@@ -23,6 +23,15 @@ enum class MembershipState {
     LIMIT_REACHED,
 }
 
+/**
+ * Where an allowance stands, for the organisation list filter. Unlike [MembershipState] this is
+ * never shown to referees and drives no enforcement; see MembershipAllowanceService.usageBand.
+ */
+enum class MembershipUsageBand {
+    NEAR_LIMIT,
+    LIMIT_REACHED,
+}
+
 /** What happens to a request made once the allowance is used up. See MembershipAllowanceService. */
 enum class MembershipOverLimitMode {
     GRACE,

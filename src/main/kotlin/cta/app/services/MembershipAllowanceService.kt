@@ -10,6 +10,7 @@ import cta.app.MembershipPeriod
 import cta.app.MembershipPeriods
 import cta.app.MembershipState
 import cta.app.MembershipTier
+import cta.app.MembershipUsageBand
 import cta.app.ReferringOrganisation
 import mu.KotlinLogging
 import org.springframework.dao.EmptyResultDataAccessException
@@ -229,8 +230,37 @@ class MembershipAllowanceService(
         return (config.membershipGraceRequests - membership.graceUsed).coerceAtLeast(0)
     }
 
+    /**
+     * Ids of those of [organisations] whose allowance today is in any of [bands]: the organisation
+     * list's "near or at the limit" filter. Usage is derived, not stored, so this cannot be a
+     * column predicate; it costs the same grouped counts as [membershipsFor] over the candidates.
+     */
+    fun organisationIdsInBands(
+        organisations: Collection<ReferringOrganisation>,
+        bands: Set<MembershipUsageBand>,
+    ): Set<Long> {
+        if (bands.isEmpty()) return emptySet()
+        return membershipsFor(organisations).filterValues { usageBand(it) in bands }.keys
+    }
+
     companion object {
         const val FLAG_KEY = "membership-support"
+
+        /** An organisation is "near" its limit from this share of the cap used, in percent. */
+        const val NEAR_LIMIT_PERCENT = 80
+
+        /**
+         * The filter band for an allowance; null when it is in neither (plenty left, or uncapped).
+         * The bands do not overlap: an organisation at its cap is LIMIT_REACHED, not NEAR_LIMIT.
+         */
+        fun usageBand(membership: Membership): MembershipUsageBand? {
+            val cap = membership.cap ?: return null
+            return when {
+                membership.state == MembershipState.LIMIT_REACHED -> MembershipUsageBand.LIMIT_REACHED
+                membership.used * 100 >= cap * NEAR_LIMIT_PERCENT -> MembershipUsageBand.NEAR_LIMIT
+                else -> null
+            }
+        }
 
         /**
          * The tier and period that apply to [organisation] on [today] (a London date):

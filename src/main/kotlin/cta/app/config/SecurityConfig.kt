@@ -221,6 +221,7 @@ object DevTechWildcard {
             "delete:requests",
             "delete:referees",
             "delete:organisations",
+            "admin:organisations",
         )
 
     /** Deliberately excluded from [AUTHORITIES]: they reach the shared Auth0 tenant. */

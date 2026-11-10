@@ -1,10 +1,13 @@
 package cta.app.graphql.queries
 
+import com.querydsl.core.BooleanBuilder
+import cta.app.MembershipUsageBand
 import cta.app.ReferringOrganisation
 import cta.app.ReferringOrganisationRepository
 import cta.app.graphql.filters.ReferringOrganisationPublicWhereInput
 import cta.app.graphql.filters.ReferringOrganisationWhereInput
 import cta.app.services.BookingRateLimiter
+import cta.app.services.MembershipAllowanceService
 import cta.app.services.PublicCreateThrottle
 import cta.graphql.KeyValuePair
 import cta.graphql.PaginationInput
@@ -25,7 +28,20 @@ class ReferringOrganisationQueries(
     private val referringOrganisations: ReferringOrganisationRepository,
     private val publicThrottle: PublicCreateThrottle,
     @Qualifier("publicOrganisationLookupRateLimiter") private val lookupRateLimiter: BookingRateLimiter,
+    private val allowance: MembershipAllowanceService,
 ) {
+    /**
+     * Builds [where] with the `membershipUsage` filter resolved. The bands are worked out over
+     * every organisation, once per distinct set per query (the dashboard nests the same filter
+     * under each branch of its search OR); nothing is loaded unless the filter is used.
+     */
+    private fun predicate(where: ReferringOrganisationWhereInput): BooleanBuilder {
+        val resolved = HashMap<Set<MembershipUsageBand>, Set<Long>>()
+        return where.build { bands ->
+            resolved.getOrPut(bands) { allowance.organisationIdsInBands(referringOrganisations.findAll(), bands) }
+        }
+    }
+
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
     @QueryMapping
     fun referringOrganisations(
@@ -34,9 +50,9 @@ class ReferringOrganisationQueries(
     ): List<ReferringOrganisation> =
         if (orderBy != null) {
             val sort: Sort = Sort.by(orderBy.map { Sort.Order(Sort.Direction.fromString(it.value), it.key) })
-            referringOrganisations.findAll(where.build(), sort).toList()
+            referringOrganisations.findAll(predicate(where), sort).toList()
         } else {
-            referringOrganisations.findAll(where.build()).toList()
+            referringOrganisations.findAll(predicate(where)).toList()
         }
 
     @PreAuthorize("hasAnyAuthority('app:admin', 'read:organisations')")
@@ -49,7 +65,7 @@ class ReferringOrganisationQueries(
         if (where == null) {
             return referringOrganisations.findAll(f.create())
         }
-        return referringOrganisations.findAll(where.build(), f.create())
+        return referringOrganisations.findAll(predicate(where), f.create())
     }
 
     /**
@@ -83,7 +99,7 @@ class ReferringOrganisationQueries(
     @QueryMapping
     fun referringOrganisation(
         @Argument where: ReferringOrganisationWhereInput,
-    ): Optional<ReferringOrganisation> = referringOrganisations.findOne(where.build())
+    ): Optional<ReferringOrganisation> = referringOrganisations.findOne(predicate(where))
 
     companion object {
         /** Anonymous callers may sort only by what ReferringOrganisationPublic shows. */
