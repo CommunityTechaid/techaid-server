@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.0.1](https://github.com/CommunityTechaid/techaid-server/compare/v6.0.0...v6.0.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **delivery:** re-saving a delivery day's boroughs no longer violates the unique constraint ([#360](https://github.com/CommunityTechaid/techaid-server/issues/360)) ([#361](https://github.com/CommunityTechaid/techaid-server/issues/361)) ([b45659b](https://github.com/CommunityTechaid/techaid-server/commit/b45659b954a7321a43ee9d847f5e595a8166c1f7))
+* record delivery configuration changes in settings history ([#359](https://github.com/CommunityTechaid/techaid-server/issues/359)) ([864184f](https://github.com/CommunityTechaid/techaid-server/commit/864184f23a68b7bbc2090de8dc5cf04af19db2de))
+
 ## [6.0.0](https://github.com/CommunityTechaid/techaid-server/compare/v5.1.0...v6.0.0) (2026-11-09)
 
 
