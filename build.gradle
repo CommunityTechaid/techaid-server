@@ -197,7 +197,7 @@ dependencies {
     implementation 'com.google.api-client:google-api-client-gson:2.9.2'
     implementation 'com.google.api-client:google-api-client:2.9.2'
     implementation 'com.google.apis:google-api-services-gmail:v1-rev20260112-2.0.0'
-    implementation 'com.google.auth:google-auth-library-oauth2-http:1.55.0'
+    implementation 'com.google.auth:google-auth-library-oauth2-http:1.56.0'
     constraints {
         /*
          * Guava comes in only through the Google clients above, which ask for 33.1.0 or older.
