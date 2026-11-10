@@ -18,6 +18,7 @@ import cta.app.graphql.queries.DeliveryDayBoroughsGql
 import cta.app.graphql.queries.DeliveryWindowAdminGql
 import cta.app.graphql.queries.toAdminGql
 import cta.app.graphql.queries.toGql
+import cta.app.services.AdminSettingAuditService
 import cta.app.services.DeliveryService
 import cta.app.services.FilterService
 import cta.toNullable
@@ -61,6 +62,7 @@ class DeliveryAdminMutations(
     private val dayBoroughs: DeliveryDayBoroughRepository,
     private val delivery: DeliveryService,
     private val filterService: FilterService,
+    private val audit: AdminSettingAuditService,
 ) {
     @PreAuthorize("hasAnyAuthority('write:organisations')")
     @MutationMapping
@@ -68,6 +70,7 @@ class DeliveryAdminMutations(
         @Argument @Valid data: UpdateDeliveryConfigInput,
     ): DeliveryConfigGql {
         val entity = config.getConfig()
+        val before = AdminSettingAuditService.deliveryConfig(entity)
         entity.enabled = data.enabled
         entity.daysOfWeek = normaliseDaysOfWeek(data.daysOfWeek)
         entity.leadTimeDays = data.leadTimeDays.coerceAtLeast(0)
@@ -76,7 +79,9 @@ class DeliveryAdminMutations(
         // existing value alone rather than falling back to a default that would silently
         // disable borough scheduling on every save from such a client.
         data.boroughSchedulingEnabled?.let { entity.boroughSchedulingEnabled = it }
-        return config.save(entity).toGql()
+        val saved = config.save(entity)
+        audit.record(before, AdminSettingAuditService.deliveryConfig(saved))
+        return saved.toGql()
     }
 
     /**
@@ -91,9 +96,11 @@ class DeliveryAdminMutations(
         @Argument dayOfWeek: Int,
         @Argument boroughs: List<String>,
     ): DeliveryDayBoroughsGql {
+        val before = AdminSettingAuditService.deliveryDayBoroughs(dayBoroughs.findAllByDayOfWeek(dayOfWeek))
         dayBoroughs.deleteByDayOfWeek(dayOfWeek)
         val distinct = boroughs.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
-        distinct.forEach { borough -> dayBoroughs.save(DeliveryDayBorough(dayOfWeek = dayOfWeek, borough = borough)) }
+        val saved = distinct.map { borough -> dayBoroughs.save(DeliveryDayBorough(dayOfWeek = dayOfWeek, borough = borough)) }
+        audit.record(before, AdminSettingAuditService.deliveryDayBoroughs(saved))
         return DeliveryDayBoroughsGql(dayOfWeek = dayOfWeek, boroughs = distinct)
     }
 
@@ -107,6 +114,7 @@ class DeliveryAdminMutations(
                 windows.findById(id).toNullable()
                     ?: throw DeliveryAdminException("No delivery window with id $id")
             } ?: DeliveryWindow()
+        val before = AdminSettingAuditService.deliveryWindow(entity.takeIf { it.id != 0L })
         entity.name = data.name
         entity.startTime = data.startTime
         entity.endTime = data.endTime
@@ -114,7 +122,9 @@ class DeliveryAdminMutations(
         entity.capacity = data.capacity.coerceAtLeast(0)
         entity.sortOrder = data.sortOrder ?: entity.sortOrder
         entity.active = data.active ?: entity.active
-        return windows.save(entity).toAdminGql()
+        val saved = windows.save(entity)
+        audit.record(before, AdminSettingAuditService.deliveryWindow(saved))
+        return saved.toAdminGql()
     }
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
@@ -126,7 +136,9 @@ class DeliveryAdminMutations(
         if (bookings.countByWindowId(windowId) > 0) {
             throw DeliveryAdminException("This window already has bookings — deactivate it instead of deleting it.")
         }
+        val before = AdminSettingAuditService.deliveryWindow(windows.findById(windowId).toNullable())
         windows.deleteById(windowId)
+        audit.record(before, emptyMap())
         return true
     }
 
@@ -143,9 +155,12 @@ class DeliveryAdminMutations(
             }
         // One row per date — re-blocking a date just updates its reason.
         val existing = blockedDates.findAllByOrderByBlockedDateAsc().firstOrNull { it.blockedDate == date }
+        val before = AdminSettingAuditService.deliveryBlockedDates(listOfNotNull(existing))
         val entity = existing ?: DeliveryBlockedDate(blockedDate = date)
         entity.reason = data.reason
-        return blockedDates.save(entity).toGql()
+        val saved = blockedDates.save(entity)
+        audit.record(before, AdminSettingAuditService.deliveryBlockedDates(listOf(saved)))
+        return saved.toGql()
     }
 
     @PreAuthorize("hasAnyAuthority('write:organisations')")
@@ -154,7 +169,9 @@ class DeliveryAdminMutations(
         @Argument id: String,
     ): Boolean {
         val blockedId = id.toLongOrNull() ?: return false
+        val before = AdminSettingAuditService.deliveryBlockedDates(listOfNotNull(blockedDates.findById(blockedId).toNullable()))
         blockedDates.deleteById(blockedId)
+        audit.record(before, emptyMap())
         return true
     }
 

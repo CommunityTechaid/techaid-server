@@ -13,6 +13,7 @@ import cta.app.DeviceRequestItems
 import cta.app.DeviceRequestRepository
 import cta.app.DeviceRequestStatus
 import cta.app.ReferringOrganisationContact
+import cta.app.services.AdminSettingAuditService
 import cta.app.services.DeliveryService
 import cta.app.services.FilterService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -52,6 +53,7 @@ class DeliveryAdminMutationsTest {
             dayBoroughs = mock(DeliveryDayBoroughRepository::class.java),
             delivery = mock(DeliveryService::class.java),
             filterService = mock(FilterService::class.java),
+            audit = mock(AdminSettingAuditService::class.java),
         )
 
     @Test

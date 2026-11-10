@@ -16,7 +16,17 @@ import java.time.Instant
 /** Who made a setting change: a signed-in admin, a Flyway migration, or application code. */
 enum class SettingChangeSource { USER, MIGRATION, SYSTEM }
 
-enum class SettingType { FEATURE_FLAG, BOROUGH_GROUP, BOROUGH_AVAILABILITY, LIMIT_EXCEPTION, ADMIN_CONFIG }
+enum class SettingType {
+    FEATURE_FLAG,
+    BOROUGH_GROUP,
+    BOROUGH_AVAILABILITY,
+    LIMIT_EXCEPTION,
+    ADMIN_CONFIG,
+    DELIVERY_CONFIG,
+    DELIVERY_WINDOW,
+    DELIVERY_BLOCKED_DATE,
+    DELIVERY_DAY_BOROUGH,
+}
 
 enum class SettingChangeType { CREATED, UPDATED, DELETED }
 
