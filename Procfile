@@ -1,1 +1,0 @@
-web: java -javaagent:/app/applicationinsights-agent.jar -jar /app/app.jar

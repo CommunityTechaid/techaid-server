@@ -37,10 +37,7 @@ RUN apk upgrade --no-cache \
 ENV TZ=UTC
 RUN cp /usr/share/zoneinfo/UTC /etc/localtime
 WORKDIR /app
-#COPY ./CHECKS /app
-COPY ./Procfile /app
 COPY ./applicationinsights.json /app/
-# COPY ./DOKKU_SCALE /app
 ENTRYPOINT [ "/sbin/tini", "--"]
 CMD ["java", \
   "-XX:+UseContainerSupport", \
