@@ -1,5 +1,34 @@
 # Changelog
 
+## [6.0.0](https://github.com/CommunityTechaid/techaid-server/compare/v5.1.0...v6.0.0) (2026-11-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **kits:** Kit.attributes and the attributes inputs/filter are gone. The dashboard's kit-info query and kit-index search select/send them, so the matching dashboard change must be deployed first (it is safe against the old server).
+
+### Features
+
+* **auth:** accept write:requests / write:referees alongside write:organisations ([#265](https://github.com/CommunityTechaid/techaid-server/issues/265)) ([#337](https://github.com/CommunityTechaid/techaid-server/issues/337)) ([1f0d835](https://github.com/CommunityTechaid/techaid-server/commit/1f0d83503cefe674edb49c604667bca813593dab))
+* **auth:** keep UAT and production tokens apart; dev:tech wildcard for local/UAT ([#330](https://github.com/CommunityTechaid/techaid-server/issues/330)) ([14b7a04](https://github.com/CommunityTechaid/techaid-server/commit/14b7a048e2c3c23c2f3646b963f5235e38cb470f))
+* **auth:** nested field guards accept split read permissions ([#341](https://github.com/CommunityTechaid/techaid-server/issues/341)) ([#342](https://github.com/CommunityTechaid/techaid-server/issues/342)) ([c8fc0b6](https://github.com/CommunityTechaid/techaid-server/commit/c8fc0b65bee2e1237415111d7de03a062385c356))
+* **auth:** split read/delete organisations permissions — phase 1 ([#338](https://github.com/CommunityTechaid/techaid-server/issues/338)) ([#340](https://github.com/CommunityTechaid/techaid-server/issues/340)) ([857e952](https://github.com/CommunityTechaid/techaid-server/commit/857e9528c5576bfd977b05cd75c2686898576d6d))
+* change history for admin-panel settings ([#327](https://github.com/CommunityTechaid/techaid-server/issues/327)) ([#328](https://github.com/CommunityTechaid/techaid-server/issues/328)) ([600e925](https://github.com/CommunityTechaid/techaid-server/commit/600e92576767a204b7e5fb13bef2374895dce244))
+* **delivery:** admin exception bookings that bypass capacity ([#73](https://github.com/CommunityTechaid/techaid-server/issues/73)) ([#347](https://github.com/CommunityTechaid/techaid-server/issues/347)) ([dab64dd](https://github.com/CommunityTechaid/techaid-server/commit/dab64dd8558b1fd694e0a3d1f34f2214bb2645f8))
+* **kits:** battery-health guard on allocation statuses, shadow mode ([#264](https://github.com/CommunityTechaid/techaid-server/issues/264)) ([#344](https://github.com/CommunityTechaid/techaid-server/issues/344)) ([868c9d0](https://github.com/CommunityTechaid/techaid-server/commit/868c9d05fe1725ba31a6c1c293e18341fe6c739d))
+* **kits:** retire kit attributes from the GraphQL API ([#151](https://github.com/CommunityTechaid/techaid-server/issues/151), [#222](https://github.com/CommunityTechaid/techaid-server/issues/222)) ([#346](https://github.com/CommunityTechaid/techaid-server/issues/346)) ([64884e2](https://github.com/CommunityTechaid/techaid-server/commit/64884e2b81cbcd1fd17e3caea81891aa924dad71))
+* **permissions:** read:requests for delivery bookings and a narrow membership hint query ([#345](https://github.com/CommunityTechaid/techaid-server/issues/345)) ([#351](https://github.com/CommunityTechaid/techaid-server/issues/351)) ([046d2a5](https://github.com/CommunityTechaid/techaid-server/commit/046d2a59c18ddd17e9f05d8e495ca73f56932e8a))
+* public request-limit status for the request form ([#336](https://github.com/CommunityTechaid/techaid-server/issues/336)) ([#339](https://github.com/CommunityTechaid/techaid-server/issues/339)) ([4b6c07c](https://github.com/CommunityTechaid/techaid-server/commit/4b6c07cff1ad269433da789eedfa174f0988ec3e))
+
+
+### Bug Fixes
+
+* **delivery:** a rejected public booking returns exactly one error ([#230](https://github.com/CommunityTechaid/techaid-server/issues/230)) ([#343](https://github.com/CommunityTechaid/techaid-server/issues/343)) ([4e52f0b](https://github.com/CommunityTechaid/techaid-server/commit/4e52f0b988346ecefe05cb42d4ad446e85446409))
+* **deps:** raise opentelemetry-api to 1.67.0 ([#353](https://github.com/CommunityTechaid/techaid-server/issues/353)) ([fecbcc8](https://github.com/CommunityTechaid/techaid-server/commit/fecbcc8396f7a1d8fe04feeef34142fa81aee8ad))
+* **filters:** group OR alternatives in the five remaining where-inputs ([#169](https://github.com/CommunityTechaid/techaid-server/issues/169)) ([#349](https://github.com/CommunityTechaid/techaid-server/issues/349)) ([a25d532](https://github.com/CommunityTechaid/techaid-server/commit/a25d53238c5ce5eab5d0a1c3768f1d971a28a178))
+* **kits:** createKit accepts the legacy attributes block again, deprecated and ignored ([#350](https://github.com/CommunityTechaid/techaid-server/issues/350)) ([246c1cd](https://github.com/CommunityTechaid/techaid-server/commit/246c1cdc04862b440ad64a55569dc19b6ec56da4))
+* **security:** limit the anonymous organisation lookup ([#352](https://github.com/CommunityTechaid/techaid-server/issues/352)) ([#354](https://github.com/CommunityTechaid/techaid-server/issues/354)) ([f9f2ea8](https://github.com/CommunityTechaid/techaid-server/commit/f9f2ea8b9bf86f9dfec03a0d13f9f5cc662bb3e2))
+
 ## [5.1.0](https://github.com/CommunityTechaid/techaid-server/compare/v5.0.3...v5.1.0) (2026-11-02)
 
 
