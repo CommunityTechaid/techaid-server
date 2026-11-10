@@ -408,4 +408,119 @@ class SettingHistoryGraphQlTest {
             assertThat(response.get("data").isNull).isTrue()
         }
     }
+
+    private val staff = listOf("write:organisations")
+
+    private fun rowsOf(type: String) = newRows().filter { it["setting_type"] == type }
+
+    private fun triple(row: Map<String, Any?>) = Triple(row["change_type"], row["old_value"], row["new_value"])
+
+    @Test
+    @Order(30)
+    fun `delivery config, windows, blocked dates and day boroughs are recorded, and no-ops are not`() {
+        // Seeded by the delivery migration: config row id 1.
+        jdbc.update("update delivery_config set days_of_week = '2,4', enabled = true, lead_time_days = 1, advance_days = 4")
+
+        // Adding a third delivery day, given in a different order, is one UPDATED daysOfWeek row.
+        ok(
+            gql(
+                "mutation { updateDeliveryConfig(data: {enabled: true, daysOfWeek: \"5,2,4\", leadTimeDays: 1, advanceDays: 4}) { id } }",
+                authorities = staff,
+            ),
+        )
+        var rows = rowsOf("DELIVERY_CONFIG")
+        assertThat(rows).hasSize(1)
+        assertThat(rows[0]["setting_key"]).isEqualTo("daysOfWeek")
+        assertThat(triple(rows[0])).isEqualTo(Triple("UPDATED", "2,4", "2,4,5"))
+        assertActor(rows[0])
+        assertThat(newRows()).hasSize(1)
+
+        // The same save again, in another order, records nothing.
+        mark = jdbc.queryForObject("select max(id) from admin_setting_history", Long::class.java)!!
+        ok(
+            gql(
+                "mutation { updateDeliveryConfig(data: {enabled: true, daysOfWeek: \"4,5,2\", leadTimeDays: 1, advanceDays: 4}) { id } }",
+                authorities = staff,
+            ),
+        )
+        assertThat(newRows()).isEmpty()
+
+        // A new window records CREATED per field; changing capacity 4 -> 2 records exactly that.
+        val created =
+            ok(
+                gql(
+                    "mutation(\$d: DeliveryWindowInput!) { saveDeliveryWindow(data: \$d) { id } }",
+                    mapOf("d" to mapOf("name" to "10-4", "startTime" to "10:00", "endTime" to "16:00", "capacity" to 4)),
+                    staff,
+                ),
+            ).get("saveDeliveryWindow").get("id").asString()
+        rows = rowsOf("DELIVERY_WINDOW")
+        assertThat(rows).allMatch { it["change_type"] == "CREATED" && it["subject_label"] == "10-4" && it["setting_key"] == created }
+        assertThat(rows.single { it["field"] == "capacity" }["new_value"]).isEqualTo("4")
+
+        mark = jdbc.queryForObject("select max(id) from admin_setting_history", Long::class.java)!!
+        ok(
+            gql(
+                "mutation(\$d: DeliveryWindowInput!) { saveDeliveryWindow(data: \$d) { id } }",
+                mapOf("d" to mapOf("id" to created, "name" to "10-4", "startTime" to "10:00", "endTime" to "16:00", "capacity" to 2)),
+                staff,
+            ),
+        )
+        rows = newRows()
+        assertThat(rows).hasSize(1)
+        assertThat(rows[0]["setting_type"]).isEqualTo("DELIVERY_WINDOW")
+        assertThat(rows[0]["field"]).isEqualTo("capacity")
+        assertThat(triple(rows[0])).isEqualTo(Triple("UPDATED", "4", "2"))
+        assertThat(rows[0]["subject_label"]).isEqualTo("10-4")
+        assertActor(rows[0])
+
+        // Blocked dates: add, re-block with a new reason, remove.
+        mark = jdbc.queryForObject("select max(id) from admin_setting_history", Long::class.java)!!
+        val block = "mutation(\$d: DeliveryBlockedDateInput!) { addDeliveryBlockedDate(data: \$d) { id } }"
+        val blockedId =
+            ok(
+                gql(block, mapOf("d" to mapOf("date" to "2031-12-25", "reason" to "Xmas")), staff),
+            ).get("addDeliveryBlockedDate").get("id").asString()
+        ok(gql(block, mapOf("d" to mapOf("date" to "2031-12-25", "reason" to "Xmas")), staff))
+        ok(gql(block, mapOf("d" to mapOf("date" to "2031-12-25", "reason" to "Christmas")), staff))
+        ok(gql("mutation { deleteDeliveryBlockedDate(id: \"$blockedId\") }", authorities = staff))
+        rows = rowsOf("DELIVERY_BLOCKED_DATE")
+        assertThat(rows.map { triple(it) }).containsExactly(
+            Triple("CREATED", null, "Xmas"),
+            Triple("UPDATED", "Xmas", "Christmas"),
+            Triple("DELETED", "Christmas", null),
+        )
+        assertThat(rows.map { it["setting_key"] }.toSet()).containsExactly("2031-12-25")
+
+        // Borough days: restrict Tuesday, change it, then clear it. (The sets are disjoint on purpose:
+        // re-saving an overlapping set trips a unique constraint in setDeliveryDayBoroughs, a bug that
+        // predates this change and is out of its scope.)
+        mark = jdbc.queryForObject("select max(id) from admin_setting_history", Long::class.java)!!
+        val setDay = "mutation(\$b: [String!]!) { setDeliveryDayBoroughs(dayOfWeek: 2, boroughs: \$b) { dayOfWeek } }"
+        ok(gql(setDay, mapOf("b" to listOf("Southwark", "Lambeth")), staff))
+        ok(gql(setDay, mapOf("b" to listOf("Hackney")), staff))
+        ok(gql(setDay, mapOf("b" to emptyList<String>()), staff))
+        rows = rowsOf("DELIVERY_DAY_BOROUGH")
+        assertThat(rows.map { triple(it) }).containsExactly(
+            Triple("CREATED", null, "Lambeth,Southwark"),
+            Triple("UPDATED", "Lambeth,Southwark", "Hackney"),
+            Triple("DELETED", "Hackney", null),
+        )
+
+        // Deleting the window records DELETED rows.
+        mark = jdbc.queryForObject("select max(id) from admin_setting_history", Long::class.java)!!
+        ok(gql("mutation { deleteDeliveryWindow(id: \"$created\") }", authorities = staff))
+        rows = newRows()
+        assertThat(rows).hasSize(7).allMatch { it["change_type"] == "DELETED" && it["new_value"] == null && it["subject_label"] == "10-4" }
+
+        // And the history query serves them.
+        val page = ok(history(type = "DELIVERY_CONFIG")).get("settingChanges")
+        assertThat(
+            page
+                .get("content")
+                .get(0)
+                .get("field")
+                .asString(),
+        ).isEqualTo("daysOfWeek")
+    }
 }

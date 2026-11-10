@@ -4,6 +4,10 @@ import cta.app.AdminConfig
 import cta.app.AdminSettingChange
 import cta.app.AdminSettingChangeRepository
 import cta.app.BoroughGroup
+import cta.app.DeliveryBlockedDate
+import cta.app.DeliveryConfig
+import cta.app.DeliveryDayBorough
+import cta.app.DeliveryWindow
 import cta.app.ReferrerLimitException
 import cta.app.SettingChangeSource
 import cta.app.SettingChangeType
@@ -27,6 +31,12 @@ import java.time.temporal.ChronoUnit
  *   boroughs); `groupId:deviceType` (BOROUGH_AVAILABILITY; field mode); `groupId:orgId`
  *   (LIMIT_EXCEPTION; field maxPerReferee, subject = the organisation id and name); admin-config
  *   field name (ADMIN_CONFIG).
+ * - Delivery configuration (#327 follow-up): DELIVERY_CONFIG key = field (enabled, daysOfWeek sorted
+ *   and comma-joined, leadTimeDays, advanceDays, boroughSchedulingEnabled); DELIVERY_WINDOW key = window
+ *   id (fields name, startTime, endTime, icon, capacity, sortOrder, active; subject = id and name);
+ *   DELIVERY_BLOCKED_DATE key = ISO date (field reason; subject = row id, label = the date);
+ *   DELIVERY_DAY_BOROUGH key = ISO day-of-week number (field boroughs, sorted and comma-joined; an
+ *   unrestricted day has no entry, so restricting it is CREATED and clearing it DELETED).
  * - A created group records a CREATED row per group field and per device-type mode; a deleted group
  *   records the matching DELETED rows, with the name snapshotted as the subject label.
  */
@@ -160,5 +170,56 @@ class AdminSettingAuditService(
             }
             return result
         }
+
+        private fun sortedDays(raw: String): String =
+            raw
+                .split(",")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .sorted()
+                .joinToString(",")
+
+        fun deliveryConfig(config: DeliveryConfig): Map<Ref, Value> =
+            mapOf(
+                "enabled" to config.enabled,
+                "daysOfWeek" to
+                    config.daysOfWeek
+                        .split(",")
+                        .map { it.trim() }
+                        .filter { it.isNotEmpty() }
+                        .sorted()
+                        .joinToString(","),
+                "leadTimeDays" to config.leadTimeDays,
+                "advanceDays" to config.advanceDays,
+                "boroughSchedulingEnabled" to config.boroughSchedulingEnabled,
+            ).entries.associate { (field, value) -> Ref(SettingType.DELIVERY_CONFIG, field, field) to Value(encode(value)) }
+
+        /** Snapshot of one window; pass null (a window that does not exist yet / any more) for an empty map. */
+        fun deliveryWindow(window: DeliveryWindow?): Map<Ref, Value> {
+            if (window == null) return emptyMap()
+            return mapOf(
+                "name" to window.name,
+                "startTime" to window.startTime,
+                "endTime" to window.endTime,
+                "icon" to window.icon,
+                "capacity" to window.capacity,
+                "sortOrder" to window.sortOrder,
+                "active" to window.active,
+            ).entries.associate { (field, value) ->
+                Ref(SettingType.DELIVERY_WINDOW, window.id.toString(), field) to Value(encode(value), window.id, window.name)
+            }
+        }
+
+        fun deliveryBlockedDates(dates: Collection<DeliveryBlockedDate>): Map<Ref, Value> =
+            dates.associate {
+                Ref(SettingType.DELIVERY_BLOCKED_DATE, it.blockedDate.toString(), "reason") to
+                    Value(it.reason.orEmpty(), it.id, it.blockedDate.toString())
+            }
+
+        fun deliveryDayBoroughs(rows: Collection<DeliveryDayBorough>): Map<Ref, Value> =
+            rows.groupBy { it.dayOfWeek }.entries.associate { (day, boroughs) ->
+                Ref(SettingType.DELIVERY_DAY_BOROUGH, day.toString(), "boroughs") to
+                    Value(encode(boroughs.map { it.borough }), day.toLong(), day.toString())
+            }
     }
 }
