@@ -98,6 +98,9 @@ class DeliveryAdminMutations(
     ): DeliveryDayBoroughsGql {
         val before = AdminSettingAuditService.deliveryDayBoroughs(dayBoroughs.findAllByDayOfWeek(dayOfWeek))
         dayBoroughs.deleteByDayOfWeek(dayOfWeek)
+        // Hibernate flushes inserts before deletes; without this the re-inserts of any borough
+        // that was already stored hit ux_delivery_day_boroughs_day_borough (#360).
+        dayBoroughs.flush()
         val distinct = boroughs.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
         val saved = distinct.map { borough -> dayBoroughs.save(DeliveryDayBorough(dayOfWeek = dayOfWeek, borough = borough)) }
         audit.record(before, AdminSettingAuditService.deliveryDayBoroughs(saved))
