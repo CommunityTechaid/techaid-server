@@ -73,6 +73,23 @@ type MembershipPublic {
     graceRemaining: Int!
 }
 
+"""
+Where an organisation's EFFECTIVE allowance stands today, for the organisation list filter. Derived
+on read like everything else in Membership, so it follows renewals and lapses without a job. An
+uncapped (TIER_3) organisation is in neither band.
+"""
+enum MembershipUsageBand {
+    "Some allowance left, but at least 80% of the cap is used (FREE 8+, TIER_1 16+, TIER_2 32+)"
+    NEAR_LIMIT
+    "Nothing left: the same organisations as Membership.state LIMIT_REACHED"
+    LIMIT_REACHED
+}
+
+input MembershipUsageBandComparison {
+    "Matches organisations in any of these bands"
+    _in: [MembershipUsageBand!]
+}
+
 input MembershipTierComparison {
     "Matches values that are equal to"
     _eq: MembershipTier
