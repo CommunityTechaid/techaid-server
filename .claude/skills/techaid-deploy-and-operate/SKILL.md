@@ -272,15 +272,13 @@ a technical one → route through **techaid-change-control**.
 
 The project migrated GKE/Helm → Dokku VM → Azure Container Apps (May 2026). Residue remains.
 Verified 2026-07-03 that no GitHub workflow references any file below; the only live consumers
-are noted. `charts/` (Helm), `.sops.yaml` (AWS-KMS SOPS config) and `.lighthouse/` (Tekton CI) were deleted 2026-10-07 — AWS is no longer used. Removal of the rest is roadmap item A6 (**techaid-roadmap-and-frontier**) — mention,
+are noted. `charts/` (Helm), `.sops.yaml` (AWS-KMS SOPS config) and `.lighthouse/` (Tekton CI) were deleted 2026-10-07 — AWS is no longer used. `Procfile` and the Dokku deploy scripts (`scripts/deploy-api.sh`, `scripts/poll-deploy-api.sh`) were deleted 2026-11-10. Removal of the rest is roadmap item A6 (**techaid-roadmap-and-frontier**) — mention,
 don't delete (per CLAUDE.md surgical-changes rule).
 
 | Path | Era | Still consumed? |
 |---|---|---|
 | `manifests/` | Kubernetes (header says unused) | No |
-| `Procfile` | Dokku process declaration | Copied into the image by `Dockerfile` but never executed (CMD supersedes it). Cosmetic only |
-| `start.sh` | Dokku/dev hot-reload helper | No |
-| `scripts/deploy-api.sh`, `scripts/poll-deploy-api.sh` | Dokku VM deploy/poll scripts (`dokku git:from-image`) | No — do NOT use; deploys go through `ci.yml`/`promote.yml` |
+| `start.sh` | Dev hot-reload helper | Only by `Dockerfile.dev` |
 | `rollback-prod.sh`, `migrate-prod-db.sh`, `cf-proxy-on.sh`, `app-cname-validate.sh` | One-shot May-2026 cutover tooling (**gitignored, maintainer-local — absent from fresh clones**; rollback flips CNAMEs back to the now-retired Dokku VM) | No — historical record only; rollback today = `promote.yml` with a pinned `image_tag` |
 | `docker/proxy.conf` | nginx proxy for local `docker-compose` | Only by local dev compose → **techaid-build-and-env** |
 | `Dockerfile.dev`, `Dockerfile.local`, `docker-compose.yml` | Local development (current) | Yes, locally → **techaid-build-and-env** |
@@ -301,4 +299,4 @@ Re-verify before trusting volatile facts:
 - Custom domains/ports: `az containerapp show -n api-production -g tada-2026 --query "properties.configuration.ingress.{fqdn:fqdn,port:targetPort,domains:customDomains[].name}" -o json`
 - Alert rule: `az monitor scheduled-query list -g tada-2026 -o table`
 - Version/changelog automation: `grep -n "x-release-please-version" build.gradle`
-- Legacy files still unreferenced by CI: `grep -rl "deploy-api\|cutover-prod\|Procfile" .github/ || echo "none"`
+- Legacy files still unreferenced by CI: `grep -rl "manifests\|cutover-prod" .github/ || echo "none"`

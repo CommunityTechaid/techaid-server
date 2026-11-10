@@ -185,7 +185,6 @@ Dokku/Kubernetes-era files, pending cleanup (roadmap item A6, `techaid-roadmap-a
 | File(s) | Was | Status |
 |---------|-----|--------|
 | `manifests/` (config/database/ingress/web/snapshot yaml) | K8s manifests | Dead |
-| `Procfile` | Dokku process file | Dead (still `COPY`'d into the image by `Dockerfile`, but the image `CMD` overrides it) |
 | `app-cname-validate.sh`, `cf-proxy-on.sh`, `migrate-prod-db.sh`, `rollback-prod.sh` | One-shot migration scripts (2026-05 cutover) — **gitignored, maintainer-local; absent from fresh clones** | Historical; do not re-run |
 | `Dockerfile.local` | Local image on **JDK 11** | Stale (app needs 17); use `Dockerfile.dev` + docker-compose |
 | `docker/proxy.conf` | nginx for a commented-out compose service | Dead |
@@ -203,5 +202,5 @@ Re-verify before trusting:
 - Consumers: `grep -rn '@Value' src/main/kotlin --include='*.kt'`
 - Deployed env (both apps): `az containerapp show -n api-production -g tada-2026 --query "properties.template.containers[0].env"` (repeat with `api-testing`)
 - Test overrides: `cat src/test/resources/application.yml`
-- Legacy files still unreferenced by CI: `grep -rn "manifests\|Procfile" .github/workflows/` (expect no output)
+- Legacy files still unreferenced by CI: `grep -rn "manifests" .github/workflows/` (expect no output)
 - Dead `DEV_APP` still dead: `grep -rn "DEV_APP" src/main/kotlin` (expect no output)
