@@ -154,6 +154,15 @@ class ReferringOrganisationContact(
 ) {
     companion object {
         const val STATUS = "FINISHED"
+
+        /**
+         * The full_name gdpr.performgdprcleanup() writes when it erases a contact (it also blanks
+         * email, phone_number and address). The cleanup recognises erased rows ONLY by this name and
+         * never scrubs them again, so anything added to one later is kept forever. Must match the
+         * SQL literal in the latest performgdprcleanup migration
+         * (db/migration/V26.08.18.1600__gdpr_drop_coordinates_scrub.sql).
+         */
+        const val GDPR_ERASED_NAME = "Contact - Erased due to GDPR policy"
     }
 }
 
