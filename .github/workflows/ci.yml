@@ -11,6 +11,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Checkout, ktlint, tests and artifact upload need nothing beyond reading the repo.
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v5
