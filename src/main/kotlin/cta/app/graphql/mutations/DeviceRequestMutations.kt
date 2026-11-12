@@ -15,11 +15,13 @@ import cta.app.ReferringOrganisationContactRepository
 import cta.app.services.BlockingFlagGuardService
 import cta.app.services.BlockingFlagSetException
 import cta.app.services.BookingRateLimiter
+import cta.app.services.DeviceTypeNotOfferedException
 import cta.app.services.FilterService
 import cta.app.services.MailService
 import cta.app.services.MembershipAllowanceService
 import cta.app.services.MembershipLimitReachedException
 import cta.app.services.PublicCreateThrottle
+import cta.app.services.PublicDeviceOfferService
 import cta.app.services.RefereeRequestLimitService
 import cta.app.services.WipeCertGuardService
 import cta.app.services.WipeCertMissingException
@@ -99,6 +101,17 @@ class ControllerExceptionHandler {
             .extensions(mapOf("code" to MembershipLimitReachedException.CODE))
             .build()
 
+    // Requested a device type that is not on offer (#367). Machine-readable code so the form can
+    // show the message inline and refresh its device list without matching wording.
+    @GraphQlExceptionHandler
+    fun handleDeviceTypeNotOffered(ex: DeviceTypeNotOfferedException): GraphQLError =
+        GraphqlErrorBuilder
+            .newError()
+            .errorType(ErrorType.BAD_REQUEST)
+            .message(ex.message)
+            .extensions(mapOf("code" to DeviceTypeNotOfferedException.CODE))
+            .build()
+
     // Wipe-cert guard rejection (#68): surface the reason (kit id + missing cert) so the
     // dashboard and the #66/#69 scan UIs inherit it instead of a generic INTERNAL_ERROR.
     @GraphQlExceptionHandler
@@ -135,6 +148,7 @@ class DeviceRequestMutations(
     private val refereeRequestLimits: RefereeRequestLimitService,
     private val membershipAllowance: MembershipAllowanceService,
     private val publicCreateThrottle: PublicCreateThrottle,
+    private val publicDeviceOffer: PublicDeviceOfferService,
     @Qualifier("publicDeviceRequestRateLimiter") private val publicCreateRateLimiter: BookingRateLimiter,
 ) {
     @MutationMapping
@@ -163,6 +177,10 @@ class DeviceRequestMutations(
         // cap's behaviour and message are unchanged when both would fail. Returns the grace index
         // when this request is accepted past the cap; throws MembershipLimitReachedException to refuse.
         val graceIndex = membershipAllowance.checkNewRequest(referringOrganisationContact.referringOrganisation)
+
+        // Last of the checks: the requested types must be on offer for the borough (#367). Same
+        // rule for staff and public callers - the staff form hides off-offer types too.
+        publicDeviceOffer.requireOffered(data.deviceRequestItems.entity, data.borough)
 
         val deviceRequest =
             DeviceRequest(
