@@ -1,5 +1,21 @@
 # Changelog
 
+## [6.1.0](https://github.com/CommunityTechaid/techaid-server/compare/v6.0.1...v6.1.0) (2026-11-13)
+
+
+### Features
+
+* log a client-supplied error ref with GraphQL errors and return it in extensions ([#371](https://github.com/CommunityTechaid/techaid-server/issues/371)) ([#376](https://github.com/CommunityTechaid/techaid-server/issues/376)) ([206329c](https://github.com/CommunityTechaid/techaid-server/commit/206329cac774367b9e3fe86324fa68664ecb9c89))
+* **membership:** near/at-limit organisation filter and organisation audit history ([#363](https://github.com/CommunityTechaid/techaid-server/issues/363)) ([cc14ed4](https://github.com/CommunityTechaid/techaid-server/commit/cc14ed49d2ee566454ae01cd88a036fa983f7d67)), closes [#266](https://github.com/CommunityTechaid/techaid-server/issues/266)
+
+
+### Bug Fixes
+
+* enforce the public device offer in createDeviceRequest ([#367](https://github.com/CommunityTechaid/techaid-server/issues/367)) ([#369](https://github.com/CommunityTechaid/techaid-server/issues/369)) ([bf278a0](https://github.com/CommunityTechaid/techaid-server/commit/bf278a0f03d44bad14cfea94e621b84504ffe139))
+* GDPR-erased referee contacts can only be archived, not edited ([#372](https://github.com/CommunityTechaid/techaid-server/issues/372)) ([6ee07d2](https://github.com/CommunityTechaid/techaid-server/commit/6ee07d240d3727649d696ec413cf75d432a350b9))
+* **gdpr:** cleanup deletes the notes of erased referee contacts ([#375](https://github.com/CommunityTechaid/techaid-server/issues/375)) ([07cc46e](https://github.com/CommunityTechaid/techaid-server/commit/07cc46ea6724e44cd29f1611bb1774635254f0c6)), closes [#374](https://github.com/CommunityTechaid/techaid-server/issues/374)
+* **kits:** createKit no longer accepts the legacy attributes block (removes the [#350](https://github.com/CommunityTechaid/techaid-server/issues/350) shim) ([#373](https://github.com/CommunityTechaid/techaid-server/issues/373)) ([1fa977c](https://github.com/CommunityTechaid/techaid-server/commit/1fa977c8c2b2b0a59143c4ae42630a3ae5c25dfb))
+
 ## [6.0.1](https://github.com/CommunityTechaid/techaid-server/compare/v6.0.0...v6.0.1) (2026-11-10)
 
 
