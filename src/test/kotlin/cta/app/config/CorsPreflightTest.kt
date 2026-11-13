@@ -1,6 +1,7 @@
 package cta.app.config
 
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
+import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -60,11 +61,25 @@ class CorsPreflightTest {
         preflight("https://not-ours.example.com").andExpect(status().isForbidden)
     }
 
-    private fun preflight(origin: String) =
-        mockMvc.perform(
-            options("/graphql")
-                .header("Origin", origin)
-                .header("Access-Control-Request-Method", "POST")
-                .header("Access-Control-Request-Headers", "content-type,authorization"),
-        )
+    /**
+     * The dashboard sends its error ref in `X-CTA-Ref` (#371). `allowedHeaders("*")` covers it today;
+     * narrowing that list without adding the header would break every dashboard request at the
+     * preflight, and the 24h preflight cache would hide the breakage from warm browsers.
+     */
+    @Test
+    fun `the error ref header is allowed`() {
+        preflight("https://app.communitytechaid.org.uk", "content-type,authorization,x-cta-ref")
+            .andExpect(status().isOk)
+            .andExpect(header().string("Access-Control-Allow-Headers", containsString("x-cta-ref")))
+    }
+
+    private fun preflight(
+        origin: String,
+        requestHeaders: String = "content-type,authorization",
+    ) = mockMvc.perform(
+        options("/graphql")
+            .header("Origin", origin)
+            .header("Access-Control-Request-Method", "POST")
+            .header("Access-Control-Request-Headers", requestHeaders),
+    )
 }

@@ -1,5 +1,11 @@
 package cta.app.services
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
+import com.jayway.jsonpath.JsonPath
+import cta.app.config.CLIENT_ERROR_REF_CONTEXT_KEY
+import graphql.GraphQLContext
 import graphql.GraphQLError
 import graphql.execution.ExecutionStepInfo
 import graphql.execution.ResultPath
@@ -15,6 +21,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -53,26 +60,32 @@ class AnonymousErrorMessageTest {
     @AfterEach
     fun clearContext() = SecurityContextHolder.clearContext()
 
-    private fun graphQl(body: String): String =
-        mockMvc
-            .perform(
-                post("/graphql")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .content(body),
-            ).andReturn()
+    private fun graphQl(
+        body: String,
+        ref: String? = null,
+    ): String {
+        val request =
+            post("/graphql")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(body)
+        if (ref != null) request.header("X-CTA-Ref", ref)
+        return mockMvc
+            .perform(request)
+            .andReturn()
             .response.contentAsString
+    }
 
     /**
      * createDeviceRequest is anonymous, and an unknown contact id makes it throw
      * EntityNotFoundException - which no controller handles, so it lands on the fallback.
      */
-    private fun createRequestAgainstMissingContact(): String {
+    private fun createRequestAgainstMissingContact(ref: String? = null): String {
         val document =
             "mutation { createDeviceRequest(data: {" +
                 "referringOrganisationContact: 999999, deviceRequestItems: { laptops: 1 }, " +
                 "clientRef: \\\"ERR\\\", borough: \\\"Lambeth\\\", details: \\\"Needs a laptop\\\"}) { id } }"
-        return graphQl("""{"query":"$document"}""")
+        return graphQl("""{"query":"$document"}""", ref)
     }
 
     /** The public delivery-booking submit is anonymous and bean-validates its input. */
@@ -174,14 +187,66 @@ class AnonymousErrorMessageTest {
         )
     }
 
+    // ---- client-supplied error ref (X-CTA-Ref, #371) ----
+
+    private fun <T> capturingResolverLog(block: () -> T): Pair<T, List<String>> {
+        val resolverLogger = LoggerFactory.getLogger(CustomErrorHandlerConfig::class.java.name) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        resolverLogger.addAppender(appender)
+        try {
+            return block() to appender.list.map { it.formattedMessage }
+        } finally {
+            resolverLogger.detachAppender(appender)
+            appender.stop()
+        }
+    }
+
+    private fun quotedReference(message: String): String? = Regex("quoting reference ([^.]+)\\.").find(message)?.groupValues?.get(1)
+
+    @Test
+    fun `a valid client ref replaces the server reference so the request has one ref`() {
+        val (content, logLines) = capturingResolverLog { createRequestAgainstMissingContact(ref = "K7Q2M9XA") }
+
+        val message: String = JsonPath.read(content, "$.errors[0].message")
+        assertEquals("K7Q2M9XA", quotedReference(message), "the displayed reference must be the client ref: $content")
+        assertEquals("K7Q2M9XA", JsonPath.read<String>(content, "$.errors[0].extensions.ref"), content)
+        assertTrue(
+            logLines.any { it.contains("[ref K7Q2M9XA]") },
+            "the logged reference must be the same value the caller was shown: $logLines",
+        )
+    }
+
+    @Test
+    fun `without a valid client ref the server reference is used, logged and displayed alike`() {
+        for (ref in listOf(null, "not valid!", "A".repeat(33))) {
+            val (content, logLines) = capturingResolverLog { createRequestAgainstMissingContact(ref = ref) }
+
+            val message: String = JsonPath.read(content, "$.errors[0].message")
+            val shown = quotedReference(message)
+            assertTrue(shown != null && Regex("^[0-9a-f]{8}$").matches(shown), "expected the 8-char server ref: $message")
+            assertTrue(logLines.any { it.contains("[ref $shown]") }, "logged and displayed refs must match: $logLines")
+            assertFalse(content.contains("\"ref\""), "no valid client ref, so no ref extension: $content")
+            if (ref != null) assertFalse(content.contains(ref), "an invalid ref must never be echoed: $content")
+        }
+    }
+
+    @Test
+    fun `the resolver takes the ref from the GraphQL context`() {
+        val error = resolve(IllegalStateException("boom"), GraphQLContext.of(mapOf(CLIENT_ERROR_REF_CONTEXT_KEY to "AB12CD34")))
+
+        assertEquals(CustomErrorHandlerConfig.GENERIC_MESSAGE.format("AB12CD34"), error?.message)
+    }
+
     /**
      * resolveToSingleError is protected, so drive the resolver through the public
      * DataFetcherExceptionResolver entry point the framework itself calls.
      */
-    private fun resolve(ex: Throwable): GraphQLError? =
-        CustomErrorHandlerConfig().resolveException(ex, environment()).block()?.firstOrNull()
+    private fun resolve(
+        ex: Throwable,
+        context: GraphQLContext? = null,
+    ): GraphQLError? = CustomErrorHandlerConfig().resolveException(ex, environment(context)).block()?.firstOrNull()
 
-    private fun environment(): DataFetchingEnvironment {
+    private fun environment(context: GraphQLContext? = null): DataFetchingEnvironment {
         val stepInfo = Mockito.mock(ExecutionStepInfo::class.java)
         Mockito.`when`(stepInfo.path).thenReturn(ResultPath.rootPath())
         val env = Mockito.mock(DataFetchingEnvironment::class.java)
@@ -189,6 +254,7 @@ class AnonymousErrorMessageTest {
         Mockito
             .`when`(env.field)
             .thenReturn(Field.newField("anything").sourceLocation(SourceLocation(1, 1)).build())
+        Mockito.`when`(env.graphQlContext).thenReturn(context)
         return env
     }
 }

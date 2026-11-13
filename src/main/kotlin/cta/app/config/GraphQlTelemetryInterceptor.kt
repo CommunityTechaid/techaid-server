@@ -1,5 +1,6 @@
 package cta.app.config
 
+import graphql.GraphQLError
 import io.opentelemetry.api.trace.Span
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -44,11 +45,38 @@ class GraphQlTelemetryConfig {
                     Span.current().updateName("POST /graphql $operationName")
                 }
             }
+            // Absent header: null, and nothing below changes. Present: the validated ref, or the
+            // fixed placeholder for the log line only - a rejected value is never logged or returned.
+            val rawRef = request.headers.getFirst(CLIENT_ERROR_REF_HEADER)
+            val clientRef = validClientErrorRef(rawRef)
+            val loggedRef = if (rawRef == null) null else clientRef ?: INVALID_CLIENT_ERROR_REF
+            if (clientRef != null) {
+                // Lets CustomErrorHandlerConfig quote this ref instead of minting its own. Passed in
+                // the GraphQL context rather than MDC: data fetchers may run on another thread.
+                request.configureExecutionInput { _, builder ->
+                    builder.graphQLContext(mapOf(CLIENT_ERROR_REF_CONTEXT_KEY to clientRef)).build()
+                }
+            }
             chain
                 .next(request)
-                .doOnNext { response -> logGraphQlErrors(operationName, request, response) }
+                .doOnNext { response -> logGraphQlErrors(operationName, loggedRef, request, response) }
+                .map { response -> if (clientRef == null) response else withRefExtension(response, clientRef) }
                 .doFinally { MDC.remove("graphql.operation") }
         }
+
+    /**
+     * Echo the client ref in each error's `extensions.ref`, so the caller can tell the server
+     * received it (a missing ref means something on the way stripped the header). Successful
+     * responses are returned untouched.
+     */
+    private fun withRefExtension(
+        response: WebGraphQlResponse,
+        ref: String,
+    ): WebGraphQlResponse {
+        val errors = response.executionResult.errors
+        if (errors.isEmpty()) return response
+        return response.transform { builder -> builder.errors(errors.map { RefExtendedError(it, ref) }) }
+    }
 
     /**
      * GraphQL errors — including pre-execution validation/variable-coercion errors such as
@@ -67,6 +95,7 @@ class GraphQlTelemetryConfig {
      */
     private fun logGraphQlErrors(
         operationName: String?,
+        ref: String?,
         request: WebGraphQlRequest,
         response: WebGraphQlResponse,
     ) {
@@ -76,15 +105,28 @@ class GraphQlTelemetryConfig {
             runCatching { mapper.writeValueAsString(request.variables) }
                 .getOrElse { request.variables.toString() }
         response.errors.forEach { error ->
-            log.warn(
-                "GraphQL error on operation '{}' [{}]: {} (path={}, locations={}) — input variables: {}",
-                operation,
-                error.errorType,
-                error.message,
-                error.path,
-                error.locations,
-                variables,
-            )
+            if (ref == null) {
+                log.warn(
+                    "GraphQL error on operation '{}' [{}]: {} (path={}, locations={}) — input variables: {}",
+                    operation,
+                    error.errorType,
+                    error.message,
+                    error.path,
+                    error.locations,
+                    variables,
+                )
+            } else {
+                log.warn(
+                    "GraphQL error on operation '{}' [{}] [ref {}]: {} (path={}, locations={}) — input variables: {}",
+                    operation,
+                    error.errorType,
+                    ref,
+                    error.message,
+                    error.path,
+                    error.locations,
+                    variables,
+                )
+            }
         }
     }
 
@@ -101,5 +143,36 @@ class GraphQlTelemetryConfig {
 
         // Shorthand: `{ buildInfo { ... } }` — use the first top-level field name
         return Regex("""^\s*\{\s*(\w+)""").find(document)?.groupValues?.get(1)
+    }
+}
+
+/**
+ * Wraps an error to add `extensions.ref` while keeping everything else - message, path,
+ * locations, classification and any existing extensions - exactly as the original serialises it.
+ */
+private class RefExtendedError(
+    private val delegate: GraphQLError,
+    private val ref: String,
+) : GraphQLError {
+    override fun getMessage(): String? = delegate.message
+
+    override fun getLocations() = delegate.locations
+
+    override fun getErrorType() = delegate.errorType
+
+    override fun getPath(): List<Any>? = delegate.path
+
+    override fun getExtensions(): Map<String, Any?> = (delegate.extensions ?: emptyMap()) + (REF_EXTENSION to ref)
+
+    override fun toSpecification(): Map<String, Any?> {
+        val specification = LinkedHashMap<String, Any?>(delegate.toSpecification())
+        val extensions = LinkedHashMap<Any?, Any?>((specification["extensions"] as? Map<*, *>).orEmpty())
+        extensions[REF_EXTENSION] = ref
+        specification["extensions"] = extensions
+        return specification
+    }
+
+    private companion object {
+        const val REF_EXTENSION = "ref"
     }
 }
