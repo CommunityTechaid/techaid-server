@@ -91,4 +91,29 @@ class GdprCleanupFunctionBodyTest {
             .describedAs("gdpr.performgdprcleanup() must not touch a column that no longer exists (#161)")
             .doesNotContain("coordinates")
     }
+
+    /**
+     * #374: the notes of an erased referee are deleted. Deletion is irreversible short of a
+     * point-in-time restore, so its scope is pinned here as text: the erased marker and nothing
+     * else. A timestamp, organisation or archived condition in this statement would repeat the
+     * shape of the 2026-08-12 over-erasure (GdprRefereeRetentionScopeTest), now destroying rows.
+     */
+    @Test
+    fun `referee notes are deleted only by the contact's erased marker`() {
+        val body = functionBody()
+        val start = body.indexOf("DELETE FROM public.referring_organisation_contacts_notes")
+        assertThat(start)
+            .describedAs("gdpr.performgdprcleanup() must delete the notes of erased referee contacts (#374)")
+            .isNotNegative()
+        val statement = body.substring(start, body.indexOf(';', start))
+
+        assertThat(statement).contains("c.full_name = 'Contact - Erased due to GDPR policy'")
+        assertThat(statement.lowercase())
+            .describedAs("the note deletion must be scoped by the erased marker alone")
+            .doesNotContain("updated_at")
+            .doesNotContain("created_at")
+            .doesNotContain("archived")
+            .doesNotContain("referring_organisation_id")
+            .doesNotContain("referring_contacts_to_archive")
+    }
 }
