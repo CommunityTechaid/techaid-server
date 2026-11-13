@@ -29,7 +29,11 @@ COPY --from=agent /applicationinsights-agent.jar /app/applicationinsights-agent.
 # were removed to shrink what has to be patched. `az containerapp exec` still gets busybox sh.
 # `apk upgrade` pulls in Alpine security fixes for the base image's own packages, which
 # otherwise wait for the next eclipse-temurin image rebuild.
-RUN apk upgrade --no-cache \
+# gnupg ships in the base image only to verify the JDK download in that image's own build; nothing
+# invokes it at runtime. Deleting the gnupg package lets apk drop the dependencies nothing else
+# needs (gpg, gnupg-keyboxd, sqlite-libs), so there is no need to name them.
+RUN apk del --no-cache gnupg \
+    && apk upgrade --no-cache \
     && apk add --no-cache \
     tini \
     tzdata
