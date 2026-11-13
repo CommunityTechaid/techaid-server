@@ -11,7 +11,7 @@ COPY ./src /app/src
 RUN gradle -p /app clean build -x test -PgitCommit=${GIT_COMMIT}
 
 # Download the Application Insights Java agent in a throwaway stage so the runtime image needs no
-# wget (CVE-2026-58469, CVE-2026-58471, CVE-2026-58472)
+# wget (fewer packages to patch)
 # Agent version: https://github.com/microsoft/ApplicationInsights-Java/releases
 # AI_AGENT_SHA256 must be updated together with AI_AGENT_VERSION
 FROM alpine:3 AS agent
