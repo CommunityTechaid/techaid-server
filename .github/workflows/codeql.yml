@@ -1,0 +1,76 @@
+name: CodeQL
+
+# Advanced setup, replacing GitHub's default setup (which covered only actions + JS/TS). The Kotlin
+# backend needs a hand-written build: default setup's autobuild ran `./gradlew testClasses` and
+# compileKotlin died with "OutOfMemoryError: GC overhead limit exceeded", and default setup cannot
+# raise the heap. Here the build gets a bigger heap and compiles in-process so CodeQL's tracer sees
+# every kotlinc invocation. Default setup must stay OFF while this workflow exists (GitHub refuses
+# advanced uploads while it is on).
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+  schedule:
+    - cron: '27 4 * * 1'   # weekly, as default setup was
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          - language: java-kotlin
+            build-mode: manual
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Build (Kotlin, traced by CodeQL)
+        if: matrix.language == 'java-kotlin'
+        # No Gradle build cache and no daemon: every source file must actually be compiled while
+        # the tracer is attached. kapt (QueryDSL Q-classes) runs as part of compileKotlin.
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --no-build-cache --stacktrace \
+            -Dorg.gradle.jvmargs="-Xmx5g -XX:MaxMetaspaceSize=1g" \
+            -Pkotlin.compiler.execution.strategy=in-process \
+            -Pkapt.use.worker.api=false \
+            clean compileKotlin compileTestKotlin
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: '/language:${{ matrix.language }}'
