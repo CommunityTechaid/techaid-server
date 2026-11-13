@@ -2,10 +2,9 @@
 -- then techaid_prod, each AFTER the app deploy that ran V26.11.13.1000 in that environment.
 --
 -- APPLIED TO
---   techaid_uat   not yet
---   techaid_prod  not yet - change control: the first run afterwards DELETES the notes of every
---                 contact already carrying the erased marker. Count first with the read-only
---                 check script, and have a point-in-time restore window in hand.
+--   techaid_uat   2026-11-13 ~17:30 UTC (AFTER check: deletes_referee_notes = t)
+--   techaid_prod  not yet - apply after the 6.1.0 promote. Read-only count on 2026-11-13: 951 erased
+--                 contacts, 0 notes on them, so the first run deletes nothing.
 --
 -- WHY THIS EXISTS. gdpr.performgdprcleanup() is owned by techaid_admin and lives in the gdpr
 -- schema, on which api_uat/api_prod have no CREATE. V26.11.13.1010 therefore self-gates and no-ops
