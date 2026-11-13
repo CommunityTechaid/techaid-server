@@ -96,27 +96,34 @@ class ErasedRefereeReadOnlyTest {
             ),
         )
 
-    /** Mirrors the detail form: every field sent, stored values echoed back unless edited. */
+    /**
+     * Mirrors the detail form's form.value: every field sent, stored values echoed back unless
+     * edited, and `note: {content: ""}` when no note is typed. isMembershipContact is only sent
+     * while the membership flag is on, so null omits it; a null address is sent as JSON null.
+     */
     private fun update(
         contact: ReferringOrganisationContact,
         fullName: String = contact.fullName,
         email: String = contact.email,
         phoneNumber: String = contact.phoneNumber,
-        address: String = contact.address,
+        address: String? = contact.address,
         orgId: Long = contact.referringOrganisation.id!!,
         archived: Boolean = contact.archived,
-        isMembershipContact: Boolean = contact.isMembershipContact,
+        isMembershipContact: Boolean? = contact.isMembershipContact,
         note: String = "",
-    ): String =
-        graphQl(
+    ): String {
+        val membership = isMembershipContact?.let { ", \"isMembershipContact\": $it" } ?: ""
+        val addressJson = address?.let { "\"$it\"" } ?: "null"
+        return graphQl(
             "mutation(\$data: UpdateReferringOrganisationContactInput!) " +
                 "{ updateReferringOrganisationContact(data: \$data) { id archived } }",
             """
             {"data": {"id": ${contact.id}, "fullName": "$fullName", "email": "$email",
-              "phoneNumber": "$phoneNumber", "address": "$address", "referringOrganisationId": $orgId,
-              "archived": $archived, "isMembershipContact": $isMembershipContact, "note": {"content": "$note"}}}
+              "phoneNumber": "$phoneNumber", "address": $addressJson, "referringOrganisationId": $orgId,
+              "archived": $archived, "note": {"content": "$note"}$membership}}
             """.trimIndent(),
         )
+    }
 
     private fun reload(contact: ReferringOrganisationContact) = referringOrganisationContacts.findById(contact.id).get()
 
@@ -174,7 +181,8 @@ class ErasedRefereeReadOnlyTest {
     fun `an erased referee can be un-archived`() {
         val contact = erased(org(), archived = true)
 
-        assertSaved(update(contact, archived = false))
+        // Membership flag off (field absent) and a null address: both still count as unchanged.
+        assertSaved(update(contact, archived = false, isMembershipContact = null, address = null))
         assertStillErased(contact, archived = false)
     }
 
