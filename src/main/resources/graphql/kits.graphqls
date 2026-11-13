@@ -230,27 +230,12 @@ input KitSubStatusWhereInput {
 }
 
 
-"""
-Legacy shape, still accepted on createKit ONLY so an external caller (the Bulk Insert Apps Script)
-keeps working while it is updated. Ignored: nothing in it is stored (#151).
-"""
-input KitAttributesInput {
-    state: String
-    otherType: String
-    credentials: String
-    notes: String
-    status: [String]
-    network: String
-    otherNetwork: String
-}
-
 input CreateKitInput {
     type: KitType!
     status: KitStatus
     model: String!
     location: String
     age: Int
-    attributes: KitAttributesInput @deprecated(reason: "Ignored; kit attributes were retired in #151. Accepted only so older callers keep working. Stop sending it.")
     donorId: ID
     note: CreateNoteInput
     make: String
