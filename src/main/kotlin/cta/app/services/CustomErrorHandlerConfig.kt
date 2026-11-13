@@ -1,6 +1,7 @@
 package cta.app.services
 
 import com.auth0.client.mgmt.core.ManagementApiException
+import cta.app.config.CLIENT_ERROR_REF_CONTEXT_KEY
 import cta.auth.Auth0Service
 import cta.graphql.InvalidSortException
 import graphql.GraphQLError
@@ -74,7 +75,11 @@ class CustomErrorHandlerConfig : DataFetcherExceptionResolverAdapter() {
             return builder.message(ex.message).build()
         }
 
-        val reference = UUID.randomUUID().toString().substring(0, 8)
+        // The dashboard's own ref (X-CTA-Ref, already validated by the interceptor) when it sent one,
+        // so the caller sees one ref per request and the log can be searched by it.
+        val reference =
+            env.graphQlContext?.get<String>(CLIENT_ERROR_REF_CONTEXT_KEY)
+                ?: UUID.randomUUID().toString().substring(0, 8)
         logger.error(
             "Unhandled error for an anonymous caller at '${env.getExecutionStepInfo().getPath()}' [ref $reference]",
             ex,
