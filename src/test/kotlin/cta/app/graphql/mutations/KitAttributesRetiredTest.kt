@@ -107,23 +107,34 @@ class KitAttributesRetiredTest {
     }
 
     /**
-     * Compatibility shim (Tony, 2026-11-04). An external tool (most likely the Bulk Insert Apps Script)
-     * made 295 createKit calls in prod between 2026-09-23 and 2026-10-13. Because the field used to be
-     * required, it must send `attributes`. createKit still ACCEPTS the old block, marked deprecated,
-     * so that tool keeps working. It is still ignored, exactly as before #346, and never stored.
+     * The createKit compatibility shim (#350) is gone. It accepted the legacy block, deprecated and
+     * ignored, while the Bulk Insert Apps Script still sent it. That script stopped sending it
+     * (Tony, 2026-11-11), so createKit now rejects the block like updateKit does, and creates nothing.
      */
     @Test
-    fun `createKit still accepts the legacy attributes block, and ignores it`() {
-        val response =
+    fun `createKit rejects the legacy attributes block`() {
+        assertValidationError(
             graphQl(
                 """mutation { createKit(data: { type: LAPTOP, model: \"Legacy Bulk\", age: 0, attributes: { """ +
                     """notes: \"from bulk\", state: \"s\", otherType: \"o\", credentials: \"c\", status: [\"x\"], """ +
                     """network: \"WIFI\", otherNetwork: \"n\" } }) { id model } }""",
+            ),
+        )
+        assertTrue(kits.findAll().none { it.model == "Legacy Bulk" }, "a rejected createKit must not store a kit")
+    }
+
+    /** The shape the updated Bulk Insert script sends: the full field set, minus attributes. */
+    @Test
+    fun `createKit with the bulk insert field set still works`() {
+        val response =
+            graphQl(
+                """mutation { createKit(data: { type: LAPTOP, status: DONATION_NEW, model: \"Bulk Shape\", age: 0, """ +
+                    """make: \"Dell\", serialNo: 12345, lotId: 7, locationCode: \"A1\", storageCapacity: 256, """ +
+                    """ramCapacity: 8, cpuType: \"i5\", cpuCores: 4 }) { id model serialNo lotId } }""",
             )
         assertFalse(response.contains("errors"), response)
-
-        val created = kits.findAll().single { it.model == "Legacy Bulk" }
-        assertEquals("", created.attributes.notes, "the legacy block must not be stored")
-        assertEquals(emptyList<String>(), created.attributes.status)
+        val created = kits.findAll().single { it.model == "Bulk Shape" }
+        assertEquals("12345", created.serialNo)
+        assertEquals("7", created.lotId)
     }
 }
