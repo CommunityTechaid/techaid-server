@@ -90,7 +90,7 @@ class KitTimestampIsolationTest {
     }
 
     @Test
-    @WithMockUser(authorities = ["write:organisations"])
+    @WithMockUser(authorities = ["write:requests"])
     fun `assigning a kit to a request must not rewrite the kits already on it`() {
         val seeded = seed("assign")
         val before = timestampsOf(seeded.kitIds)

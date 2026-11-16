@@ -1,6 +1,6 @@
 ---
 name: techaid-domain-reference
-description: Load when touching or interpreting ANY domain concept or business logic in techaid-server — kits, device requests, donors, donor parents, referring organisations, contacts, notes, audit trails, AdminConfig, emails, the Typeform intake webhook, collection/calendar sync, Auth0 permission scopes (write:organisations etc.), the public (unauthenticated) GraphQL surface, or any domain enum/field (KitStatus, DeviceRequestStatus, lotId, correlationId, archived, requestCount…). This is the definitive "what does this field/scope/status mean" and "where is the business logic for X" reference.
+description: Load when touching or interpreting ANY domain concept or business logic in techaid-server — kits, device requests, donors, donor parents, referring organisations, contacts, notes, audit trails, AdminConfig, emails, the Typeform intake webhook, collection/calendar sync, Auth0 permission scopes (write:requests / write:referees / write:organisations etc.), the public (unauthenticated) GraphQL surface, or any domain enum/field (KitStatus, DeviceRequestStatus, lotId, correlationId, archived, requestCount…). This is the definitive "what does this field/scope/status mean" and "where is the business logic for X" reference.
 ---
 
 # TechAid Domain Reference
@@ -98,7 +98,7 @@ Key fields on `Kit`: `type`, `status`, `model`/`make`/`deviceVersion`, `serialNo
 ### The two update mutations differ on null handling — do not confuse them
 
 - `updateDeviceRequest` (dashboard, full-replace): an explicit null `collectionDate` **clears** the stored date (deliberate; PR #45). Other nullable fields fall back to the existing value.
-- `synchronizeCollectionDataForDeviceRequest` (partial merge): every field including `collectionDate` keeps the old value when null. Caller is a **Google Apps Script calendar sync** authenticating with an Auth0 client-credentials token that must carry `write:organisations` (code comment warns to verify the grant before any prod promote).
+- `synchronizeCollectionDataForDeviceRequest` (partial merge): every field including `collectionDate` keeps the old value when null. Caller is a **Google Apps Script calendar sync** authenticating with an Auth0 client-credentials token that must carry `write:requests` (since #348, 2026-11; `write:organisations` no longer passes).
 
 ### REQUEST_COMPLETED cascade
 
@@ -118,20 +118,20 @@ In `updateDeviceRequest`, when status transitions *to* `REQUEST_COMPLETED` (from
 - Public typeahead surfaces (both unauthenticated, both return **projections**, not entities):
   - `referringOrganisationsPublic(where: ReferringOrganisationPublicWhereInput)` → `{id, name}` only; filter restricted to `name` + `archived` (tightened 2026-07, PR #48). Since #352 an anonymous caller gets only a name `_contains` of 3+ characters and a per-IP budget (staff scopes are exempt from both), and every caller gets at most 50 results, ordered by name.
   - `referringOrganisationContactsPublic(where: ReferringOrganisationContactPublicWhereInput)` → `{id, fullName}` only; filter allows `email`, nested `referringOrganisation`, `archived`, AND/OR/NOT — the public form uses email lookup to find an existing referee (*inferred*).
-- `createReferringOrganisationContact` is public (the form registers new referees); returns the existing contact if (fullName, email, org) matches. `createReferringOrganisation` is **not** public (requires `write:organisations`; the form's inline org-creation path was removed from the dashboard 2026-07).
+- `createReferringOrganisationContact` is staff-only (`write:referees` or `app:admin`; the public form sends unknown referees to a Typeform); returns the existing contact if (fullName, email, org) matches. `createReferringOrganisation` is **not** public (requires `write:organisations`; the form's inline org-creation path was removed from the dashboard 2026-07).
 
 ## Notes & audit trails
 
 | Note entity | Table | Attached to | Created via | Deleted via (scope) |
 |---|---|---|---|---|
 | `Note` | `note` | Kit | `createNote`/`updateNote` or inline in kit mutations (`write:kits`) | `deleteNote` (`write:kits`) |
-| `DeviceRequestNote` | `device_requests_notes` | DeviceRequest | inline in `updateDeviceRequest` | `deleteDeviceRequestNote` (`write:organisations`) |
+| `DeviceRequestNote` | `device_requests_notes` | DeviceRequest | inline in `updateDeviceRequest` | `deleteDeviceRequestNote` (`write:requests`) |
 | `ReferringOrganisationNote` | `referring_organisations_notes` | Organisation | inline in `updateReferringOrganisation` | `deleteReferringOrganisationNote` (`write:organisations`) |
-| `ReferringOrganisationContactNote` | `referring_organisation_contacts_notes` | Contact | inline in `updateReferringOrganisationContact` (added 2026-06, PR #47) | `deleteReferringOrganisationContactNote` (`write:organisations`) |
+| `ReferringOrganisationContactNote` | `referring_organisation_contacts_notes` | Contact | inline in `updateReferringOrganisationContact` (added 2026-06, PR #47) | `deleteReferringOrganisationContactNote` (`write:referees`) |
 
 All notes carry `content` (≤4096), timestamps, and `volunteer` (author's name-or-email string). Note collections render newest-first (`@SQLOrder("updatedAt DESC")`).
 
-Envers history is exposed to the dashboard via `kitAudits` (`read:kits`, `KitAuditTrailQueries.kt`) and `deviceRequestAudits` (`app:admin` or `read:organisations`, `DeviceRequestAuditTrailQueries.kt`). Each revision row includes the acting user from `custom_rev_info`.
+Envers history is exposed to the dashboard via `kitAudits` (`read:kits`, `KitAuditTrailQueries.kt`) and `deviceRequestAudits` (`app:admin` or `read:requests`, `DeviceRequestAuditTrailQueries.kt`). Each revision row includes the acting user from `custom_rev_info`.
 
 ## Auth0 permission scope inventory — THE "what scope do I need" table
 
@@ -142,9 +142,15 @@ Security model: everything is `permitAll()` at the HTTP layer; authorization = p
 | `read:kits` | `kits`, `kitsConnection`, `kit`, `statusCount`, `typeCount`, `getAttributes`, `kitAudits` |
 | `write:kits` | `createKit`, `quickCreateKit`, `updateKit`, `updateKits` (bulk), `autoCreateKit`, `autoUpdateKit`; kit-note create/update/delete |
 | `delete:kits` | `deleteKit` |
-| `read:organisations` (or `app:admin`) | `deviceRequests`, `deviceRequestConnection`, `deviceRequest`, `deviceRequestAudits`, `referringOrganisations(+Connection, single)`, `referringOrganisationContacts(+Connection, single)` |
-| `write:organisations` | `updateDeviceRequest`, `synchronizeCollectionDataForDeviceRequest` (calendar sync!), `assignKitsToDeviceRequest`, `createReferringOrganisation`, `updateReferringOrganisation`, `updateReferringOrganisationContact`; org/contact/request note deletes |
-| `delete:organisations` | `deleteDeviceRequest`, `deleteReferringOrganisation`, `deleteReferringOrganisationContact` |
+| `read:requests` (or `app:admin`) | `deviceRequests`, `deviceRequestConnection`, `deviceRequest`, `deviceRequestAudits` |
+| `write:requests` | `updateDeviceRequest`, `synchronizeCollectionDataForDeviceRequest` (calendar sync!), `assignKitsToDeviceRequest`, `deleteDeviceRequestNote`; also `referringOrganisationMembershipHint` |
+| `delete:requests` | `deleteDeviceRequest` |
+| `read:referees` (or `app:admin`) | `referringOrganisationContacts(+Connection, single)`, nested contact `notes` and organisation `membershipContacts` |
+| `write:referees` | `createReferringOrganisationContact` (also `app:admin`), `updateReferringOrganisationContact`, `deleteReferringOrganisationContactNote` |
+| `delete:referees` | `deleteReferringOrganisationContact` |
+| `read:organisations` (or `app:admin`) | `referringOrganisations(+Connection, single)`; delivery admin reads |
+| `write:organisations` | `createReferringOrganisation`, `updateReferringOrganisation`, `deleteReferringOrganisationNote`; the delivery admin mutations (by design, #265) |
+| `delete:organisations` | `deleteReferringOrganisation` |
 | `read:donors` (or `app:admin`) | `donors`, `donorsConnection`, `donor` |
 | `write:donors` / `delete:donors` | `createDonor`, `updateDonor` / `deleteDonor` |
 | `read:donorParents` (or `app:admin`) | `donorParents(+Connection, single)` |

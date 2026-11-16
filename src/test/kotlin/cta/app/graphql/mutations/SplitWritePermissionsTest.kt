@@ -23,8 +23,8 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
 /**
- * #265 phase 1: write:requests guards the device-request mutations, write:referees guards the
- * referee-contact mutations, and write:organisations still passes everywhere. Denials come back
+ * #265: write:requests guards the device-request mutations, write:referees guards the
+ * referee-contact mutations, and since #348 write:organisations guards organisations only. Denials come back
  * as HTTP 200 with a GraphQL errors array, so assertions are on the response body.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -142,10 +142,11 @@ class SplitWritePermissionsTest {
     }
 
     @Test
-    fun `write organisations alone still passes everything`() {
+    fun `write organisations alone edits organisations but not requests or referees`() {
+        // #348 (phase 2): the write:organisations fallback is gone from request and referee guards.
         val ids = seed()
-        assertAllowed(updateRequest(ids, "write:organisations"))
-        assertAllowed(updateContact(ids, "write:organisations"))
+        assertDenied(updateRequest(ids, "write:organisations"))
+        assertDenied(updateContact(ids, "write:organisations"))
         assertAllowed(updateOrg(ids, "write:organisations"))
     }
 }

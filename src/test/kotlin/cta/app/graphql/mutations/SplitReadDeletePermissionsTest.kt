@@ -23,12 +23,13 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
 /**
- * #338 phase 1: read:requests / delete:requests and read:referees / delete:referees are accepted
- * alongside the legacy *:organisations scopes. For each re-guarded entry point a new-only token and
- * an old-only token are allowed and an unrelated token is denied. Denials come back as HTTP 200
- * with a GraphQL errors array, so assertions are on the response body.
+ * #338 / #348: read:requests / delete:requests and read:referees / delete:referees guard request and
+ * referee entry points. Since #348 the legacy *:organisations scopes no longer stand in for them: for
+ * each entry point a new-scope token is allowed and an old-only or unrelated token is denied. Denials
+ * come back as HTTP 200 with a GraphQL errors array, so assertions are on the response body.
  *
- * #341: nested notes / membershipContacts accept read:referees; read:requests alone is denied them.
+ * #341: nested notes / membershipContacts need read:referees; read:requests alone (or with
+ * read:organisations) is denied them.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
@@ -116,7 +117,7 @@ class SplitReadDeletePermissionsTest {
     private val unrelated = "read:kits"
 
     @Test
-    fun `request reads accept read requests or read organisations and deny unrelated`() {
+    fun `request reads accept read requests and deny read organisations and unrelated`() {
         val ids = seed()
         val queries =
             listOf(
@@ -127,13 +128,13 @@ class SplitReadDeletePermissionsTest {
             )
         for ((query, marker) in queries) {
             assertAllowed(graphQl(query, "read:requests"), marker)
-            assertAllowed(graphQl(query, oldRead), marker)
+            assertDenied(graphQl(query, oldRead), marker)
             assertDenied(graphQl(query, unrelated), marker)
         }
     }
 
     @Test
-    fun `referee reads accept read referees or read organisations and deny unrelated`() {
+    fun `referee reads accept read referees and deny read organisations and unrelated`() {
         val ids = seed()
         val where = "where: {id: {_eq: ${ids.contact}}}"
         val queries =
@@ -145,28 +146,28 @@ class SplitReadDeletePermissionsTest {
             )
         for (query in queries) {
             assertAllowed(graphQl(query, "read:referees"), "\"id\"")
-            assertAllowed(graphQl(query, oldRead), "\"id\"")
+            assertDenied(graphQl(query, oldRead), "\"id\"")
             assertDenied(graphQl(query, unrelated), "\"id\"")
         }
     }
 
     @Test
-    fun `deleteDeviceRequest accepts delete requests or delete organisations and denies unrelated`() {
+    fun `deleteDeviceRequest accepts delete requests and denies delete organisations and unrelated`() {
         val marker = "\"deleteDeviceRequest\":true"
         assertAllowed(graphQl("mutation { deleteDeviceRequest(id: ${seed().request}) }", "delete:requests"), marker)
-        assertAllowed(graphQl("mutation { deleteDeviceRequest(id: ${seed().request}) }", "delete:organisations"), marker)
+        assertDenied(graphQl("mutation { deleteDeviceRequest(id: ${seed().request}) }", "delete:organisations"), marker)
         assertDenied(graphQl("mutation { deleteDeviceRequest(id: ${seed().request}) }", unrelated), marker)
     }
 
     @Test
-    fun `deleteReferringOrganisationContact accepts delete referees or delete organisations and denies unrelated`() {
+    fun `deleteReferringOrganisationContact accepts delete referees and denies delete organisations and unrelated`() {
         val org = referringOrganisations.save(ReferringOrganisation(name = "Split RD Delete Org"))
         val marker = "\"deleteReferringOrganisationContact\":true"
         val delete = { authority: String ->
             graphQl("mutation { deleteReferringOrganisationContact(id: ${seedContact(org).id}) }", authority)
         }
         assertAllowed(delete("delete:referees"), marker)
-        assertAllowed(delete("delete:organisations"), marker)
+        assertDenied(delete("delete:organisations"), marker)
         assertDenied(delete(unrelated), marker)
     }
 
@@ -205,19 +206,19 @@ class SplitReadDeletePermissionsTest {
         // Decision: referee notes are referee data, so read:requests alone must NOT see them.
         assertTrue(graphQl(query, "read:requests").contains("\"errors\""))
         assertAllowed(graphQl(query, "read:requests", "read:referees"), "\"id\"")
-        assertAllowed(graphQl(query, oldRead), "\"id\"")
+        assertTrue(graphQl(query, "read:requests", oldRead).contains("\"errors\""))
         assertDenied(graphQl(query, unrelated), "\"id\"")
     }
 
     @Test
-    fun `membershipContacts accepts read referees or read organisations and denies read requests alone`() {
+    fun `membershipContacts accepts read referees and denies read organisations or read requests alone`() {
         val ids = seed()
         val query =
             "{ deviceRequests(where: {id: {_eq: ${ids.request}}}) { id referringOrganisationContact { " +
                 "referringOrganisation { id membershipContacts { id } } } } }"
         assertTrue(graphQl(query, "read:requests").contains("\"errors\""))
         assertAllowed(graphQl(query, "read:requests", "read:referees"), "\"membershipContacts\"")
-        assertAllowed(graphQl(query, oldRead), "\"membershipContacts\"")
+        assertTrue(graphQl(query, "read:requests", oldRead).contains("\"errors\""))
         assertDenied(graphQl(query, unrelated), "\"membershipContacts\"")
     }
 

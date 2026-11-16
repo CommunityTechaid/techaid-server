@@ -209,7 +209,7 @@ class DeviceRequestQueryCountTest {
             mockMvc
                 .perform(
                     post("/graphql")
-                        .with(jwt().authorities(SimpleGrantedAuthority("read:organisations")))
+                        .with(jwt().authorities(SimpleGrantedAuthority("read:requests")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body),
                 ).andReturn()
