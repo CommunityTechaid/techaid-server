@@ -212,6 +212,10 @@ auth:
   # Grants the dev:tech permission near-full access. local/testing profiles ONLY; startup fails
   # if it is on anywhere else (RequiredConfigurationCheck).
   dev-tech-wildcard: ${AUTH_DEV_TECH_WILDCARD:false}
+  # Spring's session form login on /login. Off: nothing used it and every caller sends a bearer
+  # token. true restores the old behaviour exactly, as a fallback if something turns out to need
+  # it (see SecurityConfig.filterChain). Remove the switch once it has stayed off for a while.
+  form-login-enabled: ${AUTH_FORM_LOGIN_ENABLED:false}
 
 typeform:
   #hmac key

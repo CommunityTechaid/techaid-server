@@ -49,6 +49,9 @@ class SecurityConfig(
     @Value("\${auth.dev-tech-wildcard:false}")
     private var devTechWildcard: Boolean = false
 
+    @Value("\${auth.form-login-enabled:false}")
+    private var formLoginEnabled: Boolean = false
+
     @Bean
     @Lazy
     fun jwtDecoder(): JwtDecoder {
@@ -72,6 +75,12 @@ class SecurityConfig(
      * to terminate it, `AuthenticationConfiguration.getAuthenticationManager()` resolves back to
      * the bean it is defining, and any `POST /login` dies with a StackOverflowError. Nothing else
      * in the app injects an `AuthenticationManager`; `formLogin` is left with Spring's default.
+     *
+     * `formLogin` itself is now off unless `auth.form-login-enabled` (`AUTH_FORM_LOGIN_ENABLED`)
+     * is true. Nothing called it, its GET page had no template, and it was the only way to mint a
+     * session on an API whose callers all send bearer tokens. CSRF stays disabled either way: the
+     * dashboard's GraphQL POSTs carry no CSRF token, and with no session login there is no ambient
+     * credential for a forged request to ride on. See FormLoginToggleTest.
      */
     @Bean
     public fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -79,11 +88,14 @@ class SecurityConfig(
         http.addFilterBefore(TokenAuthenticationFilter(authService, objectMapper), BasicAuthenticationFilter::class.java)
         http.oauth2ResourceServer { it.jwt { jwt -> jwt.jwtAuthenticationConverter(Auth0TokenConverter(devTechWildcard)) } }
         http.authorizeHttpRequests { it.anyRequest().permitAll() }
-        http.formLogin { form ->
-            form
-                .loginPage("/login")
-                .defaultSuccessUrl("/login", true)
-                .failureUrl("/login?error")
+        if (formLoginEnabled) {
+            logger.warn { "Form login on /login is ON (AUTH_FORM_LOGIN_ENABLED=true)" }
+            http.formLogin { form ->
+                form
+                    .loginPage("/login")
+                    .defaultSuccessUrl("/login", true)
+                    .failureUrl("/login?error")
+            }
         }
         return http.build()
     }

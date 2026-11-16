@@ -56,6 +56,7 @@ Resolution order: env `DATASOURCE_URL` → property `db-url` → localhost defau
 | `AUTH0_CLIENT_ID` | `''` | `auth0.client-id` | `Auth0Service.kt:20` | |
 | `AUTH0_CLIENT_SECRET` | `''` | `auth0.client-secret` | `Auth0Service.kt:23` | |
 | `AUTH_DEV_TECH_WILDCARD` | `false` | `auth.dev-tech-wildcard` | `SecurityConfig.kt` (`DevTechWildcard`) | `true` makes the `dev:tech` permission grant every app authority except `read/write/delete:users`. Startup fails if on outside the `local`/`testing` profiles. Never set on api-production. |
+| `AUTH_FORM_LOGIN_ENABLED` | `false` | `auth.form-login-enabled` | `SecurityConfig.kt`, `LoginController.kt`, `UnknownPathFilter` | Fallback switch for Spring's session form login on `/login`, removed by default (unused; CodeQL alert #4). `true` restores the old filter, controller and allow-list entry exactly and logs a WARN at startup. Startup-time only: flipping it means a new revision. Delete the switch once it has stayed off without complaint. |
 | `GMAIL_CLIENT_ID` | `''` | `gmail.client-id` | `MailService.kt:23` | |
 | `GMAIL_CLIENT_SECRET` | `''` | `gmail.client-secret` | `MailService.kt:26` | |
 | `GMAIL_REFRESH_TOKEN` | `''` | `gmail.refresh-token` | `MailService.kt:29` | |
