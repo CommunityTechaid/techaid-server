@@ -125,7 +125,7 @@ GraphQL resolvers do **not** need allow-list changes — they all ride on `/grap
 | Integration | Entry point | Trust mechanism | Notes |
 |-------------|------------|-----------------|-------|
 | Auth0 | JWT on `/graphql` | Issuer + audience validation; `permissions` claim → authorities | The only identity provider for the dashboard |
-| Google Apps Script calendar sync | `synchronizeCollectionDataForDeviceRequest` mutation | Auth0 client-credentials token with `write:organisations` (gated since PR #48) | Partial update: keeps `?: entity` fallbacks on purpose, unlike the full-replace update mutation |
+| Google Apps Script calendar sync | `synchronizeCollectionDataForDeviceRequest` mutation | Auth0 client-credentials token with `write:requests` (gated since PR #48; `write:organisations` stopped passing with #348) | Partial update: keeps `?: entity` fallbacks on purpose, unlike the full-replace update mutation |
 | Typeform (device-request step 2) | `POST /typeform/hook` (`TypeformWebhookController`) | HMAC-SHA256 signature over the raw payload, constant-time compare (`TypeformService.validateHMACSignature`) | Correlates via hidden `corr_id` field → `markRequestStepsCompleted`. The two-step intake: `createDeviceRequest` (public, sets `correlationId`) → Typeform equalities form → webhook completes it, or the scheduler declines it after 20 min |
 | Gmail API | Outbound only (`MailService`) | OAuth refresh token; **every send site must check `mailService.emailEnabled`** (`gmail.enabled`, default false) | Guard is at call sites (`DeviceRequestService.kt:74,114`), not inside `sendMessage` — a new send site that forgets the check will email real people from a test environment |
 

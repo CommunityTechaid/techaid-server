@@ -85,10 +85,19 @@ class PublicSurfaceAuthorizationTest {
     }
 
     @Test
-    fun `synchronizeCollectionDataForDeviceRequest admits write-organisations scope`() {
-        authorizedGraphQl(syncMutation, "write:organisations")
+    fun `synchronizeCollectionDataForDeviceRequest admits write-requests scope`() {
+        // The Calendar Sync M2M grant holds write:requests (read back 2026-11-16).
+        authorizedGraphQl(syncMutation, "write:requests")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors[0].message").value(notAccessDenied))
+    }
+
+    @Test
+    fun `synchronizeCollectionDataForDeviceRequest rejects write-organisations alone`() {
+        // #348: write:organisations no longer stands in for write:requests.
+        authorizedGraphQl(syncMutation, "write:organisations")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
     }
 
     @Test
@@ -141,9 +150,19 @@ class PublicSurfaceAuthorizationTest {
     }
 
     @Test
-    fun `createReferringOrganisationContact admits write-organisations scope`() {
-        val email = "staff-${System.nanoTime()}@example.com"
+    fun `createReferringOrganisationContact rejects write-organisations alone`() {
+        // #348: creating a referee needs write:referees; write:organisations no longer stands in.
+        val email = "org-${System.nanoTime()}@example.com"
         authorizedGraphQl(createContactMutation(email), "write:organisations")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.errors[0].message").value("Access Denied"))
+        assertTrue(contactsWithEmail(email) == 0, "write:organisations alone must not create a contact")
+    }
+
+    @Test
+    fun `createReferringOrganisationContact admits write-referees scope`() {
+        val email = "staff-${System.nanoTime()}@example.com"
+        authorizedGraphQl(createContactMutation(email), "write:referees")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.errors").doesNotExist())
             .andExpect(jsonPath("$.data.createReferringOrganisationContact.id").isNotEmpty)

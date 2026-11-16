@@ -33,7 +33,7 @@ class ReferringOrganisationContactMutations(
 ) {
     // Staff only. The public referral form sends an unknown referee or organisation to a Typeform,
     // so anonymous creation is no longer offered.
-    @PreAuthorize("hasAnyAuthority('app:admin', 'write:organisations', 'write:referees')")
+    @PreAuthorize("hasAnyAuthority('app:admin', 'write:referees')")
     @MutationMapping
     fun createReferringOrganisationContact(
         @Argument @Valid data: CreateReferringOrganisationContactInput,
@@ -74,7 +74,7 @@ class ReferringOrganisationContactMutations(
         return referringOrganisationContacts.save(referringOrganisationContact)
     }
 
-    @PreAuthorize("hasAnyAuthority('write:organisations', 'write:referees')")
+    @PreAuthorize("hasAnyAuthority('write:referees')")
     @MutationMapping
     fun updateReferringOrganisationContact(
         @Argument @Valid data: UpdateReferringOrganisationContactInput,
@@ -121,7 +121,7 @@ class ReferringOrganisationContactMutations(
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('delete:organisations', 'delete:referees')")
+    @PreAuthorize("hasAnyAuthority('delete:referees')")
     @MutationMapping
     fun deleteReferringOrganisationContact(
         @Argument id: Long,

@@ -43,7 +43,7 @@ import tools.jackson.databind.ObjectMapper
  * the public allowance's email gate, partial-update null semantics, the BLOCK error's machine
  * code, and the batching of `ReferringOrganisation.membership`.
  *
- * Staff calls carry `app:admin`/`write:organisations`/`read:organisations`, which also exempts
+ * Staff calls carry `app:admin`/`*:organisations`/`*:referees`, which also exempts
  * `createDeviceRequest` from the per-IP public throttle (these tests create many requests).
  * Global state flipped here (the membership-support flag, the over-limit config) is restored
  * afterwards because the Spring context and database are shared with other suites.
@@ -81,7 +81,7 @@ class MembershipGraphQlTest {
 
     private fun JsonNode.items(): List<JsonNode> = (0 until size()).map { get(it) }
 
-    private val staff = listOf("app:admin", "read:organisations", "write:organisations")
+    private val staff = listOf("app:admin", "read:organisations", "write:organisations", "read:referees", "write:referees")
 
     private val sqlLogger = LoggerFactory.getLogger("org.hibernate.SQL") as Logger
     private val sqlAppender = ListAppender<ILoggingEvent>()

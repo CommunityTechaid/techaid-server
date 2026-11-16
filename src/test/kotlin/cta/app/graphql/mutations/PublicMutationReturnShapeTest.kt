@@ -150,7 +150,7 @@ class PublicMutationReturnShapeTest {
         mockMvc
             .perform(
                 post("/graphql")
-                    .with(jwt().authorities(SimpleGrantedAuthority("write:organisations")))
+                    .with(jwt().authorities(SimpleGrantedAuthority("write:referees")))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         """{"query":${quote(
@@ -203,8 +203,8 @@ class PublicMutationReturnShapeTest {
     }
 
     @Test
-    @WithMockUser(authorities = ["read:organisations"])
-    fun `contact notes resolver admits read-organisations scope`() {
+    @WithMockUser(authorities = ["read:referees"])
+    fun `contact notes resolver admits read-referees scope`() {
         val victim = victimInNewOrganisation()
         contactQueries.notes(victim)
     }

@@ -204,7 +204,7 @@ class DeviceRequestMutations(
 
     private fun generateCorrelationId(): Long = kotlin.random.Random.nextLong(1, Long.MAX_VALUE)
 
-    @PreAuthorize("hasAnyAuthority('write:organisations', 'write:requests')")
+    @PreAuthorize("hasAnyAuthority('write:requests')")
     @MutationMapping
     fun updateDeviceRequest(
         @Argument @Valid data: UpdateDeviceRequestInput,
@@ -264,8 +264,8 @@ class DeviceRequestMutations(
     }
 
     // Called by the Google Apps Script calendar sync, which authenticates with an Auth0
-    // bearer token — verify its client grant includes write:organisations before promoting.
-    @PreAuthorize("hasAnyAuthority('write:organisations', 'write:requests')")
+    // bearer token — its client grant must include write:requests (#348).
+    @PreAuthorize("hasAnyAuthority('write:requests')")
     @MutationMapping
     fun synchronizeCollectionDataForDeviceRequest(
         @Argument @Valid data: SynchronizeCollectionDataForDeviceRequestInput,
@@ -277,7 +277,7 @@ class DeviceRequestMutations(
         return data.apply(entity)
     }
 
-    @PreAuthorize("hasAnyAuthority('write:organisations', 'write:requests')")
+    @PreAuthorize("hasAnyAuthority('write:requests')")
     @MutationMapping
     fun assignKitsToDeviceRequest(
         @Argument @Valid data: BulkKitAssignmentInput,
@@ -299,7 +299,7 @@ class DeviceRequestMutations(
         return deviceRequests.save(deviceRequest)
     }
 
-    @PreAuthorize("hasAnyAuthority('delete:organisations', 'delete:requests')")
+    @PreAuthorize("hasAnyAuthority('delete:requests')")
     @MutationMapping
     fun deleteDeviceRequest(
         @Argument id: Long,

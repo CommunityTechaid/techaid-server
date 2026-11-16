@@ -225,7 +225,7 @@ class BlockingFlagGuardCallSiteTest {
         val response =
             graphQl(
                 """mutation { assignKitsToDeviceRequest(data: { deviceRequestId: ${request.id}, kitIds: [${kit.id}] }) { id } }""",
-                "write:organisations",
+                "write:requests",
             )
 
         assertBlocked(response, kit.id)
@@ -239,7 +239,7 @@ class BlockingFlagGuardCallSiteTest {
         val response =
             graphQl(
                 """mutation { assignKitsToDeviceRequest(data: { deviceRequestId: ${request.id}, kitIds: [${kit.id}] }) { id } }""",
-                "write:organisations",
+                "write:requests",
             )
 
         assertFalse(response.contains("errors"), response)
@@ -267,7 +267,7 @@ class BlockingFlagGuardCallSiteTest {
         kits.save(active)
         setEnforcement(true)
 
-        val response = graphQl(completeRequestMutation(request.id), "write:organisations")
+        val response = graphQl(completeRequestMutation(request.id), "write:requests")
 
         assertBlocked(response, active.id)
         val rolledBack = kits.findById(active.id).orElseThrow()
@@ -282,7 +282,7 @@ class BlockingFlagGuardCallSiteTest {
         active.deviceRequest = request
         kits.save(active)
 
-        val response = graphQl(completeRequestMutation(request.id), "write:organisations")
+        val response = graphQl(completeRequestMutation(request.id), "write:requests")
 
         assertFalse(response.contains("errors"), response)
         val cascaded = kits.findById(active.id).orElseThrow()
