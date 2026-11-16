@@ -21,6 +21,10 @@ import tools.jackson.databind.ObjectMapper
  */
 const val GRAPHQL_OPERATION_REQUEST_ATTRIBUTE = "cta.graphql.operation"
 
+/** Top-level fields whose variables and error messages are never logged (special category data). */
+private val REDACTED_FIELDS = listOf("submitEqualities")
+private const val REDACTED = "<redacted: equalities>"
+
 @Configuration
 class GraphQlTelemetryConfig {
     private val log: Logger = LoggerFactory.getLogger(GraphQlTelemetryConfig::class.java)
@@ -92,6 +96,12 @@ class GraphQlTelemetryConfig {
      *
      * NOTE: variables may contain personal data for some mutations. This fires only on error
      * responses, never on successful requests.
+     *
+     * Exception: a request that calls submitEqualities carries special category data (the
+     * equalities answers) that must never reach a log. For those, both the variables AND the error
+     * message are replaced - a coercion error's message can quote the offending value. The
+     * error's type and `extensions.code` are still logged. Matched on the document, not the
+     * client-chosen operation name, so renaming the operation cannot bypass it.
      */
     private fun logGraphQlErrors(
         operationName: String?,
@@ -101,16 +111,22 @@ class GraphQlTelemetryConfig {
     ) {
         if (response.errors.isEmpty()) return
         val operation = operationName ?: "<anonymous>"
+        val redact = isRedacted(request)
         val variables =
-            runCatching { mapper.writeValueAsString(request.variables) }
-                .getOrElse { request.variables.toString() }
+            if (redact) {
+                REDACTED
+            } else {
+                runCatching { mapper.writeValueAsString(request.variables) }
+                    .getOrElse { request.variables.toString() }
+            }
         response.errors.forEach { error ->
+            val message = if (redact) "$REDACTED (code=${error.extensions?.get("code")})" else error.message
             if (ref == null) {
                 log.warn(
                     "GraphQL error on operation '{}' [{}]: {} (path={}, locations={}) — input variables: {}",
                     operation,
                     error.errorType,
-                    error.message,
+                    message,
                     error.path,
                     error.locations,
                     variables,
@@ -121,7 +137,7 @@ class GraphQlTelemetryConfig {
                     operation,
                     error.errorType,
                     ref,
-                    error.message,
+                    message,
                     error.path,
                     error.locations,
                     variables,
@@ -129,6 +145,8 @@ class GraphQlTelemetryConfig {
             }
         }
     }
+
+    private fun isRedacted(request: WebGraphQlRequest): Boolean = REDACTED_FIELDS.any { request.document?.contains(it) == true }
 
     private fun resolveOperationName(request: WebGraphQlRequest): String? {
         val explicit = request.operationName

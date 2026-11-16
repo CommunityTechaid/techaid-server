@@ -1,0 +1,24 @@
+"One answer to an equalities question: the question's key and the chosen option's exact text."
+input EqualitiesAnswerInput {
+    key: String!
+    choice: String!
+}
+
+input SubmitEqualitiesInput {
+    "The correlationId createDeviceRequest returned."
+    correlationId: String!
+    "The ward the form looked up for the address, if any. Written to the Sheet only."
+    ward: String
+    answers: [EqualitiesAnswerInput!]!
+}
+
+extend type Mutation {
+    """
+    Public, no auth required. The native equalities form on the public request form: appends the
+    answers to the isolated equalities Google Sheet, then completes the request's equalities step
+    and sends the acknowledgement email. TaDa stores none of the answers. Errors carry
+    extensions.code: EQUALITIES_REQUEST_NOT_FOUND, EQUALITIES_INVALID_ANSWERS, or
+    EQUALITIES_SHEET_UNAVAILABLE (nothing changed; safe to retry).
+    """
+    submitEqualities(data: SubmitEqualitiesInput!): Boolean!
+}
