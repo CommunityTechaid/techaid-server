@@ -37,4 +37,15 @@ class PublicCreateRateLimiterConfig {
         @Value("\${public-lookup.rate-limit.organisations.max-requests:60}") maxRequests: Int,
         @Value("\${public-lookup.rate-limit.organisations.window-seconds:600}") windowSeconds: Long,
     ): BookingRateLimiter = BookingRateLimiter(Clock.systemUTC(), enabled, maxRequests, windowSeconds)
+
+    /**
+     * The native equalities form (submitEqualities). One submit per device request, plus retries
+     * when the Sheet is briefly unavailable, so it gets the same budget as the create it follows.
+     */
+    @Bean
+    fun publicEqualitiesRateLimiter(
+        @Value("\${public-create.rate-limit.enabled:true}") enabled: Boolean,
+        @Value("\${public-create.rate-limit.equalities.max-requests:20}") maxRequests: Int,
+        @Value("\${public-create.rate-limit.equalities.window-seconds:3600}") windowSeconds: Long,
+    ): BookingRateLimiter = BookingRateLimiter(Clock.systemUTC(), enabled, maxRequests, windowSeconds)
 }

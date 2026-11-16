@@ -217,3 +217,14 @@ typeform:
   #hmac key
   key: ${TYPEFORM_KEY:}
 
+# Native equalities form (submitEqualities). Answers are appended to the isolated Google Sheet as a
+# service account with Editor access to that one spreadsheet; TaDa stores none of them. Unset =
+# every submit fails with EQUALITIES_SHEET_UNAVAILABLE, so keep the native-equalities-form flag off.
+# See docs/equalities-sheet.md.
+equalities:
+  sheet:
+    spreadsheet-id: ${EQUALITIES_SHEET_ID:}
+    tab: ${EQUALITIES_SHEET_TAB:TaDa responses}
+    # The service account's JSON key, raw or base64-encoded.
+    service-account-key: ${EQUALITIES_SA_KEY:}
+

@@ -23,14 +23,18 @@ class DeviceRequestService(
     private val templateEngine: TemplateEngine,
 ) {
     fun markRequestStepsCompleted(id: Long): DeviceRequest? {
-        val entity = deviceRequests.findByCorrelationId(id).toNullable()
-        if (entity != null) {
-            entity.status = DeviceRequestStatus.PROCESSING_EQUALITIES_DATA_COMPLETE
-            entity.correlationId = null
-            return deviceRequests.save(entity)
-        }
+        val entity = deviceRequests.findByCorrelationId(id).toNullable() ?: return null
+        return completeEqualitiesStep(entity)
+    }
 
-        return null
+    /**
+     * The equalities step is done: the request moves on, and clearing correlationId takes it out
+     * of the 20-minute decline sweep. Shared by the Typeform webhook and the native form.
+     */
+    fun completeEqualitiesStep(entity: DeviceRequest): DeviceRequest {
+        entity.status = DeviceRequestStatus.PROCESSING_EQUALITIES_DATA_COMPLETE
+        entity.correlationId = null
+        return deviceRequests.save(entity)
     }
 
     fun declineIncompleteDeviceRequests(): Int {
