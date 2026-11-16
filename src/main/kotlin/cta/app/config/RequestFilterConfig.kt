@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
 import net.logstash.logback.marker.Markers
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -22,8 +23,10 @@ class RequestFilterConfig {
     }
 
     @Bean
-    fun unknownPathFilterRegistration(): FilterRegistrationBean<UnknownPathFilter> {
-        val registration = FilterRegistrationBean(UnknownPathFilter())
+    fun unknownPathFilterRegistration(
+        @Value("\${auth.form-login-enabled:false}") formLoginEnabled: Boolean,
+    ): FilterRegistrationBean<UnknownPathFilter> {
+        val registration = FilterRegistrationBean(UnknownPathFilter(formLoginEnabled))
         registration.order = Int.MIN_VALUE + 1
         return registration
     }
@@ -79,13 +82,16 @@ class AccessLoggingFilter : OncePerRequestFilter() {
     }
 }
 
-class UnknownPathFilter : OncePerRequestFilter() {
+class UnknownPathFilter(
+    formLoginEnabled: Boolean,
+) : OncePerRequestFilter() {
+    // /login is only a real path while the form-login fallback is on (SecurityConfig.filterChain).
     private val allowedPrefixes =
-        listOf(
+        listOfNotNull(
             "/",
             "/graphql",
             "/actuator",
-            "/login",
+            "/login".takeIf { formLoginEnabled },
             "/error",
             "/typeform/hook",
         )
