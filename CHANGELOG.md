@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.2.0](https://github.com/CommunityTechaid/techaid-server/compare/v6.1.0...v6.2.0) (2026-11-16)
+
+
+### Features
+
+* submitEqualities, the native equalities form's submit (Sheet only) ([#383](https://github.com/CommunityTechaid/techaid-server/issues/383)) ([4121115](https://github.com/CommunityTechaid/techaid-server/commit/412111531432b016c18424a4d7f5bfc0a7ce97c7))
+
+
+### Bug Fixes
+
+* **security:** turn off the unused form login on /login, behind a fallback switch ([#386](https://github.com/CommunityTechaid/techaid-server/issues/386)) ([14112f6](https://github.com/CommunityTechaid/techaid-server/commit/14112f6dfdd4248827b6bd119774af50b7621aba))
+
 ## [6.1.0](https://github.com/CommunityTechaid/techaid-server/compare/v6.0.1...v6.1.0) (2026-11-16)
 
 
