@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.2.1](https://github.com/CommunityTechaid/techaid-server/compare/v6.2.0...v6.2.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* **auth:** request and referee guards no longer accept *:organisations ([#348](https://github.com/CommunityTechaid/techaid-server/issues/348)) ([#388](https://github.com/CommunityTechaid/techaid-server/issues/388)) ([2d2c5fd](https://github.com/CommunityTechaid/techaid-server/commit/2d2c5fd5e036de3e519ecd09f302df977a964952))
+
 ## [6.2.0](https://github.com/CommunityTechaid/techaid-server/compare/v6.1.0...v6.2.0) (2026-11-16)
 
 
